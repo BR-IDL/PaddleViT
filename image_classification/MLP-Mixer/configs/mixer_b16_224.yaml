@@ -1,0 +1,11 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: Mixer
+    NAME: mixer_base_patch16_224
+    MIXER:
+        PATCH_SIZE: 16
+        HIDDEN_SIZE: 768
+        NUM_LAYERS: 12
+

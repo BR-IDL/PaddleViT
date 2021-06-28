@@ -1,0 +1,13 @@
+DATA:
+    IMAGE_SIZE: 224
+MODEL:
+    TYPE: ViT
+    NAME: vit_base_patch16_224
+    TRANS:
+        PATCH_SIZE: 16
+        HIDDEN_SIZE: 1024
+        MLP_DIM: 4096 # same as mlp_ratio = 4.0
+        NUM_LAYERS: 24
+        NUM_HEADS: 16
+        QKV_BIAS: true
+
