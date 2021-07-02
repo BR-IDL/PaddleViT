@@ -33,8 +33,8 @@ _C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
-_C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 4 # number of data loading threads 
+_C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
+_C.DATA.NUM_WORKERS = 2 # number of data loading threads 
 
 # model settings
 _C.MODEL = CN()
@@ -62,10 +62,10 @@ _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 300
 _C.TRAIN.WARMUP_EPOCHS = 3 #34 # ~ 10k steps for 4096 batch size
-_C.TRAIN.WEIGHT_DECAY = 0.01 #0.3 # 0.0 for finetune
+_C.TRAIN.WEIGHT_DECAY = 0.05 #0.3 # 0.0 for finetune
 _C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
 _C.TRAIN.WARMUP_START_LR = 1e-6 #0.0
-_C.TRAIN.END_LR = 1e-5
+_C.TRAIN.END_LR = 5e-4
 _C.TRAIN.GRAD_CLIP = 1.0
 _C.TRAIN.ACCUM_ITER = 2 #1
 
@@ -84,13 +84,13 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 20 # freq to save chpt
-_C.REPORT_FREQ = 50 # freq to logging info
-_C.VALIDATE_FREQ = 20 # freq to do validation
+_C.SAVE_FREQ = 10 # freq to save chpt
+_C.REPORT_FREQ = 100 # freq to logging info
+_C.VALIDATE_FREQ = 100 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
-_C.NGPUS = 1
+_C.NGPUS = -1
 
 
 def _update_config_from_file(config, cfg_file):

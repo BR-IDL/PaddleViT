@@ -60,8 +60,6 @@ if not config.EVAL:
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 
-config.freeze()
-
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
 
@@ -147,12 +145,14 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
         debug_steps: int, num of iters to log info
     Returns:
         val_loss_meter.avg
-        val_acc_meter.avg
+        val_acc1_meter.avg
+        val_acc5_meter.avg
         val_time
     """
     model.eval()
     val_loss_meter = AverageMeter()
-    val_acc_meter = AverageMeter()
+    val_acc1_meter = AverageMeter()
+    val_acc5_meter = AverageMeter()
     time_st = time.time()
 
     with paddle.no_grad():
@@ -164,27 +164,32 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
             loss = criterion(output, label)
 
             pred = F.softmax(output)
-            acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
+            acc1 = paddle.metric.accuracy(pred, label.unsqueeze(1))
+            acc5 = paddle.metric.accuracy(pred, label.unsqueeze(1), k=5)
 
             dist.all_reduce(loss)
-            dist.all_reduce(acc)
+            dist.all_reduce(acc1)
+            dist.all_reduce(acc5)
             loss = loss / dist.get_world_size()
-            acc = acc / dist.get_world_size()
+            acc1 = acc1 / dist.get_world_size()
+            acc5 = acc5 / dist.get_world_size()
 
             batch_size = paddle.to_tensor(image.shape[0])
             dist.all_reduce(batch_size)
 
             val_loss_meter.update(loss.numpy()[0], batch_size.numpy()[0])
-            val_acc_meter.update(acc.numpy()[0], batch_size.numpy()[0])
+            val_acc1_meter.update(acc1.numpy()[0], batch_size.numpy()[0])
+            val_acc5_meter.update(acc5.numpy()[0], batch_size.numpy()[0])
 
             if batch_id % debug_steps == 0:
                 logger.info(
                     f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
                     f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc: {val_acc_meter.avg:.4f}")
+                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, "+
+                    f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
 
     val_time = time.time() - time_st
-    return val_loss_meter.avg, val_acc_meter.avg, val_time
+    return val_loss_meter.avg, val_acc1_meter.avg, val_acc5_meter.avg, val_time
 
 
 def main_worker(*args):
@@ -288,13 +293,15 @@ def main_worker(*args):
     # 6. Validation
     if config.EVAL:
         logger.info('----- Start Validating')
-        val_loss, val_acc, val_time = validate(dataloader=dataloader_val,
-                                               model=model,
-                                               criterion=criterion,
-                                               total_batch=total_batch_val,
-                                               debug_steps=config.REPORT_FREQ)
+        val_loss, val_acc1, val_acc5, val_time = validate(
+            dataloader=dataloader_val,
+            model=model,
+            criterion=criterion,
+            total_batch=total_batch_val,
+            debug_steps=config.REPORT_FREQ)
         logger.info(f"Validation Loss: {val_loss:.4f}, " +
-                    f"Validation Acc: {val_acc:.4f}, " +
+                    f"Validation Acc@1: {val_acc1:.4f}, " +
+                    f"Validation Acc@5: {val_acc5:.4f}, " +
                     f"time: {val_time:.2f}")
         return
 
@@ -320,14 +327,16 @@ def main_worker(*args):
         # validation
         if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             logger.info(f'----- Validation after Epoch: {epoch}')
-            val_loss, val_acc, val_time = validate(dataloader=dataloader_val,
-                                                   model=model,
-                                                   criterion=criterion,
-                                                   total_batch=total_batch_val,
-                                                   debug_steps=config.REPORT_FREQ)
+            val_loss, val_acc1, val_acc5, val_time = validate(
+                dataloader=dataloader_val,
+                model=model,
+                criterion=criterion,
+                total_batch=total_batch_val,
+                debug_steps=config.REPORT_FREQ)
             logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                         f"Validation Loss: {val_loss:.4f}, " +
-                        f"Validation Acc: {val_acc:.4f}, " +
+                        f"Validation Acc@1: {val_acc1:.4f}, " +
+                        f"Validation Acc@5: {val_acc5:.4f}, " +
                         f"time: {val_time:.2f}")
         # model save
         if local_rank == 0:
@@ -343,6 +352,7 @@ def main_worker(*args):
 def main():
     dataset_train = get_dataset(config, mode='train')
     dataset_val = get_dataset(config, mode='val')
+    config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS
     dist.spawn(main_worker, args=(dataset_train, dataset_val, ), nprocs=config.NGPUS)
 
 

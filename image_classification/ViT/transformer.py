@@ -354,3 +354,7 @@ class VisualTransformer(nn.Layer):
         x, self_attn = self.transformer(x)
         logits = self.classifier(x[:, 0]) # take only cls_token as classifier
         return logits, self_attn
+
+    def flops(self):
+        flops = 0
+        flops += self.transformer.flops()
