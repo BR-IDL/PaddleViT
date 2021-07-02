@@ -22,11 +22,10 @@ from config import *
 
 config = get_config()
 parser = argparse.ArgumentParser('')
-parser.add_argument('-cfg', type=str, default='./configs/swin_base_patch4_window7_224.yaml')
-#parser.add_argument('-dataset', type=str, default="imagenet2012")
-parser.add_argument('-dataset', type=str, default="cifar10")
+parser.add_argument('-cfg', type=str, default='./configs/swin_base_patch4_window12_384.yaml')
+parser.add_argument('-dataset', type=str, default="imagenet2012")
 parser.add_argument('-batch_size', type=int, default=4)
-parser.add_argument('-image_size', type=int, default=224)
+parser.add_argument('-image_size', type=int, default=384)
 parser.add_argument('-ngpus', type=int, default=None)
 parser.add_argument('-data_path', type=str, default='/dataset/imagenet/')
 parser.add_argument('-eval', action="store_true")
@@ -121,9 +120,6 @@ def convert(torch_model, paddle_model):
     return paddle_model
 
     
-
-
-
 def main():
 
     paddle.set_device('cpu')
@@ -133,7 +129,7 @@ def main():
     print_model_named_params(paddle_model)
 
     device = torch.device('cpu')
-    torch_model = timm.create_model('swin_base_patch4_window7_224', pretrained=True)
+    torch_model = timm.create_model('swin_base_patch4_window12_384', pretrained=True)
     torch_model = torch_model.to(device)
     torch_model.eval()
 
@@ -144,7 +140,7 @@ def main():
     paddle_model = convert(torch_model, paddle_model)
 
     # check correctness
-    x = np.random.randn(1, 3, 224, 224).astype('float32')
+    x = np.random.randn(1, 3, 384, 384).astype('float32')
     #x = np.ones((1, 3, 224, 224)).astype('float32')
     x_paddle = paddle.to_tensor(x)
     x_torch = torch.Tensor(x).to(device)
@@ -164,7 +160,7 @@ def main():
     assert np.allclose(out_torch, out_paddle, atol = 1e-4)
     
     # save weights for paddle model
-    model_path = os.path.join('./swin_base_patch4_window7_224.pdparams')
+    model_path = os.path.join('./swin_base_patch4_window12_384.pdparams')
     paddle.save(paddle_model.state_dict(), model_path)
 
 
