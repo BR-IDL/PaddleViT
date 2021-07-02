@@ -51,19 +51,22 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 
 ## Results (Ported Weights) ## 
 ### Image Classification ###
-| Model                          | Acc@1 | Acc@5 | Param # (M) | Image Size | Crop_pct | Interpolation |
-|--------------------------------|-------|-------|-------------|------------|----------|---------------|
-| vit_base_patch16_224           | 80.31 | 95.49 |             | 224        | 1.0      | bilinear      |
-| vit_base_patch16_384           | 83.90 | 97.05 |             | 384        | 1.0      | bilinear      |
-| vit_large_patch16_224          | 81.99 | 96.00 |             | 224        | 1.0      | bilinear      |
-| swin_base_patch4_window7_224   | 82.77 | 95.99 |             | 224        | 1.0      | bilinear      |
-| swin_base_patch4_window12_384  | 85.54 | 97.10 |             | 384        | 0.9      | bilinear      |
-| swin_large_patch4_window12_384 | 86.74 | 97.52 |             | 384        | 0.9      | bicubic       |
+| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Model        |
+|--------------------------------|-------|-------|------------|----------|---------------|--------------|
+| vit_base_patch16_224           | 80.31 | 95.49 | 224        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kUQo1hhWZA0A1d7hNMvIYw)(nxhy) |
+| vit_base_patch16_384           | 83.90 | 97.05 | 384        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1kWKaAgneDx0QsECxtf7EnUdUZej6vSFT/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1MW8Osbe4M70IPDNKygP9kQ)(8ack) |
+| vit_large_patch16_224          | 81.99 | 96.00 | 224        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Jc8wrIydAsc-i2gL4DjztA)(g7ij) |
+| swin_base_patch4_window7_224   | 82.77 | 95.99 | 224        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1yjZFJoJeDFIfsxh9x10XGqCb8s2-Gtbp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1j8Air9uFudq71S4FhogpWA)(ps9m) |
+| swin_base_patch4_window12_384  | 85.54 | 97.10 | 384        | 0.9      | bilinear      | [google](https://drive.google.com/file/d/1ThmGsTDZ8217-Zuo9o5EGLfzw8AI6N0w/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ZrTDMeKtr2Bm5uB63gxxQA)(ef9t) |
+| swin_large_patch4_window12_384 | 86.74 | 97.52 | 384        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1f30Mt80g5yLfEiViT4-kMLpyDjTUTV5B/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RwKqdlR5N6BSZIptai7LrA)(5shn) |
+| mixer_b16_224                  | 75.79 | 91.75  | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
+| resmlp_24_224 | 79.25 | 94.53 | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/15A5q1XSXBz-y1AcXhy_XaDymLLj2s2Tn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nLAvyG53REdwYNCLmp4yBA)(jdcx) |
+| gmlp_s16_224 | 79.61 | 94.69 | 224       | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1TLypFly7aW0oXzEHfeDSz2Va4RHPRqe5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13UUz1eGIKyqyhtwedKLUMA)(bcth) |
 ### Object Detection ###
-| Model | backbone  | box_mAP |
-|-------|-----------|---------|
-| DETR  | ResNet50  | 42.0    |
-| DETR  | ResNet101 | 43.5    |
+| Model | backbone  | box_mAP | Model                                                                                                                                                       |
+|-------|-----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| DETR  | ResNet50  | 42.0    | [google](https://drive.google.com/file/d/1ruIKCqfh_MMqzq_F4L2Bv-femDMjS_ix/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1J6lB1mezd6_eVW3jnmohZA)(n5gk) |
+| DETR  | ResNet101 | 43.5    | [google](https://drive.google.com/file/d/11HCyDJKZLX33_fRGp4bCg1I14vrIKYW5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1_msuuAwFMNbAlMpgUq89Og)(bxz2) |
 ### Segmentation ###
 ### GAN ###
 
