@@ -53,9 +53,9 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 ### Image Classification ###
 | Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Model        |
 |--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| vit_base_patch16_224           | 80.31 | 95.49 | 224        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kUQo1hhWZA0A1d7hNMvIYw)(nxhy) |
+| vit_base_patch16_224           | 81.32 | 95.98 | 224        | 0.875     | bilinear      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kUQo1hhWZA0A1d7hNMvIYw)(nxhy) |
 | vit_base_patch16_384           | 83.90 | 97.05 | 384        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1kWKaAgneDx0QsECxtf7EnUdUZej6vSFT/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1MW8Osbe4M70IPDNKygP9kQ)(8ack) |
-| vit_large_patch16_224          | 81.99 | 96.00 | 224        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Jc8wrIydAsc-i2gL4DjztA)(g7ij) |
+| vit_large_patch16_224          | 82.71 | 96.36 | 224        | 0.875     | bilinear      | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Jc8wrIydAsc-i2gL4DjztA)(g7ij) |
 | swin_base_patch4_window7_224   | 82.77 | 95.99 | 224        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1yjZFJoJeDFIfsxh9x10XGqCb8s2-Gtbp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1j8Air9uFudq71S4FhogpWA)(ps9m) |
 | swin_base_patch4_window12_384  | 85.54 | 97.10 | 384        | 0.9      | bilinear      | [google](https://drive.google.com/file/d/1ThmGsTDZ8217-Zuo9o5EGLfzw8AI6N0w/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ZrTDMeKtr2Bm5uB63gxxQA)(ef9t) |
 | swin_large_patch4_window12_384 | 86.74 | 97.52 | 384        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1f30Mt80g5yLfEiViT4-kMLpyDjTUTV5B/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RwKqdlR5N6BSZIptai7LrA)(5shn) |
