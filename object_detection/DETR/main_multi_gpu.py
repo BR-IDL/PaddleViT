@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using multiple GPU """
+"""DETR training/validation using multiple GPU """
 
 import sys
 import os
@@ -26,7 +26,7 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
 from coco import build_coco
-from coco import get_loader
+from coco import get_dataloader
 from coco_eval import CocoEvaluator
 from detr import build_detr
 from utils import AverageMeter
@@ -40,10 +40,11 @@ parser.add_argument('-cfg', type=str, default=None)
 parser.add_argument('-dataset', type=str, default=None)
 parser.add_argument('-batch_size', type=int, default=None)
 parser.add_argument('-data_path', type=str, default=None)
+parser.add_argument('-backbone', type=str, default=None)
+parser.add_argument('-ngpus', type=int, default=None)
 parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-eval', action='store_true')
 arguments = parser.parse_args()
-
 
 log_format = "%(asctime)s %(message)s"
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
@@ -60,7 +61,7 @@ if not config.EVAL:
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 
-config.freeze()
+#config.freeze()
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
@@ -76,6 +77,8 @@ logger.info(f'config= {config}')
 def train(dataloader,
           model,
           criterion,
+          postprocessors,
+          base_ds,
           optimizer,
           epoch,
           total_batch,
@@ -84,57 +87,60 @@ def train(dataloader,
     """Training for one epoch
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
-        model: nn.Layer, a ViT model
-        criterion: nn.criterion
+        model: nn.Layer, DETR model
+        criterion: nn.Layer
+        postprocessors: nn.Layer
+        base_ds: coco api instance
         epoch: int, current epoch
         total_epoch: int, total num of epoch, for logging
         debug_steps: int, num of iters to log info
         accum_iter: int, num of iters for accumulating gradients
     Returns:
-        train_loss_meter.avg
-        train_acc_meter.avg
+        train_loss_ce_meter.avg
+        train_loss_bbox_meter.avg
+        train_loss_giou_meter.avg
         train_time
     """
+
     model.train()
-    train_loss_meter = AverageMeter()
-    train_acc_meter = AverageMeter()
+    criterion.train()
+    train_loss_ce_meter = AverageMeter()
+    train_loss_bbox_meter = AverageMeter()
+    train_loss_giou_meter = AverageMeter()
     time_st = time.time()
+    iou_types = ('bbox', )
+    coco_evaluator = CocoEvaluator(base_ds, iou_types)
 
     for batch_id, data in enumerate(dataloader):
-        image = data[0]
-        label = data[1]
+        samples = data[0]
+        targets = data[1]
+        #targets = [{k:v for k,v in t.items()} for t in targets]
+            
+        outputs = model(samples)
+        loss_dict = criterion(outputs, targets)
+        weight_dict = criterion.weight_dict
+        losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
 
-        output, _ = model(image)
-        loss = criterion(output, label)
-
-        #NOTE: division may be needed depending on the loss function
-        # Here no division is needed:
-        # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-        #
-        #loss =  loss / accum_iter
-
-        loss.backward()
-
+        losses.backward()
         if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
             optimizer.step()
             optimizer.clear_grad()
 
-        pred = F.softmax(output)
-        acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
-
-        batch_size = image.shape[0]
-        train_loss_meter.update(loss.numpy()[0], batch_size)
-        train_acc_meter.update(acc.numpy()[0], batch_size)
-
-        if batch_id % debug_steps == 0:
+        # logging losses
+        batch_size = samples.tensors.shape[0]
+        train_loss_ce_meter.update(loss_dict['loss_ce'].numpy()[0], batch_size)
+        train_loss_bbox_meter.update(loss_dict['loss_bbox'].numpy()[0], batch_size)
+        train_loss_giou_meter.update(loss_dict['loss_giou'].numpy()[0], batch_size)
+    
+        if batch_id > 0 and batch_id % debug_steps == 0:
             logger.info(
-                f"Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                f"Step[{batch_id:04d}/{total_batch:04d}], " +
-                f"Avg Loss: {train_loss_meter.avg:.4f}, " +
-                f"Avg Acc: {train_acc_meter.avg:.4f}")
+                f"Train Step[{batch_id:04d}/{total_batch:04d}], " + 
+                f"Avg loss_ce: {train_loss_ce_meter.avg:.4f}, " + 
+                f"Avg loss_bbox: {train_loss_bbox_meter.avg:.4f}, " + 
+                f"Avg loss_giou: {train_loss_giou_meter.avg:.4f}, ") 
 
     train_time = time.time() - time_st
-    return train_loss_meter.avg, train_acc_meter.avg, train_time
+    return train_loss_ce_meter.avg, train_loss_bbox_meter.avg, train_loss_giou_meter.avg, train_time
 
 
 def validate(dataloader, model, criterion, postprocessors, base_ds, total_batch, debug_steps=100):
@@ -225,19 +231,19 @@ def main_worker(*args):
     np.random.seed(seed)
     random.seed(seed)
     # 1. Create model
-    model, criterion, postprocessors = build_detr()
+    model, criterion, postprocessors = build_detr(config)
     model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train, dataset_val = args[0], args[1]
     total_batch_train = 0
     if not config.EVAL:
-        dataloader_train = get_loader(dataset_train,
+        dataloader_train = get_dataloader(dataset_train,
                                       batch_size=config.DATA.BATCH_SIZE,
                                       mode='train',
                                       multi_gpu=True)
         total_batch_train = len(dataloader_train)
 
-    dataloader_val = get_loader(dataset_val,
+    dataloader_val = get_dataloader(dataset_val,
                                 batch_size=config.DATA.BATCH_SIZE_EVAL,
                                 mode='val',
                                 multi_gpu=True)
@@ -389,7 +395,8 @@ def main():
     else:
         dataset_train = None
     dataset_val = build_coco('val', config.DATA.DATA_PATH)
-    dist.spawn(main_worker, args=(dataset_train, dataset_val, ), nprocs=4)
+    config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS
+    dist.spawn(main_worker, args=(dataset_train, dataset_val, ), nprocs=config.NGPUS)
 
 
 if __name__ == "__main__":

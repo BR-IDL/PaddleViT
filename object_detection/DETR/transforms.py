@@ -1,10 +1,25 @@
+#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+""" Transforms for image data and detection targets"""
+
 import random
 import numpy as np
 import PIL
 import paddle
 import paddle.vision.transforms as T
 from paddle.vision.transforms import functional as F
-
 from random_erasing import RandomErasing
 from box_ops import box_xyxy_to_cxcywh
 
@@ -234,6 +249,7 @@ class RandomPad():
 
 
 class RandomSelect():
+    """ Random select one the transforms to apply with probablity p"""
     def __init__(self, transforms1, transforms2, p=0.5):
         self.transforms1 = transforms1
         self.transforms2 = transforms2
@@ -259,6 +275,13 @@ class RandomErasing():
 
 
 class Normalize():
+    """Normalization for image and labels.
+
+    Specifically, image is normalized with -mean and /std,
+    boxes are converted to [cx, cy, w, h] format and scaled to 
+    [0, 1] according to image size
+    """
+
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std

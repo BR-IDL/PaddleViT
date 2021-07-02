@@ -18,7 +18,7 @@ import paddle
 import numpy as np
 import PIL
 from PIL import Image, ImageDraw, ImageFont
-from coco import build as build_coco
+from coco import build_coco
 from coco import make_coco_transforms
 from coco import CocoDetection
 from box_ops import box_cxcywh_to_xyxy
@@ -82,7 +82,7 @@ class DetrTest(unittest.TestCase):
     def tearDown(cls):
         pass
 
-    #@unittest.skip('skip for debug')
+    @unittest.skip('skip for debug')
     def test_build_detr_cpu(self):
         paddle.set_device('cpu')
         model, criterion, postprocessors = build_detr()

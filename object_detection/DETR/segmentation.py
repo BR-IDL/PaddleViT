@@ -2,7 +2,7 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 
-
+# TODO: add related classes and methods for segmentations
 def dice_loss(inputs, targets, num_boxes):
     inputs = F.sigmoid(inputs)
     inputs = inputs.flatten(1)

@@ -1,4 +1,22 @@
+#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Utilities"""
+
 import copy
+import pickle
+import numpy as np
 import paddle
 import paddle.distributed as dist
 from paddle.optimizer.lr import LRScheduler
@@ -26,6 +44,13 @@ class AverageMeter():
 
 
 def collate_fn(batch):
+    """Collate function for batching samples
+    
+    Samples varies in sizes, here convert samples to NestedTensor which pads the tensor,
+    and generate the corresponding mask, so that the whole batch is of the same size.
+
+    """
+
     batch = list(zip(*batch))
     #print(batch[0])
     #print('===================')
@@ -46,6 +71,7 @@ def _max_by_axis(the_list):
 
 
 class NestedTensor():
+    """Each NestedTensor has .tensor and .mask attributes, which are paddle.Tensors"""
     def __init__(self, tensors, mask):
         self.tensors = tensors
         self.mask = mask
@@ -57,8 +83,15 @@ class NestedTensor():
         return str(self.tensors)
 
 
-# make the batch handle different image sizes
 def nested_tensor_from_tensor_list(tensor_list):
+    """make the batch handle different image sizes
+    
+    This method take a list of tensors with different sizes,
+    then max size is selected as the final batch size,
+    smaller samples are padded with zeros(bottom-right),
+    and corresponding masks are generated.
+
+    """
     max_size = _max_by_axis([list(img.shape) for img in tensor_list])
     batch_shape = [len(tensor_list)] + max_size # len is the num of images in this batch
     b, c, h, w  = batch_shape
@@ -82,6 +115,7 @@ def nested_tensor_from_tensor_list(tensor_list):
 
 
 def reduce_dict(input_dict, average=True):
+    """Impl all_reduce for dict of tensors in DDP"""
     world_size = dist.get_world_size()
     if world_size < 2:
         return input_dict
@@ -97,7 +131,6 @@ def reduce_dict(input_dict, average=True):
             values /= world_size
         reduced_dict = {k: v for k, v in zip(names, values)}
     return reduced_dict
-
 
 
 @paddle.no_grad()

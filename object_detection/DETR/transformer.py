@@ -1,10 +1,25 @@
-import paddle
-import paddle.nn as nn
+#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+""" Transformer class and related methods for DETR """
+
 import copy
 import math
+import paddle
+import paddle.nn as nn
 
 
-# DONE
 class Mlp(nn.Layer):
     def __init__(self, d_model, dim_feedforward, dropout, act='relu'):
         super(Mlp, self).__init__()
@@ -36,7 +51,7 @@ class Mlp(nn.Layer):
         x = self.linear2(x)
         return x
 
-# DONE
+
 class Attention(nn.Layer):
     def __init__(self, d_model, n_head, dropout=0.):
         super(Attention, self).__init__()
@@ -99,7 +114,6 @@ class Attention(nn.Layer):
         TGT_L = query.shape[0]
         EMBED_DIM = query.shape[2]
 
-
         attn_mask = None
         if key_pad_mask is not None:
             assert key_pad_mask.shape == [B, SRC_L], f'expecting key_pad_mask shape of {[B, L]}, but got {key_pad_mask.shape}'
@@ -119,12 +133,6 @@ class Attention(nn.Layer):
         q = self.transpose_for_scores(self.q(query))
         k = self.transpose_for_scores(self.k(key))
         v = self.transpose_for_scores(self.v(value))
-        #print('imhere')
-        #print('imhere')
-        #print('imhere')
-        #print('imhere')
-        #print('imhere')
-        #print('imhere')
         #print('q.w:', self.q.weight )
         #print('q.b:', self.q.bias )
         #print('k.w:', self.k.weight )
@@ -137,9 +145,7 @@ class Attention(nn.Layer):
         q = q * self.scales
         #print('========= q after scaling ========')
         #print(q)
-
         attn = paddle.matmul(q, k, transpose_y=True)
-
 
         #print('attn shape=', attn.shape)
         #attn = attn * self.scales
@@ -168,7 +174,7 @@ class Attention(nn.Layer):
         z = self.dropout(z)
         return z
         
-# DONE
+
 class TransformerEncoderLayer(nn.Layer):
     def __init__(self,
                  d_model,
@@ -227,7 +233,6 @@ class TransformerEncoderLayer(nn.Layer):
         return self.forward_post(src, src_key_pad_mask, pos)
         
 
-# DONE
 class TransformerEncoder(nn.Layer):
     def __init__(self, layer, num_layers, norm):
         super(TransformerEncoder, self).__init__()
@@ -246,9 +251,6 @@ class TransformerEncoder(nn.Layer):
         #print(f'---------- last encoder after norm ------------')
         #print(output, output.shape)
         return output
-
-
-
 
 
 class TransformerDecoderLayer(nn.Layer):
@@ -448,8 +450,14 @@ class Transformer(nn.Layer):
         return hs, memory
         
 
-
-
-
-
+def build_transformer(config):
+    return Transformer(d_model=config.MODEL.TRANS.HIDDEN_SIZE,
+                       n_head=config.MODEL.TRANS.NUM_HEADS,
+                       num_encoder_layers=config.MODEL.TRANS.NUM_ENCODER_LAYERS,
+                       num_decoder_layers=config.MODEL.TRANS.NUM_DECODER_LAYERS,
+                       dim_feedforward=config.MODEL.TRANS.MLP_DIM,
+                       dropout=config.MODEL.DROPOUT,
+                       activation='relu',
+                       normalize_before=False,
+                       return_intermediate_dec=True)
 

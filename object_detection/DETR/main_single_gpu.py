@@ -21,7 +21,7 @@ import paddle
 import paddle.nn.functional as F
 import paddle.distributed as dist
 from coco import build_coco
-from coco import get_loader
+from coco import get_dataloader
 from coco_eval import CocoEvaluator
 from detr import build_detr
 from config import get_config
@@ -35,11 +35,11 @@ parser.add_argument('-cfg', type=str, default='./configs/detr_resnet50.yaml')
 parser.add_argument('-dataset', type=str, default="coco")
 parser.add_argument('-batch_size', type=int, default=4)
 parser.add_argument('-data_path', type=str, default='/dataset/coco/')
+parser.add_argument('-backbone', type=str, default=None)
+parser.add_argument('-ngpus', type=int, default=None)
 parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-eval', action='store_true')
 args = parser.parse_args()
-
-
 
 log_format = "%(asctime)s %(message)s"
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
@@ -47,7 +47,6 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
 
 config = get_config()
 config = update_config(config, args)
-
 
 if not config.EVAL:
     config.SAVE = '{}/train-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
@@ -66,50 +65,49 @@ logger.addHandler(fh)
 logger.info(f'config= {config}')
 
 
-def train(dataloader, model, criterion, optimizer, epoch, total_batch, debug_steps=100, accum_iter=1):
+def train(dataloader, model, criterion, postprocessors, base_ds, optimizer, epoch, total_batch, debug_steps=100, accum_iter=1):
     model.train()
-    train_loss_meter = AverageMeter()
-    train_acc_meter = AverageMeter()
+    criterion.train()
+
+    train_loss_ce_meter = AverageMeter()
+    train_loss_bbox_meter = AverageMeter()
+    train_loss_giou_meter = AverageMeter()
+
     time_st = time.time()
 
+    iou_types = ('bbox', )
+    coco_evaluator = CocoEvaluator(base_ds, iou_types)
+
     for batch_id, data in enumerate(dataloader):
-        image = data[0]
-        label = data[1]
+        samples = data[0]
+        targets = data[1]
+        #targets = [{k:v for k,v in t.items()} for t in targets]
+            
+        outputs = model(samples)
+        loss_dict = criterion(outputs, targets)
+        weight_dict = criterion.weight_dict
+        losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
 
-        output, _  = model(image)
-        loss = criterion(output, label)
-
-        #NOTE: division may be needed depending on the loss function 
-        # Here no division is needed:
-        # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-        #   
-        #loss =  loss / accum_iter
-
-        loss.backward()
-
+        losses.backward()
         if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
             optimizer.step()
             optimizer.clear_grad()
-        
-        pred = F.softmax(output)
-        acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
 
-        n = image.shape[0]
-        train_loss_meter.update(loss.numpy()[0], n)
-        train_acc_meter.update(acc.numpy()[0], n)
-
-        if batch_id % debug_steps == 0:
+        # logging losses
+        batch_size = samples.tensors.shape[0]
+        train_loss_ce_meter.update(loss_dict['loss_ce'].numpy()[0], batch_size)
+        train_loss_bbox_meter.update(loss_dict['loss_bbox'].numpy()[0], batch_size)
+        train_loss_giou_meter.update(loss_dict['loss_giou'].numpy()[0], batch_size)
+    
+        if batch_id > 0 and batch_id % debug_steps == 0:
             logger.info(
-                f"Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " + 
-                f"Step[{batch_id:04d}/{total_batch:04d}], " + 
-                f"Avg Loss: {train_loss_meter.avg:.4f}, " + 
-                f"Avg Acc: {train_acc_meter.avg:.4f}")
-        ## debug only
-        #if batch_id == debug_steps * 5:
-        #    break
+                f"Train Step[{batch_id:04d}/{total_batch:04d}], " + 
+                f"Avg loss_ce: {train_loss_ce_meter.avg:.4f}, " + 
+                f"Avg loss_bbox: {train_loss_bbox_meter.avg:.4f}, " + 
+                f"Avg loss_giou: {train_loss_giou_meter.avg:.4f}, ") 
 
     train_time = time.time() - time_st
-    return train_loss_meter.avg, train_acc_meter.avg, train_time
+    return train_loss_ce_meter.avg, train_loss_bbox_meter.avg, train_loss_giou_meter.avg, train_time
 
 
 def validate(dataloader, model, criterion, postprocessors, base_ds, total_batch, debug_steps=100):
@@ -129,7 +127,7 @@ def validate(dataloader, model, criterion, postprocessors, base_ds, total_batch,
         for batch_id, data in enumerate(dataloader):
             samples = data[0]
             targets = data[1]
-            targets = [{k:v for k,v in t.items()} for t in targets]
+            #targets = [{k:v for k,v in t.items()} for t in targets]
             
             outputs = model(samples)
             loss_dict = criterion(outputs, targets)
@@ -158,30 +156,28 @@ def validate(dataloader, model, criterion, postprocessors, base_ds, total_batch,
     if coco_evaluator is not None:
         coco_evaluator.synchronize_between_processes()
         coco_evaluator.accumulate()
-        coco_evaluator.summarize()
+        coco_evaluator.summarize() #TODO: get stats[0] and return mAP
 
     val_time = time.time() - time_st
-    return val_loss_meter.avg, val_acc_meter.avg, val_time
+    return val_loss_ce_meter.avg, val_loss_bbox_meter.avg, val_loss_giou_meter.avg, val_time
 
 
 def main():
-    # TODO: set backbone_lr
-
     # 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
-    #paddle.set_device('gpu:0')
+    # TODO: set backbone_lr
     # 1. Create model and criterion
-    model, criterion, postprocessors = build_detr()
+    model, criterion, postprocessors = build_detr(config)
     # 2. Create train and val dataloader
     if not config.EVAL:
         dataset_train = build_coco('train', config.DATA.DATA_PATH)
-        dataloader_train = get_loader(dataset_train,
+        dataloader_train = get_dataloader(dataset_train,
                                       batch_size=config.DATA.BATCH_SIZE,
                                       mode='train', 
                                       multi_gpu=False)
 
     dataset_val = build_coco('val', config.DATA.DATA_PATH)
-    dataloader_val = get_loader(dataset_val,
+    dataloader_val = get_dataloader(dataset_val,
                                 batch_size=config.DATA.BATCH_SIZE_EVAL,
                                 mode='val', 
                                 multi_gpu=False)
@@ -250,19 +246,20 @@ def main():
         optimizer.set_dict(opt_state)
         logger.info(f"----- Resume Training: Load model and optmizer states from {config.MODEL.RESUME}")
 
-
     # 7. Validation
     if config.EVAL:
         logger.info(f'----- Start Validating')
-        val_loss, val_acc, val_time = validate(dataloader=dataloader_val,
-                                               model=model,
-                                               criterion=criterion,
-                                               postprocessors=postprocessors,
-                                               base_ds=base_ds,
-                                               total_batch=len(dataloader_val),
-                                               debug_steps=config.REPORT_FREQ)
-        logger.info(f"Validation Loss: {val_loss:.4f}, " +
-                    f"Validation Acc: {val_acc:.4f}, " +
+        val_loss_ce, val_loss_bbox, val_loss_giou, val_time = validate(
+            dataloader=dataloader_val,
+            model=model,
+            criterion=criterion,
+            postprocessors=postprocessors,
+            base_ds=base_ds,
+            total_batch=len(dataloader_val),
+            debug_steps=config.REPORT_FREQ)
+        logger.info(f"Validation Loss ce: {val_loss_ce:.4f}, " +
+                    f"Validation Loss bbox: {val_loss_bbox:.4f}, " +
+                    f"Validation Loss giou: {val_loss_giou:.4f}, " +
                     f"time: {val_time:.2f}")
         return
 
@@ -271,33 +268,37 @@ def main():
     for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
         # train
         logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        train_loss, train_acc, train_time = train(dataloader=dataloader_train,
-                                                  model=model, 
-                                                  criterion=criterion, 
-                                                  optimizer=optimizer, 
-                                                  epoch=epoch,
-                                                  total_batch=len(dataloader_train),
-                                                  debug_steps=config.REPORT_FREQ,
-                                                  accum_iter=config.TRAIN.ACCUM_ITER,
-                                                  )
+        train_loss_ce, train_loss_bbox, train_loss_giou, train_time = train(
+            dataloader=dataloader_train,
+            model=model, 
+            criterion=criterion, 
+            postprocessors=postprocessors,
+            base_ds=base_ds,
+            optimizer=optimizer, 
+            epoch=epoch,
+            total_batch=len(dataloader_train),
+            debug_steps=config.REPORT_FREQ,
+            accum_iter=config.TRAIN.ACCUM_ITER)
         scheduler.step()
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                    f"Train Loss: {train_loss:.4f}, " +
-                    f"Train Acc: {train_acc:.4f}, " +
+                    f"Train Loss ce: {train_loss_ce:.4f}, " +
+                    f"Train Loss bbox: {train_loss_bbox:.4f}, " +
+                    f"Train Loss giou: {train_loss_giou:.4f}, " +
                     f"time: {train_time:.2f}")
         # validation
         if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             logger.info(f'----- Validation after Epoch: {epoch}')
-            val_loss, val_acc, val_time = validate(dataloader=dataloader_val,
-                                                   model=model,
-                                                   criterion=criterion,
-                                                   postprocessors=postprocessors,
-                                                   base_ds=base_ds,
-                                                   total_batch=len(dataloader_val),
-                                                   debug_steps=config.REPORT_FREQ)
-            logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                        f"Validation Loss: {val_loss:.4f}, " +
-                        f"Validation Acc: {val_acc:.4f}, " +
+            val_loss_ce, val_loss_bbox, val_loss_giou, val_time = validate(
+                dataloader=dataloader_val,
+                model=model,
+                criterion=criterion,
+                postprocessors=postprocessors,
+                base_ds=base_ds,
+                total_batch=len(dataloader_val),
+                debug_steps=config.REPORT_FREQ)
+            logger.info(f"Validation Loss ce: {val_loss_ce:.4f}, " +
+                        f"Validation Loss bbox: {val_loss_bbox:.4f}, " +
+                        f"Validation Loss giou: {val_loss_giou:.4f}, " +
                         f"time: {val_time:.2f}")
         # model save
         if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:

@@ -1,28 +1,61 @@
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+Dataset(COCO2017) related classes and methods for DETR training and validation
+"""
+
 import os
 import numpy as np
 from PIL import Image
 import paddle
-import transforms as T
+from pycocotools.coco import COCO
 from pycocotools import mask as coco_mask
+import transforms as T
 from utils import collate_fn
 
 
 class CocoDetection(paddle.io.Dataset):
+    """ COCO Detection dataset
+
+    This class gets images and annotations for paddle training and validation.
+    Transform(preprocessing) can be applied in __getitem__ method.
+
+    Attributes:
+        img_folder: path where coco images is stored, e.g.{COCO_PATH}/train2017
+        anno_file: path where annotation json file is stored
+        transforms: transforms applied on data, see make_coco_transform for details
+        return_masks: if true, return coco masks, default: False (now only support False)
+    """
+
     def __init__(self, img_folder, anno_file, transforms, return_masks):
         super(CocoDetection, self).__init__()
-        from pycocotools.coco import COCO
         self.coco = COCO(anno_file)
+        # coco all image ids
         ids = list(sorted(self.coco.imgs.keys()))
+        # remove ids where anno has no bboxes
         self.ids = self._remove_images_without_annotations(ids)
         self._transforms = transforms
+        # prepare filters labels and put image and label to paddle tensors
         self.prepare = ConvertCocoPolysToMasks(return_masks)
         self.root = img_folder
 
     def _remove_images_without_annotations(self, ids):
         new_ids = []
         rm_cnt = 0
-        for id in ids:
-            annos = self._load_target(id)
+        for idx in ids:
+            annos = self._load_target(idx)
             boxes = []
             for anno in annos:
                 if 'bbox' in anno:
@@ -30,27 +63,29 @@ class CocoDetection(paddle.io.Dataset):
             if len(boxes) == 0:
                 rm_cnt += 1
                 continue
-            new_ids.append(id)
+            new_ids.append(idx)
         print(f'loading coco data, {rm_cnt} imgs without annos are removed')
         return new_ids
 
-
-    def _load_image(self, id):
-        path = self.coco.loadImgs(id)[0]['file_name']
+    def _load_image(self, idx):
+        """ Return PIL Image (RGB) according to COCO image id"""
+        path = self.coco.loadImgs(idx)[0]['file_name']
         return Image.open(os.path.join(self.root, path)).convert('RGB')
 
-    def _load_target(self, id):
-        return self.coco.loadAnns(self.coco.getAnnIds(id))
+    def _load_target(self, idx):
+        """ Return image annos according to COCO image id"""
+        return self.coco.loadAnns(self.coco.getAnnIds(idx))
 
     def __len__(self):
         return len(self.ids)
 
     def __getitem__(self, idx):
+        """idx is for training image id, not COCO image id"""
         image_id = self.ids[idx]
         image = self._load_image(image_id)
         target = self._load_target(image_id)
         target = {'image_id': image_id, 'annotations': target}
-        
+
         image, target = self.prepare(image, target)
         if self._transforms is not None:
             image, target = self._transforms(image, target)
@@ -58,6 +93,7 @@ class CocoDetection(paddle.io.Dataset):
 
 
 def convert_coco_poly_to_mask(segmentations, height, width):
+    """ Convert coco anno from polygons to image masks"""
     masks = []
     for polygons in segmentations:
         rles = coco_mask.frPyObjects(polygons, height, width)
@@ -78,6 +114,7 @@ def convert_coco_poly_to_mask(segmentations, height, width):
 
 
 class ConvertCocoPolysToMasks():
+    """ Prepare coco annotations to paddle tensors"""
     def __init__(self, return_masks=False):
         self.return_masks = return_masks
 
@@ -145,11 +182,12 @@ class ConvertCocoPolysToMasks():
 
 
 def make_coco_transforms(image_set):
+    """ return transforms(class defined in ./transforms.py) for coco train and val"""
     normalize = T.Compose([
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-    
+
     scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
 
     if image_set == 'train':
@@ -165,7 +203,8 @@ def make_coco_transforms(image_set):
             ),
             normalize,
         ])
-    elif image_set == 'val':
+
+    if image_set == 'val':
         return T.Compose([
             T.RandomResize([800], max_size=1333),
             normalize,
@@ -175,25 +214,38 @@ def make_coco_transforms(image_set):
 
 
 def build_coco(image_set, coco_path, masks=False):
-    root = coco_path
-    assert os.path.exists(root), f'provided COCO path {root} does not exist'
+    """Return CocoDetection dataset according to image_set: ['train', 'val']"""
+    assert image_set in ['train', 'val'], f'image_set {image_set} not supported'
+    assert os.path.exists(coco_path), f'provided COCO path {coco_path} does not exist'
     mode = 'instances'
-    PATHS = {
-        'train': (os.path.join(root, 'train2017'), os.path.join(root, 'annotations', f'{mode}_train2017.json')),
-        'val': (os.path.join(root, 'val2017'), os.path.join(root, 'annotations', f'{mode}_val2017.json')),
+    paths = {
+        'train': (os.path.join(coco_path, 'train2017'),
+                  os.path.join(coco_path, 'annotations', f'{mode}_train2017.json')),
+        'val': (os.path.join(coco_path, 'val2017'),
+                os.path.join(coco_path, 'annotations', f'{mode}_val2017.json')),
     }
-    img_folder, anno_file = PATHS[image_set]
-    dataset = CocoDetection(img_folder, anno_file, transforms=make_coco_transforms(image_set), return_masks=masks)
+    img_folder, anno_file = paths[image_set]
+    dataset = CocoDetection(img_folder,
+                            anno_file,
+                            transforms=make_coco_transforms(image_set),
+                            return_masks=masks)
     return dataset
 
 
-def get_loader(dataset, batch_size, mode='train', multi_gpu=False):
-    if multi_gpu is True:
+def get_dataloader(dataset, batch_size, mode='train', multi_gpu=False):
+    """ return dataloader on train/val set for single/multi gpu
+    Arguments:
+        dataset: paddle.io.Dataset, coco dataset
+        batch_size: int, num of samples in one batch
+        mode: str, ['train', 'val'], dataset to use
+        multi_gpu: bool, if True, DistributedBatchSampler is used for DDP
+    """
+    if multi_gpu:
         sampler = paddle.io.DistributedBatchSampler(
             dataset,
             batch_size=batch_size,
-            shuffle=True if mode is 'train' else False,
-            drop_last=True) 
+            shuffle=(mode == 'train'),
+            drop_last=True)
         #TODO: may need to fix this drop_last of multi-gpu dataloading error
         # currently, val may drop several samples, which will lower the performance
         # an idea is to pad the last batch in collate_fn
@@ -203,7 +255,6 @@ def get_loader(dataset, batch_size, mode='train', multi_gpu=False):
     else:
         dataloader = paddle.io.DataLoader(dataset,
                                           batch_size=batch_size,
-                                          shuffle=True if mode is 'train' else False,
+                                          shuffle=(mode == 'train'),
                                           collate_fn=collate_fn)
-
     return dataloader

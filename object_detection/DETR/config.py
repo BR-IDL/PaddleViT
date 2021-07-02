@@ -32,9 +32,7 @@ _C.DATA.BATCH_SIZE = 256 #256 # train batch_size for single GPU
 _C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/coco/' # path to dataset
 _C.DATA.DATASET = 'coco' # dataset name
-#_C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
-#_C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 1 # number of data loading threads (curren paddle must set to 0)
+_C.DATA.NUM_WORKERS = 1 # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
@@ -47,12 +45,15 @@ _C.MODEL.DROPOUT = 0.1
 _C.MODEL.ATTENTION_DROPOUT = 0.0
 _C.MODEL.NUM_QUERIES = 100
 
+_C.MODEL.BACKBONE = 'resnet50'
+
 # transformer settings
 _C.MODEL.TRANS = CN()
-_C.MODEL.TRANS.HIDDEN_SIZE = 768
-_C.MODEL.TRANS.MLP_DIM = 3072
-_C.MODEL.TRANS.NUM_HEADS = 12
-_C.MODEL.TRANS.NUM_LAYERS = 12
+_C.MODEL.TRANS.HIDDEN_SIZE = 256
+_C.MODEL.TRANS.MLP_DIM = 2048
+_C.MODEL.TRANS.NUM_HEADS = 8
+_C.MODEL.TRANS.NUM_ENCODER_LAYERS = 6
+_C.MODEL.TRANS.NUM_DECODER_LAYERS = 6
 _C.MODEL.TRANS.QKV_BIAS = True
 
 # training settings
@@ -88,6 +89,7 @@ _C.VALIDATE_FREQ = 20 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
+_C.NGPUS = -1
 
 
 def _update_config_from_file(config, cfg_file):
@@ -118,6 +120,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE_EVAL = args.batch_size
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
+    if args.backbone:
+        config.MODEL.BACKBONE = args.backbone
 
     #config.freeze()
     return config

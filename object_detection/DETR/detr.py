@@ -1,7 +1,26 @@
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+DETR related classes and methods 
+"""
+
 import paddle 
 import paddle.nn as nn
 import paddle.nn.functional as F
-from transformer import Transformer # TODO: change to build_transformer
+import paddle.distributed as dist
+from transformer import build_transformer
 from backbone import build_backbone
 from matcher import build_matcher
 from utils import nested_tensor_from_tensor_list
@@ -11,49 +30,50 @@ from box_ops import box_cxcywh_to_xyxy
 from box_ops import box_xyxy_to_cxcywh
 
 
-def build_detr():
-    backbone = build_backbone() 
-    transformer = Transformer()
-    num_classes = 91
-    num_queries = 100
-    aux_loss = False # True if training
-    n_dec_layers = 6
-    #TODO: add mask related 
-    detr = DETR(backbone, transformer, num_classes, num_queries, aux_loss)
+def build_detr(config):
+    """ build detr model from configs"""
+    # 1. build backbone with position embedding
+    backbone = build_backbone(config) 
+    # 2. build transformer (encoders and decoders)
+    transformer = build_transformer(config)
+    # 3. build DETR model
+    aux_loss = not config.EVAL # True if training
+    detr = DETR(backbone, transformer, config.MODEL.NUM_CLASSES, config.MODEL.NUM_QUERIES, aux_loss)
+    # 4. build matcher
     matcher = build_matcher()
+    # 5. setup aux_loss
     weight_dict = {'loss_ce': 1, 'loss_bbox': 5, 'loss_giou': 2}
-    
     if aux_loss:
         aux_weight_dict = {}
-        for i in range(n_dec_layers-1):
+        for i in range(config.MODEL.NUM_DECODER_LAYERS-1):
             aux_weight_dict.update({k + f'_{i}': v for k, v in weight_dict.items()})
         weight_dict.update(aux_weight_dict)
 
     losses = ['labels', 'boxes', 'cardinality']
-    
-    criterion = SetCriterion(num_classes,
+    # 6. build criterion
+    criterion = SetCriterion(config.MODEL.NUM_CLASSES,
                              matcher=matcher,
                              weight_dict=weight_dict,
                              eos_coef=0.1,
                              losses=losses)
+    # 7. build postprocessors
     postprocessors = {'bbox': PostProcess()}
 
-
     return detr, criterion, postprocessors
-
 
 
 class DETR(nn.Layer):
     def __init__(self, backbone, transformer, num_classes, num_queries, aux_loss=False):
         """ Initialize the model
         Args:
-            backbone(nn.Layer): paddle module of the backbone.
-            transformer(nn.Layer): paddle module of the transformer.
-            num_classes(int): number of object classes
-            num_queries(int): number of object queries, this is the max number
+            backbone: nn.Layer, paddle module of the backbone.
+            transformer: nn.Layer, paddle module of the transformer.
+            num_classes: int, number of object classes
+            num_queries: int, number of object queries, this is the max number
                               of objects the DETR can detect in a single image.
-            aux_loss(bool): True if auxiliary decoding losses(loss at each decodr layer) are used
+            aux_loss: bool, True if auxiliary decoding losses(loss at each decodr layer) are used
         """
+
         super(DETR, self).__init__()
         self.num_queries = num_queries
         self.transformer = transformer
@@ -64,11 +84,17 @@ class DETR(nn.Layer):
                                      num_classes+1,
                                      weight_attr=w_attr_1,
                                      bias_attr=b_attr_1)
-        self.bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3) # different from transformer Mlp
+
+        self.bbox_embed = MLP(in_dim=hidden_dim,
+                              hidden_dim=hidden_dim,
+                              out_dim=4,
+                              num_layers=3) # different from transformer Mlp
+
         w_attr_2, _ = self._init_weights()
         self.query_embed = nn.Embedding(num_queries, 
                                         hidden_dim,
                                         weight_attr=w_attr_2)
+        # proj features from resnet to hidden_dim channels
         self.input_proj = nn.Conv2D(backbone.num_channels, hidden_dim, kernel_size=1)
         self.backbone = backbone
         self.aux_loss = aux_loss
@@ -79,7 +105,8 @@ class DETR(nn.Layer):
         return w_attr, b_attr
 
     def forward(self, x):
-        features, pos = self.backbone(x)
+        features, pos = self.backbone(x) #resnet + position_embed
+        # decompose NestedTensor to separate 'tensor' and 'mask' tensors
         src, mask = features[-1].decompose()  # last output layer feature
         #print('backbone features: ')
         #print(src, src.shape)
@@ -88,7 +115,8 @@ class DETR(nn.Layer):
         #print(self.query_embed.weight, self.query_embed.weight.shape)
         #print(pos[-1], pos[-1].shape)
         #print(self.input_proj(src))
-        hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0] 
+        src = self.input_proj(src) # proj feature channel to hidden_dim
+        hs = self.transformer(src, mask, self.query_embed.weight, pos[-1])[0] 
         #print('||||||||||||||HS |||||||||||||||||||||')
         #print(hs)
 
@@ -117,8 +145,8 @@ class DETR(nn.Layer):
         return [{'pred_logits': a, 'pred_boxes': b} for a, b in zip(output_class[:-1], output_coord[:-1])]
 
 
-
 class SetCriterion(nn.Layer):
+    """ build criterions for DETR"""
     def __init__(self, num_classes, matcher, weight_dict, eos_coef, losses):
         super().__init__()
         self.num_classes = num_classes
@@ -128,11 +156,6 @@ class SetCriterion(nn.Layer):
         self.losses = losses # [str, str, str]
         empty_w = paddle.ones([self.num_classes + 1])
         empty_w[-1] = self.eos_coef
-        #self.empty_weight = paddle.create_parameter(shape=[self.num_classes + 1],
-        #                                       dtype='float32',
-        #                                       name='empty_weight',
-        #                                       default_initializer=nn.initializer.Assign(empty_w),
-        #                                       is_bias=False)
         self.register_buffer(name='empty_weight', tensor=empty_w)
 
     def loss_labels(self, outputs, targets, indices, num_boxes):
@@ -259,15 +282,15 @@ class SetCriterion(nn.Layer):
  
     def forward(self, outputs, targets):
         outputs_without_aux = {k: v for k, v in outputs.items() if k!= 'aux_outputs'}
-
-        indices = self.matcher(outputs_without_aux, targets)
+        indices = self.matcher(outputs_without_aux, targets) # list of index(tensor) pairs 
         #print('----------------------- indieces ----------------')
         #print(indices)
 
         num_boxes = sum(len(t['labels']) for t in targets)
         num_boxes = paddle.to_tensor([num_boxes], dtype='float32')
         # TODO: all_reduce num_boxes is dist is used
-        num_boxes = paddle.clip(num_boxes / paddle.distributed.get_world_size(), min=1).item()
+        #dist.all_reduce(num_boxes)
+        num_boxes = paddle.clip(num_boxes / dist.get_world_size(), min=1).item()
         #print('num_boxes = ', num_boxes)
 
         losses = {}
@@ -307,7 +330,7 @@ class PostProcess(nn.Layer):
         # convert to [x0, y0, x1, y1] format
         boxes = box_cxcywh_to_xyxy(out_bbox)
         # from [0, 1] to absolute [0, height] coords
-        img_h, img_w = target_sizes.unbind(1) #TODO: check
+        img_h, img_w = target_sizes.unbind(1)
         scale_factor = paddle.stack([img_w, img_h, img_w, img_h], axis=1)
         scale_factor = scale_factor.unsqueeze(1)
         boxes = boxes * scale_factor
@@ -317,18 +340,27 @@ class PostProcess(nn.Layer):
 
 
 class MLP(nn.Layer):
+    """ Build mlp layers
+
+    Multiple linear layers with ReLU activation(except last linear) applied.
+
+    Args:
+        in_dim:  input feature dim for mlp
+        hidden_dim: input and output dims for middle linear layers
+        out_dim: output dim for last linear layer
+        num_layers: num of linear layers
+    """
+
     def __init__(self, in_dim, hidden_dim, out_dim, num_layers):
         super(MLP, self).__init__()
         self.num_layers = num_layers
-        h = [hidden_dim] * (num_layers -1)
-        l = []
-        for idim, odim in zip([in_dim] + h, h + [out_dim]):
+        hidden_dims = [hidden_dim] * (num_layers -1)
+        layer_list = []
+        for idim, odim in zip([in_dim] + hidden_dims, hidden_dims + [out_dim]):
             w_attr, b_attr= self._init_weights()
-            l.append(nn.Linear(idim,
-                               odim,
-                               weight_attr=w_attr,
-                               bias_attr=b_attr))
-        self.layers = nn.LayerList(l)
+            layer_list.append(
+                nn.Linear(idim, odim, weight_attr=w_attr, bias_attr=b_attr))
+        self.layers = nn.LayerList(layer_list)
         self.relu = nn.ReLU()
 
     def _init_weights(self):
@@ -339,6 +371,7 @@ class MLP(nn.Layer):
     def forward(self, x):
         for idx, layer in enumerate(self.layers):
             x = layer(x)
+            # last layer no activation
             if idx < len(self.layers) - 1:
                 x = self.relu(x)
         return x
