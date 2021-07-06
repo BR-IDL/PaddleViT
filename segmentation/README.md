@@ -8,7 +8,6 @@
 CUDA_VISIBLE_DEVICES=0 python3  val.py  \
     --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
     --model_path ./pretrain_models/setr/SETR_MLA_pascal_context_b8_80k.pdparams
-dd
 ```
 > Note:
 > - The `-model_path` option accepts the path of pretrained weights file (segmentation model, e.g., setr).
