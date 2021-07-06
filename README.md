@@ -35,11 +35,13 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 3. PVT ([Pyramid Vision Transformer: A Versatile Backbone for Dense Prediction without Convolutions](https://arxiv.org/abs/2102.12122))
 
 ### Segmentation ###
-#### Coming Soon:  ####
+#### Now: ####
 1. SETR ([Rethinking Semantic Segmentation from a Sequence-to-Sequence Perspective with Transformers](https://arxiv.org/abs/2012.15840))
-2. Swin Transformer ([Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030))
-3. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
-4. SegFormer ([SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203))
+
+#### Coming Soon:  ####
+1. Swin Transformer ([Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030))
+2. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
+3. SegFormer ([SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203))
 
 
 ### GAN ###
@@ -67,7 +69,13 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 |-------|-----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | DETR  | ResNet50  | 42.0    | [google](https://drive.google.com/file/d/1ruIKCqfh_MMqzq_F4L2Bv-femDMjS_ix/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1J6lB1mezd6_eVW3jnmohZA)(n5gk) |
 | DETR  | ResNet101 | 43.5    | [google](https://drive.google.com/file/d/11HCyDJKZLX33_fRGp4bCg1I14vrIKYW5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1_msuuAwFMNbAlMpgUq89Og)(bxz2) |
+
 ### Segmentation ###
+#### Pascal Context ####
+|Model   | Backbone  | mIoU (ss) | mIoU (ms+flip) | Backbone_checkpoints | Model_checkpoints                                                                                                                              |
+|--------|-----------|-----------|----------------|----------------------|----------------------------------------------------------------------------------------------------------------------|
+|SETR_MLA| ViT_Large | 54.39     |       -        | [google](https://drive.google.com/file/d/1TPgh7Po6ayYb1DksJeZp60LGnNyznr-r/view?usp=sharing)/[baidu](https://pan.baidu.com/s/18WSi8Jp3tCZgv_Vr3V1i7A)(owoj)     | [google](https://drive.google.com/file/d/1utU2h0TrtuGzRX5RMGroudiDcz0z6UmV/view)/[baidu](https://pan.baidu.com/s/1Eg0eyUQXc-Mg5fg0T3RADA)(wora)|
+
 ### GAN ###
 
 ## Results (Self-Trained Weights) ## 
