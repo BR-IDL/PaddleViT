@@ -127,3 +127,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# segmentation
+./segmentation/output
+./segmentation/log
+*.pdparams
+./segmentation/pytorch_2_paddle.py
+./segmentation/readme.txt 
+setr.py.bak
+
+
