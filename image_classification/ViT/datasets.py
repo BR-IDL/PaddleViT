@@ -23,7 +23,7 @@ from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
 
 class ImageNet2012Dataset(Dataset):
-    """Build ImageNet2021 dataset
+    """Build ImageNet2012 dataset
 
     This class gets train/val imagenet datasets, which loads transfomed data and labels.
 
@@ -35,7 +35,7 @@ class ImageNet2012Dataset(Dataset):
     """
 
     def __init__(self, file_folder, mode="train", transform=None):
-        """Init ImageNet2021Dataset with dataset file path, mode(train/val), and transform"""
+        """Init ImageNet2012 Dataset with dataset file path, mode(train/val), and transform"""
         super(ImageNet2012Dataset, self).__init__()
         assert mode in ["train", "val"]
         self.file_folder = file_folder
@@ -105,7 +105,7 @@ def get_val_transforms(config):
 
     scale_size = int(math.floor(config.DATA.IMAGE_SIZE / config.DATA.CROP_PCT))
     transforms_val = transforms.Compose([
-        transforms.Resize((scale_size, scale_size)),
+        transforms.Resize(scale_size, 'bicubic'), # single int for resize shorter side of image
         transforms.CenterCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),

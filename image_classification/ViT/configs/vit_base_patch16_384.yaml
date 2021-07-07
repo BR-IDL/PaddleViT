@@ -3,7 +3,7 @@ DATA:
     CROP_PCT: 1.0
 MODEL:
     TYPE: ViT
-    NAME: vit_base_patch16_224
+    NAME: vit_base_patch16_384
     TRANS:
         PATCH_SIZE: 16
         HIDDEN_SIZE: 768

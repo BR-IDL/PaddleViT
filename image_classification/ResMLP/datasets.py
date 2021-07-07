@@ -105,7 +105,7 @@ def get_val_transforms(config):
 
     scale_size = int(math.floor(config.DATA.IMAGE_SIZE / config.DATA.CROP_PCT))
     transforms_val = transforms.Compose([
-        transforms.Resize((scale_size, scale_size), interpolation='bicubic'),
+        transforms.Resize(scale_size, interpolation='bicubic'),
         transforms.CenterCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),

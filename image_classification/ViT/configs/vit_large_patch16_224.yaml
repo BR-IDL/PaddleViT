@@ -1,8 +1,9 @@
 DATA:
     IMAGE_SIZE: 224
+    CROP_PCT: 0.875
 MODEL:
     TYPE: ViT
-    NAME: vit_base_patch16_224
+    NAME: vit_large_patch16_224
     TRANS:
         PATCH_SIZE: 16
         HIDDEN_SIZE: 1024
