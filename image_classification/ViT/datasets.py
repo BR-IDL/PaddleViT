@@ -105,7 +105,7 @@ def get_val_transforms(config):
 
     scale_size = int(math.floor(config.DATA.IMAGE_SIZE / config.DATA.CROP_PCT))
     transforms_val = transforms.Compose([
-        transforms.Resize(scale_size), # single int for resize shorter side of image
+        transforms.Resize(scale_size, 'bicubic'), # single int for resize shorter side of image
         transforms.CenterCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
