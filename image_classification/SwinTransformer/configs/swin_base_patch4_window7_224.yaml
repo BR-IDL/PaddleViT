@@ -1,3 +1,6 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.90
 MODEL:
     TYPE: swin
     NAME: swin_base_patch4_window7_224
