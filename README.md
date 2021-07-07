@@ -40,8 +40,9 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 
 #### Coming Soon:  ####
 1. Swin Transformer ([Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030))
-2. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
+2. Segmenter: ([Transformer for Semantic Segmentation](https://arxiv.org/pdf/2105.05633.pdf))
 3. SegFormer ([SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203))
+4. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
 
 
 ### GAN ###
@@ -55,29 +56,30 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 ### Image Classification ###
 | Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Model        |
 |--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| vit_base_patch16_224           | 81.32 | 95.98 | 224        | 0.875     | bilinear      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kUQo1hhWZA0A1d7hNMvIYw)(nxhy) |
-| vit_base_patch16_384           | 83.90 | 97.05 | 384        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1kWKaAgneDx0QsECxtf7EnUdUZej6vSFT/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1MW8Osbe4M70IPDNKygP9kQ)(8ack) |
-| vit_large_patch16_224          | 82.71 | 96.36 | 224        | 0.875     | bilinear      | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Jc8wrIydAsc-i2gL4DjztA)(g7ij) |
-| swin_base_patch4_window7_224   | 82.77 | 95.99 | 224        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1yjZFJoJeDFIfsxh9x10XGqCb8s2-Gtbp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1j8Air9uFudq71S4FhogpWA)(ps9m) |
-| swin_base_patch4_window12_384  | 85.54 | 97.10 | 384        | 0.9      | bilinear      | [google](https://drive.google.com/file/d/1ThmGsTDZ8217-Zuo9o5EGLfzw8AI6N0w/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ZrTDMeKtr2Bm5uB63gxxQA)(ef9t) |
-| swin_large_patch4_window12_384 | 86.74 | 97.52 | 384        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1f30Mt80g5yLfEiViT4-kMLpyDjTUTV5B/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RwKqdlR5N6BSZIptai7LrA)(5shn) |
-| pvtv2_tiny_224                 | 70.10 | 90.00 | 224        | 0.875     | bicubic       | [google](https://drive.google.com/file/d/13xboSs9W3rvFM-j5JK4MeXi-5IFyyo8O/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YHT8oDEtYgZDiDLss__YnA)(575w) |
-| pvtv2_medium_224               | 82.02 | 95.94 | 224        | 0.875     | bicubic       | [google](https://drive.google.com/file/d/1B2ETlmmGqkxEIHkNg1Jq3h8NhJpUg9OZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1XZC5YBBTCK7yUOXgDFhrSg)(ezfc) |
-| pvtv2_large_224                | 83.90 | 96.64 | 224        | 0.875     | bicubic       | [google](https://drive.google.com/file/d/1QaRBbmKq2aPYLEKMxTUo4M1-8KdLzKR7/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1vonKDOLvrIGjrf2BGh5ULA)(fbc4) |
-| mixer_b16_224                  | 75.79 | 91.75  | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
-| resmlp_24_224 | 79.25 | 94.53 | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/15A5q1XSXBz-y1AcXhy_XaDymLLj2s2Tn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nLAvyG53REdwYNCLmp4yBA)(jdcx) |
-| gmlp_s16_224 | 79.61 | 94.69 | 224       | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1TLypFly7aW0oXzEHfeDSz2Va4RHPRqe5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13UUz1eGIKyqyhtwedKLUMA)(bcth) |
+| vit_base_patch16_224           | 81.66 | 96.09 | 224        | 0.875     | bilinear      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kUQo1hhWZA0A1d7hNMvIYw)(nxhy) |
+| vit_base_patch16_384           | 84.20 | 97.22 | 384        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1kWKaAgneDx0QsECxtf7EnUdUZej6vSFT/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1MW8Osbe4M70IPDNKygP9kQ)(8ack) |
+| vit_large_patch16_224          | 83.00 | 96.47 | 224        | 0.875     | bicubic      | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Jc8wrIydAsc-i2gL4DjztA)(g7ij) |
+| swin_base_patch4_window7_224   | 85.27 | 97.56 | 224        | 0.9     | bicubic      | [google](https://drive.google.com/file/d/1yjZFJoJeDFIfsxh9x10XGqCb8s2-Gtbp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1j8Air9uFudq71S4FhogpWA)(ps9m) |
+| swin_base_patch4_window12_384  | 86.43 | 98.07 | 384        | 1.0      | bicubic      | [google](https://drive.google.com/file/d/1ThmGsTDZ8217-Zuo9o5EGLfzw8AI6N0w/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ZrTDMeKtr2Bm5uB63gxxQA)(ef9t) |
+| swin_large_patch4_window12_384 | 87.14 | 98.23 | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1f30Mt80g5yLfEiViT4-kMLpyDjTUTV5B/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RwKqdlR5N6BSZIptai7LrA)(5shn) |
+| pvtv2_tiny_224                 | 70.47 | 90.16 | 224        | 0.875       | bicubic       | [google](https://drive.google.com/file/d/13xboSs9W3rvFM-j5JK4MeXi-5IFyyo8O/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YHT8oDEtYgZDiDLss__YnA)(575w) |
+| pvtv2_medium_224               | 82.02 | 95.99 | 224        | 0.875       | bicubic       | [google](https://drive.google.com/file/d/1B2ETlmmGqkxEIHkNg1Jq3h8NhJpUg9OZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1XZC5YBBTCK7yUOXgDFhrSg)(ezfc) |
+| pvtv2_large_224                | 83.77 | 96.61 | 224        | 0.875       | bicubic       | [google](https://drive.google.com/file/d/1QaRBbmKq2aPYLEKMxTUo4M1-8KdLzKR7/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1vonKDOLvrIGjrf2BGh5ULA)(fbc4) |
+| mixer_b16_224                  | 76.60 | 92.23  | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
+| resmlp_24_224                  | 79.38 | 94.55 | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/15A5q1XSXBz-y1AcXhy_XaDymLLj2s2Tn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nLAvyG53REdwYNCLmp4yBA)(jdcx) |
+| gmlp_s16_224                   | 79.64 | 94.63 | 224       | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1TLypFly7aW0oXzEHfeDSz2Va4RHPRqe5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13UUz1eGIKyqyhtwedKLUMA)(bcth) |
 ### Object Detection ###
 | Model | backbone  | box_mAP | Model                                                                                                                                                       |
 |-------|-----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | DETR  | ResNet50  | 42.0    | [google](https://drive.google.com/file/d/1ruIKCqfh_MMqzq_F4L2Bv-femDMjS_ix/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1J6lB1mezd6_eVW3jnmohZA)(n5gk) |
 | DETR  | ResNet101 | 43.5    | [google](https://drive.google.com/file/d/11HCyDJKZLX33_fRGp4bCg1I14vrIKYW5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1_msuuAwFMNbAlMpgUq89Og)(bxz2) |
 
-### Segmentation ###
+### Semantic Segmentation ###
 #### Pascal Context ####
-|Model   | Backbone  | mIoU (ss) | mIoU (ms+flip) | Backbone_checkpoints | Model_checkpoints                                                                                                                              |
-|--------|-----------|-----------|----------------|----------------------|----------------------------------------------------------------------------------------------------------------------|
-|SETR_MLA| ViT_Large | 54.39     |       -        | [google](https://drive.google.com/file/d/1TPgh7Po6ayYb1DksJeZp60LGnNyznr-r/view?usp=sharing)/[baidu](https://pan.baidu.com/s/18WSi8Jp3tCZgv_Vr3V1i7A)(owoj)     | [google](https://drive.google.com/file/d/1utU2h0TrtuGzRX5RMGroudiDcz0z6UmV/view)/[baidu](https://pan.baidu.com/s/1Eg0eyUQXc-Mg5fg0T3RADA)(wora)|
+|Model   | Backbone  | Batch_size | mIoU (ss) | mIoU (ms+flip) | Backbone_checkpoints | Model_checkpoints      |
+|--------|-----------|------------|-----------|----------------|-----------------------------------------------|-----------------------------------------------------------------------|
+|SETR_MLA| ViT_Large |     8      |   54.39   |       -        | [google](https://drive.google.com/file/d/1TPgh7Po6ayYb1DksJeZp60LGnNyznr-r/view?usp=sharing)/[baidu](https://pan.baidu.com/s/18WSi8Jp3tCZgv_Vr3V1i7A)(owoj)     | [google](https://drive.google.com/file/d/1utU2h0TrtuGzRX5RMGroudiDcz0z6UmV/view)/[baidu](https://pan.baidu.com/s/1Eg0eyUQXc-Mg5fg0T3RADA)(wora)|
+|SETR_MLA| ViT_large |     16     |   55.01   |       -        | [google](https://drive.google.com/file/d/1TPgh7Po6ayYb1DksJeZp60LGnNyznr-r/view?usp=sharing)/[baidu](https://pan.baidu.com/s/18WSi8Jp3tCZgv_Vr3V1i7A)(owoj)     | [google](https://drive.google.com/file/d/1SOXB7sAyysNhI8szaBqtF8ZoxSaPNvtl/view?usp=sharing)/[baidu]() | 
 
 ### GAN ###
 
