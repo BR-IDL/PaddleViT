@@ -17,15 +17,6 @@ git checkout -b feature
 
 #### step 3. Commit to the remote repository
 
-In case of code conflicts, pull the latest code to the local repository and merge into feature branch.
-
-```shell
-git checkout develop
-git pull
-git checkout feature
-git merge develop
-```
-
 Commit to the temporary storage.
 
 ```shell
@@ -35,6 +26,15 @@ git add -A
 Commit to the local repository.
 ```shell
 git commit -m “message”
+```
+
+In case of code conflicts, pull the latest code to the local repository and merge into feature branch.
+
+```shell
+git checkout develop
+git pull
+git checkout feature
+git merge develop
 ```
 
 Commit to the remote repository.
