@@ -38,7 +38,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -u -m paddle.distributed.launch val.py \
 ```
 > Note:
 >
-> - that the `-pretrained` option accepts the path of pretrained weights file (segmentation model, e.g., setr)
+> - that the `-model_path` option accepts the path of pretrained weights file (segmentation model, e.g., setr)
 
 
 ### 3. Training
