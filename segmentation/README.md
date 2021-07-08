@@ -6,7 +6,7 @@
 ### 1. Preparing data
 
  Download Pascal-Context dataset. It should have this basic structure:  
-
+```
 pascal_context
 |-- Annotations
 |-- ImageSets
@@ -16,7 +16,7 @@ pascal_context
 |-- SegmentationObject
 |-- trainval_merged.json
 |-- voc2010_to_pascalcontext.py
-
+```
 ### 2. Testing
 #### Single-scale testing on single GPU
 
