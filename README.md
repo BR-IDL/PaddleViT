@@ -34,15 +34,17 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 2. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
 3. PVT ([Pyramid Vision Transformer: A Versatile Backbone for Dense Prediction without Convolutions](https://arxiv.org/abs/2102.12122))
 
-### Segmentation ###
+### Semantic Segmentation ###
 #### Now: ####
 1. SETR ([Rethinking Semantic Segmentation from a Sequence-to-Sequence Perspective with Transformers](https://arxiv.org/abs/2012.15840))
 
 #### Coming Soon:  ####
-1. Swin Transformer ([Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030))
-2. Segmenter: ([Transformer for Semantic Segmentation](https://arxiv.org/pdf/2105.05633.pdf))
-3. SegFormer ([SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203))
-4. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
+1. FTN ([Fully Transformer Networks for Semantic Image Segmentation](https://arxiv.org/pdf/2106.04108.pdf))
+2. Swin Transformer ([Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030))
+3. Segmenter: ([Transformer for Semantic Segmentation](https://arxiv.org/pdf/2105.05633.pdf))
+4. SegFormer ([SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203))
+5. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
+
 
 
 ### GAN ###
