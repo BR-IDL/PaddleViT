@@ -32,33 +32,12 @@ PPViT uses this [Git branching model](http://nvie.com/posts/a-successful-git-bra
 
 1. Commit
 
-   Before issuing your first `git commit` command, please install [`pre-commit`](http://pre-commit.com/) by running the following commands:
+   Commit to the local repository.
 
-   ```bash
-   pip install pre-commit
-   pre-commit install
+   ```shell
+   git add -A
+   git commit -m “message”
    ```
-
-   Our pre-commit configuration requires clang-format 3.8 for auto-formating C/C++ code and yapf for Python.
-
-   Once installed, `pre-commit` checks the style of code and documentation in every commit.  We will see something like the following when you run `git commit`:
-
-   ```
-   ➜  git commit
-   CRLF end-lines remover...............................(no files to check)Skipped
-   yapf.................................................(no files to check)Skipped
-   Check for added large files..............................................Passed
-   Check for merge conflicts................................................Passed
-   Check for broken symlinks................................................Passed
-   Detect Private Key...................................(no files to check)Skipped
-   Fix End of Files.....................................(no files to check)Skipped
-   clang-formater.......................................(no files to check)Skipped
-   [my-cool-stuff c703c041] add test file
-    1 file changed, 0 insertions(+), 0 deletions(-)
-    create mode 100644 233
-   ```
-
-	NOTE: The `yapf` installed by `pip install pre-commit` and `conda install -c conda-forge pre-commit` is slightly different. Paddle developers use `pip install pre-commit`.
   
 1. Build and test
 
