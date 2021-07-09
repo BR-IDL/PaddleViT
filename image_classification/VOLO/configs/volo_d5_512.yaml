@@ -1,0 +1,14 @@
+DATA:
+    IMAGE_SIZE: 512
+    CROP_PCT: 1.15
+MODEL:
+    TYPE: volo
+    NAME: volo_d5_224
+    TRANS:
+        LAYERS: [12, 12, 20, 4]
+        EMBED_DIMS: [384, 768, 768, 768]
+        NUM_HEADS: [12, 16, 16, 16]
+        MLP_RATIOS: [4, 4, 4, 4]
+        DOWNSAMPLES: [True, False, False, False]
+        OUTLOOK_ATTENTION: [True, False, False, False]
+    STEM_HIDDEN_DIM: 128

@@ -23,11 +23,13 @@ from config import *
 config = get_config()
 parser = argparse.ArgumentParser('')
 parser.add_argument('-cfg', type=str, default='./configs/vit_base_patch16_224.yaml')
-#parser.add_argument('-dataset', type=str, default="imagenet2012")
-parser.add_argument('-dataset', type=str, default="cifar10")
-parser.add_argument('-batch_size', type=int, default=4)
-parser.add_argument('-image_size', type=int, default=224)
+parser.add_argument('-dataset', type=str, default="imagenet2012")
 parser.add_argument('-data_path', type=str, default='/dataset/imagenet/')
+parser.add_argument('-batch_size', type=int, default=None)
+parser.add_argument('-image_size', type=int, default=None)
+parser.add_argument('-ngpus', type=int, default=None)
+parser.add_argument('-eval', action='store_true')
+parser.add_argument('-pretrained', type=str, default=None)
 args = parser.parse_args()
 
 config = get_config()
@@ -36,8 +38,17 @@ print(config)
 
 
 def print_model_named_params(model):
+    print('----------------------------------')
     for name, param in model.named_parameters():
         print(name, param.shape)
+    print('----------------------------------')
+
+
+def print_model_named_buffers(model):
+    print('----------------------------------')
+    for name, param in model.named_buffers():
+        print(name, param.shape)
+    print('----------------------------------')
 
 
 def torch_to_paddle_mapping():
@@ -73,13 +84,17 @@ def torch_to_paddle_mapping():
 
 
 def convert(torch_model, paddle_model):
-    def _set_value(th_name, pd_name):
+    def _set_value(th_name, pd_name, transpose=True):
         th_shape = th_params[th_name].shape
         pd_shape = tuple(pd_params[pd_name].shape) # paddle shape default type is list
         #assert th_shape == pd_shape, f'{th_shape} != {pd_shape}'
-        print(f'set {th_name} {th_shape} to {pd_name} {pd_shape}')
-        value = th_params[th_name].data.numpy()
-        if len(value.shape) == 2:
+        print(f'**SET** {th_name} {th_shape} **TO** {pd_name} {pd_shape}')
+        if isinstance(th_params[th_name], torch.nn.parameter.Parameter):
+            value = th_params[th_name].data.numpy()
+        else:
+            value = th_params[th_name].numpy()
+
+        if len(value.shape) == 2 and transpose:
             value = value.transpose((1, 0))
         pd_params[pd_name].set_value(value)
 
@@ -90,8 +105,15 @@ def convert(torch_model, paddle_model):
         pd_params[name] = param
     for name, param in torch_model.named_parameters():
         th_params[name] = param
+
+    for name, param in paddle_model.named_buffers():
+        pd_params[name] = param
+    for name, param in torch_model.named_buffers():
+        th_params[name] = param
+
     # 2. get name mapping pairs
     mapping = torch_to_paddle_mapping()
+
     # 3. set torch param values to paddle params: may needs transpose on weights
     for th_name, pd_name in mapping:
         if th_name in th_params.keys(): # nn.Parameters
@@ -108,29 +130,26 @@ def convert(torch_model, paddle_model):
     return paddle_model
 
     
-
-
-
 def main():
 
     paddle.set_device('cpu')
     paddle_model = VisualTransformer(config)
     paddle_model.eval()
-
-    #for name, param in paddle_model.named_parameters():
-    #    print(name, param.shape)
+    print_model_named_params(paddle_model)
+    print_model_named_buffers(paddle_model)
 
     device = torch.device('cpu')
     torch_model = timm.create_model('vit_base_patch16_224', pretrained=True)
     torch_model = torch_model.to(device)
     torch_model.eval()
-
+    print_model_named_params(torch_model)
+    print_model_named_buffers(torch_model)
 
     # convert weights
     paddle_model = convert(torch_model, paddle_model)
 
     # check correctness
-    x = np.random.randn(1, 3, 224, 224).astype('float32')
+    x = np.random.randn(2, 3, 224, 224).astype('float32')
     x_paddle = paddle.to_tensor(x)
     x_torch = torch.Tensor(x).to(device)
 
@@ -142,12 +161,14 @@ def main():
 
     print(out_torch.shape, out_paddle.shape)
     print(out_torch[0:100])
+    print('========================================================')
     print(out_paddle[0:100])
     assert np.allclose(out_torch, out_paddle, atol = 1e-5)
     
     # save weights for paddle model
-    model_path = os.path.join('./vit_base_patch16_224.pdparams')
+    model_path = os.path.join('./vit_base_patch16_224_tmp.pdparams')
     paddle.save(paddle_model.state_dict(), model_path)
+    print('all done')
 
 
 if __name__ == "__main__":
