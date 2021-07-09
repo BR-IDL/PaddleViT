@@ -96,8 +96,6 @@ PPViT uses this [Git branching model](http://nvie.com/posts/a-successful-git-bra
 Our Python code follows the [PEP8 language guide](https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_language_rules/) and [PEP8 style guide](https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/).
   
 Our build process helps to check the code style.  In [`build.sh`](https://github.com/PaddlePaddle/Paddle/blob/b84e8226514b8bb4405c3c28e54aa5077193d179/paddle/scripts/docker/build.sh#L42), the entry point of our [builder Docker image](https://github.com/PaddlePaddle/Paddle/blob/b84e8226514b8bb4405c3c28e54aa5077193d179/Dockerfile#L88), the CMake argument `WITH_STYLE_CHECK` is set to `ON` by default.  This flag is on
-
-Please install pre-commit, which automatically reformat the changes to C/C++ and Python code whenever we run `git commit`.  To check the whole codebase, we can run the command `pre-commit run -a`, as in the [`check_style.sh` file](https://github.com/PaddlePaddle/Paddle/blob/b84e8226514b8bb4405c3c28e54aa5077193d179/paddle/scripts/travis/check_style.sh#L30), which is invoked by [our Travis CI configuration](https://github.com/PaddlePaddle/Paddle/blob/b84e8226514b8bb4405c3c28e54aa5077193d179/.travis.yml#L43).
   
 ### Use Pylint
 
