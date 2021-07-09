@@ -205,10 +205,15 @@ python main_multi_gpu.py \
 * Data Augumentation
 * DropPath
 
+## Contributing ##
+We encourage and appreciate your contribution to **PPViT** project, please refer to our workflow and work styles by [CONTRIBUTING.md](https://github.com/xperzy/PPViT/blob/develop/CONTRIBUTING.md)
+
 
 ## Licenses ##
-### Code ###
-### Pretrained Weights #####
+#### Code #####
+This repo is under the Apache-2.0 license. 
+
+#### Pretrained Weights #####
 
 
 ## Citing #
