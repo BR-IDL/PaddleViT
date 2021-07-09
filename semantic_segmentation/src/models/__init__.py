@@ -1,1 +1,1 @@
-from .setr import SETR_MLA
+from .setr import SETR

@@ -8,6 +8,10 @@ DATA:
 MODEL:
     TYPE: SETR
     NAME: SETR
+    ENCODER:
+        TYPE: 'ViT_MLA'
+        OUT_INDICES: [5, 11, 17, 23] # Base: [2, 5, 8, 11]; Large: [5, 11, 17, 23] 
+    DECODER_TYPE: 'VIT_MLAHead'
     PRETRAINED: './pretrain_models/backbones/vit_large_patch16_224.pdparams'
     TRANS:
         PATCH_SIZE: 16
@@ -17,7 +21,6 @@ MODEL:
         NUM_LAYERS: 24   # 12(Base), 24(Large), 32(Huge)
         QKV_BIAS: True
     MLA:
-        MLA_INDEX: [5, 11, 17, 23]   # Base: [2, 5, 8, 11]; Large: [5, 11, 17, 23] 
         MLA_CHANNELS: 256
         MLAHEAD_CHANNELS: 128
         MLAHEAD_ALIGN_CORNERS: False

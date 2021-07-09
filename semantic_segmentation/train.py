@@ -11,7 +11,7 @@ import paddle.nn as nn
 from config import *
 from src.utils import get_sys_env, logger
 from src.datasets import get_dataset
-from src.models import SETR_MLA
+from src.models import SETR
 from src.models.losses import CrossEntropyLoss
 from src.utils import TimeAverager, calculate_eta, resume
 
@@ -60,7 +60,7 @@ def main():
     place = 'gpu' if env_info['Paddle compiled with cuda'] and env_info['GPUs used'] else 'cpu'
     paddle.set_device(place)
     # build  model
-    model = SETR_MLA(config)
+    model = SETR(config)
     model.train()
     nranks = paddle.distributed.ParallelEnv().nranks
     #print("nranks= ", nranks)

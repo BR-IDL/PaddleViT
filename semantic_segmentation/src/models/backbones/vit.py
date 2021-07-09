@@ -286,76 +286,6 @@ class Transformer(nn.Layer):
 
 
 
-class Conv_MLA(nn.Layer):
-    """Conv_MLA
-
-    Multi-Level feature Aggregatio, Ref. https://arxiv.org/pdf/2012.15840.pdf
-
-    """
-    def __init__(self, in_channels=1024, mla_channels=256):
-        super(Conv_MLA, self).__init__()
-
-        sync_norm_bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0)) 
-
-        
-        self.mla_p2_1x1 = nn.Sequential(nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p3_1x1 = nn.Sequential(nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p4_1x1 = nn.Sequential(nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p5_1x1 = nn.Sequential(nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-
-        self.mla_p2 = nn.Sequential(nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p3 = nn.Sequential(nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p4 = nn.Sequential(nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p5 = nn.Sequential(nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels,weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-
-    def get_sync_norm_weight_attr(self):
-        return paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0)) 
-
-    def to_2D(self, x):
-        n, hw, c = x.shape
-        h = w = int(math.sqrt(hw))
-        x = x.transpose([0, 2, 1]).reshape([n, c, h, w])
-        return x
-
-    def forward(self, res2, res3, res4, res5):
-        res2 = self.to_2D(res2)
-        res3 = self.to_2D(res3)
-        res4 = self.to_2D(res4)
-        res5 = self.to_2D(res5)
-
-        mla_p5_1x1 = self.mla_p5_1x1(res5)
-        mla_p4_1x1 = self.mla_p4_1x1(res4)
-        mla_p3_1x1 = self.mla_p3_1x1(res3)
-        mla_p2_1x1 = self.mla_p2_1x1(res2)
-
-        mla_p4_plus = mla_p5_1x1 + mla_p4_1x1
-        mla_p3_plus = mla_p4_plus + mla_p3_1x1
-        mla_p2_plus = mla_p3_plus + mla_p2_1x1
-
-        mla_p5 = self.mla_p5(mla_p5_1x1)
-        mla_p4 = self.mla_p4(mla_p4_plus)
-        mla_p3 = self.mla_p3(mla_p3_plus)
-        mla_p2 = self.mla_p2(mla_p2_plus)
-
-        return mla_p2, mla_p3, mla_p4, mla_p5
-
-
 class VisualTransformer(nn.Layer):
     """ VisualTransformer
    
@@ -365,7 +295,7 @@ class VisualTransformer(nn.Layer):
     def __init__(self, config):
         super(VisualTransformer, self).__init__()
         self.transformer = Transformer(config)
-        self.mla_index = config.MODEL.MLA.MLA_INDEX
+        self.out_indices = config.MODEL.ENCODER.OUT_INDICES
 
         norm_weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
         norm_bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
@@ -378,8 +308,9 @@ class VisualTransformer(nn.Layer):
         B = x.shape[0]
         outs = self.transformer(x)
         feats = [ ]
-        # getting multi-level feats from layers(6,12,18,24)
-        for idx in enumrate(self.mla_index):
+        # getting multi-level feats from layers
+        #print("self.out_indices: ", self.out_indices)
+        for idx in self.out_indices:
             feats.append(outs[idx])
         return feats 
 

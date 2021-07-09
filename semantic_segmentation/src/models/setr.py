@@ -5,30 +5,54 @@ import copy
 import numpy as np
 import math
 import sys
-from src.models.backbones import ViT_MLA
-from src.models.decoders import VIT_MLAHead, VIT_MLA_AUXIHead
+from src.models.backbones import ViT_MLA, VisualTransformer
+from src.models.decoders import VIT_MLAHead, VIT_MLA_AUXIHead, VisionTransformerUpHead
 from src.utils.utils import load_pretrained_model
 
 
-class SETR_MLA(nn.Layer):
-    """ SETR_MLA
+class SETR(nn.Layer):
+    """ SETR
+
+    SEgmentation TRansformer (SETR) has three diffrent decoder designs to perform pixl-level segmentation. The variants of SETR includes SETR_MLA, SETR_PUP, SETR_Naive
     
     Reference:
         Sixiao Zheng, et al. *"Rethinking Semantic Segmentation from a Sequence-to-Sequence Perspective with Transformers"*
     """
     def __init__(self, config):
-        super(SETR_MLA, self).__init__()
-        self.encoder = ViT_MLA(config)
-        self.decoder = VIT_MLAHead(config.MODEL.MLA.MLA_CHANNELS,
-                                   config.MODEL.MLA.MLAHEAD_CHANNELS, 
-                                   config.DATA.NUM_CLASSES,
-                                   config.MODEL.MLA.MLAHEAD_ALIGN_CORNERS) 
+        super(SETR, self).__init__()
+        if config.MODEL.ENCODER.TYPE == "ViT_MLA":
+            self.encoder = ViT_MLA(config)
+        elif config.MODEL.ENCODER.TYPE == "ViT":
+            self.encoder = VisualTransformer(config)
+
         self.AuxiHead = config.MODEL.AUX.AUXIHEAD
-        if self.AuxiHead==True:
-            self.aux_decoder2 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
-            self.aux_decoder3 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
-            self.aux_decoder4 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
-            self.aux_decoder5 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
+        self.decoder_type = config.MODEL.DECODER_TYPE
+
+        if self.decoder_type == "VIT_MLAHead":
+            self.decoder = VIT_MLAHead(config.MODEL.MLA.MLA_CHANNELS,
+                config.MODEL.MLA.MLAHEAD_CHANNELS, 
+                config.DATA.NUM_CLASSES,
+                config.MODEL.MLA.MLAHEAD_ALIGN_CORNERS) 
+            self.AuxiHead = config.MODEL.AUX.AUXIHEAD
+            if self.AuxiHead==True:
+                self.aux_decoder2 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
+                self.aux_decoder3 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
+                self.aux_decoder4 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
+                self.aux_decoder5 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
+
+        elif self.decoder_type == "VisionTransformerUpHead":
+            self.decoder = VisionTransformerUpHead(config.MODEL.PUP.INPUT_CHANNEL, config.MODEL.PUP.NUM_CONV, 
+                config.MODEL.PUP.NUM_UPSAMPLE_LAYER, config.MODEL.PUP.CONV3x3_CONV1x1, config.MODEL.PUP.ALIGN_CORNERS)
+            self.AuxiHead = config.MODEL.AUX.AUXIHEAD
+            if self.AuxiHead==True:
+                self.aux_decoder2 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV, 
+                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
+                self.aux_decoder3 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV,  
+                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
+                self.aux_decoder4 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV,
+                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
+                self.aux_decoder5 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV,
+                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
 
         self.init__decoder_lr_coef(config)
     
@@ -64,13 +88,17 @@ class SETR_MLA(nn.Layer):
 
     def forward(self, imgs):
         # imgs.shapes: (B,3,H,W)
-        mla_p2, mla_p3, mla_p4, mla_p5 = self.encoder(imgs)
-        pred = self.decoder(mla_p2, mla_p3, mla_p4, mla_p5)
+        p2, p3, p4, p5 = self.encoder(imgs)
+        if self.decoder_type == "VIT_MLAHead":
+             pred = self.decoder(p2, p3, p4, p5)
+        elif self.decoder_type == "VisionTransformerUpHead":
+             pred = self.decoder(p5)
+              
         if self.AuxiHead==True:
-            aux_pred2 = self.aux_decoder2(mla_p2)
-            aux_pred3 = self.aux_decoder3(mla_p3)
-            aux_pred4 = self.aux_decoder4(mla_p4)
-            aux_pred5 = self.aux_decoder5(mla_p5)
+            aux_pred2 = self.aux_decoder2(p2)
+            aux_pred3 = self.aux_decoder3(p3)
+            aux_pred4 = self.aux_decoder4(p4)
+            aux_pred5 = self.aux_decoder5(p5)
         if self.AuxiHead==True:
             return [pred, aux_pred2, aux_pred3, aux_pred4, aux_pred5]
         return [pred]

@@ -1,5 +1,5 @@
 DATA:
-    BATCH_SIZE: 4  # per GPU [total bs is set to 8 or 16]
+    BATCH_SIZE: 2  # per GPU [total bs is set to 8 or 16]
     BATCH_SIZE_VAL: 1  # per GPU
     DATASET: 'PascalContext' # dataset name
     DATA_PATH: '/home/ssd3/wutianyi/datasets/pascal_context'
@@ -9,10 +9,16 @@ MODEL:
     TYPE: SETR
     NAME: SETR
     ENCODER:
-        TYPE: 'ViT_MLA'
-        OUT_INDICES: [5, 11, 17, 23]   # Base: [2, 5, 8, 11]; Large: [5, 11, 17, 23] 
-    DECODER_TYPE: 'VIT_MLAHead'
+        TYPE: 'ViT'
+        OUT_INDICES: [9, 14, 19, 23]   
     PRETRAINED: './pretrain_models/backbones/vit_large_patch16_224.pdparams'
+    DECODER_TYPE: 'VisionTransformerUpHead'
+    PUP:
+       INPUT_CHANNEL: 1024
+       NUM_CONV: 4
+       NUM_UPSAMPLE_LAYER: 4
+       CONV3x3_CONV1x1: True
+       ALIGN_CORNERS: False
     TRANS:
         PATCH_SIZE: 16
         HIDDEN_SIZE: 1024 # 768(Base), 1024(Large), 1280(Huge)
@@ -20,13 +26,14 @@ MODEL:
         NUM_HEADS: 16    # 12(Base), 16(Large), 16(Huge)
         NUM_LAYERS: 24   # 12(Base), 24(Large), 32(Huge)
         QKV_BIAS: True
-    MLA:
-        MLA_CHANNELS: 256
-        MLAHEAD_CHANNELS: 128
-        MLAHEAD_ALIGN_CORNERS: False
+    AUXPUP:
+       INPUT_CHANNEL: 1024
+       NUM_CONV: 2
+       NUM_UPSAMPLE_LAYER: 2
+       CONV3x3_CONV1x1: True
+       ALIGN_CORNERS: False
     AUX:
-        AUXIHEAD: True
-        AUXHEAD_ALIGN_CORNERS: False
+       AUXIHEAD: True
 TRAIN:
     BASE_LR: 0.001
     END_LR: 1e-4
@@ -44,7 +51,7 @@ TRAIN:
 VAL:
     MULTI_SCALES_VAL: False
     CROP_SIZE: [480,480]
-SAVE_DIR: "./output/SETR_MLA_Large_480x480_80k_pascal_context_bs_16"
+SAVE_DIR: "./output/SETR_PUP_Large_480x480_80k_pascal_context_bs_16"
 
         
 

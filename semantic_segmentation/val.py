@@ -12,7 +12,7 @@ from config import *
 from src.utils import  get_sys_env, metrics, TimeAverager, calculate_eta, logger, progbar
 from src.core import infer
 from src.datasets import get_dataset
-from src.models import SETR_MLA
+from src.models import SETR
 from src.utils import TimeAverager, calculate_eta, resume
 from src.utils.utils import load_entire_model
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     place = 'gpu' if env_info['Paddle compiled with cuda'] and env_info['GPUs used'] else 'cpu'
     paddle.set_device(place)
     # build model
-    model = SETR_MLA(config)
+    model = SETR(config)
     if args.model_path:
         load_entire_model(model, args.model_path)
         logger.info('Loaded trained params of model successfully')

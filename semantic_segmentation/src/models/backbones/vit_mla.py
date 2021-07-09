@@ -365,9 +365,8 @@ class ViT_MLA(nn.Layer):
     def __init__(self, config):
         super(ViT_MLA, self).__init__()
         self.transformer = Transformer(config)
-        self.mla = Conv_MLA(in_channels=config.MODEL.TRANS.HIDDEN_SIZE,
-                               mla_channels=config.MODEL.MLA.MLA_CHANNELS)
-        self.mla_index = config.MODEL.MLA.MLA_INDEX
+        self.mla = Conv_MLA(in_channels=config.MODEL.TRANS.HIDDEN_SIZE, mla_channels=config.MODEL.MLA.MLA_CHANNELS)
+        self.mla_index = config.MODEL.ENCODER.OUT_INDICES
 
         norm_weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
         norm_bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
