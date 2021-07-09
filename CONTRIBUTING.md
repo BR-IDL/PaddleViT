@@ -1,87 +1,92 @@
 # Contribute Code
 
-You are welcome to contribute to project PPViT. 
+You encourage and appreciate researchers and developers to contribute to project **PPViT**. 
 
-We sincerely appreciate your contribution.  This document explains our workflow and work style.
+This document explains our workflow and working style.
 
 ## Workflow
 
-PPViT uses this [Git branching model](http://nvie.com/posts/a-successful-git-branching-model/).  The following steps guide usual contributions.
+PPViT uses this [Git branching model](http://nvie.com/posts/a-successful-git-branching-model/).  You can follow the listed steps for common contributions.
 
-1. Fork
+### 1. Fork the repo
 
-   Our development community has been growing fastly; it doesn't make sense for everyone to write into the official repo.  So, please file Pull Requests from your fork.  To make a fork,  just head over to the GitHub page and click the ["Fork" button](https://help.github.com/articles/fork-a-repo/).
+  Please **file `Pull Requests` from your fork**. 
+  
+  To make a fork, just head over to our GitHub repo page and click the ["Fork"](https://help.github.com/articles/fork-a-repo/) button.
    
-1. Clone
+### 2. Clone the repo
 
-   To make a copy of your fork to your local computers, please run
-
-   ```bash
-   git clone https://github.com/your-github-account/PPViT
-   cd PPViT
-   ```
-
-1. Create the local feature branch
-
-   For daily works like adding a new feature or fixing a bug, please open your feature branch based on develop before coding:
+   To make a copy of your fork to your local env:
 
    ```bash
-   git checkout develop
-   git checkout -b my-cool-stuff
+   $ git clone https://github.com/your-github-account/PPViT
+   $ cd PPViT
    ```
 
-1. Commit
+### 3. Create local `feature` branch
 
-   Commit to the local repository.
+   For daily works like adding a new feature or fixing a bug, open a `feature` branch based on `develop` branch before coding:
+
+   ```bash
+   $ git checkout develop
+   $ git checkout -b feature
+   ```
+   wher `feature` can be replaced with the name of your feature you are working on.
+
+### 4. Commit
+
+   Commit your code to the local repository **during and after** your coding.
 
    ```shell
-   git add -A
-   git commit -m “message”
+   $ git add -A
+   $ git commit -m “message”
    ```
   
-1. Build and test
+### 5. Test
 
-   Users can build PPViT natively on Linux and Mac OS X.  But to unify the building environment and to make it easy for debugging.
-1. Keep pulling
+   - We encourage writing `unittest` to test your class and method.
+   - Please test and report model performance on related datasets before you start to merge.
+ 
+### 6. Keep pulling
 
    An experienced Git user pulls from the official repo often -- daily or even hourly, so they notice conflicts with others work early, and it's easier to resolve smaller conflicts.
 
    ```bash
-   git remote add upstream https://github.com/xperzy/PPViT
-   git pull upstream develop
+   $ git remote add upstream https://github.com/xperzy/PPViT
+   $ git pull upstream develop
    ```
 
-1. Push and file a pull request
+### 7. Push and file a `Pull Request`
 
-   You can "push" your local work into your forked repo:
+   1. **Push** your local work into your forked repo:
 
-   ```bash
-   git push origin my-cool-stuff
-   ```
+      ```bash
+      $ git push origin my-cool-stuff
+      ```
 
-   The push allows you to create a pull request, requesting owners of this [official repo](https://github.com/xperzy/PPViT) to pull your change into the official one.
+      The push allows you to create a pull request, requesting owners of this [official repo](https://github.com/xperzy/PPViT) to pull your change into the official one.
 
-   To create a pull request, please follow [these steps](https://help.github.com/articles/creating-a-pull-request/).
+   2. To create a `Pull Request`, please follow [these steps](https://help.github.com/articles/creating-a-pull-request/).
 
-   If your change is for fixing an issue, please write ["Fixes <issue-URL>"](https://help.github.com/articles/closing-issues-using-keywords/) in the description section of your pull request.  Github would close the issue when the owners merge your pull request.
+      If your change is for fixing an issue, please write ["Fixes <issue-URL>"](https://help.github.com/articles/closing-issues-using-keywords/) in the description section of your pull request.  Github would close the issue when the owners merge your pull request.
 
-   Please remember to specify some reviewers for your pull request.  If you don't know who are the right ones, please follow Github's recommendation.
+      Please remember to specify some reviewers for your pull request.  If you don't know who are the right ones, please follow Github's recommendation.
 
-1. Delete local and remote branches
+### 8. Delete local and remote `feature` branches
 
-   After merging into develop branch successfully, delete feature branch.
+   After merging into `develop` branch successfully, delete your `feature` branch.
    To keep your local workspace and your fork clean, you might want to remove merged branches:
 
    ```bash
-   git push origin :my-cool-stuff
-   git checkout develop
-   git pull upstream develop
-   git branch -d my-cool-stuff
+   $ git push origin :my-cool-stuff
+   $ git checkout develop
+   $ git pull upstream develop
+   $ git branch -d my-cool-stuff
    ```
 
-### Code Review
+## Code Review
 
--  Please feel free to ping your reviewers by sending them the URL of your pull request via IM or email.  Please do this after your pull request passes the CI.
+-  Please feel free to ping your reviewers by sending them the URL of your pull request via IM or email.
 
 - Please answer reviewers' every comment.  If you are to follow the comment, please write "Done"; please give a reason otherwise.
 
@@ -95,15 +100,13 @@ PPViT uses this [Git branching model](http://nvie.com/posts/a-successful-git-bra
 
 Our Python code follows the [PEP8 language guide](https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_language_rules/) and [PEP8 style guide](https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/).
   
-Our build process helps to check the code style.  In [`build.sh`](https://github.com/PaddlePaddle/Paddle/blob/b84e8226514b8bb4405c3c28e54aa5077193d179/paddle/scripts/docker/build.sh#L42), the entry point of our [builder Docker image](https://github.com/PaddlePaddle/Paddle/blob/b84e8226514b8bb4405c3c28e54aa5077193d179/Dockerfile#L88), the CMake argument `WITH_STYLE_CHECK` is set to `ON` by default.  This flag is on
-  
 ### Use Pylint
 
 [Pylint](http://pylint.pycqa.org/en/latest/) is a Python code analysis tool that analyzes errors in Python code and finds code that does not meet coding style standards and has potential problems.
 
-### Code Annotation
+### Comments and Annotations
   
-To make it easier for others to use and generate online documents, try to have a docstring for each function on each class method.
+To make it easier for others to use and generate online documents, please include a docstring for each function on each class method.
   
 ### Unit Tests
 
