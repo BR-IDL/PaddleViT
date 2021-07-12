@@ -15,6 +15,8 @@ from src.datasets import get_dataset
 from src.models import SETR
 from src.utils import TimeAverager, calculate_eta, resume
 from src.utils.utils import load_entire_model
+from src.transforms import *
+
 
 
 
@@ -54,12 +56,16 @@ if __name__ == '__main__':
             ddp_model = paddle.DataParallel(model)
 
     # build val dataset and dataloader
-    _, dataset_val = get_dataset(config)
+    transforms_val = [ Resize(target_size=config.VAL.IMAGE_BASE_SIZE),
+                       Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375]) ]
+    dataset_val = get_dataset(config, data_transform=transforms_val, mode='val')
+
     batch_sampler = paddle.io.DistributedBatchSampler(
         dataset_val, batch_size=config.DATA.BATCH_SIZE_VAL, shuffle=True, drop_last=True)
-    val_loader = paddle.io.DataLoader( dataset_val, batch_sampler=batch_sampler,
+    loader_val = paddle.io.DataLoader( dataset_val, batch_sampler=batch_sampler,
         num_workers=config.DATA.NUM_WORKERS, return_list=True)
-    total_iters = len(val_loader)
+
+    total_iters = len(loader_val)
 
     # build workspace for saving checkpoints
     if not os.path.isdir(config.SAVE_DIR):
@@ -77,7 +83,7 @@ if __name__ == '__main__':
     batch_cost_averager = TimeAverager()
     batch_start = time.time()
     with paddle.no_grad():
-        for iter, (im, label) in enumerate(val_loader):
+        for iter, (im, label) in enumerate(loader_val):
             reader_cost_averager.record(time.time() - batch_start)
             label = label.astype('int64')
             #print("img.shape: {}, label.shape: {}".format(im.shape, label.shape))
@@ -87,7 +93,7 @@ if __name__ == '__main__':
                     model,
                     im,
                     ori_shape=ori_shape,
-                    transforms=config.DATASET.Test_Pipeline,
+                    transforms=transforms_val,
                     scales=scales,
                     flip_horizontal=flip_horizontal,
                     flip_vertical=flip_vertical,
@@ -99,7 +105,7 @@ if __name__ == '__main__':
                     model,
                     im,
                     ori_shape=ori_shape,
-                    transforms=config.DATASET.Test_Pipeline,
+                    transforms=transforms_val,
                     is_slide=True,
                     stride=(320,320),
                     crop_size=config.VAL.CROP_SIZE)

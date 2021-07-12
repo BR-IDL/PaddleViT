@@ -1,5 +1,10 @@
 
-# Segmentation toolkit based on ViT
+# Semantic segmentation toolkit based on Visual Transformers
+
+Semantic segmentation aims at classifying each pixel in an image to a specified semantic category, including objects (e.g., bicycle, car, people) and stuff (e.g., road, bench, sky).
+<div align="center">
+  <img src="figure/ppvit_seg.png" width="700px" />
+</div>
 
 ## Quick start: training and testing models
 

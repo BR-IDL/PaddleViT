@@ -1,7 +1,6 @@
 import os
 from yacs.config import CfgNode as CN
 import yaml
-from src.transforms import *
 
 _C = CN()
 _C.BASE = ['']
@@ -12,15 +11,13 @@ _C.DATA.BATCH_SIZE = 4  #train batch_size for single GPU
 _C.DATA.BATCH_SIZE_VAL = 1 # val batch_size for single GPU
 _C.DATA.DATASET = 'PascalContext' # dataset name
 _C.DATA.DATA_PATH = '/home/ssd3/wutianyi/datasets/pascal_context'
-_C.DATA.IMAGE_SIZE = 512 # input image size 512
+_C.DATA.CROP_SIZE = (480,480) # input_size (training)
 _C.DATA.NUM_CLASSES = 60  # 19 for cityscapes, 60 for Pascal-Context
 _C.DATA.NUM_WORKERS = 0 # number of data loading threads (curren paddle must set to 0)
 
 # model settings
 _C.MODEL = CN()
-_C.MODEL.TYPE = 'SETR'
-_C.MODEL.NAME = 'SETR'
-
+_C.MODEL.NAME = 'SETR_MLA'
 _C.MODEL.ENCODER = CN()
 _C.MODEL.ENCODER.TYPE = 'ViT_MLA'
 _C.MODEL.ENCODER.OUT_INDICES = [5,11,17,23]
@@ -53,7 +50,7 @@ _C.MODEL.MLA.AUXIHEAD = False
 _C.MODEL.MLA.MLAHEAD_ALIGN_CORNERS = False
 
 
-# PUP Decoder setting
+# PUP and Naive Decoder setting
 _C.MODEL.PUP = CN()
 _C.MODEL.PUP.INPUT_CHANNEL = 1024
 _C.MODEL.PUP.NUM_CONV = 4
@@ -61,7 +58,7 @@ _C.MODEL.PUP.NUM_UPSAMPLE_LAYER = 4
 _C.MODEL.PUP.CONV3x3_CONV1x1 = True
 _C.MODEL.PUP.ALIGN_CORNERS = False
 
-# Auxi PUP Decoder setting
+# Auxi PUP and Naive Decoder setting
 _C.MODEL.AUXPUP = CN()
 _C.MODEL.AUXPUP.INPUT_CHANNEL = 1024
 _C.MODEL.AUXPUP.NUM_CONV = 2
@@ -102,6 +99,7 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 # val settings
 _C.VAL = CN()
 _C.VAL.MULTI_SCALES_VAL = False
+_C.VAL.IMAGE_BASE_SIZE = 520 # 520 for pascal context
 _C.VAL.CROP_SIZE = [480,480]
 
 # misc
@@ -114,23 +112,6 @@ _C.VALIDATE_FREQ = 20 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
-
-
-_C.DATASET = CN()
-_C.DATASET.Train_Pipeline = [
-    ResizeStepScaling(min_scale_factor=0.5, max_scale_factor=2.0, scale_step_size= 0.25),
-    RandomPaddingCrop(crop_size=(480,480),im_padding_value=(123.675, 116.28, 103.53),label_padding_value=255),
-    RandomHorizontalFlip(prob=0.5),
-    RandomDistort(brightness_range=0.4, contrast_range=0.4, saturation_range=0.4),
-    #Normalize( mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
-    Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])
-]
-_C.DATASET.Test_Pipeline = [
-    Resize(target_size=520),
-    #Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
-    Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])
-]
-
 
 
 def _update_config_from_file(config, cfg_file):
