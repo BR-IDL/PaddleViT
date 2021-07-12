@@ -29,7 +29,7 @@ class Embeddings(nn.Layer):
     def __init__(self, config, in_channels=3):
         super(Embeddings, self).__init__()
         self.hybrid = config.MODEL.TRANS.HYBRID
-        image_size = (config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)
+        image_size = config.DATA.CROP_SIZE
 
         if self.hybrid:
             #TODO: add resnet model 
@@ -313,4 +313,5 @@ class VisualTransformer(nn.Layer):
         for idx in self.out_indices:
             feats.append(outs[idx])
         return feats 
+        #return outs 
 

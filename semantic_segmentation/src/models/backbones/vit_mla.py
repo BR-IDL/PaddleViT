@@ -29,7 +29,7 @@ class Embeddings(nn.Layer):
     def __init__(self, config, in_channels=3):
         super(Embeddings, self).__init__()
         self.hybrid = config.MODEL.TRANS.HYBRID
-        image_size = (config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)
+        image_size = config.DATA.CROP_SIZE
 
         if self.hybrid:
             #TODO: add resnet model 
@@ -401,8 +401,6 @@ class ViT_MLA(nn.Layer):
         c12 = self.norm_1(outs[self.mla_index[1]])
         c18= self.norm_2(outs[self.mla_index[2]])
         c24 = self.norm_3(outs[self.mla_index[3]])
-
         mla_p2, mla_p3, mla_p4, mla_p5  = self.mla(c6, c12, c18, c24)
-
-        return mla_p2, mla_p3, mla_p4, mla_p5 
+        return [mla_p2, mla_p3, mla_p4, mla_p5]
 

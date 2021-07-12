@@ -40,7 +40,7 @@ class SETR(nn.Layer):
                 self.aux_decoder4 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
                 self.aux_decoder5 = VIT_MLA_AUXIHead(config.MODEL.MLA.MLA_CHANNELS, config.DATA.NUM_CLASSES, config.MODEL.AUX.AUXHEAD_ALIGN_CORNERS) 
 
-        elif self.decoder_type == "VisionTransformerUpHead":
+        elif self.decoder_type == "PUP_VisionTransformerUpHead" or self.decoder_type == "Naive_VisionTransformerUpHead":
             self.decoder = VisionTransformerUpHead(config.MODEL.PUP.INPUT_CHANNEL, config.MODEL.PUP.NUM_CONV, 
                 config.MODEL.PUP.NUM_UPSAMPLE_LAYER, config.MODEL.PUP.CONV3x3_CONV1x1, config.MODEL.PUP.ALIGN_CORNERS)
             self.AuxiHead = config.MODEL.AUX.AUXIHEAD
@@ -51,8 +51,9 @@ class SETR(nn.Layer):
                     config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
                 self.aux_decoder4 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV,
                     config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
-                self.aux_decoder5 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV,
-                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
+                if self.decoder_type == "PUP_VisionTransformerUpHead":
+                    self.aux_decoder5 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV,
+                        config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
 
         self.init__decoder_lr_coef(config)
     
@@ -75,7 +76,8 @@ class SETR(nn.Layer):
             sublayers.append(self.aux_decoder2.sublayers())
             sublayers.append(self.aux_decoder3.sublayers())
             sublayers.append(self.aux_decoder4.sublayers())
-            sublayers.append(self.aux_decoder5.sublayers())
+            if self.decoder_type == "PUP_VisionTransformerUpHead":
+                 sublayers.append(self.aux_decoder5.sublayers())
             print("self.aux_decoders.sublayers(): ", sublayers)
             for sublayer_list in sublayers:
                 for sublayer in sublayer_list:
@@ -89,17 +91,18 @@ class SETR(nn.Layer):
     def forward(self, imgs):
         # imgs.shapes: (B,3,H,W)
         p2, p3, p4, p5 = self.encoder(imgs)
+        preds = []
         if self.decoder_type == "VIT_MLAHead":
              pred = self.decoder(p2, p3, p4, p5)
-        elif self.decoder_type == "VisionTransformerUpHead":
+        elif self.decoder_type == "PUP_VisionTransformerUpHead" or self.decoder_type == "Naive_VisionTransformerUpHead":
              pred = self.decoder(p5)
+        preds.append(pred)
               
         if self.AuxiHead==True:
-            aux_pred2 = self.aux_decoder2(p2)
-            aux_pred3 = self.aux_decoder3(p3)
-            aux_pred4 = self.aux_decoder4(p4)
-            aux_pred5 = self.aux_decoder5(p5)
-        if self.AuxiHead==True:
-            return [pred, aux_pred2, aux_pred3, aux_pred4, aux_pred5]
-        return [pred]
+            preds.append(self.aux_decoder2(p2))
+            preds.append(self.aux_decoder3(p3))
+            preds.append(self.aux_decoder4(p4))
+            if self.decoder_type == "PUP_VisionTransformerUpHead":
+                preds.append(self.aux_decoder5(p5))
+        return preds
 
