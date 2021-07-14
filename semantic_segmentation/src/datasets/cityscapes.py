@@ -1,29 +1,14 @@
-
 import os
 import glob
-
 from src.datasets import Dataset
 from src.transforms import Compose
 
 
 class Cityscapes(Dataset):
-    """
-    Cityscapes dataset `https://www.cityscapes-dataset.com/`.
-    The folder structure is as follow:
-
-        cityscapes
-        |
-        |--leftImg8bit
-        |  |--train
-        |  |--val
-        |  |--test
-        |
-        |--gtFine
-        |  |--train
-        |  |--val
-        |  |--test
-
-    Make sure there are **labelTrainIds.png in gtFine directory. If not, please run the conver_cityscapes.py in tools.
+    """Cityscapes 
+    
+    It contains a diverse set of stereo video sequences recorded in street scenes from 50 different cities, with high quality pixel-level annotations of 5000 frames 
+    in addition to a larger set of 20000 weakly annotated frames.
 
     Args:
         transforms (list): Transforms for image.
@@ -42,22 +27,12 @@ class Cityscapes(Dataset):
         self.num_classes = self.num_classes
         self.ignore_index = 255
 
-        if mode not in ['train', 'val', 'test']:
-            raise ValueError(
-                "mode should be 'train', 'val' or 'test', but got {}.".format(
-                    mode))
-
-        if self.transforms is None:
-            raise ValueError("`transforms` is necessary, but it is None.")
-
         img_dir = os.path.join(self.dataset_root, 'leftImg8bit')
         label_dir = os.path.join(self.dataset_root, 'gtFine')
         if self.dataset_root is None or not os.path.isdir(
                 self.dataset_root) or not os.path.isdir(
                     img_dir) or not os.path.isdir(label_dir):
-            raise ValueError(
-                "The dataset is not Found or the folder structure is nonconfoumance."
-            )
+            raise ValueError("The dataset is not Found or the folder structure is nonconfoumance.")
 
         label_files = sorted(
             glob.glob(
@@ -69,3 +44,5 @@ class Cityscapes(Dataset):
         self.file_list = [[
             img_path, label_path
         ] for img_path, label_path in zip(img_files, label_files)]
+
+        print("mode: {}, file_nums: {}".format(mode, len(self.file_list)))

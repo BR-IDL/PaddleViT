@@ -86,7 +86,7 @@ if __name__ == '__main__':
         for iter, (im, label) in enumerate(loader_val):
             reader_cost_averager.record(time.time() - batch_start)
             label = label.astype('int64')
-            #print("img.shape: {}, label.shape: {}".format(im.shape, label.shape))
+            print("img.shape: {}, label.shape: {}".format(im.shape, label.shape))
             ori_shape = label.shape[-2:]
             if config.VAL.MULTI_SCALES_VAL:
                 pred = infer.aug_inference(
@@ -97,9 +97,9 @@ if __name__ == '__main__':
                     scales=scales,
                     flip_horizontal=flip_horizontal,
                     flip_vertical=flip_vertical,
-                    is_slide=is_slide,
-                    stride=stride,
-                    crop_size=crop_size)
+                    is_slide=True,
+                    stride=config.VAL.STRIDE,
+                    crop_size=config.VAL.CROP_SIZE)
             else:
                 pred = infer.inference(
                     model,
@@ -107,8 +107,9 @@ if __name__ == '__main__':
                     ori_shape=ori_shape,
                     transforms=transforms_val,
                     is_slide=True,
-                    stride=(320,320),
-                    crop_size=config.VAL.CROP_SIZE)
+                    stride=config.VAL.STRIDE_SIZE,
+                    crop_size=config.VAL.CROP_SIZE,
+                    num_classes=config.DATA.NUM_CLASSES)
 
             intersect_area, pred_area, label_area = metrics.calculate_area(
                 pred,

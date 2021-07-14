@@ -124,7 +124,7 @@ def main():
                 logits_list = ddp_model(images)
             else:
                 logits_list = model(images)
-            loss_list = multi_cross_entropy_loss(logits_list, labels, num_classes= config.DATA.NUM_CLASSES)
+            loss_list = multi_cross_entropy_loss(logits_list, labels, num_classes = config.DATA.NUM_CLASSES)
             loss = sum(loss_list)
             loss.backward()
             optimizer.step()

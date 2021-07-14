@@ -101,6 +101,7 @@ _C.VAL = CN()
 _C.VAL.MULTI_SCALES_VAL = False
 _C.VAL.IMAGE_BASE_SIZE = 520 # 520 for pascal context
 _C.VAL.CROP_SIZE = [480,480]
+_C.VAL.STRIDE_SIZE = [320,320]
 
 # misc
 _C.SAVE_DIR = "./output"

@@ -13,7 +13,14 @@ def get_dataset(config, data_transform, mode='train'):
         elif mode == 'val':
             dataset = PascalContext(transforms=data_transform, 
                 dataset_root=config.DATA.DATA_PATH,num_classes=config.DATA.NUM_CLASSES, mode='val')
+    elif config.DATA.DATASET == "Cityscapes":
+        if mode == 'train':
+            dataset = Cityscapes(transforms=data_transform,
+                dataset_root=config.DATA.DATA_PATH, num_classes=config.DATA.NUM_CLASSES, mode='train')
+        elif mode == 'val':
+            dataset =  Cityscapes(transforms=data_transform,
+                dataset_root=config.DATA.DATA_PATH, num_classes=config.DATA.NUM_CLASSES, mode='val')
     else:
-        raise NotImplementedError("Only PascalContext are supported now")
+        raise NotImplementedError("{} dataset is not supported".format(config.DATA.DATASET))
 
     return dataset

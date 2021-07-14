@@ -8,95 +8,6 @@ import cv2
 import paddle
 import paddle.nn.functional as F
 
-
-def get_reverse_list(ori_shape, transforms):
-    """
-    get reverse list of transform.
-
-    Args:
-        ori_shape (list): Origin shape of image.
-        transforms (list): List of transform.
-
-    Returns:
-        list: List of tuple, there are two format:
-            ('resize', (h, w)) The image shape before resize,
-            ('padding', (h, w)) The image shape before padding.
-    """
-    reverse_list = []
-    h, w = ori_shape[0], ori_shape[1]
-    for op in transforms:
-        if op.__class__.__name__ in ['Resize']:
-            reverse_list.append(('resize', (h, w)))
-            if isinstance(op.target_size, int):
-                h= op.target_size
-                w= op.target_size
-            else:
-                h, w = op.target_size[0], op.target_size[1]
-
-        if op.__class__.__name__ in ['ResizeByLong']:
-            reverse_list.append(('resize', (h, w)))
-            long_edge = max(h, w)
-            short_edge = min(h, w)
-            short_edge = int(round(short_edge * op.long_size / long_edge))
-            long_edge = op.long_size
-            if h > w:
-                h = long_edge
-                w = short_edge
-            else:
-                w = long_edge
-                h = short_edge
-        if op.__class__.__name__ in ['Padding']:
-            reverse_list.append(('padding', (h, w)))
-            w, h = op.target_size[0], op.target_size[1]
-        if op.__class__.__name__ in ['PaddingByAspectRatio']:
-            reverse_list.append(('padding', (h, w)))
-            ratio = w / h
-            if ratio == op.aspect_ratio:
-                pass
-            elif ratio > op.aspect_ratio:
-                h = int(w / op.aspect_ratio)
-            else:
-                w = int(h * op.aspect_ratio)
-        if op.__class__.__name__ in ['LimitLong']:
-            long_edge = max(h, w)
-            short_edge = min(h, w)
-            if ((op.max_long is not None) and (long_edge > op.max_long)):
-                reverse_list.append(('resize', (h, w)))
-                long_edge = op.max_long
-                short_edge = int(round(short_edge * op.max_long / long_edge))
-            elif ((op.min_long is not None) and (long_edge < op.min_long)):
-                reverse_list.append(('resize', (h, w)))
-                long_edge = op.min_long
-                short_edge = int(round(short_edge * op.min_long / long_edge))
-            if h > w:
-                h = long_edge
-                w = short_edge
-            else:
-                w = long_edge
-                h = short_edge
-    return reverse_list
-
-
-def reverse_transform(pred, ori_shape, transforms, mode='nearest'):
-    """recover pred to origin shape"""
-    reverse_list = get_reverse_list(ori_shape, transforms)
-    for item in reverse_list[::-1]:
-        if item[0] == 'resize':
-            h, w = item[1][0], item[1][1]
-            if paddle.get_device() == 'cpu':
-                pred = paddle.cast(pred, 'uint8')
-                pred = F.interpolate(pred, (h, w), mode=mode)
-                pred = paddle.cast(pred, 'int32')
-            else:
-                pred = F.interpolate(pred, (h, w), mode=mode)
-        elif item[0] == 'padding':
-            h, w = item[1][0], item[1][1]
-            pred = pred[:, :, 0:h, 0:w]
-        else:
-            raise Exception("Unexpected info '{}' in im_info".format(item[0]))
-    return pred
-
-
 def flip_combination(flip_horizontal=False, flip_vertical=False):
     """
     Get flip combination.
@@ -129,7 +40,7 @@ def tensor_flip(x, flip):
     return x
 
 
-def slide_inference(model, im, crop_size, stride):
+def slide_inference(model, im, crop_size, stride, num_classes=60):
     """
     Infer by sliding window.
 
@@ -153,7 +64,7 @@ def slide_inference(model, im, crop_size, stride):
     cols = 1 if w_im <= w_crop else cols
     # TODO 'Tensor' object does not support item assignment. If support, use tensor to calculation.
     count = np.zeros([1, 1, h_im, w_im])
-    final_logit = paddle.zeros([1, 60, h_im, w_im], dtype='float32')
+    final_logit = paddle.zeros([1, num_classes, h_im, w_im], dtype='float32')
     #print("h_im= {}, w_im={}".format(h_im, w_im))
     for r in range(rows):
         for c in range(cols):
@@ -185,7 +96,8 @@ def inference(model,
               transforms=None,
               is_slide=False,
               stride=None,
-              crop_size=None):
+              crop_size=None,
+              num_classes=60):
     """
     Inference for image.
 
@@ -210,16 +122,12 @@ def inference(model,
                 .format(type(logits)))
         logit = logits[0]
     else:
-        logit = slide_inference(model, im, crop_size=crop_size, stride=stride)
+        logit = slide_inference(model, im, crop_size=crop_size, stride=stride, num_classes=num_classes)
     if ori_shape is not None:
 
-        # method 1
         logit = F.interpolate(logit, ori_shape, mode='bilinear', align_corners = False)  # resize to original shape
         logit = F.softmax(logit, axis=1)
         pred = paddle.argmax(logit, axis=1, keepdim=True, dtype='int32')
-        # method 2
-        #pred = paddle.argmax(logit, axis=1, keepdim=True, dtype='int32')
-        #pred = reverse_transform(pred, ori_shape, transforms)
         return pred
     else:
         return logit

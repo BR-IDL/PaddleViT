@@ -11,7 +11,7 @@ MODEL:
         TYPE: 'ViT'
         OUT_INDICES: [9, 14, 19, 23]   
     PRETRAINED: './pretrain_models/backbones/vit_large_patch16_224.pdparams'
-    DECODER_TYPE: 'VisionTransformerUpHead'
+    DECODER_TYPE: 'PUP_VisionTransformerUpHead'
     PUP:
        INPUT_CHANNEL: 1024
        NUM_CONV: 4
@@ -49,8 +49,9 @@ TRAIN:
         MOMENTUM: 0.9
 VAL:
     MULTI_SCALES_VAL: False
-    CROP_SIZE: [480,480]
     IMAGE_BASE_SIZE: 520
+    CROP_SIZE: [480,480]
+    STRIDE_SIZE: [320,320]
 SAVE_DIR: "./output/SETR_PUP_Large_480x480_80k_pascal_context_bs_16"
 
         

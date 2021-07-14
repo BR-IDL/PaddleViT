@@ -1,10 +1,10 @@
 DATA:
     BATCH_SIZE: 2  # per GPU [total bs is set to 8 or 16]
     BATCH_SIZE_VAL: 1  # per GPU
-    DATASET: 'PascalContext' # dataset name
-    DATA_PATH: '/home/ssd3/wutianyi/datasets/pascal_context'
-    CROP_SIZE: (480,480)  # input_size (training)
-    NUM_CLASSES: 60
+    DATASET: 'Cityscapes' # dataset name
+    DATA_PATH: '/home/ssd3/wutianyi/datasets/cityscapes'
+    CROP_SIZE: (768,768)  # input_size (training)
+    NUM_CLASSES: 19
 MODEL:
     NAME: 'SETR_Naive'
     ENCODER:
@@ -34,7 +34,7 @@ MODEL:
     AUX:
        AUXIHEAD: True
 TRAIN:
-    BASE_LR: 0.001
+    BASE_LR: 0.01
     END_LR: 1e-4
     DECODER_LR_COEF: 10.0
     GRAD_CLIP: 1.0
@@ -49,10 +49,10 @@ TRAIN:
         MOMENTUM: 0.9
 VAL:
     MULTI_SCALES_VAL: False
-    IMAGE_BASE_SIZE: 520
-    CROP_SIZE: [480,480]
-    STRIDE_SIZE: [320,320]
-SAVE_DIR: "./output/SETR_Naive_Large_480x480_80k_pascal_context_bs_16"
+    IMAGE_BASE_SIZE: 1024
+    CROP_SIZE: [768,768]
+    STRIDE_SIZE: [512,512]
+SAVE_DIR: "./output/SETR_Naive_Large_768x768_80k_cityscapes_bs_8"
 
         
 

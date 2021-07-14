@@ -9,9 +9,9 @@ from src.transforms import Compose
 class PascalContext(Dataset):
     """PascalContext dataset.
 
-    In segmentation map annotation for PascalContext, 0 stands for background,
-    which is included in 60 categories.  The ``img_suffix`` is fixed to '.jpg' and ``seg_map_suffix`` is
-    fixed to '.png'.
+    This dataset is a set of additional annotations for PASCAL VOC 2010. It goes beyond the original PASCAL semantic segmentation task 
+    by providing annotations for the whole scene. The statistics section has a full list of 400+ labels. Here, we choose 59 foreground
+    and 1 background class for training segmentation models. (The ``img`` is fixed to '.jpg' and ``label`` is fixed to '.png'.)
 
     Args:
         transforms (list): Transforms for image.
@@ -47,8 +47,8 @@ class PascalContext(Dataset):
         if mode == 'train':
             file_path = os.path.join(image_set_dir, 'train.txt')
         elif mode == 'val':
-            file_path = os.path.join(image_set_dir, 'val.txt')
-            #file_path = os.path.join(image_set_dir, 'val_mini.txt')
+            #file_path = os.path.join(image_set_dir, 'val.txt')
+            file_path = os.path.join(image_set_dir, 'val_mini.txt')
         elif mode == 'trainval':
             file_path = os.path.join(image_set_dir, 'trainval.txt')
         print("file_path: ", file_path)

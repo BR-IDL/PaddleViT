@@ -42,18 +42,18 @@ class SETR(nn.Layer):
 
         elif self.decoder_type == "PUP_VisionTransformerUpHead" or self.decoder_type == "Naive_VisionTransformerUpHead":
             self.decoder = VisionTransformerUpHead(config.MODEL.PUP.INPUT_CHANNEL, config.MODEL.PUP.NUM_CONV, 
-                config.MODEL.PUP.NUM_UPSAMPLE_LAYER, config.MODEL.PUP.CONV3x3_CONV1x1, config.MODEL.PUP.ALIGN_CORNERS)
+                config.MODEL.PUP.NUM_UPSAMPLE_LAYER, config.MODEL.PUP.CONV3x3_CONV1x1, config.MODEL.PUP.ALIGN_CORNERS, config.DATA.NUM_CLASSES)
             self.AuxiHead = config.MODEL.AUX.AUXIHEAD
             if self.AuxiHead==True:
                 self.aux_decoder2 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV, 
-                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
+                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS, config.DATA.NUM_CLASSES)
                 self.aux_decoder3 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV,  
-                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
+                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS, config.DATA.NUM_CLASSES)
                 self.aux_decoder4 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV,
-                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
+                    config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS, config.DATA.NUM_CLASSES)
                 if self.decoder_type == "PUP_VisionTransformerUpHead":
                     self.aux_decoder5 = VisionTransformerUpHead(config.MODEL.AUXPUP.INPUT_CHANNEL, config.MODEL.AUXPUP.NUM_CONV,
-                        config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS)
+                        config.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER, config.MODEL.AUXPUP.CONV3x3_CONV1x1, config.MODEL.AUXPUP.ALIGN_CORNERS, config.DATA.NUM_CLASSES)
 
         self.init__decoder_lr_coef(config)
     

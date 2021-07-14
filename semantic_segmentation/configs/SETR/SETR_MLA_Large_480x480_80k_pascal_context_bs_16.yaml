@@ -42,8 +42,9 @@ TRAIN:
         MOMENTUM: 0.9
 VAL:
     MULTI_SCALES_VAL: False
-    CROP_SIZE: [480,480]
     IMAGE_BASE_SIZE: 520
+    CROP_SIZE: [480,480]
+    STRIDE_SIZE: [320,320]
 
 SAVE_DIR: "./output/SETR_MLA_Large_480x480_80k_pascal_context_bs_16"
 
