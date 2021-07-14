@@ -1,0 +1,15 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 1.0
+MODEL:
+    TYPE: cait
+    NAME: cait_xxs24_224
+    TRANS:
+        PATCH_SIZE: 16
+        EMBED_DIM: 192
+        DEPTH: 24
+        NUM_HEADS: 4
+        MLP_RATIO: 4.0
+        QKV_BIAS: True
+        INIT_VALUES: 1e-5
+        DEPTH_TOKEN_ONLY: 2

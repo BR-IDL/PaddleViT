@@ -15,14 +15,14 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 5. ResMLP ([ResMLP: Feedforward networks for image classification with data-efficient training](https://arxiv.org/abs/2105.03404))
 6. gMLP ([Pay Attention to MLPs](https://arxiv.org/abs/2105.08050))
 7. VOLO ([VOLO: Vision Outlooker for Visual Recognition](https://arxiv.org/abs/2106.13112))
+8. CaiT ([Going deeper with Image Transformers](https://arxiv.org/abs/2103.17239))
 
 #### Coming Soon: ####
 1. DeiT ([Training data-efficient image transformers & distillation through attention](https://arxiv.org/abs/2012.12877))
 2. T2T-ViT ([Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet](https://arxiv.org/abs/2101.11986))
-3. CaiT ([Going deeper with Image Transformers](https://arxiv.org/abs/2103.17239))
-4. CrossViT ([CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899))
-5. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
-6. Refined-ViT ([Refiner: Refining Self-attention for Vision Transformers](https://arxiv.org/pdf/2106.03714.pdf))
+3. CrossViT ([CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899))
+4. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
+5. Refined-ViT ([Refiner: Refining Self-attention for Vision Transformers](https://arxiv.org/pdf/2106.03714.pdf))
 
 
 ### Detection ###
@@ -58,20 +58,23 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 ### Image Classification ###
 | Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Model        |
 |--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| vit_base_patch16_224           | 81.66 | 96.09 | 224        | 0.875     | bilinear      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kUQo1hhWZA0A1d7hNMvIYw)(nxhy) |
+| vit_base_patch16_224           | 81.66 | 96.09 | 224        | 0.875    | bilinear      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kUQo1hhWZA0A1d7hNMvIYw)(nxhy) |
 | vit_base_patch16_384           | 84.20 | 97.22 | 384        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1kWKaAgneDx0QsECxtf7EnUdUZej6vSFT/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1MW8Osbe4M70IPDNKygP9kQ)(8ack) |
-| vit_large_patch16_224          | 83.00 | 96.47 | 224        | 0.875     | bicubic      | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Jc8wrIydAsc-i2gL4DjztA)(g7ij) |
-| swin_base_patch4_window7_224   | 85.27 | 97.56 | 224        | 0.9     | bicubic      | [google](https://drive.google.com/file/d/1yjZFJoJeDFIfsxh9x10XGqCb8s2-Gtbp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1j8Air9uFudq71S4FhogpWA)(ps9m) |
-| swin_base_patch4_window12_384  | 86.43 | 98.07 | 384        | 1.0      | bicubic      | [google](https://drive.google.com/file/d/1ThmGsTDZ8217-Zuo9o5EGLfzw8AI6N0w/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ZrTDMeKtr2Bm5uB63gxxQA)(ef9t) |
+| vit_large_patch16_224          | 83.00 | 96.47 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Jc8wrIydAsc-i2gL4DjztA)(g7ij) |
+| swin_base_patch4_window7_224   | 85.27 | 97.56 | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1yjZFJoJeDFIfsxh9x10XGqCb8s2-Gtbp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1j8Air9uFudq71S4FhogpWA)(ps9m) |
+| swin_base_patch4_window12_384  | 86.43 | 98.07 | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1ThmGsTDZ8217-Zuo9o5EGLfzw8AI6N0w/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ZrTDMeKtr2Bm5uB63gxxQA)(ef9t) |
 | swin_large_patch4_window12_384 | 87.14 | 98.23 | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1f30Mt80g5yLfEiViT4-kMLpyDjTUTV5B/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RwKqdlR5N6BSZIptai7LrA)(5shn) |
-| pvtv2_tiny_224                 | 70.47 | 90.16 | 224        | 0.875       | bicubic       | [google](https://drive.google.com/file/d/13xboSs9W3rvFM-j5JK4MeXi-5IFyyo8O/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YHT8oDEtYgZDiDLss__YnA)(575w) |
-| pvtv2_medium_224               | 82.02 | 95.99 | 224        | 0.875       | bicubic       | [google](https://drive.google.com/file/d/1B2ETlmmGqkxEIHkNg1Jq3h8NhJpUg9OZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1XZC5YBBTCK7yUOXgDFhrSg)(ezfc) |
-| pvtv2_large_224                | 83.77 | 96.61 | 224        | 0.875       | bicubic       | [google](https://drive.google.com/file/d/1QaRBbmKq2aPYLEKMxTUo4M1-8KdLzKR7/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1vonKDOLvrIGjrf2BGh5ULA)(fbc4) |
-| mixer_b16_224                  | 76.60 | 92.23  | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
-| resmlp_24_224                  | 79.38 | 94.55 | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/15A5q1XSXBz-y1AcXhy_XaDymLLj2s2Tn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nLAvyG53REdwYNCLmp4yBA)(jdcx) |
-| gmlp_s16_224                   | 79.64 | 94.63 | 224       | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1TLypFly7aW0oXzEHfeDSz2Va4RHPRqe5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13UUz1eGIKyqyhtwedKLUMA)(bcth) |
-| volo_d5_224_86.10              | 86.08 | 97.58 | 224       | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1GBOBPCBJYZfWybK-Xp0Otn0N4NXpct0G/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1t9gPLRAOkdXaG55fVADQZg)(td49) |
-| volo_d5_512_87.07              | 87.05 | 97.97 | 512       | 1.15      | bicubic       | [google](https://drive.google.com/file/d/1Phf_wHsjRZ1QrZ8oFrqsYuhDr4TXrVkc/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1X-WjpNqvWva2M977jgHosg)(irik) |
+| pvtv2_tiny_224                 | 70.47 | 90.16 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/13xboSs9W3rvFM-j5JK4MeXi-5IFyyo8O/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YHT8oDEtYgZDiDLss__YnA)(575w) |
+| pvtv2_medium_224               | 82.02 | 95.99 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1B2ETlmmGqkxEIHkNg1Jq3h8NhJpUg9OZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1XZC5YBBTCK7yUOXgDFhrSg)(ezfc) |
+| pvtv2_large_224                | 83.77 | 96.61 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1QaRBbmKq2aPYLEKMxTUo4M1-8KdLzKR7/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1vonKDOLvrIGjrf2BGh5ULA)(fbc4) |
+| mixer_b16_224                  | 76.60 | 92.23 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
+| resmlp_24_224                  | 79.38 | 94.55 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/15A5q1XSXBz-y1AcXhy_XaDymLLj2s2Tn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nLAvyG53REdwYNCLmp4yBA)(jdcx) |
+| gmlp_s16_224                   | 79.64 | 94.63 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1TLypFly7aW0oXzEHfeDSz2Va4RHPRqe5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13UUz1eGIKyqyhtwedKLUMA)(bcth) |
+| volo_d5_224_86.10              | 86.08 | 97.58 | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1GBOBPCBJYZfWybK-Xp0Otn0N4NXpct0G/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1t9gPLRAOkdXaG55fVADQZg)(td49) |
+| volo_d5_512_87.07              | 87.05 | 97.97 | 512        | 1.15     | bicubic       | [google](https://drive.google.com/file/d/1Phf_wHsjRZ1QrZ8oFrqsYuhDr4TXrVkc/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1X-WjpNqvWva2M977jgHosg)(irik) |
+| cait_xxs24_224                 | 78.38 | 94.32 | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1LKsQUr824oY4E42QeUEaFt41I8xHNseR/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YIaBLopKIK5_p7NlgWHpGA)(j9m8) |
+| cait_s24_384                   | 85.05 | 97.34 | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1GU0esukDvMg3u40FZB_5GiB6qpShjvGh/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1qvhNckJjcEf5HyVn8LuEeA)(qb86) |
+| cait_m48_448                   | -     | -     | 448        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1lJSP__dVERBNFnp7im-1xM3s_lqEe82-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/179MA3MkG2qxFle0K944Gkg)(imk5) |
 
 
 ### Object Detection ###
