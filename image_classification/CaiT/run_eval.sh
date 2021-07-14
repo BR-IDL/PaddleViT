@@ -5,4 +5,4 @@ python main_single_gpu.py \
 -batch_size=4 \
 -data_path='/dataset/imagenet' \
 -eval \
--pretrained='./cait_xxs24_224' \
+-pretrained='./cait_xxs24_224'
