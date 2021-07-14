@@ -137,6 +137,10 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE_EVAL = args.batch_size
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
+    if args.resume:
+        config.MODEL.RESUME = args.resume
+    if args.last_epoch:
+        config.MODEL.LAST_EPOCH = args.last_epoch
 
     #config.freeze()
     return config

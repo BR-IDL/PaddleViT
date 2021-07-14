@@ -33,34 +33,41 @@ _C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
-_C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 4 # number of data loading threads 
+_C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
+_C.DATA.NUM_WORKERS = 2 # number of data loading threads 
 
 # model settings
 _C.MODEL = CN()
-_C.MODEL.TYPE = 'ResMLP'
-_C.MODEL.NAME = 'ResMLP'
+_C.MODEL.TYPE = 'CaiT'
+_C.MODEL.NAME = 'CaiT'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.1
-_C.MODEL.DROPPATH = 0.0
+_C.MODEL.ATTENTION_DROPOUT = 0.0
 
 # transformer settings
-_C.MODEL.MIXER = CN()
-_C.MODEL.MIXER.PATCH_SIZE = 16
-_C.MODEL.MIXER.HIDDEN_SIZE = 384
-_C.MODEL.MIXER.NUM_LAYERS = 24
+_C.MODEL.TRANS = CN()
+_C.MODEL.TRANS.PATCH_SIZE = 16
+_C.MODEL.TRANS.IN_CHANNELS = 3
+_C.MODEL.TRANS.EMBED_DIM = 192
+_C.MODEL.TRANS.DEPTH = 24
+_C.MODEL.TRANS.DEPTH_TOKEN_ONLY = 2
+_C.MODEL.TRANS.MLP_RATIO = 4.0
+_C.MODEL.TRANS.NUM_HEADS = 4
+_C.MODEL.TRANS.QKV_BIAS = True
+_C.MODEL.TRANS.INIT_VALUES = 1e-5
+
 
 # training settings
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 300
 _C.TRAIN.WARMUP_EPOCHS = 3 #34 # ~ 10k steps for 4096 batch size
-_C.TRAIN.WEIGHT_DECAY = 0.01 #0.3 # 0.0 for finetune
+_C.TRAIN.WEIGHT_DECAY = 0.05 #0.3 # 0.0 for finetune
 _C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
 _C.TRAIN.WARMUP_START_LR = 1e-6 #0.0
-_C.TRAIN.END_LR = 1e-5
+_C.TRAIN.END_LR = 5e-4
 _C.TRAIN.GRAD_CLIP = 1.0
 _C.TRAIN.ACCUM_ITER = 2 #1
 
@@ -79,13 +86,13 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 20 # freq to save chpt
-_C.REPORT_FREQ = 50 # freq to logging info
-_C.VALIDATE_FREQ = 20 # freq to do validation
+_C.SAVE_FREQ = 5 # freq to save chpt
+_C.REPORT_FREQ = 100 # freq to logging info
+_C.VALIDATE_FREQ = 100 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
-_C.NGPUS = 1
+_C.NGPUS = -1
 
 
 def _update_config_from_file(config, cfg_file):
@@ -129,7 +136,7 @@ def update_config(config, args):
     if args.resume:
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
-        config.MODEL.LAST_EPOCH = args.last_epoch
+        config.TRAIN.LAST_EPOCH = args.last_epoch
 
     #config.freeze()
     return config

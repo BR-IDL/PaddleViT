@@ -40,6 +40,8 @@ parser.add_argument('-image_size', type=int, default=None)
 parser.add_argument('-data_path', type=str, default=None)
 parser.add_argument('-ngpus', type=int, default=None)
 parser.add_argument('-pretrained', type=str, default=None)
+parser.add_argument('-resume', type=str, default=None)
+parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
 args = parser.parse_args()
 
@@ -261,7 +263,7 @@ def main():
         model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
-        optimizer.set_dict(opt_state)
+        optimizer.set_state_dict(opt_state)
         logger.info(
             "----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
     # 7. Validation
