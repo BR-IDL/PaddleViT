@@ -1,6 +1,4 @@
-
 import os
-
 from PIL import Image
 from src.datasets import Dataset
 from src.transforms import Compose
@@ -17,7 +15,7 @@ class PascalContext(Dataset):
         transforms (list): Transforms for image.
         dataset_root (str): The dataset directory. Default: None
         mode (str): Which part of dataset to use. it is one of ('train', 'trainval', 'context', 'val').
-            If you want to set mode to 'context', please make sure the dataset have been augmented. Default: 'train'.
+        num_classes (int): the number of classes
     """
 
     def __init__(self, transforms=None, dataset_root=None, mode='train', num_classes=60):

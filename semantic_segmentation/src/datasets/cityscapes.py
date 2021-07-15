@@ -14,6 +14,7 @@ class Cityscapes(Dataset):
         transforms (list): Transforms for image.
         dataset_root (str): Cityscapes dataset directory.
         mode (str, optional): Which part of dataset to use. it is one of ('train', 'val', 'test'). Default: 'train'.
+        num_classes (int): the number of classes
     """
 
     def __init__(self, transforms, dataset_root, mode='train', num_classes=19):
