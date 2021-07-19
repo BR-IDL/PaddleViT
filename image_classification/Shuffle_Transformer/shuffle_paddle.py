@@ -13,13 +13,7 @@ class MLP(nn.Layer):
     Describe:
         A Feed Forward Network, which use Conv replace the Linear.
     '''
-    def __init__(self,
-                 in_feature,
-                 hidden_features=None,
-                 out_features=None,
-                 act_layer=nn.ReLU6,
-                 drop=0.,
-                 stride=False):
+    def __init__(self, in_feature, hidden_features=None, out_features=None, drop=0.):
         '''
         Args:
             in_feature:       The MLP's input feature dim.
@@ -27,24 +21,22 @@ class MLP(nn.Layer):
             out_features:     The MLP's output feature dim.
             act_layer:        The act function of Conv2D.
             drop:             The drop rate of dropout.
-            stride:           Emmmmmmm, what the fuck...
         '''
         super().__init__()
-        self.stride = stride
         out_feature = out_features or in_feature
         hid_feature = hidden_features or in_feature
         self.fc1    = nn.Conv2D(in_feature, hid_feature, 1, 1, 0)
-        self.act    = act_layer()
+        self.act    = nn.ReLU6()
         self.fc2    = nn.Conv2D(hid_feature, out_feature, 1, 1, 0)
         self.drop   = nn.Dropout(drop)
 
-    def forward(self,x):
-        x = self.fc1(x)
-        x = self.act(x)
-        x = self.drop(x)
-        x = self.fc2(x)
-        x = self.drop(x)
-        return x
+    def forward(self, inputs):
+        temp = self.fc1(inputs)
+        temp = self.act(temp)
+        temp = self.drop(temp)
+        temp = self.fc2(temp)
+        res  = self.drop(temp)
+        return res
 
 
 
@@ -58,7 +50,6 @@ class Attention(nn.Layer):
                  num_heads,
                  window_size=1,
                  shuffle=False,
-                 qkv_bias=False,
                  qk_scale=None,
                  attn_drop=0.,
                  proj_drop=0.,
@@ -69,7 +60,6 @@ class Attention(nn.Layer):
             num_heads:              The head_number of Attention modules.
             windows_size:           The window size of Attention modules.
             shuffle:                Whether this modules will shuffle the output.
-            qkv_bias:               Whether this modules's q,k,v need the bias.
             qk_scale:               Emmmmmm, what the fucking shit.
             attn_drop:              The drop rate of attention modules.
             proj_drop:              The drop rate of projection modules.
@@ -117,43 +107,52 @@ class Attention(nn.Layer):
             This function used to replace the einops.
             rearrange(qkv, 'b (qkv h d) (ws1 hh) (ws2 ww) -> qkv (b hh ww) h (ws1 ws2) d')
         '''
-        b0, c0, h0, w0 = tensor.shape
+        #b0, c0, h0, w0 = tensor.shape
+        origin_b, origin_c, origin_h, origin_w = tensor.shape
         if self.shuffle:
             # reshape the tensor from
             # b,(qkv h d),(ws1 hh),(ws2 ww) --> b, qkv, h, d, ws1, hh, ws2, ww
             tensor         = paddle.reshape(tensor,
-                                            shape=[b0,
+                                            shape=[origin_b,
                                                    3,
                                                    self.num_heads,
-                                                   c0 // (3 * self.num_heads),
+                                                   origin_c // (3 * self.num_heads),
                                                    self.ws,
-                                                   h0 // self.ws,
+                                                   origin_h // self.ws,
                                                    self.ws,
-                                                   w0 // self.ws])
-            b, qkv, h, d, ws1, hh, ws2, ww = tensor.shape
+                                                   origin_w // self.ws])
+            div_b, _, div_h, div_d, div_ws1, div_hh, div_ws2, div_ww = tensor.shape
             # transpose the tensor to qkv,b,hh,ww,h,ws1,ws2,d
             tensor         = paddle.transpose(tensor, perm=[1, 0, 5, 7, 2, 4, 6, 3])
             # reshape the tensor to qkv,(b hh ww),h,(ws1 ws2),d
-            tensor         = paddle.reshape(tensor, shape=[3, (b * hh * ww), h, (ws1 * ws2), d])
+            tensor         = paddle.reshape(tensor, shape=[3,
+                                                           (div_b * div_hh * div_ww),
+                                                           div_h,
+                                                           (div_ws1 * div_ws2),
+                                                           div_d])
         else:
             # reshape the tensor from b,
             # (qkv h d),(ws1 hh),(ws2 ww) --> b, qkv, h, d, hh, ws1, ww, ws2
             tensor         = paddle.reshape(tensor,
-                                            shape=[b0,
+                                            shape=[origin_b,
                                                    3,
                                                    self.num_heads,
-                                                   c0 // (3 * self.num_heads),
-                                                   h0 // self.ws,
+                                                   origin_c // (3 * self.num_heads),
+                                                   origin_h // self.ws,
                                                    self.ws,
-                                                   w0 // self.ws,
+                                                   origin_w // self.ws,
                                                    self.ws])
-            b, qkv, h, d, hh, ws1, ww, ws2 = tensor.shape
+            div_b, _, div_h, div_d, div_hh, div_ws1, div_ww, div_ws2 = tensor.shape
             # transpose the tensor to qkv,b,hh,ww,h,ws1,ws2,d
             tensor         = paddle.transpose(tensor, perm=[1, 0, 4, 6, 2, 5, 7, 3])
             # reshape the tensor to qkv,(b hh ww),h,(ws1 ws2),d
-            tensor         = paddle.reshape(tensor, shape=[3, (b * hh * ww), h, (ws1 * ws2), d])
-        q, k, v        = paddle.unbind(tensor, axis=0)
-        return q, k, v
+            tensor         = paddle.reshape(tensor, shape=[3,
+                                                           (div_b * div_hh * div_ww),
+                                                           div_h,
+                                                           (div_ws1 * div_ws2),
+                                                           div_d])
+        query, key, value  = paddle.unbind(tensor, axis=0)
+        return query, key, value
 
     def reshape_and_transpose_back(self, tensor, origin_shape):
         '''
@@ -161,34 +160,42 @@ class Attention(nn.Layer):
             This function used to replace the einops.
             Rearrange(out, '(b hh ww) h (ws1 ws2) d -> b (h d) (ws1 hh) (ws2 ww)')
         '''
-        b0, c0, h0, w0 = origin_shape
+        origin_b, origin_c, origin_h, origin_w = origin_shape
         if self.shuffle:
             # reshape the tensor to b, hh, ww, h, ws1, ws2, d
             tensor     = paddle.reshape(tensor,
-                                        shape=[b0,
-                                               h0 // self.ws,
-                                               w0 // self.ws,
+                                        shape=[origin_b,
+                                               origin_h // self.ws,
+                                               origin_w // self.ws,
                                                self.num_heads,
                                                self.ws, self.ws,
-                                               c0 // self.num_heads])
-            b, hh, ww, h, ws1, ws2, d = tensor.shape
+                                               origin_c // self.num_heads])
+            div_b, div_hh, div_ww, div_h, div_ws1, div_ws2, div_d = tensor.shape
             # reshape the tensor to b, h, d, ws1, hh, ws2, ww
             tensor     = paddle.transpose(tensor, perm=[0, 3, 6, 4, 1, 5, 2])
-            tensor     = paddle.reshape(tensor, shape=[b, (h * d), (ws1 * hh), (ws2 * ww)])
+            tensor     = paddle.reshape(tensor,
+                                        shape=[div_b,
+                                               (div_h * div_d),
+                                               (div_ws1 * div_hh),
+                                               (div_ws2 * div_ww)])
         else:
             # reshape the tensor to b, hh, ww, h, ws1, ws2, d
             tensor     = paddle.reshape(tensor,
-                                        shape=[b0,
-                                               h0 // self.ws,
-                                               w0 // self.ws,
+                                        shape=[origin_b,
+                                               origin_h // self.ws,
+                                               origin_w // self.ws,
                                                self.num_heads,
                                                self.ws,
                                                self.ws,
-                                               c0 // self.num_heads])
-            b, hh, ww, h, ws1, ws2, d = tensor.shape
+                                               origin_c // self.num_heads])
+            div_b, div_hh, div_ww, div_h, div_ws1, div_ws2, div_d = tensor.shape
             # reshape the tensor to b, h, d, hh, ws1, ww, ws2
             tensor     = paddle.transpose(tensor, perm=[0, 3, 6, 1, 4, 2, 5])
-            tensor     = paddle.reshape(tensor, shape=[b, (h * d), (hh * ws1), (ww * ws2)])
+            tensor     = paddle.reshape(tensor,
+                                        shape=[div_b,
+                                               (div_h * div_d),
+                                               (div_hh * div_ws1),
+                                               (div_ww * div_ws2)])
         return tensor
 
 
@@ -207,12 +214,12 @@ class Attention(nn.Layer):
         return relative_position_bias
 
 
-    def forward(self, x):
-        origin_shape = x.shape
-        qkv          = self.to_qkv(x)
-        q, k, v      = self.reshap_and_transpose_front(qkv)
+    def forward(self, inputs):
+        origin_shape = inputs.shape
+        qkv          = self.to_qkv(inputs)
+        query, key, value      = self.reshap_and_transpose_front(qkv)
 
-        dot          = paddle.matmul(q, paddle.transpose(k, perm=[0, 1, 3, 2])) * self.scale
+        dot          = paddle.matmul(query, paddle.transpose(key, perm=[0, 1, 3, 2])) * self.scale
 
         if self.relative_pos_embedding:
             relative_position_bias = self.get_relative_pos_bias_from_pos_index()
@@ -224,7 +231,7 @@ class Attention(nn.Layer):
             dot      += paddle.unsqueeze(relative_position_bias, axis=0)
 
         attn         = self.softmax(dot)
-        out          = paddle.matmul(attn, v)
+        out          = paddle.matmul(attn, value)
 
         out          = self.reshape_and_transpose_back(out, origin_shape)
 
@@ -246,14 +253,11 @@ class Block(nn.Layer):
                  window_size = 1,
                  shuffle=False,
                  mlp_ratio=4,
-                 qkv_bias=False,
                  qk_scale=None,
                  drop=0.,
                  attn_drop=0.,
                  drop_path=0.,
-                 act_layer=nn.ReLU6,
                  norm_layer=nn.BatchNorm2D,
-                 stride=False,
                  relative_pos_embedding=False):
         '''
         Args:
@@ -269,7 +273,6 @@ class Block(nn.Layer):
                                       num_heads=num_heads,
                                       window_size=window_size,
                                       shuffle=shuffle,
-                                      qkv_bias=qkv_bias,
                                       qk_scale=qk_scale,
                                       attn_drop=attn_drop,
                                       proj_drop=drop,
@@ -283,18 +286,16 @@ class Block(nn.Layer):
         self.mlp          = MLP(dim,
                                 mlp_hidden_dim,
                                 out_dim,
-                                act_layer=act_layer,
-                                drop=drop,
-                                stride=stride)
+                                drop=drop)
         self.norm3        = norm_layer(out_dim, 0.1)
 
 
 
-    def forward(self, x):
-        x = x + self.drop_path(self.attn(self.norm1(x)))
-        x = x + self.local(self.norm2(x))
-        x = x + self.drop_path(self.mlp(self.norm3(x)))
-        return x
+    def forward(self, inputs):
+        temp = inputs + self.drop_path(self.attn(self.norm1(inputs)))
+        temp = temp + self.local(self.norm2(temp))
+        res  = temp + self.drop_path(self.mlp(self.norm3(temp)))
+        return res
 
 class PatchMerging(nn.Layer):
     '''
@@ -308,10 +309,10 @@ class PatchMerging(nn.Layer):
         self.norm     = norm_layer(in_dim, 0.1)
         self.reduction= nn.Conv2D(in_dim, out_dim, 2, 2, 0, bias_attr=False)
 
-    def forward(self, x):
-        x = self.norm(x)
-        x = self.reduction(x)
-        return x
+    def forward(self, inputs):
+        temp = self.norm(inputs)
+        res  = self.reduction(temp)
+        return res
 
 class StageModule(nn.Layer):
     '''
@@ -326,12 +327,10 @@ class StageModule(nn.Layer):
                  window_size=1,
                  shuffle=True,
                  mlp_ratio=4.,
-                 qkv_bias=False,
                  qk_scale=None,
                  drop=0.,
                  attn_drop=0.,
                  drop_path=0.,
-                 act_layer=nn.ReLU6,
                  norm_layer=nn.BatchNorm2D,
                  relative_pos_embedding=False):
         '''
@@ -354,25 +353,26 @@ class StageModule(nn.Layer):
                 nn.Sequential(
                     Block(dim=out_dim, out_dim=out_dim, num_heads=num_heads,
                           window_size=window_size,shuffle=False,mlp_ratio=mlp_ratio,
-                          qkv_bias=qkv_bias, qk_scale=qk_scale,
+                          qk_scale=qk_scale,
                           drop=drop, attn_drop=attn_drop, drop_path=drop_path,
                           relative_pos_embedding=relative_pos_embedding),
                     Block(dim=out_dim, out_dim=out_dim, num_heads=num_heads,
                           window_size=window_size,shuffle=shuffle,mlp_ratio=mlp_ratio,
-                          qkv_bias=qkv_bias, qk_scale=qk_scale,
+                          qk_scale=qk_scale,
                           drop=drop, attn_drop=attn_drop,drop_path=drop_path,
                           relative_pos_embedding=relative_pos_embedding)
                 )
             )
 
 
-    def forward(self, x):
+    def forward(self, inputs):
         if self.patch_partition:
-            x = self.patch_partition(x)
+            inputs = self.patch_partition(inputs)
+        temp = inputs
         for regular_block, shifted_block in self.layers:
-            x = regular_block(x)
-            x = shifted_block(x)
-        return x
+            temp = regular_block(temp)
+            temp = shifted_block(temp)
+        return temp
 
 
 class PatchEmbedding(nn.Layer):
@@ -401,11 +401,11 @@ class PatchEmbedding(nn.Layer):
         self.conv3 = nn.Conv2D(out_channel, out_channel, kernel_size=1, stride=1, padding=0)
 
 
-    def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        return x
+    def forward(self, inputs):
+        temp = self.conv1(inputs)
+        temp = self.conv2(temp)
+        res  = self.conv3(temp)
+        return res
 
 
 def get_sinusoid_encoding_table(n_position, d_model):
@@ -431,7 +431,6 @@ class ShuffleTransformer(nn.Layer):
     '''
     def __init__(self,
                  img_size=224,
-                 in_chans=3,
                  num_classes=1000,
                  token_dim=32,
                  embed_dim=96,
@@ -441,7 +440,6 @@ class ShuffleTransformer(nn.Layer):
                  relative_pos_embedding=True,
                  shuffle=True,
                  window_size=7,
-                 qkv_bias=False,
                  qk_scale=None,
                  drop_rate=0.,
                  attn_drop_rate=0.,
@@ -481,25 +479,25 @@ class ShuffleTransformer(nn.Layer):
         dpr = [x.item() for x in np.linspace(0, drop_path_rate, 4)]
         self.stage1 = StageModule(layers[0], embed_dim, dims[0], num_heads[0],
                                   window_size=window_size, shuffle=shuffle,
-                                  mlp_ratio=mlp_ratio, qkv_bias=qkv_bias,
+                                  mlp_ratio=mlp_ratio,
                                   qk_scale=qk_scale, drop=drop_rate,
                                   attn_drop=attn_drop_rate, drop_path=dpr[0],
                                   relative_pos_embedding=relative_pos_embedding)
         self.stage2 = StageModule(layers[1], dims[0], dims[1], num_heads[1],
                                   window_size=window_size, shuffle=shuffle,
-                                  mlp_ratio=mlp_ratio, qkv_bias=qkv_bias,
+                                  mlp_ratio=mlp_ratio,
                                   qk_scale=qk_scale, drop=drop_rate,
                                   attn_drop=attn_drop_rate, drop_path=dpr[1],
                                   relative_pos_embedding=relative_pos_embedding)
         self.stage3 = StageModule(layers[2], dims[1], dims[2], num_heads[2],
                                   window_size=window_size, shuffle=shuffle,
-                                  mlp_ratio=mlp_ratio, qkv_bias=qkv_bias,
+                                  mlp_ratio=mlp_ratio,
                                   qk_scale=qk_scale, drop=drop_rate,
                                   attn_drop=attn_drop_rate, drop_path=dpr[2],
                                   relative_pos_embedding=relative_pos_embedding)
         self.stage4 = StageModule(layers[3], dims[2], dims[3], num_heads[3],
                                   window_size=window_size, shuffle=shuffle,
-                                  mlp_ratio=mlp_ratio, qkv_bias=qkv_bias,
+                                  mlp_ratio=mlp_ratio,
                                   qk_scale=qk_scale, drop=drop_rate,
                                   attn_drop=attn_drop_rate, drop_path=dpr[3],
                                   relative_pos_embedding=relative_pos_embedding)
@@ -509,34 +507,34 @@ class ShuffleTransformer(nn.Layer):
         self.head   = nn.Linear(dims[3], num_classes)
 
 
-    def forward_features(self, x):
+    def forward_features(self, inputs):
         '''
         Describe:
             This function used to forward the feature of Shuffle Transformer.
         Args:
             x --------------> A tensor, whose shape is[n,3,h,w]
         '''
-        x = self.to_token(x)
-        b, c, h, w = x.shape
+        temp = self.to_token(inputs)
+        _, channel, height, width = temp.shape
         if self.has_pos_embed:
-            pos_embed = paddle.reshape(self.pos_embed, shape=[1, h, w, c])
+            pos_embed = paddle.reshape(self.pos_embed, shape=[1, height, width, channel])
             pos_embed = paddle.transpose(pos_embed, perm=[0, 3, 1, 2])
-            x = x + pos_embed
-            x = self.pos_drop(x)
-        x = self.stage1(x)
-        x = self.stage2(x)
-        x = self.stage3(x)
-        x = self.stage4(x)
-        x = self.avgpool(x)
-        x = paddle.flatten(x, 1)
-        return x
+            temp = temp + pos_embed
+            temp = self.pos_drop(temp)
+        temp = self.stage1(temp)
+        temp = self.stage2(temp)
+        temp = self.stage3(temp)
+        temp = self.stage4(temp)
+        temp = self.avgpool(temp)
+        result = paddle.flatten(temp, 1)
+        return result
 
 
 
-    def forward(self, x):
-        x = self.forward_features(x)
-        x = self.head(x)
-        return x
+    def forward(self, inputs):
+        temp = self.forward_features(inputs)
+        res  = self.head(temp)
+        return res
 
 
 if __name__ == '__main__':
