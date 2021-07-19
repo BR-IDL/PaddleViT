@@ -5,7 +5,6 @@ import random
 import argparse
 import numpy as np
 from collections import deque
-
 import paddle
 import paddle.nn.functional as F
 from config import *
@@ -18,20 +17,17 @@ from src.utils.utils import load_entire_model
 from src.transforms import *
 
 
-
-
 def parse_args():
-    parser = argparse.ArgumentParser(description='Model Evaluation')
-    parser.add_argument("--config", dest='cfg',help="The config file.", default=None, type=str)
-    parser.add_argument('--model_path',dest='model_path', help='The path of weights file (segmentation model)',type=str,default=None)
+    parser = argparse.ArgumentParser(description='Evaluation of Segmenatation Models')
+    parser.add_argument("--config", dest='cfg', help="The config file.", default=None, type=str)
+    parser.add_argument('--model_path', dest='model_path', 
+        help='The path of weights file (segmentation model)', type=str, default=None)
     return parser.parse_args()
-
 
 if __name__ == '__main__':
     config = get_config()
     args = parse_args()
     config = update_config(config, args)
-    
     if args.model_path is None:
         args.model_path = os.path.join(config.SAVE_DIR,"iter_{}_model_state.pdparams".format(config.TRAIN.ITERS))
 
@@ -57,14 +53,13 @@ if __name__ == '__main__':
 
     # build val dataset and dataloader
     transforms_val = [ Resize(target_size=config.VAL.IMAGE_BASE_SIZE),
-                       Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375]) ]
+                       Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])]
     dataset_val = get_dataset(config, data_transform=transforms_val, mode='val')
 
     batch_sampler = paddle.io.DistributedBatchSampler(
         dataset_val, batch_size=config.DATA.BATCH_SIZE_VAL, shuffle=True, drop_last=True)
     loader_val = paddle.io.DataLoader( dataset_val, batch_sampler=batch_sampler,
         num_workers=config.DATA.NUM_WORKERS, return_list=True)
-
     total_iters = len(loader_val)
 
     # build workspace for saving checkpoints
