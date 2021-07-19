@@ -1,0 +1,13 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
+MODEL:
+    TYPE: DeiT
+    NAME: deit_tiny_distilled_patch16_224
+    TRANS:
+        PATCH_SIZE: 16
+        HIDDEN_SIZE: 192
+        MLP_DIM: 768 # same as mlp_ratio = 4.0
+        NUM_LAYERS: 12
+        NUM_HEADS: 3
+        QKV_BIAS: true
