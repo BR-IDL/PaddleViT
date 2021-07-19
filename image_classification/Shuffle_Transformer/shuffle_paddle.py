@@ -114,42 +114,34 @@ class Attention(nn.Layer):
             # b,(qkv h d),(ws1 hh),(ws2 ww) --> b, qkv, h, d, ws1, hh, ws2, ww
             tensor         = paddle.reshape(tensor,
                                             shape=[origin_b,
-                                                   3,
-                                                   self.num_heads,
+                                                   3, self.num_heads,
                                                    origin_c // (3 * self.num_heads),
-                                                   self.ws,
-                                                   origin_h // self.ws,
-                                                   self.ws,
-                                                   origin_w // self.ws])
+                                                   self.ws, origin_h // self.ws,
+                                                   self.ws, origin_w // self.ws])
             div_b, _, div_h, div_d, div_ws1, div_hh, div_ws2, div_ww = tensor.shape
             # transpose the tensor to qkv,b,hh,ww,h,ws1,ws2,d
             tensor         = paddle.transpose(tensor, perm=[1, 0, 5, 7, 2, 4, 6, 3])
             # reshape the tensor to qkv,(b hh ww),h,(ws1 ws2),d
             tensor         = paddle.reshape(tensor, shape=[3,
                                                            (div_b * div_hh * div_ww),
-                                                           div_h,
-                                                           (div_ws1 * div_ws2),
+                                                           div_h, (div_ws1 * div_ws2),
                                                            div_d])
         else:
             # reshape the tensor from b,
             # (qkv h d),(ws1 hh),(ws2 ww) --> b, qkv, h, d, hh, ws1, ww, ws2
             tensor         = paddle.reshape(tensor,
                                             shape=[origin_b,
-                                                   3,
-                                                   self.num_heads,
+                                                   3, self.num_heads,
                                                    origin_c // (3 * self.num_heads),
-                                                   origin_h // self.ws,
-                                                   self.ws,
-                                                   origin_w // self.ws,
-                                                   self.ws])
+                                                   origin_h // self.ws, self.ws,
+                                                   origin_w // self.ws, self.ws])
             div_b, _, div_h, div_d, div_hh, div_ws1, div_ww, div_ws2 = tensor.shape
             # transpose the tensor to qkv,b,hh,ww,h,ws1,ws2,d
             tensor         = paddle.transpose(tensor, perm=[1, 0, 4, 6, 2, 5, 7, 3])
             # reshape the tensor to qkv,(b hh ww),h,(ws1 ws2),d
             tensor         = paddle.reshape(tensor, shape=[3,
                                                            (div_b * div_hh * div_ww),
-                                                           div_h,
-                                                           (div_ws1 * div_ws2),
+                                                           div_h, (div_ws1 * div_ws2),
                                                            div_d])
         query, key, value  = paddle.unbind(tensor, axis=0)
         return query, key, value
@@ -184,9 +176,7 @@ class Attention(nn.Layer):
                                         shape=[origin_b,
                                                origin_h // self.ws,
                                                origin_w // self.ws,
-                                               self.num_heads,
-                                               self.ws,
-                                               self.ws,
+                                               self.num_heads, self.ws, self.ws,
                                                origin_c // self.num_heads])
             div_b, div_hh, div_ww, div_h, div_ws1, div_ws2, div_d = tensor.shape
             # reshape the tensor to b, h, d, hh, ws1, ww, ws2
@@ -225,8 +215,7 @@ class Attention(nn.Layer):
             relative_position_bias = self.get_relative_pos_bias_from_pos_index()
             relative_position_bias = paddle.reshape(relative_position_bias,
                                                     shape=[self.ws * self.ws,
-                                                           self.ws * self.ws,
-                                                           -1])
+                                                           self.ws * self.ws, -1])
             relative_position_bias = paddle.transpose(relative_position_bias, perm=[2, 0, 1])
             dot      += paddle.unsqueeze(relative_position_bias, axis=0)
 
@@ -331,7 +320,6 @@ class StageModule(nn.Layer):
                  drop=0.,
                  attn_drop=0.,
                  drop_path=0.,
-                 norm_layer=nn.BatchNorm2D,
                  relative_pos_embedding=False):
         '''
         Args:
@@ -512,7 +500,7 @@ class ShuffleTransformer(nn.Layer):
         Describe:
             This function used to forward the feature of Shuffle Transformer.
         Args:
-            x --------------> A tensor, whose shape is[n,3,h,w]
+            inputs --------------> A tensor, whose shape is[n,3,h,w]
         '''
         temp = self.to_token(inputs)
         _, channel, height, width = temp.shape
