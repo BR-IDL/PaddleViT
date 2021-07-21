@@ -5,7 +5,6 @@ import random
 import argparse
 import numpy as np
 from collections import deque
-
 import paddle
 import paddle.nn as nn
 from config import *
@@ -18,23 +17,30 @@ from src.utils import TimeAverager, calculate_eta, resume
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Visual Transformer for semantic image segmentation')
+    parser = argparse.ArgumentParser(description='Visual Transformer for semantic segmentation')
     parser.add_argument("--config", dest='cfg',help="The config file.", default=None, type=str)
     return parser.parse_args()
 
 
 def optimizer_setting(model, config):
     if config.TRAIN.LR_SCHEDULER.NAME == "PolynomialDecay":
-        scheduler = paddle.optimizer.lr.PolynomialDecay(learning_rate=config.TRAIN.BASE_LR, decay_steps=config.TRAIN.ITERS, end_lr=config.TRAIN.END_LR, 
-                 power=config.TRAIN.POWER, cycle=False, last_epoch=-1, verbose=False)
+        scheduler = paddle.optimizer.lr.PolynomialDecay(
+            learning_rate=config.TRAIN.BASE_LR, 
+            decay_steps=config.TRAIN.ITERS, 
+            end_lr=config.TRAIN.END_LR, 
+            power=config.TRAIN.POWER, 
+            cycle=False, 
+            last_epoch=-1, 
+            verbose=False)
     else:
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
 
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
-        optimizer = paddle.optimizer.Momentum(parameters=model.parameters(),
-                                     learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-                                     weight_decay=config.TRAIN.WEIGHT_DECAY,
-                                     momentum=config.TRAIN.OPTIMIZER.MOMENTUM)
+        optimizer = paddle.optimizer.Momentum(
+            parameters=model.parameters(),
+            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
+            momentum=config.TRAIN.OPTIMIZER.MOMENTUM)
     else:
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
     return optimizer
@@ -70,7 +76,9 @@ def main():
     # build dataset_train
     transforms_train = [ 
         ResizeStepScaling(min_scale_factor = 0.5, max_scale_factor = 2.0, scale_step_size = 0.25),
-        RandomPaddingCrop(crop_size = config.DATA.CROP_SIZE, im_padding_value = (123.675, 116.28, 103.53), label_padding_value = 255),
+        RandomPaddingCrop(crop_size = config.DATA.CROP_SIZE, 
+            im_padding_value = (123.675, 116.28, 103.53), 
+            label_padding_value = 255),
         RandomHorizontalFlip(prob = 0.5),
         RandomDistort(brightness_range = 0.4, contrast_range = 0.4, saturation_range = 0.4),
         Normalize(mean = [123.675, 116.28, 103.53], std = [58.395, 57.12, 57.375])
@@ -132,7 +140,8 @@ def main():
             if isinstance(optimizer._learning_rate,paddle.optimizer.lr.LRScheduler):
                 optimizer._learning_rate.step()
                 #print("updating lr, lr_last={}, lr_cur={}".format(lr, optimizer.get_lr()))
-                #print("decay_steps: {}, last_epoch: {}".format(optimizer._learning_rate.decay_steps, optimizer._learning_rate.last_epoch))
+                #print("decay_steps: {}, last_epoch: {}".format(optimizer._learning_rate.decay_steps, 
+                #    optimizer._learning_rate.last_epoch))
             model.clear_gradients()
             avg_loss += loss.numpy()[0]
             if not avg_loss_list:
@@ -149,10 +158,11 @@ def main():
                 avg_train_batch_cost = batch_cost_averager.get_average()
                 avg_train_reader_cost = reader_cost_averager.get_average()
                 eta = calculate_eta(remain_iters, avg_train_batch_cost)
-                logger.info("[TRAIN] epoch: {}, iter: {}/{}, loss: {:.4f}, lr: {:.8f}, batch_cost: {:.4f}, reader_cost: {:.5f}, ips: {:.4f} samples/sec | ETA {}"
-                    .format((cur_iter - 1) // iters_per_epoch + 1, cur_iter, config.TRAIN.ITERS, avg_loss, lr, avg_train_batch_cost,
-                            avg_train_reader_cost, batch_cost_averager.get_ips_average(), eta))
-
+                logger.info("[TRAIN] epoch: {}, iter: {}/{}, loss: {:.4f}, lr: {:.8f}, batch_cost:
+                    {:.4f}, reader_cost: {:.5f}, ips: {:.4f} samples/sec | ETA {}".format(
+                    (cur_iter - 1) // iters_per_epoch + 1, cur_iter, config.TRAIN.ITERS, avg_loss, 
+                    lr, avg_train_batch_cost, avg_train_reader_cost, 
+                    batch_cost_averager.get_ips_average(), eta))
                 avg_loss = 0.0
                 avg_loss_list = []
                 reader_cost_averager.reset()
