@@ -11,7 +11,7 @@ from droppath import DropPath
 class MLP(nn.Layer):
     '''
     Describe:
-        A Feed Forward Network, which use Conv replace the Linear.
+        A Feed Forward Network layer, which use Conv replace the Linear project.
     '''
     def __init__(self, in_feature, hidden_features=None, out_features=None, drop=0.):
         '''
@@ -31,6 +31,7 @@ class MLP(nn.Layer):
         self.drop   = nn.Dropout(drop)
 
     def forward(self, inputs):
+        # input tensor should be [batch_size, hidden_dim, height, width]
         temp = self.fc1(inputs)
         temp = self.act(temp)
         temp = self.drop(temp)
@@ -101,11 +102,17 @@ class Attention(nn.Layer):
             relative_position_index = relative_coords.sum(-1)
             self.register_buffer("relative_position_index", relative_position_index)
 
-    def reshap_and_transpose_front(self, tensor):
+    def shuffle_and_divide_qkv(self, tensor):
         '''
         Describe:
             This function used to replace the einops.
             rearrange(qkv, 'b (qkv h d) (ws1 hh) (ws2 ww) -> qkv (b hh ww) h (ws1 ws2) d')
+        Args:
+            tensor:      A paddle tensor with shape [batch_size, hidden_dim * 3, height, width]
+        Returns:
+            query:       A paddle tensor with shape [batch_size * hidden_dim, head_num, window_area, head_dim]
+            key:         A paddle tensor with shape [batch_size * hidden_dim, head_num, window_area, head_dim]
+            value:       A paddle tensor with shape [batch_size * hidden_dim, head_num, window_area, head_dim]
         '''
         #b0, c0, h0, w0 = tensor.shape
         origin_b, origin_c, origin_h, origin_w = tensor.shape
@@ -146,11 +153,17 @@ class Attention(nn.Layer):
         query, key, value  = paddle.unbind(tensor, axis=0)
         return query, key, value
 
-    def reshape_and_transpose_back(self, tensor, origin_shape):
+    def flatten_2_image(self, tensor, origin_shape):
         '''
         Describe:
-            This function used to replace the einops.
-            Rearrange(out, '(b hh ww) h (ws1 ws2) d -> b (h d) (ws1 hh) (ws2 ww)')
+            This function used to replace the einops's rearrange function.
+            Rearrange(Input, '(batch_size height width) head_number (window_size1 window_size2)
+            head_dim -> batch_size (head_number head_dim) (window_s1 height) (window_s2 width)')
+        Args:
+            tensor:         A paddle tensor with shape [batch_size * window_area, head_num, window_size, head_dim]
+            origin_shape:   The original input tensor's shape. It should be [batch_size, hidden_dim, window_h, window_w].
+        Return:
+            result:         A paddle tensor with shape [batch_size, hidden_dim, window_h, window_w]
         '''
         origin_b, origin_c, origin_h, origin_w = origin_shape
         if self.shuffle:
@@ -165,7 +178,7 @@ class Attention(nn.Layer):
             div_b, div_hh, div_ww, div_h, div_ws1, div_ws2, div_d = tensor.shape
             # reshape the tensor to b, h, d, ws1, hh, ws2, ww
             tensor     = paddle.transpose(tensor, perm=[0, 3, 6, 4, 1, 5, 2])
-            tensor     = paddle.reshape(tensor,
+            result     = paddle.reshape(tensor,
                                         shape=[div_b,
                                                (div_h * div_d),
                                                (div_ws1 * div_hh),
@@ -181,12 +194,12 @@ class Attention(nn.Layer):
             div_b, div_hh, div_ww, div_h, div_ws1, div_ws2, div_d = tensor.shape
             # reshape the tensor to b, h, d, hh, ws1, ww, ws2
             tensor     = paddle.transpose(tensor, perm=[0, 3, 6, 1, 4, 2, 5])
-            tensor     = paddle.reshape(tensor,
+            result     = paddle.reshape(tensor,
                                         shape=[div_b,
                                                (div_h * div_d),
                                                (div_hh * div_ws1),
                                                (div_ww * div_ws2)])
-        return tensor
+        return result
 
 
     def get_relative_pos_bias_from_pos_index(self):
@@ -199,7 +212,6 @@ class Attention(nn.Layer):
         # index is a tensor
         index = self.relative_position_index.reshape([-1])
         # window_h*window_w * window_h*window_w
-        # NOTE: paddle does NOT support indexing Tensor by a Tensor
         relative_position_bias = paddle.index_select(x=table, index=index)
         return relative_position_bias
 
@@ -207,7 +219,7 @@ class Attention(nn.Layer):
     def forward(self, inputs):
         origin_shape = inputs.shape
         qkv          = self.to_qkv(inputs)
-        query, key, value      = self.reshap_and_transpose_front(qkv)
+        query, key, value      = self.shuffle_and_divide_qkv(qkv)
 
         dot          = paddle.matmul(query, paddle.transpose(key, perm=[0, 1, 3, 2])) * self.scale
 
@@ -222,7 +234,7 @@ class Attention(nn.Layer):
         attn         = self.softmax(dot)
         out          = paddle.matmul(attn, value)
 
-        out          = self.reshape_and_transpose_back(out, origin_shape)
+        out          = self.flatten_2_image(out, origin_shape)
 
         out          = self.proj(out)
         out          = self.proj_drop(out)

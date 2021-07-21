@@ -163,19 +163,22 @@ def convert(torch_model, paddle_model):
         pd_params[pd_name].set_value(value)
 
 
-    # 1. get paddle and torch model parameters
+    # Get paddle and torch model parameters
     pd_params = {}
     th_params = {}
     for name, param in paddle_model.named_parameters():
         pd_params[name] = param
     for name, param in torch_model.named_parameters():
         th_params[name] = param
+    # In pytorch, BatchNorm2d's running_mean, running_var was saved as buffer.
+    # But in paddle, BatchNorm2D's _mean, _varience was saved as parameters.
+    # So, here we should add torch model's buffer into mapping dictory.
     for name, buffer in torch_model.named_buffers():
         th_params[name] = buffer
-    # 2. get name mapping pairs
+    # Get name mapping pairs
     mapping = mapping_generagte()
 
-    # 3. set torch param values to paddle params: may needs transpose on weights
+    # Set torch param values to paddle params: may needs transpose on weights
     for th_name, pd_name in mapping:
         if th_name in th_params.keys(): # nn.Parameters
             if th_name.endswith('relative_position_bias_table'):
@@ -193,6 +196,7 @@ def convert(torch_model, paddle_model):
                 th_name_b = f'{th_name}.bias'
                 pd_name_b = f'{pd_name}.bias'
                 _set_value(th_name_b, pd_name_b)
+                # mapping the mean && varience.
                 if th_name.endswith('norm') or th_name.endswith('norm1') \
                 or th_name.endswith('norm2') or th_name.endswith('norm3') \
                 or th_name == 'to_token.conv1.1' or th_name == 'to_token.conv2.1':
