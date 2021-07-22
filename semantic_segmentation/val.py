@@ -19,9 +19,11 @@ from src.transforms import *
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Evaluation of Segmenatation Models')
-    parser.add_argument("--config", dest='cfg', help="The config file.", default=None, type=str)
+    parser.add_argument("--config", dest='cfg', default=None, type=str, help='The config file.')
     parser.add_argument('--model_path', dest='model_path', 
         help='The path of weights file (segmentation model)', type=str, default=None)
+    parser.add_argument("--multi_scales", type=bool, default=False, 
+        help='whether employing multiple scales testing')
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -72,37 +74,38 @@ if __name__ == '__main__':
     pred_area_all = 0
     label_area_all = 0
 
-    logger.info("Start evaluating (total_samples: {}, total_iters: {})...".format(len(dataset_val), total_iters))
+    logger.info("Start evaluating (total_samples: {}, total_iters: {}), multi-scale testing: {}".format(len(dataset_val), total_iters, args.multi_scales))
     progbar_val = progbar.Progbar(target=total_iters, verbose=1)
     reader_cost_averager = TimeAverager()
     batch_cost_averager = TimeAverager()
     batch_start = time.time()
     with paddle.no_grad():
-        for iter, (im, label) in enumerate(loader_val):
+        for iter, (img, label) in enumerate(loader_val):
             reader_cost_averager.record(time.time() - batch_start)
             label = label.astype('int64')
-            print("img.shape: {}, label.shape: {}".format(im.shape, label.shape))
+            #print("img.shape: {}, label.shape: {}".format(img.shape, label.shape))
             ori_shape = label.shape[-2:]
-            if config.VAL.MULTI_SCALES_VAL:
+            if args.multi_scales == True:
                 pred = infer.aug_inference(
                     model,
-                    im,
+                    img,
                     ori_shape=ori_shape,
                     transforms=transforms_val,
-                    scales=scales,
-                    flip_horizontal=flip_horizontal,
-                    flip_vertical=flip_vertical,
                     is_slide=True,
-                    stride=config.VAL.STRIDE,
-                    crop_size=config.VAL.CROP_SIZE)
+                    stride_size=config.VAL.STRIDE_SIZE,
+                    crop_size=config.VAL.CROP_SIZE,
+                    num_classes=config.DATA.NUM_CLASSES,
+                    scales=config.VAL.SCALE_RATIOS,
+                    flip_horizontal=True,
+                    flip_vertical=False)
             else:
                 pred = infer.inference(
                     model,
-                    im,
+                    img,
                     ori_shape=ori_shape,
                     transforms=transforms_val,
                     is_slide=True,
-                    stride=config.VAL.STRIDE_SIZE,
+                    stride_size=config.VAL.STRIDE_SIZE,
                     crop_size=config.VAL.CROP_SIZE,
                     num_classes=config.DATA.NUM_CLASSES)
 

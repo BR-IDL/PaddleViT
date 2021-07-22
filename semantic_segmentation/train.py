@@ -21,7 +21,6 @@ def parse_args():
     parser.add_argument("--config", dest='cfg',help="The config file.", default=None, type=str)
     return parser.parse_args()
 
-
 def optimizer_setting(model, config):
     if config.TRAIN.LR_SCHEDULER.NAME == "PolynomialDecay":
         scheduler = paddle.optimizer.lr.PolynomialDecay(
