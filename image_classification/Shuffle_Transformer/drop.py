@@ -11,7 +11,7 @@ def drop_path(x, drop_prob=0., training=False):
     random_tensor = random_tensor.floor()
     output = x.divide(keep_prob) * random_tensor
     return output
-    
+
 
 class DropPath(nn.Layer):
     def __init__(self, drop_prob=None):
@@ -20,4 +20,4 @@ class DropPath(nn.Layer):
 
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
-        
+

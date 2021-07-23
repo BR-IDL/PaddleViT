@@ -6,7 +6,7 @@ import argparse
 import paddle
 import torch
 import numpy as np
-import shuffle_paddle
+import shuffle_transformer_paddle
 import shuffle_transformer
 from config import *
 
@@ -35,19 +35,19 @@ def build_paddle_model(configs):
     Args:
         config---------> a parser object.
     '''
-    model = shuffle_paddle.ShuffleTransformer(img_size=configs.DATA.IMAGE_SIZE,
-                                              in_chans=configs.MODEL.TRANS.IN_CHANNELS,
-                                              num_classes=configs.MODEL.NUM_CLASSES,
-                                              embed_dim=configs.MODEL.TRANS.EMBED_DIM,
-                                              layers=configs.MODEL.TRANS.STAGE_DEPTHS,
-                                              num_heads=configs.MODEL.TRANS.NUM_HEADS,
-                                              window_size=configs.MODEL.TRANS.WINDOW_SIZE,
-                                              mlp_ratio=configs.MODEL.TRANS.MLP_RATIO,
-                                              qkv_bias=configs.MODEL.TRANS.QKV_BIAS,
-                                              qk_scale=configs.MODEL.TRANS.QK_SCALE,
-                                              drop_rate=configs.MODEL.DROPOUT,
-                                              drop_path_rate=configs.MODEL.DROP_PATH
-                                              )
+    model = shuffle_transformer_paddle.ShuffleTransformer(img_size=configs.DATA.IMAGE_SIZE,
+                                                          in_chans=configs.MODEL.TRANS.IN_CHANNELS,
+                                                          num_classes=configs.MODEL.NUM_CLASSES,
+                                                          embed_dim=configs.MODEL.TRANS.EMBED_DIM,
+                                                          layers=configs.MODEL.TRANS.STAGE_DEPTHS,
+                                                          num_heads=configs.MODEL.TRANS.NUM_HEADS,
+                                                          window_size=configs.MODEL.TRANS.WINDOW_SIZE,
+                                                          mlp_ratio=configs.MODEL.TRANS.MLP_RATIO,
+                                                          qkv_bias=configs.MODEL.TRANS.QKV_BIAS,
+                                                          qk_scale=configs.MODEL.TRANS.QK_SCALE,
+                                                          drop_rate=configs.MODEL.DROPOUT,
+                                                          drop_path_rate=configs.MODEL.DROP_PATH
+                                                          )
     return model
 
 def build_pytorch_model(configs):
@@ -225,8 +225,8 @@ if __name__ == '__main__':
     torchmodel  = build_pytorch_model(config)
     torchmodel  = torchmodel.to(device)
     torchmodel.eval()
-    modelpath = './shuffle_vit_tiny_patch4_window7_224_local7midV2_drop0.1_82.41/ckpt_epoch_298.pth'
-    checkpoint = torch.load(modelpath, map_location='cpu')
+    model_path = './shuffle_vit_tiny_patch4_window7_224_local7midV2_drop0.1_82.41/ckpt_epoch_298.pth'
+    checkpoint = torch.load(model_path, map_location='cpu')
     torchmodel.load_state_dict(checkpoint['model'], strict=False)
     print_model_named_params(torchmodel)
     print_model_buffer_params(torchmodel)

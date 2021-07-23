@@ -108,11 +108,11 @@ class Attention(nn.Layer):
             This function used to replace the einops.
             rearrange(qkv, 'b (qkv h d) (ws1 hh) (ws2 ww) -> qkv (b hh ww) h (ws1 ws2) d')
         Args:
-            tensor:      A paddle tensor with shape [batch_size, hidden_dim * 3, height, width]
+            tensor: A paddle tensor with shape [batch_size, hidden_dim * 3, height, width]
         Returns:
-            query:       A paddle tensor with shape [batch_size * hidden_dim, head_num, window_area, head_dim]
-            key:         A paddle tensor with shape [batch_size * hidden_dim, head_num, window_area, head_dim]
-            value:       A paddle tensor with shape [batch_size * hidden_dim, head_num, window_area, head_dim]
+            query:  A paddle tensor with shape [batch_size*hidden_dim,head_num,window_area,head_dim]
+            key:    A paddle tensor with shape [batch_size*hidden_dim,head_num,window_area,head_dim]
+            value:  A paddle tensor with shape [batch_size*hidden_dim,head_num,window_area,head_dim]
         '''
         #b0, c0, h0, w0 = tensor.shape
         origin_b, origin_c, origin_h, origin_w = tensor.shape
@@ -160,8 +160,10 @@ class Attention(nn.Layer):
             Rearrange(Input, '(batch_size height width) head_number (window_size1 window_size2)
             head_dim -> batch_size (head_number head_dim) (window_s1 height) (window_s2 width)')
         Args:
-            tensor:         A paddle tensor with shape [batch_size * window_area, head_num, window_size, head_dim]
-            origin_shape:   The original input tensor's shape. It should be [batch_size, hidden_dim, window_h, window_w].
+            tensor:         A paddle tensor with shape [batch_size * window_area,
+                            head_num, window_size, head_dim].
+            origin_shape:   The original input tensor's shape. It should be [batch_size,
+                            hidden_dim, window_h, window_w].
         Return:
             result:         A paddle tensor with shape [batch_size, hidden_dim, window_h, window_w]
         '''
