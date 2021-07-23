@@ -25,22 +25,35 @@ pascal_context
 ```
 ### 2. Testing
 #### Single-scale testing on single GPU
-
 ```shell
 CUDA_VISIBLE_DEVICES=0 python3  val.py  \
     --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
     --model_path ./pretrain_models/setr/SETR_MLA_pascal_context_b8_80k.pdparams
 ```
-> Note:
-> - The `-model_path` option accepts the path of pretrained weights file (segmentation model, e.g., setr).
+
+#### Multi-scale testing on single GPU
+```shell
+CUDA_VISIBLE_DEVICES=0,1 python3 val.py \
+    --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
+    --model_path ./pretrain_models/setr/SETR_MLA_pascal_context_b8_80k.pdparams \
+    --multi_scales True
+```
 
 #### Single-scale testing on multi GPU
-
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -u -m paddle.distributed.launch val.py \
     --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
     --model_path ./pretrain_models/setr/SETR_MLA_pascal_context_b8_80k.pdparams
 ```
+
+#### Multi-scale testing on multi GPU
+```shell                                                                                                                                                                                       
+CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -u -m paddle.distributed.launch val.py \
+    --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
+    --model_path ./pretrain_models/setr/SETR_MLA_pascal_context_b8_80k.pdparams \
+    --multi_scales True
+```
+
 > Note:
 >
 > - that the `-model_path` option accepts the path of pretrained weights file (segmentation model, e.g., setr)
