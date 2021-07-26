@@ -11,7 +11,7 @@ from config import *
 from src.utils import  get_sys_env, metrics, TimeAverager, calculate_eta, logger, progbar
 from src.core import infer
 from src.datasets import get_dataset
-from src.models import SETR
+from src.models import SETR,DPTSeg
 from src.utils import TimeAverager, calculate_eta, resume
 from src.utils.utils import load_entire_model
 from src.transforms import *
@@ -37,7 +37,10 @@ if __name__ == '__main__':
     place = 'gpu' if env_info['Paddle compiled with cuda'] and env_info['GPUs used'] else 'cpu'
     paddle.set_device(place)
     # build model
-    model = SETR(config)
+    if 'DPT' in config.MODEL.NAME:
+        model = DPTSeg(config)
+    elif 'SETR' in config.MODEL.NAME:
+        model = SETR(config)
     if args.model_path:
         load_entire_model(model, args.model_path)
         logger.info('Loaded trained params of model successfully')
@@ -55,7 +58,7 @@ if __name__ == '__main__':
 
     # build val dataset and dataloader
     transforms_val = [ Resize(target_size=config.VAL.IMAGE_BASE_SIZE),
-                       Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])]
+                       Normalize(mean=config.VAL.MEAN, std=config.VAL.STD)]
     dataset_val = get_dataset(config, data_transform=transforms_val, mode='val')
 
     batch_sampler = paddle.io.DistributedBatchSampler(

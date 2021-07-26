@@ -30,7 +30,7 @@ class Embeddings(nn.Layer):
         super(Embeddings, self).__init__()
         self.hybrid = config.MODEL.TRANS.HYBRID
         image_size = config.DATA.CROP_SIZE
-
+        self.keep_cls_token = config.MODEL.TRANS.KEEP_CLS_TOKEN
         if self.hybrid:
             #TODO: add resnet model 
             self.hybrid_model = None
@@ -72,7 +72,8 @@ class Embeddings(nn.Layer):
         x = x.transpose([0, 2, 1])
         x = paddle.concat((cls_tokens, x), axis=1)
         embeddings = x + self.position_embeddings[0] # tensor broadcast
-        embeddings = embeddings[:, 1:]  # For SETR 
+        if not self.keep_cls_token:
+            embeddings = embeddings[:, 1:]  # For SETR 
         embeddings = self.dropout(embeddings)
         return embeddings
 
