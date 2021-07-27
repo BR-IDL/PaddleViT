@@ -1,0 +1,23 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: DeiT
+    NAME: deit_base_patch16_224
+    TRANS:
+        PATCH_SIZE: 16
+        EMBED_DIM: 768
+        MLP_RATIO: 4.0
+        DEPTH: 12
+        NUM_HEADS: 12
+        QKV_BIAS: True
+TRAIN:
+    NUM_EPOCHS: 300
+    WARMUP_EPOCHS: 5
+    WEIGHT_DECAY: 0.3
+    BASE_LR: 0.003
+    WARMUP_START_LR: 1e-6
+    END_LR: 5e-4
+    ACCUM_ITER: 2
+
+
