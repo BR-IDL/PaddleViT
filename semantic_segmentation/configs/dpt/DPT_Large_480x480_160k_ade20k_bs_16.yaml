@@ -1,0 +1,50 @@
+DATA:
+    BATCH_SIZE: 2  # per GPU [total bs is set to 8 or 16]
+    BATCH_SIZE_VAL: 1  # per GPU
+    DATASET: 'ADE20K' # dataset name
+    DATA_PATH: 'H:/datasets/ADEChallengeData2016'
+    CROP_SIZE: (480,480)  # input_size (training)
+    NUM_CLASSES: 150
+MODEL:
+    NAME: 'DPTSeg'
+    ENCODER:
+        TYPE: 'ViT'
+        OUT_INDICES: [5, 11, 17, 23] 
+    PRETRAINED: None
+    DECODER_TYPE: 'DPTHead'
+    DPT:
+        HIDDEN_FEATURES: [256, 512, 1024, 1024]
+        FEATURES: 256
+        READOUT_PROCESS: 'project'
+    NUM_CLASSES: 150
+    TRANS:
+        PATCH_SIZE: 16
+        HIDDEN_SIZE: 1024 # 768(Base), 1024(Large), 1280(Huge)
+        MLP_RATIO: 4     # same as mlp_ratio = 4.0
+        NUM_HEADS: 16    # 12(Base), 16(Large), 16(Huge)
+        NUM_LAYERS: 24   # 12(Base), 24(Large), 32(Huge)
+        QKV_BIAS: True
+        KEEP_CLS_TOKEN: True
+TRAIN:
+    BASE_LR: 0.001
+    END_LR: 1e-4
+    DECODER_LR_COEF: 10.0
+    GRAD_CLIP: 1.0
+    ITERS: 160000
+    WEIGHT_DECAY: 0.0
+    POWER: 0.9
+    DECAY_STEPS: 160000
+    LR_SCHEDULER:
+        NAME: 'PolynomialDecay'
+    OPTIMIZER:
+        NAME: 'SGD'
+        MOMENTUM: 0.9
+VAL:
+    MULTI_SCALES_VAL: False
+    CROP_SIZE: [480,480]
+    MEAN: [127.5, 127.5, 127.5]
+    STD: [127.5, 127.5, 127.5]
+SAVE_DIR: "./output/SETR_PUP_Large_480x480_80k_pascal_context_bs_16"
+
+        
+

@@ -40,6 +40,7 @@ _C.MODEL.TRANS.MLP_RATIO = 4
 _C.MODEL.TRANS.NUM_HEADS = None      # 12(Base), 16(Large), 16(Huge)
 _C.MODEL.TRANS.NUM_LAYERS = 12     # 12(Base), 24(Large), 32(Huge)
 _C.MODEL.TRANS.QKV_BIAS = True
+
 ## special settings for SwinTransformer
 _C.MODEL.TRANS.WINDOW_SIZE = 7
 _C.MODEL.TRANS.IN_CHANNELS = 3
@@ -50,6 +51,7 @@ _C.MODEL.TRANS.QK_SCALE = None
 _C.MODEL.TRANS.APE = False   # absolute postional embedding
 _C.MODEL.TRANS.PATCH_NORM = True   
 #_C.MODEL.TRANS.DROP_PATH_RATE = None   
+_C.MODEL.TRANS.KEEP_CLS_TOKEN = False
 
 
 # MLA Decoder setting
@@ -86,9 +88,6 @@ _C.MODEL.UPERHEAD.POOL_SCALES = [1, 2, 3, 6]
 _C.MODEL.UPERHEAD.DROP_RATIO = 0.1
 _C.MODEL.UPERHEAD.ALIGN_CORNERS = False
 
-
-
-
 # Auxilary Segmentation Head setting
 _C.MODEL.AUX = CN()
 _C.MODEL.AUX.AUXIHEAD = True
@@ -98,6 +97,12 @@ _C.MODEL.AUX.AUXHEAD_ALIGN_CORNERS = False
 _C.MODEL.AUXFCN = CN()
 _C.MODEL.AUXFCN.IN_CHANNELS = 384
 _C.MODEL.AUXFCN.UP_RATIO = 16
+
+#DPT Head settings
+_C.MODEL.DPT = CN()
+_C.MODEL.DPT.HIDDEN_FEATURES = [256, 512, 1024, 1024]
+_C.MODEL.DPT.FEATURES = 256
+_C.MODEL.DPT.READOUT_PROCESS = "project"
 
 # training settings
 _C.TRAIN = CN()
@@ -130,6 +135,8 @@ _C.VAL.SCALE_RATIOS= [0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
 _C.VAL.IMAGE_BASE_SIZE = 520 # 520 for pascal context
 _C.VAL.CROP_SIZE = [480,480]
 _C.VAL.STRIDE_SIZE = [320,320]
+_C.VAL.MEAN = [123.675, 116.28, 103.53]
+_C.VAL.STD = [58.395, 57.12, 57.375]
 
 # misc
 _C.SAVE_DIR = "./output"

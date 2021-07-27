@@ -1,5 +1,6 @@
 from .setr import SETR
 from .upernet import UperNet
+from .dpt import DPTSeg
 
 
 def get_model(config):

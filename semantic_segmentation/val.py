@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     # build val dataset and dataloader
     transforms_val = [ Resize(target_size=config.VAL.IMAGE_BASE_SIZE),
-                       Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])]
+                       Normalize(mean=config.VAL.MEAN, std=config.VAL.STD)]
     dataset_val = get_dataset(config, data_transform=transforms_val, mode='val')
 
     batch_sampler = paddle.io.DistributedBatchSampler(
@@ -74,7 +74,8 @@ if __name__ == '__main__':
     pred_area_all = 0
     label_area_all = 0
 
-    logger.info("Start evaluating (total_samples: {}, total_iters: {}), multi-scale testing: {}".format(len(dataset_val), total_iters, args.multi_scales))
+    logger.info("Start evaluating (total_samples: {}, total_iters: {}), \
+        multi-scale testing: {}".format(len(dataset_val), total_iters, args.multi_scales))
     progbar_val = progbar.Progbar(target=total_iters, verbose=1)
     reader_cost_averager = TimeAverager()
     batch_cost_averager = TimeAverager()
