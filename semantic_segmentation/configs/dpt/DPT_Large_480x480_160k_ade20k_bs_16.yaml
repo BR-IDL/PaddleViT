@@ -44,7 +44,7 @@ VAL:
     CROP_SIZE: [480,480]
     MEAN: [127.5, 127.5, 127.5]
     STD: [127.5, 127.5, 127.5]
-SAVE_DIR: "./output/SETR_PUP_Large_480x480_80k_pascal_context_bs_16"
+SAVE_DIR: "./output/DPT_Large_480x480_80k_pascal_context_bs_16"
 
         
 
