@@ -56,11 +56,11 @@ def inference(model, img, ori_shape, transforms, is_slide, stride_size, crop_siz
     Args:
         model (paddle.nn.Layer): model to get logits of image.
         img (Tensor): the input image.
-        ori_shape (list): Origin shape of image.
-        transforms (list): Transforms for image.
-        is_slide (bool): Whether to infer by sliding window. Default: False.
-        crop_size (tuple|list). The size of sliding window, (w, h). It should be probided if is_slide is True.
-        stride_size (tuple|list). The size of stride, (w, h). It should be probided if is_slide is True.
+        ori_shape (list): origin shape of image.
+        transforms (list): transforms for image.
+        is_slide (bool): whether to infer by sliding window.
+        crop_size (tuple|list). the size of sliding window, (w, h). It should be probided if is_slide is True.
+        stride_size (tuple|list). the size of stride, (w, h). It should be probided if is_slide is True.
         num_classes (int): the number of classes
 
     Returns:
@@ -107,15 +107,15 @@ def aug_inference(model,
     Args:
         model (paddle.nn.Layer): model to get logits of image.
         img (Tensor): the input image.
-        ori_shape (list): Origin shape of image.
-        transforms (list): Transforms for image.
-        scales (list):  Scales for resize. Default: [1.0,].
-        flip_horizontal (bool): Whether to flip horizontally. Default: False.
-        flip_vertical (bool): Whether to flip vertically. Default: False.
-        is_slide (bool): Whether to infer by sliding wimdow. Default: False.
-        crop_size (tuple|list). The size of sliding window, (w, h). It should be probided if is_slide is True.
-        stride_size (tuple|list). The size of stride, (w, h). It should be probided if is_slide is True.
+        ori_shape (list): origin shape of image.
+        transforms (list): transforms for image.
+        is_slide (bool): whether to infer by sliding wimdow. 
+        crop_size (tuple|list). the size of sliding window, (w, h). It should be probided if is_slide is True.
+        stride_size (tuple|list). the size of stride, (w, h). It should be probided if is_slide is True.
         num_classes (int): the number of classes
+        scales (list):  scales for resize. Default: [1.0,].
+        flip_horizontal (bool): whether to flip horizontally. Default: True
+        flip_vertical (bool): whether to flip vertically. Default: False.
 
     Returns:
         Tensor: Prediction of image with shape (1, 1, h, w) is returned.

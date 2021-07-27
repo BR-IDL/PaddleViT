@@ -10,7 +10,7 @@ import paddle.nn as nn
 from config import *
 from src.utils import get_sys_env, logger
 from src.datasets import get_dataset
-from src.models import SETR
+from src.models import get_model
 from src.transforms import *
 from src.models.losses import CrossEntropyLoss
 from src.utils import TimeAverager, calculate_eta, resume
@@ -66,7 +66,7 @@ def main():
     place = 'gpu' if env_info['Paddle compiled with cuda'] and env_info['GPUs used'] else 'cpu'
     paddle.set_device(place)
     # build  model
-    model = SETR(config)
+    model = get_model(config)
     model.train()
     nranks = paddle.distributed.ParallelEnv().nranks
     local_rank = paddle.distributed.ParallelEnv().local_rank
@@ -157,7 +157,7 @@ def main():
                 avg_train_batch_cost = batch_cost_averager.get_average()
                 avg_train_reader_cost = reader_cost_averager.get_average()
                 eta = calculate_eta(remain_iters, avg_train_batch_cost)
-                logger.info("[TRAIN] epoch: {}, iter: {}/{}, loss: {:.4f}, lr: {:.8f}, batch_cost:
+                logger.info("[TRAIN] epoch: {}, iter: {}/{}, loss: {:.4f}, lr: {:.8f}, batch_cost:\
                     {:.4f}, reader_cost: {:.5f}, ips: {:.4f} samples/sec | ETA {}".format(
                     (cur_iter - 1) // iters_per_epoch + 1, cur_iter, config.TRAIN.ITERS, avg_loss, 
                     lr, avg_train_batch_cost, avg_train_reader_cost, 
