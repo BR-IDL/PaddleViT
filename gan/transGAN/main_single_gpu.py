@@ -167,6 +167,15 @@ def train(args,
                 f"Step[{batch_id:04d}/{total_batch:04d}], " +
                 f"Avg Loss: {train_loss_meter.avg:.4f}, ")
 
+            # plt.figure()
+            # for i in range(1,5):
+            #     plt.subplot(2,2,i)
+            #     plt.imshow(gen_imgs[i-1])
+            #     plt.xticks([])
+            #     plt.yticks([])
+            # plt.draw()
+            # plt.savefig(str(batch_id) + '.png')
+
     train_time = time.time() - time_st
     return train_loss_meter.avg, train_time
 
