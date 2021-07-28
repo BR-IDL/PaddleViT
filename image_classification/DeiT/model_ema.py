@@ -40,9 +40,15 @@ class ModelEma:
 
     @paddle.no_grad()
     def _update(self, model, update_fn):
-        for ema_param_values, model_param_values in zip(
-            self.module.state_dict().values(), model.state_dict().values()):
-            ema_param_values = copy.deepcopy(update_fn(ema_param_values, model_param_values))
+        # update ema model parameters by model parameters
+        for (_, ema_param), (_, model_param) in zip(
+            self.module.named_parameters(), model.named_parameters()):
+            ema_param.set_value(copy.deepcopy(update_fn(ema_param, model_param)))
+            
+        # update ema model buffers by model buffers
+        for (_, ema_buf), (_, model_buf) in zip(
+            self.module.named_buffers(), model.named_buffers()):
+            ema_buf.set_value(copy.deepcopy(update_fn(ema_buf, model_buf)))
 
     def update(self, model):
         self._update(model, update_fn=lambda e, m: self.decay * e  + (1 - self.decay) * m)
