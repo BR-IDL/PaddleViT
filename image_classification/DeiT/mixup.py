@@ -212,5 +212,5 @@ class Mixup:
         else:
             x_flipped = x.flip(axis=[0])
             x_flipped = x_flipped * (1 - lam)
-            x = x * (lam) + x_flipped
+            x.set_value(x * (lam) + x_flipped)
         return lam
