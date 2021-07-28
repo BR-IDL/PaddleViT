@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import unittest
+import copy
 import numpy as np
 import paddle
 import paddle.nn as nn
@@ -22,8 +23,8 @@ from model_ema import ModelEma
 class DummyModel(nn.Layer):
     def __init__(self):
         super().__init__()
-        self.layer = nn.Linear(8, 16)
-        self.head = nn.Linear(16, 1000)
+        self.layer = nn.Linear(4, 8)
+        self.head = nn.Linear(8, 5)
 
     def forward(self, x):
         feature = self.layer(x)
@@ -31,7 +32,7 @@ class DummyModel(nn.Layer):
         return out
 
 
-class LossesTest(unittest.TestCase):
+class ModelEmaTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         paddle.set_device('cpu')
@@ -44,17 +45,21 @@ class LossesTest(unittest.TestCase):
     def test_model_ema(self):
         model = DummyModel()
         criterion = nn.CrossEntropyLoss()
-        optim = paddle.optimizer.SGD(learning_rate=0.01,
+        optim = paddle.optimizer.SGD(learning_rate=0.1,
                                        parameters=model.parameters())
-        model_ema = ModelEma(model)
-        for i in range(10):
-            x = paddle.rand([4, 8])
-            target = paddle.randint(0, 999, [4])
+        model_ema = ModelEma(model, decay=0.5)
+        for i in range(5):
+            x = paddle.rand([4, 4])
+            target = paddle.randint(0, 5, [4])
             out = model(x)
             loss = criterion(out, target)
             loss.backward()
             optim.step()
             optim.clear_grad()
             model_ema.update(model)
+            # test model ema update
+            model_ema_weight = model_ema.module.head.weight
+            self.assertFalse(np.allclose(prev_weight.numpy(), model_ema_weight.numpy(), atol=1e-5))
+            prev_weight = copy.deepcopy(model_ema.module.head.weight)
 
             
