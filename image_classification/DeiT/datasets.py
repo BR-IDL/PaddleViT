@@ -38,7 +38,7 @@ class ImageNet2012Dataset(Dataset):
     """
 
     def __init__(self, file_folder, mode="train", transform=None):
-        """Init ImageNet2021Dataset with dataset file path, mode(train/val), and transform"""
+        """Init ImageNet2012Dataset with dataset file path, mode(train/val), and transform"""
         super(ImageNet2012Dataset, self).__init__()
         assert mode in ["train", "val"]
         self.file_folder = file_folder
