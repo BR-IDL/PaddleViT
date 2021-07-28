@@ -102,7 +102,7 @@ class LossesTest(unittest.TestCase):
                                      'none',
                                      alpha=0.3,
                                      tau=0.8)
-        loss = criterion(x, out, out_kd, labels)
+        loss = criterion(x, (out, out_kd), labels)
         self.assertEqual(loss.shape, [1])
 
         criterion = DistillationLoss(base_criterion,
@@ -110,7 +110,7 @@ class LossesTest(unittest.TestCase):
                                      'hard',
                                      alpha=0.3,
                                      tau=0.8)
-        loss = criterion(x, out, out_kd, labels)
+        loss = criterion(x, (out, out_kd), labels)
         self.assertEqual(loss.shape, [1])
 
         criterion = DistillationLoss(base_criterion,
@@ -118,7 +118,7 @@ class LossesTest(unittest.TestCase):
                                      'soft',
                                      alpha=0.3,
                                      tau=0.8)
-        loss = criterion(x, out, out_kd, labels)
+        loss = criterion(x, (out, out_kd), labels)
         self.assertEqual(loss.shape, [1])
 
 
