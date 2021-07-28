@@ -48,6 +48,7 @@ class ModelEmaTest(unittest.TestCase):
         optim = paddle.optimizer.SGD(learning_rate=0.1,
                                        parameters=model.parameters())
         model_ema = ModelEma(model, decay=0.5)
+        prev_weight = copy.deepcopy(model_ema.module.head.weight)
         for i in range(5):
             x = paddle.rand([4, 4])
             target = paddle.randint(0, 5, [4])
