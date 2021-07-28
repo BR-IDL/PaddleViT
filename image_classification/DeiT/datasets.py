@@ -26,7 +26,7 @@ from auto_augment import AutoAugment
 from random_erasing import RandomErasing
 
 class ImageNet2012Dataset(Dataset):
-    """Build ImageNet2021 dataset
+    """Build ImageNet2012 dataset
 
     This class gets train/val imagenet datasets, which loads transfomed data and labels.
 
