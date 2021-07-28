@@ -1,0 +1,9 @@
+MODEL:
+  GEN_MODEL: "ViT_custom"
+  DIS_MODEL: "ViT_custom_scale2"
+
+EXP_NAME: "cifar_train"
+EVAL_BATCH_SIZE: 8
+NUM_EVAL_IMAGES: 2000
+LOAD_PATH: "/content/drive/MyDrive/transgan_all/TransGAN/transgan.pdparams"
+FID_STAT: "/content/drive/MyDrive/transgan_all/TransGAN/fid_stat/fid_stats_cifar10_train.npz"
