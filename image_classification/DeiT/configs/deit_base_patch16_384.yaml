@@ -1,0 +1,14 @@
+DATA:
+    IMAGE_SIZE: 384
+    CROP_PCT: 1.0
+MODEL:
+    TYPE: DeiT
+    NAME: deit_base_patch16_384
+    TRANS:
+        PATCH_SIZE: 16
+        EMBED_DIM: 768
+        MLP_RATIO: 4.0
+        DEPTH: 12
+        NUM_HEADS: 12
+        QKV_BIAS: True
+
