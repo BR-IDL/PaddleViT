@@ -32,7 +32,6 @@ if __name__ == '__main__':
     config = update_config(config, args)
     if args.model_path is None:
         args.model_path = os.path.join(config.SAVE_DIR,"iter_{}_model_state.pdparams".format(config.TRAIN.ITERS))
-
     env_info = get_sys_env()
     place = 'gpu' if env_info['Paddle compiled with cuda'] and env_info['GPUs used'] else 'cpu'
     paddle.set_device(place)

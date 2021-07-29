@@ -1,5 +1,7 @@
-"""
-DPT model implementation
+"""                                                                                                                                                                                                                 
+This module implements DPT
+Vision Transformers for Dense Prediction
+<https://arxiv.org/abs/2103.13413.pdf>
 """
 
 import paddle

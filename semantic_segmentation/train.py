@@ -17,8 +17,10 @@ from src.utils import TimeAverager, calculate_eta, resume
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Visual Transformer for semantic segmentation')
-    parser.add_argument("--config", dest='cfg',help="The config file.", default=None, type=str)
+    parser = argparse.ArgumentParser(
+        description='Visual Transformer for semantic segmentation')
+    parser.add_argument("--config", dest='cfg',help="The config file.", 
+        default=None, type=str)
     return parser.parse_args()
 
 def optimizer_setting(model, config):
@@ -179,7 +181,7 @@ def main():
                     os.remove(files_to_remove[0])
                     os.remove(files_to_remove[1])
             batch_start = time.time()
-    time.sleep(0.5)
+    time.sleep(1.0)
 
 if __name__ == '__main__':
     main()

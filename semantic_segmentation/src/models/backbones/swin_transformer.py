@@ -582,7 +582,6 @@ class SwinTransformer(nn.Layer):
         x = self.position_dropout(x)
         outs = []
         for idx in range(len(self.stages)):
-            #print("idx: {}, x.shape: {}.".format(idx, x.shape))
             x_out, x = self.stages[idx](x)
             if idx in self.out_indices:
                 outs.append(x_out)

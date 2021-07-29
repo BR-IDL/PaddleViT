@@ -8,4 +8,6 @@ def get_model(config):
        model = SETR(config)
     elif "UperNet" in config.MODEL.NAME:
        model = UperNet(config)
+    elif "DPT" in config.MODEL.NAME:
+       model = DPTSeg(config)
     return model

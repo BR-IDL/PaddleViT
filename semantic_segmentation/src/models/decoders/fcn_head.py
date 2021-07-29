@@ -5,9 +5,8 @@ import paddle.nn.functional as F
 class FCNHead(nn.Layer):
     """FCNHead
 
-    FCNHead is the decoder of FCN, which can be used as an auxiliary segmentation head for other segmentation models.
+    FCNHead is the decoder of FCN, which can also be used as an auxiliary segmentation head for other segmentation models.
     Ref https://arxiv.org/pdf/1411.4038.pdf
-
     Reference:                                                                                                                                                
         Jonathan Long, et al. *"Fully Convolution Networks for Semantic Segmentation."*
     """
