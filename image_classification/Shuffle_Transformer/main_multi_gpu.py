@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using multiple GPU """
+"""Shuffle Transformer training/validation using multiple GPU """
 
 import sys
 import os
@@ -26,14 +26,14 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader, get_dataset
-from load_weight import build_paddle_model
+from shuffle_transformer import build_shuffle_transformer as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
 from config import update_config
 
 
-parser = argparse.ArgumentParser('ViT')
+parser = argparse.ArgumentParser('Shuffle Transformer')
 parser.add_argument('-cfg', type=str, default=None)
 parser.add_argument('-dataset', type=str, default=None)
 parser.add_argument('-batch_size', type=int, default=None)
@@ -61,8 +61,6 @@ if not config.EVAL:
     config.SAVE = '{}/train-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
-
-#config.freeze()
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
@@ -189,7 +187,7 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
                 logger.info(
                     f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
                     f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
+                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, "+
                     f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
 
     val_time = time.time() - time_st
@@ -208,7 +206,7 @@ def main_worker(*args):
     np.random.seed(seed)
     random.seed(seed)
     # 1. Create model
-    model = build_paddle_model(config)
+    model = build_model(config)
     model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train, dataset_val = args[0], args[1]
@@ -269,8 +267,7 @@ def main_worker(*args):
             weight_decay=config.TRAIN.WEIGHT_DECAY,
             epsilon=config.TRAIN.OPTIMIZER.EPS,
             grad_clip=clip,
-            apply_decay_param_fun=get_exclude_from_weight_decay_fn([
-                'absolute_pos_embed', 'relative_position_bias_table']),
+            #apply_decay_param_fun=get_exclude_from_weight_decay_fn(['pos_embed', 'cls_token']),
             )
     else:
         logging.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
@@ -294,7 +291,7 @@ def main_worker(*args):
         optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume Training: Load model and optmizer states from {config.MODEL.RESUME}")
-
+    
     # 6. Validation
     if config.EVAL:
         logger.info('----- Start Validating')
@@ -348,8 +345,8 @@ def main_worker(*args):
             if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
                 model_path = os.path.join(
                     config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
-                paddle.save(model.state_dict(), model_path)
-                paddle.save(optimizer.state_dict(), model_path)
+                paddle.save(model.state_dict(), model_path + '.pdparams')
+                paddle.save(optimizer.state_dict(), model_path + '.pdopt')
                 logger.info(f"----- Save model: {model_path}.pdparams")
                 logger.info(f"----- Save optim: {model_path}.pdopt")
 
