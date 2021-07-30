@@ -20,13 +20,12 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 10. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
 
 #### Coming Soon: ####
-2. T2T-ViT ([Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet](https://arxiv.org/abs/2101.11986))
-
-4. CSwin ([CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows](https://arxiv.org/pdf/2107.00652.pdf))
-5. Focal Self-attention ([Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641))
-6. HaloNet ([Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731))
-7. Refined-ViT ([Refiner: Refining Self-attention for Vision Transformers](https://arxiv.org/pdf/2106.03714.pdf))
-8. CrossViT ([CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899))
+1. T2T-ViT ([Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet](https://arxiv.org/abs/2101.11986))
+2. CSwin ([CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows](https://arxiv.org/pdf/2107.00652.pdf))
+3. Focal Self-attention ([Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641))
+4. HaloNet ([Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731))
+5. Refined-ViT ([Refiner: Refining Self-attention for Vision Transformers](https://arxiv.org/pdf/2106.03714.pdf))
+6. CrossViT ([CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899))
 
 
 
