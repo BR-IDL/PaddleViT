@@ -162,7 +162,8 @@ class Attention(nn.Layer):
         self.window_size = window_size
         if self.window_size != 0:
             zeros_ = nn.initializer.Constant(value=0.)
-            self.relative_position_bias_table = self.create_parameter( # 2*Wh-1 * 2*Ww-1, nH
+             # 2*Wh-1 * 2*Ww-1, nH
+            self.relative_position_bias_table = self.create_parameter(
                 shape=((2 * window_size - 1) * (2 * window_size - 1), num_heads),
                 default_initializer=zeros_
             )
@@ -173,7 +174,8 @@ class Attention(nn.Layer):
 
             coords = paddle.stack(paddle.meshgrid([coords_h, coords_w]))  # 2, Wh, Ww
             coords_flatten = paddle.flatten(coords, 1)  # 2, Wh*Ww
-            relative_coords = coords_flatten.unsqueeze(2) - coords_flatten.unsqueeze(1)  # 2, Wh*Ww, Wh*Ww
+            # 2, Wh*Ww, Wh*Ww
+            relative_coords = coords_flatten.unsqueeze(2) - coords_flatten.unsqueeze(1)
             relative_coords = relative_coords.transpose([1, 2, 0])  # Wh*Ww, Wh*Ww, 2
             relative_coords[:, :, 0] += window_size - 1  # shift to start from 0
             relative_coords[:, :, 1] += window_size - 1
@@ -185,14 +187,19 @@ class Attention(nn.Layer):
 
     def forward(self, x):
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape([B, N, 3, self.num_heads, C // self.num_heads]).transpose([2, 0, 3, 1, 4])
+        qkv = self.qkv(x).reshape([B, N, 3, self.num_heads, C // self.num_heads])
+        qkv = qkv.transpose([2, 0, 3, 1, 4])
         q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
         attn = (self.mat(q, k.transpose([0, 1, 3, 2]))) * self.scale
         if self.window_size != 0:
-            relative_position_bias = paddle.index_select(self.relative_position_bias_table,
-                                                         self.relative_position_index.flatten().clone()).reshape((
-                self.window_size * self.window_size, self.window_size * self.window_size, -1))  # Wh*Ww,Wh*Ww,nH
-            relative_position_bias = relative_position_bias.transpose((2, 0, 1))  # nH, Wh*Ww, Wh*Ww
+            relative_position_bias = paddle.index_select(
+                self.relative_position_bias_table,
+                self.relative_position_index.flatten().clone())
+            relative_position_bias = relative_position_bias.reshape((
+                self.window_size * self.window_size,
+                self.window_size * self.window_size,
+                -1))  # Wh*Ww,Wh*Ww,nH
+            relative_position_bias = relative_position_bias.transpose((2, 0, 1)) # nH, Wh*Ww, Wh*Ww
             attn = attn + relative_position_bias.unsqueeze(0)
 
         #attn = attn.softmax(dim=-1)
@@ -218,18 +225,36 @@ class Block(nn.Layer):
     Make up the basic unit of the network
 
     """
-    def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=0., act_layer=gelu, norm_layer=nn.LayerNorm, window_size=16):
+    def __init__(self,
+                 dim,
+                 num_heads,
+                 mlp_ratio=4.,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop=0.,
+                 attn_drop=0.,
+                 drop_path=0.,
+                 act_layer=gelu,
+                 norm_layer=nn.LayerNorm,
+                 window_size=16):
         super().__init__()
         self.norm1 = CustomNorm(norm_layer, dim)
         self.attn = Attention(
-            dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop, window_size=window_size)
+            dim,
+            num_heads=num_heads,
+            qkv_bias=qkv_bias,
+            qk_scale=qk_scale,
+            attn_drop=attn_drop,
+            proj_drop=drop,
+            window_size=window_size)
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0. else Identity()
         self.norm2 = CustomNorm(norm_layer, dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim,
-                       act_layer=act_layer, drop=drop)
+        self.mlp = Mlp(in_features=dim,
+                       hidden_features=mlp_hidden_dim,
+                       act_layer=act_layer,
+                       drop=drop)
 
     def forward(self, x):
         x = x + self.drop_path(self.attn(self.norm1(x)))
@@ -241,10 +266,18 @@ class StageBlock(nn.Layer):
     Organize Block
 
     """
-    def __init__(self, depth, dim, num_heads,
-                 mlp_ratio=4., qkv_bias=False, qk_scale=None,
-                 drop=0., attn_drop=0., drop_path=0.,
-                 act_layer=gelu, norm_layer=nn.LayerNorm,
+    def __init__(self,
+                 depth,
+                 dim,
+                 num_heads,
+                 mlp_ratio=4.,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop=0.,
+                 attn_drop=0.,
+                 drop_path=0.,
+                 act_layer=gelu,
+                 norm_layer=nn.LayerNorm,
                  window_size=16):
         super().__init__()
         self.depth = depth
@@ -293,11 +326,23 @@ class Generator(nn.Layer):
         norm_layer: which norm method
 
     """
-    def __init__(self, args, img_size=64, patch_size=2, in_chans=3,
-                 num_classes=10, embed_dim=384, depth=5,
-                 num_heads=4, mlp_ratio=4., qkv_bias=False,
-                 qk_scale=None, drop_rate=0., attn_drop_rate=0.,
-                 drop_path_rate=0., hybrid_backbone=None, norm_layer="ln"):
+    def __init__(self,
+                 args,
+                 img_size=64,
+                 patch_size=2,
+                 in_chans=3,
+                 num_classes=10,
+                 embed_dim=384,
+                 depth=5,
+                 num_heads=4,
+                 mlp_ratio=4.,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop_rate=0.,
+                 attn_drop_rate=0.,
+                 drop_path_rate=0.,
+                 hybrid_backbone=None,
+                 norm_layer="ln"):
         super().__init__()
         self.args = args
         self.ch = embed_dim
@@ -322,19 +367,18 @@ class Generator(nn.Layer):
             self.pos_embed_3
         ]
         self.blocks = StageBlock(
-                        depth=depth[0],
-                        dim=embed_dim,
-                        num_heads=num_heads,
-                        mlp_ratio=mlp_ratio,
-                        qkv_bias=qkv_bias,
-                        qk_scale=qk_scale,
-                        drop=drop_rate,
-                        attn_drop=attn_drop_rate,
-                        drop_path=0,
-                        act_layer=act_layer,
-                        norm_layer=norm_layer,
-                        window_size=8
-                        )
+            depth=depth[0],
+            dim=embed_dim,
+            num_heads=num_heads,
+            mlp_ratio=mlp_ratio,
+            qkv_bias=qkv_bias,
+            qk_scale=qk_scale,
+            drop=drop_rate,
+            attn_drop=attn_drop_rate,
+            drop_path=0,
+            act_layer=act_layer,
+            norm_layer=norm_layer,
+            window_size=8)
         self.upsample_blocks = nn.LayerList([
             StageBlock(
                 depth=depth[1],

@@ -25,8 +25,10 @@ from paddle.optimizer.lr import LRScheduler
 import paddle.nn.functional as F
 
 def gelu(x):
-    """ Original Implementation of the gelu activation function in Google Bert repo when initialy created.
-        For information: OpenAI GPT's gelu is slightly different (and gives slightly different results):
+    """ Original Implementation of the gelu activation function in Google Bert repo
+        when initialy created.
+        For information: OpenAI GPT's gelu is slightly different (and gives slightly
+        different results):
         0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
         Also see https://arxiv.org/abs/1606.08415
     """
@@ -202,20 +204,26 @@ def rand_brightness(x, affine=None):
 
 def rand_saturation(x, affine=None):
     x_mean = x.mean(dim=1, keepdim=True)
-    x = (x - x_mean) * (paddle.rand(x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) * 2) + x_mean
+    x = (x - x_mean) *
+        (paddle.rand(x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) * 2) + x_mean
     return x
 
 
 def rand_contrast(x, affine=None):
     x_mean = x.mean(dim=[1, 2, 3], keepdim=True)
-    x = (x - x_mean) * (paddle.rand(x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) + 0.5) + x_mean
+    x = (x - x_mean) *
+        (paddle.rand(x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) + 0.5) + x_mean
     return x
 
 def rand_cutout(x, ratio=0.5, affine=None):
     if random.random() < 0.3:
         cutout_size = int(x.size(2) * ratio + 0.5), int(x.size(3) * ratio + 0.5)
-        offset_x = paddle.randint(0, x.size(2) + (1 - cutout_size[0] % 2), size=[x.size(0), 1, 1], device=x.device)
-        offset_y = paddle.randint(0, x.size(3) + (1 - cutout_size[1] % 2), size=[x.size(0), 1, 1], device=x.device)
+        offset_x =paddle.randint(0,
+                                 x.size(2) + (1 - cutout_size[0] % 2), size=[x.size(0), 1, 1],
+                                 device=x.device)
+        offset_y = paddle.randint(0,
+                                  x.size(3) + (1 - cutout_size[1] % 2), size=[x.size(0), 1, 1],
+                                  device=x.device)
         grid_batch, grid_x, grid_y = paddle.meshgrid(
             paddle.arange(x.size(0), dtype=paddle.long, device=x.device),
             paddle.arange(cutout_size[0], dtype=paddle.long, device=x.device),
@@ -258,11 +266,12 @@ AUGMENT_FNS = {
 
 def drop_path(x, drop_prob: float = 0., training: bool = False):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
-    This is the same as the DropConnect impl author created for EfficientNet, etc networks, however,
-    the original name is misleading as 'Drop Connect' is a different form of dropout in a separate paper...
-    See discussion: https://github.com/tensorflow/tpu/issues/494#issuecomment-532968956 ... author have opted for
-    changing the layer and argument names to 'drop path' rather than mix DropConnect as a layer name and use
-    'survival rate' as the argument.
+    This is the same as the DropConnect impl author created for EfficientNet, etc networks,
+    however,the original name is misleading as 'Drop Connect' is a different form of dropout in
+    a separate paper...
+    See discussion: https://github.com/tensorflow/tpu/issues/494#issuecomment-532968956 ... 
+    author have opted for changing the layer and argument names to 'drop path' rather than mix
+    DropConnect as a layer name and use 'survival rate' as the argument.
     """
     if drop_prob == 0. or not training:
         return x

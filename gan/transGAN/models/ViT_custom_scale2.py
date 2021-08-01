@@ -88,7 +88,7 @@ class CustomNorm(nn.Layer):
 class CustomAct(nn.Layer):
     """ CustomAct layer
 
-    Custom act method, defalut "gelu"
+    Custom act method, defalut "gelu", or choose "leakyrelu"
 
     """
     def __init__(self, act_layer):
@@ -177,7 +177,6 @@ class Attention(nn.Layer):
             self.relative_position_bias_table = self.create_parameter(
                 shape=((2 * window_size - 1) * (2 * window_size - 1),
                        num_heads), default_initializer=zeros_)
-
             # get pair-wise relative position index for each token inside the window
             coords_h = paddle.arange(window_size)
             coords_w = paddle.arange(window_size)
@@ -191,7 +190,6 @@ class Attention(nn.Layer):
             relative_coords[:, :, 0] *= 2 * window_size - 1
             relative_position_index = relative_coords.sum(-1)  # Wh*Ww, Wh*Ww
             self.register_buffer("relative_position_index", relative_position_index)
-
             trunc_normal_(self.relative_position_bias_table, std=.02)
 
     def forward(self, x):
@@ -243,7 +241,10 @@ class DisBlock(nn.Layer):
         self.drop_path = DropPath(drop_path) if drop_path > 0. else Identity()
         self.norm2 = CustomNorm(norm_layer, dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
+        self.mlp = Mlp(in_features=dim,
+                       hidden_features=mlp_hidden_dim,
+                       act_layer=act_layer,
+                       drop=drop)
         self.gain = np.sqrt(0.5) if norm_layer == "none" else 1
 
     def forward(self, x):
@@ -295,18 +296,21 @@ class Discriminator(nn.Layer):
         super().__init__()
         self.num_classes = num_classes
         self.num_features = embed_dim = self.embed_dim = args.df_dim
-
         depth = args.d_depth
         self.args = args
         self.patch_size = patch_size = args.patch_size
         norm_layer = args.d_norm
         self.window_size = args.d_window_size
-
         act_layer = args.d_act
-        self.fRGB_1 = nn.Conv2D(3, embed_dim//4*3, \
-                                kernel_size=patch_size, stride=patch_size, padding=0)
-        self.fRGB_2 = nn.Conv2D(3, embed_dim//4, \
-                                kernel_size=patch_size*2, stride=patch_size*2, padding=0)
+        self.fRGB_1 = nn.Conv2D(3,
+                                embed_dim//4*3,
+                                kernel_size=patch_size,
+                                stride=patch_size, padding=0)
+        self.fRGB_2 = nn.Conv2D(3,
+                                embed_dim//4,
+                                kernel_size=patch_size*2,
+                                stride=patch_size*2,
+                                padding=0)
 
         num_patches_1 = (args.img_size // patch_size)**2
         num_patches_2 = ((args.img_size//2) // patch_size)**2
@@ -320,28 +324,45 @@ class Discriminator(nn.Layer):
             shape=(1, num_patches_2, embed_dim), default_initializer=zeros_)
 
         self.pos_drop = nn.Dropout(p=drop_rate)
-
-        dpr = [x.item() for x in paddle.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
+        # stochastic depth decay rule
+        dpr = [x.item() for x in paddle.linspace(0, drop_path_rate, depth)]
         self.blocks_1 = nn.LayerList([
-            DisBlock(
-                dim=embed_dim//4*3, num_heads=num_heads, mlp_ratio=mlp_ratio, \
-                qkv_bias=qkv_bias, qk_scale=qk_scale,
-                drop=drop_rate, attn_drop=attn_drop_rate, drop_path=0, act_layer=act_layer, \
-                norm_layer=norm_layer, window_size=args.bottom_width*4//2)
-            for i in range(depth)])
+            DisBlock(dim=embed_dim//4*3,
+                     num_heads=num_heads,
+                     mlp_ratio=mlp_ratio,
+                     qkv_bias=qkv_bias,
+                     qk_scale=qk_scale,
+                     drop=drop_rate,
+                     attn_drop=attn_drop_rate,
+                     drop_path=0,
+                     act_layer=act_layer,
+                     norm_layer=norm_layer,
+                     window_size=args.bottom_width*4//2) for i in range(depth)])
         self.blocks_2 = nn.LayerList([
-            DisBlock(
-                dim=embed_dim, num_heads=num_heads, \
-                mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
-                drop=drop_rate, attn_drop=attn_drop_rate, drop_path=0, \
-                act_layer=act_layer, norm_layer=norm_layer, \
-                window_size=args.bottom_width*4//4)
-            for i in range(depth)])
+            DisBlock(dim=embed_dim,
+                     num_heads=num_heads,
+                     mlp_ratio=mlp_ratio,
+                     qkv_bias=qkv_bias,
+                     qk_scale=qk_scale,
+                     drop=drop_rate,
+                     attn_drop=attn_drop_rate,
+                     drop_path=0,
+                     act_layer=act_layer,
+                     norm_layer=norm_layer,
+                     window_size=args.bottom_width*4//4) for i in range(depth)])
 
         self.last_block = nn.Sequential(
-            DisBlock(
-                dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
-                drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[0], act_layer=act_layer, norm_layer=norm_layer, window_size=0)
+            DisBlock(dim=embed_dim,
+                     num_heads=num_heads,
+                     mlp_ratio=mlp_ratio,
+                     qkv_bias=qkv_bias,
+                     qk_scale=qk_scale,
+                     drop=drop_rate,
+                     attn_drop=attn_drop_rate,
+                     drop_path=dpr[0],
+                     act_layer=act_layer,
+                     norm_layer=norm_layer,
+                     window_size=0)
             )
 
         self.norm = CustomNorm(norm_layer, embed_dim)
@@ -351,21 +372,7 @@ class Discriminator(nn.Layer):
         trunc_normal_(self.pos_embed_2, std=.02)
         trunc_normal_(self.cls_token, std=.02)
         # self.apply(self._init_weights)
-        if 'filter' in self.args.diff_aug:
-            Hz_lo = np.asarray(wavelets['sym2'])            # H(z)
-            Hz_hi = Hz_lo * ((-1) ** np.arange(Hz_lo.size)) # H(-z)
-            Hz_lo2 = np.convolve(Hz_lo, Hz_lo[::-1]) / 2    # H(z) * H(z^-1) / 2
-            Hz_hi2 = np.convolve(Hz_hi, Hz_hi[::-1]) / 2    # H(-z) * H(-z^-1) / 2
-            Hz_fbank = np.eye(4, 1)                         # Bandpass(H(z), b_i)
-            for i in range(1, Hz_fbank.shape[0]):
-                Hz_fbank = np.dstack([Hz_fbank, np.zeros_like(Hz_fbank)]).reshape(Hz_fbank.shape[0], -1)[:, :-1]
-                Hz_fbank = scipy.signal.convolve(Hz_fbank, [Hz_lo2])
-                Hz_fbank[i, (Hz_fbank.shape[1] - Hz_hi2.size) // 2 : (Hz_fbank.shape[1] + Hz_hi2.size) // 2] += Hz_hi2
-            Hz_fbank = torch.as_tensor(Hz_fbank, dtype=torch.float32)
-            # TODO
-            # self.register_buffer('Hz_fbank', paddle.to_tensor(Hz_fbank, dtype=paddle.float32))
-        else:
-            self.Hz_fbank = None
+        self.Hz_fbank = None
         if 'geo' in self.args.diff_aug:
             self.register_buffer('Hz_geom', upfirdn2d.setup_filter(wavelets['sym6']))
         else:

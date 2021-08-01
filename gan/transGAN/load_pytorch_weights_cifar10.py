@@ -14,19 +14,15 @@
 
 """load weight """
 
-import sys
-import logging
-import operator
-import numpy as np
 import torch
 import torch.nn as nn
-import os
-import zipfile
-import math
-from tqdm import tqdm
-import random
 import paddle
 import argparse
+
+import models_search
+from models.ViT_custom import Generator
+from models.ViT_custom_scale2 import Discriminator
+
 from config import get_config, update_config
 
 def print_model_named_params(model):
@@ -56,7 +52,6 @@ def torch_to_paddle_mapping():
     num_layers_1 = 5
     for idx in range(num_layers_1):
         ly_py_prefix = f'blocks.block.{idx}'
-        # th_prefix = f'blocks.{idx}'
         layer_mapping = [
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.weight', f'{ly_py_prefix}.norm1.norm.weight'),
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.bias', f'{ly_py_prefix}.norm1.norm.bias'),
@@ -76,7 +71,6 @@ def torch_to_paddle_mapping():
     num_layers_2 = 4
     for idx in range(num_layers_2):
         ly_py_prefix = f'upsample_blocks.0.block.{idx}'
-        # th_prefix = f'blocks.{idx}'
         layer_mapping = [
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.weight', f'{ly_py_prefix}.norm1.norm.weight'),
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.bias', f'{ly_py_prefix}.norm1.norm.bias'),
@@ -96,7 +90,6 @@ def torch_to_paddle_mapping():
     num_layers_3 = 2
     for idx in range(num_layers_3):
         ly_py_prefix = f'upsample_blocks.1.block.{idx}'
-        # th_prefix = f'blocks.{idx}'
         layer_mapping = [
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.weight', f'{ly_py_prefix}.norm1.norm.weight'),
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.bias', f'{ly_py_prefix}.norm1.norm.bias'),
@@ -138,7 +131,6 @@ def torch_to_paddle_mapping_dis():
     num_layers_1 = 2
     for idx in range(num_layers_1):
         ly_py_prefix = f'blocks_1.{idx}'
-        # th_prefix = f'blocks.{idx}'
         layer_mapping = [
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.weight', f'{ly_py_prefix}.norm1.norm.weight'),
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.bias', f'{ly_py_prefix}.norm1.norm.bias'),
@@ -262,7 +254,6 @@ def convert(torch_model, paddle_model, mapping):
     return paddle_model
     
 def main():
-    # args
     parser = argparse.ArgumentParser('transGAN')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
@@ -313,7 +304,7 @@ def main():
 
     #convert weights
     paddle_model_gen = convert(torch_model_gen, paddle_model_gen, "gen")
-    paddle_model_dis = convert(torch_model_dis, paddle_model_dis)
+    paddle_model_dis = convert(torch_model_dis, paddle_model_dis, "dis")
 
     # check correctness
     
