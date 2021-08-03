@@ -225,7 +225,6 @@ def main():
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
     # 5. Define optimizer
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
-        print(config.TRAIN.GRAD_CLIP)
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
         else:
@@ -237,11 +236,17 @@ def main():
             momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
             grad_clip=clip)
     elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
+        if config.TRAIN.GRAD_CLIP:
+            clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
+        else:
+            clip = None
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
+            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-            epsilon=config.TRAIN.OPTIMIZER.EPS)
+            epsilon=config.TRAIN.OPTIMIZER.EPS,
+            grad_clip=clip)
     else:
         logging.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
@@ -252,9 +257,9 @@ def main():
         model.set_dict(model_state)
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
-    if config.MODEL.RESUME and os.path.isfile(
-            config.MODEL.RESUME+'.pdparams') and os.path.isfile(
-                config.MODEL.RESUME+'.pdopt'):
+    if config.MODEL.RESUME:
+        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
         model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
@@ -312,8 +317,8 @@ def main():
         if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             model_path = os.path.join(
                 config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
-            paddle.save(model.state_dict(), model_path)
-            paddle.save(optimizer.state_dict(), model_path)
+            paddle.save(model.state_dict(), model_path + '.pdparams')
+            paddle.save(optimizer.state_dict(), model_path + '.pdopt')
             logger.info(f"----- Save model: {model_path}.pdparams")
             logger.info(f"----- Save optim: {model_path}.pdopt")
 

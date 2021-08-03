@@ -323,11 +323,11 @@ def main():
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
         optimizer.set_dict(opt_state)
         logger.info(
-            "----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
+            f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
         if model_ema is not None and os.path.isfile(config.MODEL.RESUME_EMA+'.pdparams'):
             model_ema_state = paddle.load(config.MODEL.RESUME_EMA+'.pdparams')
             model_ema.set_dict(model_ema_state)
-            logger.info("----- Load model ema from {config.MODEL.RESUME_EMA}")
+            logger.info(f"----- Load model ema from {config.MODEL.RESUME_EMA}")
 
     # 10. Validation
     if config.EVAL:
@@ -381,15 +381,15 @@ def main():
         if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             model_path = os.path.join(
                 config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
-            paddle.save(model.state_dict(), model_path)
-            paddle.save(optimizer.state_dict(), model_path)
+            paddle.save(model.state_dict(), model_path + '.pdparams')
+            paddle.save(optimizer.state_dict(), model_path + '.pdopt')
             logger.info(f"----- Save model: {model_path}.pdparams")
             logger.info(f"----- Save optim: {model_path}.pdopt")
             # save model ema
             if model_ema is not None:
                 model_ema_path = os.path.join(
                     config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}-EMA")
-                paddle.save(model_ema.state_dict(), model_ema_path)
+                paddle.save(model_ema.state_dict(), model_ema_path + '.pdparams')
                 logger.info(f"----- Save ema model: {model_ema_path}.pdparams")
 
 if __name__ == "__main__":
