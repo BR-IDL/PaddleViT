@@ -117,8 +117,9 @@ class Resize:
         'AREA', 'LANCZOS4', 'RANDOM').
     """
 
-    def __init__(self, target_size=520, interp='LINEAR'):
+    def __init__(self, target_size=520, interp='LINEAR', keep_ori_size=False):
         self.interp = interp
+        self.keep_ori_size = keep_ori_size
 
         if isinstance(target_size, int):
             assert target_size>0
@@ -153,8 +154,8 @@ class Resize:
             interp = random.choice(list(self.interp_dict.keys()))
         else:
             interp = self.interp
-
-        im = F.resize(im, self.target_size, 'bilinear')
+        if not self.keep_ori_size:
+            im = F.resize(im, self.target_size, 'bilinear')
 
         if label is not None:
             label = F.resize(label, self.target_size,'nearest')

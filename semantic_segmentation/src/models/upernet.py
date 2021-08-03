@@ -67,7 +67,7 @@ class UperNet(nn.Layer):
             feat = self.layer_norms[idx](feats[idx])
             feats[idx] = self.to_2D(feat)
         p2, p3, p4, p5 = feats
-        preds = [self.decoder([p2, p3, p4, p5]), ]
+        preds = [self.decoder([p2, p3, p4, p5])]
         preds.append(self.aux_decoder(p4))
         return preds
 

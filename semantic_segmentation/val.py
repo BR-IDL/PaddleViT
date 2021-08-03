@@ -4,17 +4,16 @@ import shutil
 import random
 import argparse
 import numpy as np
-from collections import deque
 import paddle
 import paddle.nn.functional as F
 from config import *
-from src.utils import  get_sys_env, metrics, TimeAverager, calculate_eta, logger, progbar
 from src.core import infer
 from src.datasets import get_dataset
+from src.transforms import Resize, Normalize 
 from src.models import get_model
+from src.utils import metrics, logger, progbar
 from src.utils import TimeAverager, calculate_eta, resume
 from src.utils.utils import load_entire_model
-from src.transforms import *
 
 
 def parse_args():
@@ -32,8 +31,7 @@ if __name__ == '__main__':
     config = update_config(config, args)
     if args.model_path is None:
         args.model_path = os.path.join(config.SAVE_DIR,"iter_{}_model_state.pdparams".format(config.TRAIN.ITERS))
-    env_info = get_sys_env()
-    place = 'gpu' if env_info['Paddle compiled with cuda'] and env_info['GPUs used'] else 'cpu'
+    place = 'gpu' if config.VAL.USE_GPU else 'cpu'
     paddle.set_device(place)
     # build model
     model = get_model(config)
@@ -51,18 +49,16 @@ if __name__ == '__main__':
             ddp_model = paddle.DataParallel(model)
         else:
             ddp_model = paddle.DataParallel(model)
-
     # build val dataset and dataloader
-    transforms_val = [ Resize(target_size=config.VAL.IMAGE_BASE_SIZE),
+    transforms_val = [ Resize(target_size=config.VAL.IMAGE_BASE_SIZE,
+                              keep_ori_size=config.VAL.KEEP_ORI_SIZE),
                        Normalize(mean=config.VAL.MEAN, std=config.VAL.STD)]
     dataset_val = get_dataset(config, data_transform=transforms_val, mode='val')
-
     batch_sampler = paddle.io.DistributedBatchSampler(
         dataset_val, batch_size=config.DATA.BATCH_SIZE_VAL, shuffle=True, drop_last=True)
     loader_val = paddle.io.DataLoader( dataset_val, batch_sampler=batch_sampler,
         num_workers=config.DATA.NUM_WORKERS, return_list=True)
     total_iters = len(loader_val)
-
     # build workspace for saving checkpoints
     if not os.path.isdir(config.SAVE_DIR):
         if os.path.exists(config.SAVE_DIR):
@@ -86,28 +82,32 @@ if __name__ == '__main__':
             #print("img.shape: {}, label.shape: {}".format(img.shape, label.shape))
             ori_shape = label.shape[-2:]
             if args.multi_scales == True:
-                pred = infer.aug_inference(
-                    model,
-                    img,
+                pred = infer.ms_inference(
+                    model=model,
+                    img=img,
                     ori_shape=ori_shape,
                     transforms=transforms_val,
                     is_slide=True,
+                    base_size=config.VAL.IMAGE_BASE_SIZE,
                     stride_size=config.VAL.STRIDE_SIZE,
                     crop_size=config.VAL.CROP_SIZE,
                     num_classes=config.DATA.NUM_CLASSES,
                     scales=config.VAL.SCALE_RATIOS,
                     flip_horizontal=True,
-                    flip_vertical=False)
+                    flip_vertical=False,
+                    rescale_from_ori=config.VAL.RESCALE_FROM_ORI)
             else:
-                pred = infer.inference(
-                    model,
-                    img,
+                pred = infer.ss_inference(
+                    model=model,
+                    img=img,
                     ori_shape=ori_shape,
                     transforms=transforms_val,
                     is_slide=True,
+                    base_size=config.VAL.IMAGE_BASE_SIZE,
                     stride_size=config.VAL.STRIDE_SIZE,
                     crop_size=config.VAL.CROP_SIZE,
-                    num_classes=config.DATA.NUM_CLASSES)
+                    num_classes=config.DATA.NUM_CLASSES,
+                    rescale_from_ori=config.VAL.RESCALE_FROM_ORI)
 
             intersect_area, pred_area, label_area = metrics.calculate_area(
                 pred,
@@ -123,7 +123,6 @@ if __name__ == '__main__':
                 paddle.distributed.all_gather(intersect_area_list, intersect_area)
                 paddle.distributed.all_gather(pred_area_list, pred_area)
                 paddle.distributed.all_gather(label_area_list, label_area)
-
                 # Some image has been evaluated and should be eliminated in last iter
                 if (iter + 1) * nranks > len(dataset_val):
                     valid = len(dataset_val) - iter * nranks
@@ -148,11 +147,9 @@ if __name__ == '__main__':
             reader_cost_averager.reset()
             batch_cost_averager.reset()
             batch_start = time.time()
-
     class_iou, miou = metrics.mean_iou(intersect_area_all, pred_area_all, label_area_all)
     class_acc, acc = metrics.accuracy(intersect_area_all, pred_area_all)
     kappa = metrics.kappa(intersect_area_all, pred_area_all, label_area_all)
-
     logger.info("[EVAL] #Images: {} mIoU: {:.4f} Acc: {:.4f} Kappa: {:.4f} ".format(len(dataset_val), miou, acc, kappa))
     logger.info("[EVAL] Class IoU: \n" + str(np.round(class_iou, 4)))
     logger.info("[EVAL] Class Acc: \n" + str(np.round(class_acc, 4)))

@@ -106,6 +106,7 @@ _C.MODEL.DPT.READOUT_PROCESS = "project"
 
 # training settings
 _C.TRAIN = CN()
+_C.TRAIN.USE_GPU = True
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
 _C.TRAIN.END_LR = 1e-4
@@ -130,9 +131,12 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 
 # val settings
 _C.VAL = CN()
+_C.VAL.USE_GPU = True
 _C.VAL.MULTI_SCALES_VAL = False
 _C.VAL.SCALE_RATIOS= [0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
-_C.VAL.IMAGE_BASE_SIZE = 520 # 520 for pascal context
+_C.VAL.IMAGE_BASE_SIZE = None # 520 for pascal context
+_C.VAL.KEEP_ORI_SIZE = False
+_C.VAL.RESCALE_FROM_ORI = False
 _C.VAL.CROP_SIZE = [480,480]
 _C.VAL.STRIDE_SIZE = [320,320]
 _C.VAL.MEAN = [123.675, 116.28, 103.53]
