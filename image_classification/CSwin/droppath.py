@@ -32,7 +32,7 @@ class DropPath(nn.Layer):
         Args:
             input: tensor with arbitrary shape
             drop_prob: float number of drop path probability, default: 0.0
-            training: bool, if current mode is training, default: False
+            training: bool, set if current mode is training, default: False
         Returns:
             output: output tensor after drop path
         """
@@ -54,8 +54,9 @@ class DropPath(nn.Layer):
 #def main():
 #    tmp = paddle.to_tensor(np.random.rand(8, 16, 8, 8), dtype='float32')
 #    dp = DropPath(0.5)
-#    out = dp(tmp)
-#    print(out)
+#    for i in range(100):
+#        out = dp(tmp)
+#        print(out)
 #
 #if __name__ == "__main__":
 #    main()

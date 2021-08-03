@@ -39,19 +39,19 @@ _C.DATA.NUM_WORKERS = 2 # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
-_C.MODEL.TYPE = 'Swin'
-_C.MODEL.NAME = 'Swin'
+_C.MODEL.TYPE = 'CSwin'
+_C.MODEL.NAME = 'CSwin'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.0
 _C.MODEL.ATTENTION_DROPOUT = 0.0
-_C.MODEL.DROP_PATH = 0.1
+_C.MODEL.DROP_PATH = 0.0
 
 # transformer settings
 _C.MODEL.TRANS = CN()
 _C.MODEL.TRANS.PATCH_SIZE = 4 # image_size = patch_size x window_size x num_windows
-_C.MODEL.TRANS.WINDOW_SIZE = 7
+_C.MODEL.TRANS.SPLIT_SIZES = [7]
 _C.MODEL.TRANS.IN_CHANNELS = 3
 _C.MODEL.TRANS.EMBED_DIM = 96 # same as HIDDEN_SIZE in ViT
 _C.MODEL.TRANS.DEPTHS = [2, 2, 6, 2]
@@ -59,8 +59,6 @@ _C.MODEL.TRANS.NUM_HEADS = [3, 6, 12, 24]
 _C.MODEL.TRANS.MLP_RATIO = 4.
 _C.MODEL.TRANS.QKV_BIAS = True
 _C.MODEL.TRANS.QK_SCALE = None
-_C.MODEL.TRANS.APE = False # absolute positional embeddings
-_C.MODEL.TRANS.PATCH_NORM = True
 
 # training settings
 _C.TRAIN = CN()
@@ -151,10 +149,6 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE_EVAL = args.batch_size
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
-    if args.resume:
-        config.MODEL.RESUME = args.resume
-    if args.last_epoch:
-        config.TRAIN.LAST_EPOCH = args.last_epoch
 
     #config.freeze()
     return config

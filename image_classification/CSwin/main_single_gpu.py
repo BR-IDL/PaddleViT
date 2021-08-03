@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Shuffle Transformer training/validation using single GPU """
+"""CSwin Transformer training/validation using single GPU """
 
 import sys
 import os
@@ -24,14 +24,14 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 from datasets import get_dataloader
 from datasets import get_dataset
-from shuffle_transformer import build_shuffle_transformer as build_model
+from cswin import build_cswin as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
 from config import update_config
 
 
-parser = argparse.ArgumentParser('Shuffle Transformer')
+parser = argparse.ArgumentParser('CSwin Transformer')
 parser.add_argument('-cfg', type=str, default=None)
 parser.add_argument('-dataset', type=str, default=None)
 parser.add_argument('-batch_size', type=int, default=None)
@@ -316,8 +316,8 @@ def main():
         if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             model_path = os.path.join(
                 config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
-            paddle.save(model.state_dict(), model_path)
-            paddle.save(optimizer.state_dict(), model_path)
+            paddle.save(model.state_dict(), model_path + '.pdparams')
+            paddle.save(optimizer.state_dict(), model_path + '.pdopt')
             logger.info(f"----- Save model: {model_path}.pdparams")
             logger.info(f"----- Save optim: {model_path}.pdopt")
 

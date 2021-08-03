@@ -1,0 +1,12 @@
+DATA:
+    IMAGE_SIZE: 384
+    CROP_PCT: 1.0
+MODEL:
+    TYPE: cswin
+    NAME: cswin_large_384
+    TRANS:
+        PATCH_SIZE: 4
+        EMBED_DIM: 144
+        DEPTHS: [2, 4, 32, 2]
+        SPLIT_SIZES: [1, 2, 12, 12]
+        NUM_HEADS: [6, 12, 24, 24]

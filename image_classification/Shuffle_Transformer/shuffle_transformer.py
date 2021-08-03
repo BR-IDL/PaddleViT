@@ -1,274 +1,509 @@
-import torch
-from torch import nn, einsum
-from einops import rearrange, repeat
-import torch.utils.checkpoint as checkpoint
-from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+""" Implement Shuffle Transformer (https://arxiv.org/abs/2106.03650) """
+
+import numpy as np
+import paddle
+import paddle.nn as nn
+from droppath import DropPath
 
 
-class Mlp(nn.Module):
-    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.ReLU6, drop=0., stride=False):
-        super().__init__()
-        self.stride = stride
-        out_features = out_features or in_features
-        hidden_features = hidden_features or in_features
-        self.fc1 = nn.Conv2d(in_features, hidden_features, 1, 1, 0, bias=True)
-        self.act = act_layer()
-        self.fc2 = nn.Conv2d(hidden_features, out_features, 1, 1, 0, bias=True)
-        self.drop = nn.Dropout(drop, inplace=True)
+class Identity(nn.Layer):
+    """ Identity layer
+
+    The output of this layer is the input without any change.
+    Use this layer to avoid if condition in some forward methods
+    """
+    def __init__(self):
+        super(Identity, self).__init__()
 
     def forward(self, x):
-        x = self.fc1(x)
-        x = self.act(x)
-        x = self.drop(x)
-        x = self.fc2(x)
-        x = self.drop(x)
         return x
 
-class Attention(nn.Module):
-    def __init__(self, dim, num_heads, window_size=1, shuffle=False, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0., relative_pos_embedding=False):
+
+class PatchEmbedding(nn.Layer):
+    """Patch embedding layer
+
+    Apply patch embeddings on input images. Embeddings in implemented using
+    2 stacked Conv2D layers.
+
+    Attriubutes:
+        image_size: int, input image size, default: 224
+        patch_size: int, size of an image patch, default: 4
+        in_channels: int, input image channels, default: 3
+        inter_dim: int, intermediate dim for conv layers, default: 32
+        embed_dim: int, embedding dimension, default: 48
+    """
+    def __init__(self,
+                 image_size=224,
+                 inter_dim=32,
+                 embed_dim=48,
+                 in_channels=3):
+        super().__init__()
+        self.conv1 = nn.Sequential(
+            nn.Conv2D(in_channels, inter_dim, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2D(inter_dim),
+            nn.ReLU6())
+
+        self.conv2 = nn.Sequential(
+            nn.Conv2D(inter_dim, embed_dim, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2D(embed_dim),
+            nn.ReLU6())
+
+        self.conv3 = nn.Conv2D(embed_dim, embed_dim, kernel_size=1, stride=1, padding=0)
+
+        # 4 = stride * stride
+        self.num_patches = (image_size // 4) * (image_size // 4)
+
+    def forward(self, inputs):
+        out = self.conv1(inputs)
+        out = self.conv2(out)
+        out = self.conv3(out)
+        return out
+
+
+class MLP(nn.Layer):
+    """MLP module
+
+    A MLP layer which uses 1x1 conv instead of linear layers.
+    ReLU6 is used as activation function.
+
+    Args:
+        in_features: int, input feature dim.
+        hidden_features: int, hidden feature dim.
+        out_features: int, output feature dim.
+        dropout: flaot, dropout rate, default: 0.0.
+    """
+
+    def __init__(self, in_features, hidden_features=None, out_features=None, dropout=0.):
+        super().__init__()
+        out_features = out_features or in_features
+        hidden_features = hidden_features or in_features
+        self.fc1 = nn.Conv2D(in_features, hidden_features, 1, 1, 0)
+        self.act = nn.ReLU6()
+        self.fc2 = nn.Conv2D(hidden_features, out_features, 1, 1, 0)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, inputs):
+        out = self.fc1(inputs) # [batch_size, hidden_dim, height, width]
+        out = self.act(out)
+        out = self.dropout(out)
+        out = self.fc2(out)
+        out = self.dropout(out)
+        return out
+
+
+class WindowAttention(nn.Layer):
+    """ Window Multihead Aelf-attention Module.
+    This module use 1x1 Conv as the qkv proj and linear proj
+    Args:
+        dim: int, input dimension.
+        num_heads: int, number of attention heads.
+        windows_size: int, the window size of attention modules, default: 1
+        shuffle: bool, if True, use output shuffle, default: False
+        qk_scale: float, if set, override default qk scale, default: None
+        qkv_bias: bool, if True, enable bias to qkv, default: False
+        dropout: float, dropout for output, default: 0.
+        attention_dropout: float, dropout of attention, default: 0.
+    """
+    def __init__(self,
+                 dim,
+                 num_heads,
+                 window_size=1,
+                 shuffle=False,
+                 qk_scale=None,
+                 qkv_bias=False,
+                 dropout=0.,
+                 attention_dropout=0.):
         super().__init__()
         self.num_heads = num_heads
-        self.relative_pos_embedding = relative_pos_embedding
-        head_dim = dim // self.num_heads
-        self.ws = window_size
+        self.head_dim = dim // self.num_heads
+        self.window_size = window_size
         self.shuffle = shuffle
+        self.scale = qk_scale or self.head_dim ** -0.5
 
-        self.scale = qk_scale or head_dim ** -0.5
+        self.qkv = nn.Conv2D(dim, dim * 3, kernel_size=1, bias_attr=qkv_bias)
+        self.attention_dropout = nn.Dropout(attention_dropout)
+        self.proj = nn.Conv2D(dim, dim, kernel_size=1)
+        self.proj_dropout = nn.Dropout(dropout)
+        self.softmax = nn.Softmax(axis=-1)
 
-        self.to_qkv = nn.Conv2d(dim, dim * 3, 1, bias=False)
+        self.relative_position_bias_table = paddle.create_parameter(
+            shape=[(2 * window_size - 1) * (2 * window_size - 1), num_heads],
+            dtype='float32',
+            default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
 
-        self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Conv2d(dim, dim, 1)
-        self.proj_drop = nn.Dropout(proj_drop)
+        # relative position index for each token inside window
+        coords_h = paddle.arange(0, self.window_size)
+        coords_w = paddle.arange(0, self.window_size)
+        coords = paddle.stack(paddle.meshgrid([coords_h, coords_w]))
+        coords_flatten = paddle.flatten(coords, 1) # [2, window_h * window_w]
+        # 2, window_h * window_w, window_h * window_h
+        relative_coords = coords_flatten.unsqueeze(2) - coords_flatten.unsqueeze(1)
+        # winwod_h*window_w, window_h*window_w, 2
+        relative_coords = relative_coords.transpose([1, 2, 0])
+        relative_coords[:, :, 0] += self.window_size - 1
+        relative_coords[:, :, 1] += self.window_size - 1
+        relative_coords[:, :, 0] *= 2 * self.window_size - 1
+        # [window_size * window_size, window_size*window_size]
+        relative_position_index = relative_coords.sum(-1)
+        self.register_buffer("relative_position_index", relative_position_index)
 
-        if self.relative_pos_embedding:
-            # define a parameter table of relative position bias
-            self.relative_position_bias_table = nn.Parameter(
-                torch.zeros((2 * window_size - 1) * (2 * window_size - 1), num_heads))  # 2*Wh-1 * 2*Ww-1, nH
+    def get_relative_pos_bias_from_pos_index(self):
+        # relative_position_bias_table is a ParamBase object
+        table = self.relative_position_bias_table # N x num_heads
+        # index is a tensor
+        index = self.relative_position_index.reshape([-1])
+        # window_h*window_w * window_h*window_w
+        relative_position_bias = paddle.index_select(x=table, index=index)
+        return relative_position_bias
 
-            # get pair-wise relative position index for each token inside the window
-            coords_h = torch.arange(self.ws)
-            coords_w = torch.arange(self.ws)
-            coords = torch.stack(torch.meshgrid([coords_h, coords_w]))  # 2, Wh, Ww
-            coords_flatten = torch.flatten(coords, 1)  # 2, Wh*Ww
-            relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]  # 2, Wh*Ww, Wh*Ww
-            relative_coords = relative_coords.permute(1, 2, 0).contiguous()  # Wh*Ww, Wh*Ww, 2
-            relative_coords[:, :, 0] += self.ws - 1  # shift to start from 0
-            relative_coords[:, :, 1] += self.ws - 1
-            relative_coords[:, :, 0] *= 2 * self.ws - 1
-            relative_position_index = relative_coords.sum(-1)  # Wh*Ww, Wh*Ww
-            self.register_buffer("relative_position_index", relative_position_index)
+    def transpose_multihead(self, x):
+        B, C, H, W = x.shape
+        n_window = H // self.window_size
+        if self.shuffle:
+            x = x.reshape([B,
+                           self.num_heads,
+                           self.head_dim,
+                           self.window_size, # window_size first
+                           n_window,
+                           self.window_size,
+                           n_window])
+            x = x.transpose([0, 4, 6, 1, 3, 5, 2]) # order matters
+        else:
+            x = x.reshape([B,
+                           self.num_heads,
+                           self.head_dim,
+                           n_window, # n_window first
+                           self.window_size,
+                           n_window,
+                           self.window_size])
+            x = x.transpose([0, 3, 5, 1, 4, 6, 2]) # order metters
 
-            trunc_normal_(self.relative_position_bias_table, std=.02)
+        x = x.reshape([B * n_window * n_window,
+                       self.num_heads,
+                       self.window_size * self.window_size,
+                       self.head_dim])
+        return x
+
+    def transpose_multihead_reverse(self, x, B, H, W):
+        assert H == W
+        n_window = H // self.window_size
+        x = x.reshape([B,
+                       n_window,
+                       n_window,
+                       self.num_heads,
+                       self.window_size,
+                       self.window_size,
+                       self.head_dim])
+        if self.shuffle:
+            x = x.transpose([0, 3, 6, 4, 1, 5, 2])
+        else:
+            x = x.transpose([0, 3, 6, 1, 4, 2, 5])
+        x = x.reshape([B,
+                       self.num_heads * self.head_dim,
+                       self.window_size * n_window,
+                       self.window_size * n_window])
+        return x
+
+    def forward(self, inputs):
+        B, C, H, W = inputs.shape
+        qkv = self.qkv(inputs).chunk(3, axis=1) # qkv is a tuple: (q, k, v)
+
+        # Now q, k, and v has the following shape:
+        # Case1: [B, (num_heads * head_dim), (window_size * n_window), (window_size * n_window)]
+        # Case2: [B, (num_heads * head_dim), (n_window * window_size), (n_window * window_size)]
+        # where Case 1 is used when shuffle is True, Case 2 is used for no shuffle
+
+        # with/without spatial shuffle
+        # shape = [(B * n_window * n_window), num_heads, (window_size * window_size), head_dim]
+        q, k, v = map(self.transpose_multihead, qkv)
+
+        q = q * self.scale
+        attn = paddle.matmul(q, k, transpose_y=True)
+
+        relative_position_bias = self.get_relative_pos_bias_from_pos_index()
+
+        relative_position_bias = relative_position_bias.reshape(
+            [self.window_size * self.window_size,
+             self.window_size * self.window_size,
+             -1])
+        # nH, window_h * window_w, window_h * window_h
+        relative_position_bias = paddle.transpose(relative_position_bias, perm=[2, 0, 1])
+
+        attn = attn + relative_position_bias.unsqueeze(0)
+
+        attn = self.softmax(attn)
+        z = paddle.matmul(attn, v)
+
+
+        # shape = [(B * n_window * n_window), num_heads, (window_size * window_size), head_dim]
+        # new shape=[B, (num_heads * head_dim), (n_window * window_size), (n_window * window_size)]
+        z = self.transpose_multihead_reverse(z, B, H, W)
+
+        z = self.proj(z)
+        z = self.proj_dropout(z)
+
+        return z
+
+
+class ShuffleBlock(nn.Layer):
+    """Shuffle block layers
+
+    Shuffle block layers contains multi head attention, conv,
+    droppath, mlp, batch_norm and residual.
+
+    Attributes:
+        dim: int, embedding dimension
+        out_dim: int, stage output dim
+        num_heads: int, num of attention heads
+        window_size: int, window size, default: 1
+        shuffle: bool, if True, apply channel shuffle, default: False
+        mlp_ratio: float, ratio of mlp hidden dim and input dim, default: 4.
+        qk_scale: float, if set, override default qk scale, default: None
+        qkv_bias: bool, if True, enable bias to qkv, default: False
+        dropout: float, dropout for output, default: 0.
+        attention_dropout: float, dropout of attention, default: 0.
+        droppath: float, drop path rate, default: 0.
+    """
+    def __init__(self,
+                 dim,
+                 out_dim,
+                 num_heads,
+                 window_size=1,
+                 shuffle=False,
+                 mlp_ratio=4,
+                 qk_scale=None,
+                 qkv_bias=False,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 droppath=0.):
+        super().__init__()
+        self.norm1 = nn.BatchNorm2D(dim)
+        self.attn = WindowAttention(dim,
+                                    num_heads=num_heads,
+                                    window_size=window_size,
+                                    shuffle=shuffle,
+                                    qk_scale=qk_scale,
+                                    qkv_bias=qkv_bias,
+                                    dropout=dropout,
+                                    attention_dropout=attention_dropout)
+        # neighbor-window connection enhancement (NWC)
+        self.local = nn.Conv2D(dim,
+                               dim,
+                               kernel_size=window_size,
+                               stride=1,
+                               padding=window_size // 2,
+                               groups=dim)
+        self.drop_path = DropPath(droppath)
+        self.norm2 = nn.BatchNorm2D(dim)
+        mlp_hidden_dim = int(dim * mlp_ratio)
+        self.mlp = MLP(dim, mlp_hidden_dim, out_dim, dropout)
+        self.norm3 = nn.BatchNorm2D(dim)
 
     def forward(self, x):
-        b, c, h, w = x.shape
-        qkv = self.to_qkv(x)
+        # attention
+        h = x
+        x = self.norm1(x)
+        x = self.attn(x)
+        x = self.drop_path(x)
+        x = h + x
+        # neighbor-window connection enhancement (NWC)
+        h = x
+        x = self.norm2(x)
+        x = self.local(x)
+        x = h + x
+        # mlp
+        h = x
+        x = self.norm3(x)
+        x = self.mlp(x)
+        x = self.drop_path(x)
+        x = h + x
+        return x
 
-        if self.shuffle:
-            q, k, v = rearrange(qkv, 'b (qkv h d) (ws1 hh) (ws2 ww) -> qkv (b hh ww) h (ws1 ws2) d', h=self.num_heads, qkv=3, ws1=self.ws, ws2=self.ws)
+
+class PatchMerging(nn.Layer):
+    """Patch Merging
+    Merge the patches by a BatchNorm and a Conv2D with kernel size 2x2
+    and stride 2, to reduce the number of tokens
+    """
+    def __init__(self, in_dim=32, out_dim=64):
+        super().__init__()
+        self.norm = nn.BatchNorm2D(in_dim)
+        self.reduction = nn.Conv2D(in_dim,
+                                   out_dim,
+                                   kernel_size=2,
+                                   stride=2,
+                                   padding=0,
+                                   bias_attr=False)
+
+    def forward(self, inputs):
+        out = self.norm(inputs)
+        out = self.reduction(out)
+        return out
+
+
+class StageModule(nn.Layer):
+    """Stage layer for shuffle transformer
+
+    Stage layers contains a number of Transformer blocks and an optional
+    patch merging layer, patch merging is not applied after last stage
+
+    Attributes:
+        num_layers: int, num of blocks in stage
+        dim: int, embedding dimension
+        out_dim: int, stage output dim
+        num_heads: int, num of attention heads
+        window_size: int, window size, default: 1
+        mlp_ratio: float, ratio of mlp hidden dim and input dim, default: 4.
+        qk_scale: float, if set, override default qk scale, default: None
+        qkv_bias: bool, if True, enable bias to qkv, default: False
+        dropout: float, dropout for output, default: 0.
+        attention_dropout: float, dropout of attention, default: 0.
+        droppath: float, drop path rate, default: 0.
+    """
+    def __init__(self,
+                 num_layers,
+                 dim,
+                 out_dim,
+                 num_heads,
+                 window_size=1,
+                 shuffle=True,
+                 mlp_ratio=4.,
+                 qk_scale=None,
+                 qkv_bias=False,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 droppath=0.):
+        super().__init__()
+        assert num_layers % 2 == 0, "Stage layers must be even for shifted block."
+        if dim != out_dim:
+            self.patch_partition = PatchMerging(in_dim=dim, out_dim=out_dim)
         else:
-            q, k, v = rearrange(qkv, 'b (qkv h d) (hh ws1) (ww ws2) -> qkv (b hh ww) h (ws1 ws2) d', h=self.num_heads, qkv=3, ws1=self.ws, ws2=self.ws)
+            self.patch_partition = Identity()
 
-        dots = (q @ k.transpose(-2, -1)) * self.scale
+        self.layers = nn.LayerList()
+        for idx in range(num_layers):
+            shuffle = idx % 2 != 0
+            self.layers.append(ShuffleBlock(dim=out_dim,
+                                            out_dim=out_dim,
+                                            num_heads=num_heads,
+                                            window_size=window_size,
+                                            shuffle=shuffle,
+                                            mlp_ratio=mlp_ratio,
+                                            qk_scale=qk_scale,
+                                            qkv_bias=qkv_bias,
+                                            dropout=dropout,
+                                            attention_dropout=attention_dropout,
+                                            droppath=droppath))
 
-        if self.relative_pos_embedding:
-            relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(
-            self.ws * self.ws, self.ws * self.ws, -1)  # Wh*Ww,Wh*Ww,nH
-            relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
-            dots += relative_position_bias.unsqueeze(0)
-
-        attn = dots.softmax(dim=-1)
-        out = attn @ v
-
-        if self.shuffle:
-            out = rearrange(out, '(b hh ww) h (ws1 ws2) d -> b (h d) (ws1 hh) (ws2 ww)', h=self.num_heads, b=b, hh=h//self.ws, ws1=self.ws, ws2=self.ws)
-        else:
-            out = rearrange(out, '(b hh ww) h (ws1 ws2) d -> b (h d) (hh ws1) (ww ws2)', h=self.num_heads, b=b, hh=h//self.ws, ws1=self.ws, ws2=self.ws)
- 
-        out = self.proj(out)
-        out = self.proj_drop(out)
+    def forward(self, inputs):
+        out = self.patch_partition(inputs)
+        for layer in self.layers:
+            out = layer(out)
 
         return out
 
-class Block(nn.Module):
-    def __init__(self, dim, out_dim, num_heads, window_size=1, shuffle=False, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=0., act_layer=nn.ReLU6, norm_layer=nn.BatchNorm2d, stride=False, relative_pos_embedding=False):
-        super().__init__()
-        self.norm1 = norm_layer(dim)
-        self.attn = Attention(
-            dim, num_heads=num_heads, window_size=window_size, shuffle=shuffle, qkv_bias=qkv_bias, qk_scale=qk_scale, 
-            attn_drop=attn_drop, proj_drop=drop, relative_pos_embedding=relative_pos_embedding)
-        self.local = nn.Conv2d(dim, dim, window_size, 1, window_size//2, groups=dim, bias=qkv_bias)
-        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
-        self.norm2 = norm_layer(dim)
-        mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, out_features=out_dim, act_layer=act_layer, drop=drop, stride=stride)
-        self.norm3 = norm_layer(dim)
-        #print("input dim={}, output dim={}, stride={}, expand={}, num_heads={}".format(dim, out_dim, stride, shuffle, num_heads))
 
-    def forward(self, x):
-        x = x + self.drop_path(self.attn(self.norm1(x)))
-        x = x + self.local(self.norm2(x)) # local connection
-        x = x + self.drop_path(self.mlp(self.norm3(x)))
-        return x
+class ShuffleTransformer(nn.Layer):
+    """Shuffle Transformer
+    Args:
+        image_size: int, input image size, default: 224
+        num_classes: int, num of classes, default: 1000
+        token_dim: int, intermediate feature dim in PatchEmbedding, default: 32
+        embed_dim: int, embedding dim (out dim for PatchEmbedding), default: 96
+        mlp_ratio: float, ratio for mlp dim, mlp hidden_dim = mlp in_dim * mlp_ratio, default: 4.
+        layers: list of int, num of layers in each stage, default: [2, 2, 6, 2]
+        num_heads: list of int, num of heads in each stage, default: [3, 6, 12, 24]
+        window_size: int, attention window size, default: 7
+        qk_scale: float, if set, override default qk scale (head_dim**-0.5), default: None
+        qkv_bias: bool, if True, qkv layers is set with bias, default: False
+        attention_dropout: float, dropout rate of attention, default: 0.0
+        dropout: float, dropout rate for output, default: 0.0
+        droppath: float, droppath rate, default: 0.0
+    """
 
-
-class PatchMerging(nn.Module):
-    def __init__(self, dim, out_dim, norm_layer=nn.BatchNorm2d):
-        super().__init__()
-        self.dim = dim
-        self.out_dim = out_dim
-        self.norm = norm_layer(dim)
-        self.reduction = nn.Conv2d(dim, out_dim, 2, 2, 0, bias=False)
-
-    def forward(self, x):
-        x = self.norm(x)
-        x = self.reduction(x)
-        return x
-
-    def extra_repr(self) -> str:
-        return f"input dim={self.dim}, out dim={self.out_dim}"
-
-
-class StageModule(nn.Module):
-    def __init__(self, layers, dim, out_dim, num_heads, window_size=1, shuffle=True, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=0., act_layer=nn.ReLU6, norm_layer=nn.BatchNorm2d, relative_pos_embedding=False):
-        super().__init__()
-        assert layers % 2 == 0, 'Stage layers need to be divisible by 2 for regular and shifted block.'
-
-        if dim != out_dim:
-            self.patch_partition = PatchMerging(dim, out_dim)
-        else:
-            self.patch_partition = None
-
-        num = layers // 2
-        self.layers = nn.ModuleList([])
-        for idx in range(num):
-            the_last = (idx==num-1)
-            self.layers.append(nn.ModuleList([
-                Block(dim=out_dim, out_dim=out_dim, num_heads=num_heads, window_size=window_size, shuffle=False, mlp_ratio=mlp_ratio,
-                      qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop, attn_drop=attn_drop, drop_path=drop_path,
-                      relative_pos_embedding=relative_pos_embedding),
-                Block(dim=out_dim, out_dim=out_dim, num_heads=num_heads, window_size=window_size, shuffle=shuffle, mlp_ratio=mlp_ratio,
-                      qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop, attn_drop=attn_drop, drop_path=drop_path, 
-                      relative_pos_embedding=relative_pos_embedding)
-            ]))
-
-    def forward(self, x):
-        
-        if self.patch_partition:
-            x = self.patch_partition(x)
-        for regular_block, shifted_block in self.layers:
-            x = regular_block(x)
-            x = shifted_block(x)
-        return x
-
-
-class PatchEmbedding(nn.Module):
-    def __init__(self, inter_channel=32, out_channels=48):
-        super().__init__()
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(3, inter_channel, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(inter_channel),
-            nn.ReLU6(inplace=True)
-        )
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(inter_channel, out_channels, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU6(inplace=True)
-        )
-        self.conv3 = nn.Conv2d(out_channels, out_channels, kernel_size=1, stride=1, padding=0)
-
-    def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        return x
-
-
-class ShuffleTransformer(nn.Module):
-    def __init__(self, img_size=224, in_chans=3, num_classes=1000, token_dim=32, embed_dim=96, mlp_ratio=4., layers=[2,2,6,2], num_heads=[3,6,12,24], 
-                relative_pos_embedding=True, shuffle=True, window_size=7, qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0., drop_path_rate=0., 
-                has_pos_embed=False, **kwargs):
+    def __init__(self,
+                 image_size=224,
+                 num_classes=1000,
+                 token_dim=32,
+                 embed_dim=96,
+                 mlp_ratio=4.,
+                 layers=(2, 2, 6, 2),
+                 num_heads=(3, 6, 12, 24),
+                 window_size=7,
+                 qk_scale=None,
+                 qkv_bias=False,
+                 attention_dropout=0.,
+                 dropout=0.,
+                 droppath=0.):
         super().__init__()
         self.num_classes = num_classes
-        self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
-        self.has_pos_embed = has_pos_embed
-        dims = [i*32 for i in num_heads]
+        self.num_features = embed_dim
+        self.embed_dim = embed_dim
+        dims = [embed_dim]
+        dims.extend([i * 32 for i in num_heads]) # dims for each stage
 
-        self.to_token = PatchEmbedding(inter_channel=token_dim, out_channels=embed_dim)
+        self.patch_embedding = PatchEmbedding(image_size=image_size,
+                                              inter_dim=token_dim,
+                                              embed_dim=embed_dim)
+        #num_patches = self.patch_embedding.num_patches
+        self.num_stages = len(layers)
+        dprs = [x.item() for x in np.linspace(0, droppath, self.num_stages)]
 
-        num_patches = (img_size*img_size) // 16
+        self.stages = nn.LayerList()
+        for i in range(self.num_stages):
+            self.stages.append(StageModule(layers[i],
+                                           dims[i],
+                                           dims[i+1],
+                                           num_heads[i],
+                                           window_size=window_size,
+                                           mlp_ratio=mlp_ratio,
+                                           qk_scale=qk_scale,
+                                           qkv_bias=qkv_bias,
+                                           attention_dropout=attention_dropout,
+                                           dropout=dropout,
+                                           droppath=dprs[i]))
+        self.avgpool = nn.AdaptiveAvgPool2D(1)
+        self.head = nn.Linear(dims[-1], num_classes)
 
-        if self.has_pos_embed:
-            self.pos_embed = nn.Parameter(data=get_sinusoid_encoding(n_position=num_patches, d_hid=embed_dim), requires_grad=False)
-            self.pos_drop = nn.Dropout(p=drop_rate)
+    def forward_features(self, inputs):
+        out = self.patch_embedding(inputs)
+        B, C, H, W = out.shape
 
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, 4)]  # stochastic depth decay rule
-        self.stage1 = StageModule(layers[0], embed_dim, dims[0], num_heads[0], window_size=window_size, shuffle=shuffle,
-                                  mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[0],
-                                  relative_pos_embedding=relative_pos_embedding)
-        self.stage2 = StageModule(layers[1], dims[0], dims[1], num_heads[1], window_size=window_size, shuffle=shuffle,
-                                  mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[1],
-                                  relative_pos_embedding=relative_pos_embedding)
-        self.stage3 = StageModule(layers[2], dims[1], dims[2], num_heads[2], window_size=window_size, shuffle=shuffle,
-                                  mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[2],
-                                  relative_pos_embedding=relative_pos_embedding)
-        self.stage4 = StageModule(layers[3], dims[2], dims[3], num_heads[3], window_size=window_size, shuffle=shuffle, 
-                                  mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[3],
-                                  relative_pos_embedding=relative_pos_embedding)
+        for idx, stage in enumerate(self.stages):
+            out = stage(out)
 
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        # Classifier head
-        self.head = nn.Linear(dims[3], num_classes) if num_classes > 0 else nn.Identity()
+        out = self.avgpool(out)
+        out = paddle.flatten(out, 1)
+        return out
 
-        self.apply(self._init_weights)
+    def forward(self, inputs):
+        out = self.forward_features(inputs)
+        out = self.head(out)
+        return out
 
-    def _init_weights(self, m):
-        if isinstance(m, (nn.BatchNorm2d, nn.GroupNorm, nn.LayerNorm)):
-            nn.init.constant_(m.weight, 1.0)
-            nn.init.constant_(m.bias, 0)
-        elif isinstance(m, (nn.Linear, nn.Conv2d)):
-            trunc_normal_(m.weight, std=.02)
-            if isinstance(m, (nn.Linear, nn.Conv2d)) and m.bias is not None:
-                nn.init.constant_(m.bias, 0)
 
-    @torch.jit.ignore
-    def no_weight_decay(self):
-        return {'pos_embed'}
-
-    @torch.jit.ignore
-    def no_weight_decay_keywords(self):
-        return {'relative_position_bias_table'}
-
-    def get_classifier(self):
-        return self.head
-
-    def reset_classifier(self, num_classes, global_pool=''):
-        self.num_classes = num_classes
-        self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
-
-    def forward_features(self, x):
-        x = self.to_token(x)
-        b, c, h, w = x.shape
-        if self.has_pos_embed:
-            x = x + self.pos_embed.view(1, h, w, c).permute(0, 3, 1, 2)
-            x = self.pos_drop(x)
-        x = self.stage1(x)
-        x = self.stage2(x)
-        x = self.stage3(x)
-        x = self.stage4(x)
-        
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        return x
-
-    def forward(self, x):
-        x = self.forward_features(x)
-        x = self.head(x)
-        return x
-
-if __name__ == '__main__':
-    model = ShuffleTransformer(img_size=224)
-    print(model)
+def build_shuffle_transformer(config):
+    """ build shuffle transformer using config"""
+    model = ShuffleTransformer(image_size=config.DATA.IMAGE_SIZE,
+                               embed_dim=config.MODEL.TRANS.EMBED_DIM,
+                               mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+                               layers=config.MODEL.TRANS.DEPTHS,
+                               num_heads=config.MODEL.TRANS.NUM_HEADS,
+                               window_size=config.MODEL.TRANS.WINDOW_SIZE,
+                               qk_scale=config.MODEL.TRANS.QK_SCALE,
+                               qkv_bias=config.MODEL.TRANS.QKV_BIAS)
+    return model
