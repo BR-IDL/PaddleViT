@@ -4,3 +4,5 @@ from .vit_up_head import VisionTransformerUpHead
 from .uper_head import UperHead
 from .fcn_head import FCNHead
 from .dpt_head import DPTHead
+from .segmentor_head import MaskTransformer
+from .segmentor_head import LinearDecoder
