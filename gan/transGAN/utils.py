@@ -24,6 +24,25 @@ import paddle.nn as nn
 from paddle.optimizer.lr import LRScheduler
 import paddle.nn.functional as F
 
+# Several initialization methods
+@paddle.no_grad()
+def constant_(x, value):
+    temp_value = paddle.full(x.shape, value, x.dtype)
+    x.set_value(temp_value)
+    return x
+
+@paddle.no_grad()
+def normal_(x, mean=0., std=1.):
+    temp_value = paddle.normal(mean, std, shape=x.shape)
+    x.set_value(temp_value)
+    return x
+
+@paddle.no_grad()
+def uniform_(x, a=-1., b=1.):
+    temp_value = paddle.uniform(min=a, max=b, shape=x.shape)
+    x.set_value(temp_value)
+    return x
+
 def gelu(x):
     """ Original Implementation of the gelu activation function in Google Bert repo
         when initialy created.
@@ -62,12 +81,10 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
         tensor = paddle.to_tensor(special.erfinv(tensor.numpy()))
 
         # Transform to proper mean, std
-        # tensor.mul_(std * math.sqrt(2.))
         tensor = paddle.multiply(tensor, paddle.to_tensor(std * math.sqrt(2.)))
         tensor = paddle.add(tensor, paddle.to_tensor(mean))
 
         # Clamp to ensure it's in the proper range
-        # tensor.clamp_(min=a, max=b)
         tensor = paddle.clip(tensor, min=a, max=b)
         return tensor
 
@@ -198,23 +215,26 @@ def DiffAugment(x, policy='', channels_first=True, affine=None):
             x = x.transpose(0, 2, 3, 1)
     return x
 
+# belong to DiffAugment
 def rand_brightness(x, affine=None):
     x = x + (paddle.rand(x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) - 0.5)
     return x
 
+# belong to DiffAugment
 def rand_saturation(x, affine=None):
     x_mean = x.mean(dim=1, keepdim=True)
-    x = (x - x_mean) *
-        (paddle.rand(x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) * 2) + x_mean
+    x = (x - x_mean) * (paddle.rand(
+                  x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) * 2) + x_mean
     return x
 
-
+# belong to DiffAugment
 def rand_contrast(x, affine=None):
     x_mean = x.mean(dim=[1, 2, 3], keepdim=True)
-    x = (x - x_mean) *
-        (paddle.rand(x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) + 0.5) + x_mean
+    x = (x - x_mean) * (paddle.rand(
+                  x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) + 0.5) + x_mean
     return x
 
+# belong to DiffAugment
 def rand_cutout(x, ratio=0.5, affine=None):
     if random.random() < 0.3:
         cutout_size = int(x.size(2) * ratio + 0.5), int(x.size(3) * ratio + 0.5)
@@ -242,6 +262,7 @@ def rand_cutout(x, ratio=0.5, affine=None):
         del grid_batch
     return x
 
+# belong to DiffAugment
 def rand_translation(x, ratio=0.2, affine=None):
     shift_x, shift_y = int(x.shape[2] * ratio + 0.5), int(x.shape[3] * ratio + 0.5)
     translation_x = paddle.randint(-shift_x, shift_x + 1, shape=[x.shape[0], 1, 1])
@@ -256,7 +277,6 @@ def rand_translation(x, ratio=0.2, affine=None):
     x_pad = F.pad(x, [1, 1, 1, 1, 0, 0, 0, 0])
     x = x_pad.transpose([0, 2, 3, 1])[grid_batch, grid_x, grid_y].transpose([0, 3, 1, 2])
     return x
-
 
 AUGMENT_FNS = {
     'color': [rand_brightness, rand_saturation, rand_contrast],

@@ -14,15 +14,21 @@
 
 """load weight """
 
+import sys
 import torch
 import torch.nn as nn
 import paddle
 import argparse
+import json
+import os
+import numpy as np
 
-import models_search
+sys.path.append("../TransGAN")
+sys.path.append("..")
+
+import TransGAN.models_search as models_search
 from models.ViT_custom import Generator
 from models.ViT_custom_scale2 import Discriminator
-
 from config import get_config, update_config
 
 def print_model_named_params(model):
@@ -128,12 +134,13 @@ def torch_to_paddle_mapping_dis():
         (f'{py_prefix}.fRGB_2.bias', 'fRGB_2.bias'),
     ]
 
-    num_layers_1 = 2
+    num_layers_1 = 3
     for idx in range(num_layers_1):
         ly_py_prefix = f'blocks_1.{idx}'
         layer_mapping = [
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.weight', f'{ly_py_prefix}.norm1.norm.weight'),
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.bias', f'{ly_py_prefix}.norm1.norm.bias'),
+            (f'{py_prefix}.{ly_py_prefix}.attn.noise_strength_1', f'{ly_py_prefix}.attn.noise_strength_1'),
             (f'{py_prefix}.{ly_py_prefix}.attn.relative_position_bias_table', f'{ly_py_prefix}.attn.relative_position_bias_table'),
             (f'{py_prefix}.{ly_py_prefix}.attn.qkv.weight', f'{ly_py_prefix}.attn.qkv.weight'),
             (f'{py_prefix}.{ly_py_prefix}.attn.proj.weight', f'{ly_py_prefix}.attn.proj.weight'),
@@ -147,12 +154,13 @@ def torch_to_paddle_mapping_dis():
         ]
         mapping_dis.extend(layer_mapping)
         
-    num_layers_2 = 2
+    num_layers_2 = 3
     for idx in range(num_layers_2):
         ly_py_prefix = f'blocks_2.{idx}'
         layer_mapping = [
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.weight', f'{ly_py_prefix}.norm1.norm.weight'),
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.bias', f'{ly_py_prefix}.norm1.norm.bias'),
+            (f'{py_prefix}.{ly_py_prefix}.attn.noise_strength_1', f'{ly_py_prefix}.attn.noise_strength_1'),
             (f'{py_prefix}.{ly_py_prefix}.attn.relative_position_bias_table', f'{ly_py_prefix}.attn.relative_position_bias_table'),
             (f'{py_prefix}.{ly_py_prefix}.attn.qkv.weight', f'{ly_py_prefix}.attn.qkv.weight'),
             (f'{py_prefix}.{ly_py_prefix}.attn.proj.weight', f'{ly_py_prefix}.attn.proj.weight'),
@@ -172,6 +180,7 @@ def torch_to_paddle_mapping_dis():
         layer_mapping = [
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.weight', f'{ly_py_prefix}.norm1.norm.weight'),
             (f'{py_prefix}.{ly_py_prefix}.norm1.norm.bias', f'{ly_py_prefix}.norm1.norm.bias'),
+            (f'{py_prefix}.{ly_py_prefix}.attn.noise_strength_1', f'{ly_py_prefix}.attn.noise_strength_1'),
             (f'{py_prefix}.{ly_py_prefix}.attn.qkv.weight', f'{ly_py_prefix}.attn.qkv.weight'),
             (f'{py_prefix}.{ly_py_prefix}.attn.proj.weight', f'{ly_py_prefix}.attn.proj.weight'),
             (f'{py_prefix}.{ly_py_prefix}.attn.proj.bias', f'{ly_py_prefix}.attn.proj.bias'),
@@ -199,21 +208,22 @@ def torch_to_paddle_mapping_dis():
 
 
 def convert(torch_model, paddle_model, mapping):
-    def _set_value(th_name, pd_name, transpose=True):
+    def _set_value(th_name, pd_name, no_transpose=True):
         th_shape = th_params[th_name].shape
         pd_shape = tuple(pd_params[pd_name].shape) # paddle shape default type is list
         #assert th_shape == pd_shape, f'{th_shape} != {pd_shape}'
-        print(f'**SET** {th_name} {th_shape} **TO** {pd_name} {pd_shape}')
+        print(f'set {th_name} {th_shape} to {pd_name} {pd_shape}')
         if isinstance(th_params[th_name], torch.nn.parameter.Parameter):
             value = th_params[th_name].data.numpy()
         else:
             value = th_params[th_name].numpy()
-
-        if len(value.shape) == 2 and transpose:
+        if value.shape == ():
+            value = value.reshape(1)
+        if th_name.find("attn.proj.weight") != -1 and th_shape == pd_shape: # prevent shape[1]==shape[0]
             value = value.transpose((1, 0))
-
-        print("value.shape",str(value.shape)[1:-2])
-        print("pd_params[pd_name].shape",str(pd_params[pd_name].shape)[1:-2])
+        if len(value.shape) == 2:
+            if not no_transpose:
+                value = value.transpose((1, 0))
         if str(value.shape)[1:-2] == str(pd_params[pd_name].shape)[1:-2]:
             pd_params[pd_name].set_value(value)
         else:
@@ -273,6 +283,11 @@ def main():
     config = update_config(config, args)
     config.freeze()
 
+    parser = argparse.ArgumentParser()
+    args_torch = parser.parse_args()
+    with open('../TransGAN/commandline_args.txt', 'r') as f:
+        args_torch.__dict__ = json.load(f)
+
     paddle.set_device('cpu')
     paddle_model_gen = Generator(args = config)
     paddle_model_dis = Discriminator(args = config)
@@ -286,14 +301,21 @@ def main():
     print_model_named_params(paddle_model_dis)
     print_model_named_buffers(paddle_model_dis)
 
+    
     device = torch.device('cpu')
-    torch_model_gen = eval('models_search.'+'ViT_custom_new'+'.Generator')(args=config)
+    torch_model_gen = eval('models_search.'+'ViT_custom_new'+'.Generator')(args=args_torch)
     torch_model_gen = torch.nn.DataParallel(torch_model_gen.to("cuda:0"), device_ids=[0])
 
-    torch_model_dis = eval('models_search.'+'ViT_custom_new'+'.Discriminator')(args=config)
+    torch_model_dis = eval('models_search.'+'ViT_custom_scale2'+'.Discriminator')(args=args_torch)
     torch_model_dis = torch.nn.DataParallel(torch_model_dis.to("cuda:0"), device_ids=[0])
 
-    checkpoint=torch.load("./cifar_checkpoint")
+    print_model_named_params(torch_model_gen)
+    print_model_named_buffers(torch_model_gen)
+
+    print_model_named_params(torch_model_dis)
+    print_model_named_buffers(torch_model_dis)
+
+    checkpoint=torch.load("../cifar_checkpoint")
     torch_model_gen.load_state_dict(checkpoint['avg_gen_state_dict'])
     torch_model_dis.load_state_dict(checkpoint['dis_state_dict'])
 
@@ -302,11 +324,36 @@ def main():
     torch_model_dis = torch_model_dis.to(device)
     torch_model_dis.eval()
 
-    #convert weights
+    # convert weights
     paddle_model_gen = convert(torch_model_gen, paddle_model_gen, "gen")
     paddle_model_dis = convert(torch_model_dis, paddle_model_dis, "dis")
 
     # check correctness
+    x = np.random.normal(0, 1, (args_torch.eval_batch_size, args_torch.latent_dim))
+    z_paddle = paddle.to_tensor(x, dtype="float32")
+    z_torch = torch.cuda.FloatTensor(x)
+    epoch = 0
+
+    device_cor = torch.device('cuda')
+    torch_model_gen = torch_model_gen.to(device_cor)
+    torch_model_dis = torch_model_dis.to(device_cor)
+
+    gen_imgs_torch = torch_model_gen(z_torch, epoch)
+    gen_imgs_paddle = paddle_model_gen(z_paddle, epoch)
+
+    ar_load = np.load('../TransGAN/dis_tesy.npy')
+    z = paddle.to_tensor(ar_load, dtype="float32")
+
+    print("gen_imgs_paddle", gen_imgs_paddle.shape)
+
+    fake_validity_torch = torch_model_dis(gen_imgs_torch)
+    fake_validity_paddle = paddle_model_dis(gen_imgs_paddle)
+
+    print("gen_imgs_torch", gen_imgs_torch.flatten()[:5])
+    print("gen_imgs_paddle", gen_imgs_paddle.flatten()[:5])
+
+    print("fake_validity_torch", fake_validity_torch.flatten()[:5])
+    print("fake_validity_paddle", fake_validity_paddle.flatten()[:5])
     
     #save weights for paddle model
     model_path = os.path.join('./transgan_cifar10.pdparams')
