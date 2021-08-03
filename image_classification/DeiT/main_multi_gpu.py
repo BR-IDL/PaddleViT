@@ -425,7 +425,6 @@ def main_worker(*args):
                     logger.info(f"----- Save ema model: {model_ema_path}.pdparams")
 
 
-
 def main():
     # Build dataset
     dataset_train = get_dataset(config, mode='train')
