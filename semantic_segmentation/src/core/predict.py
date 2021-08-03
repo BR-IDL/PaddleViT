@@ -1,11 +1,8 @@
-
 import os
 import math
-
 import cv2
 import numpy as np
 import paddle
-
 from src import utils
 from src.core import infer
 from src.utils import logger, progbar

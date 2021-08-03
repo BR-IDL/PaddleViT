@@ -45,8 +45,8 @@ class PascalContext(Dataset):
         if mode == 'train':
             file_path = os.path.join(image_set_dir, 'train.txt')
         elif mode == 'val':
-            #file_path = os.path.join(image_set_dir, 'val.txt')
-            file_path = os.path.join(image_set_dir, 'val_mini.txt')
+            file_path = os.path.join(image_set_dir, 'val.txt')
+            #file_path = os.path.join(image_set_dir, 'val_mini.txt')
         elif mode == 'trainval':
             file_path = os.path.join(image_set_dir, 'trainval.txt')
         print("file_path: ", file_path)

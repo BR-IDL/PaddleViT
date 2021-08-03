@@ -1,16 +1,11 @@
-
-
 import contextlib
 import filelock
 import math
 import os
 import paddle.nn.functional as F
-
 import tempfile
 from urllib.parse import urlparse, unquote
-
 import paddle
-
 from src.utils import logger, seg_env
 from src.utils.download import download_file_and_uncompress
 

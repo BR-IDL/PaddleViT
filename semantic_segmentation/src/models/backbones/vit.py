@@ -1,15 +1,11 @@
-import copy
-import math
-import numpy as np
+"""
+Implement Transformer Class for ViT
+"""
+
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 from src.utils.utils import load_pretrained_model
-
-
-"""
-Implement Transformer Class for ViT
-"""
 
 
 class Embeddings(nn.Layer):
@@ -282,15 +278,13 @@ class Transformer(nn.Layer):
         embedding_out = self.embeddings(x)
         embedding_out = self.dropout(embedding_out)
         encoder_outs = self.encoder(embedding_out)
-        
         return encoder_outs
-
-
 
 class VisualTransformer(nn.Layer):
     """ VisualTransformer
    
-    Vision Transformer as the backbone of SETR-PUP, Ref. https://arxiv.org/pdf/2012.15840.pdf
+    Vision Transformer as the backbone of SETR-PUP and SETR-Naive. 
+    Ref. https://arxiv.org/pdf/2012.15840.pdf
 
     """
     def __init__(self, config):
@@ -310,9 +304,7 @@ class VisualTransformer(nn.Layer):
         outs = self.transformer(x)
         feats = [ ]
         # getting multi-level feats from layers
-        #print("self.out_indices: ", self.out_indices)
         for idx in self.out_indices:
             feats.append(outs[idx])
         return feats 
-        #return outs 
 

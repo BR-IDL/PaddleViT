@@ -1,7 +1,3 @@
-"""
-DPT head implementation
-"""
-
 import copy
 import paddle
 import paddle.nn as nn
@@ -138,7 +134,11 @@ class FeatureFusionBlock(nn.Layer):
 
 
 class DPTHead(nn.Layer):
-    """decoder of the DPT segmentation model
+    """DPTHead
+     
+    DPTHead is the decoder of the dense predition transformer (DPT), Ref https://arxiv.org/pdf/2103.13413.pdf.
+    Reference:                                                                                                                                                
+        Rene Ranftl, et al. *"Vision Transformers for Dense Prediction"*
     """
     def __init__(self, config):
         super(DPTHead, self).__init__()

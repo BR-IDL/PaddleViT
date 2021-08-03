@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""CSwin Transformer training/validation using multiple GPU """
+"""Shuffle Transformer training/validation using multiple GPU """
 
 import sys
 import os
@@ -26,14 +26,14 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader, get_dataset
-from cswin import build_cswin as build_model
+from shuffle_transformer import build_shuffle_transformer as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
 from config import update_config
 
 
-parser = argparse.ArgumentParser('CSwin Transformer')
+parser = argparse.ArgumentParser('Shuffle Transformer')
 parser.add_argument('-cfg', type=str, default=None)
 parser.add_argument('-dataset', type=str, default=None)
 parser.add_argument('-batch_size', type=int, default=None)

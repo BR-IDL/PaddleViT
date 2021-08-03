@@ -28,17 +28,29 @@ _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.0 # 0.0
 _C.MODEL.ATTENTION_DROPOUT = 0.0
+_C.MODEL.DROP_PATH = 0.1  # for SwinTransformer
 
-# transformer settings
+# Transformer backbone settings 
 _C.MODEL.TRANS = CN()
 _C.MODEL.TRANS.HYBRID = False       #TODO: implement
 _C.MODEL.TRANS.PATCH_GRID = None    #TODO: implement
 _C.MODEL.TRANS.PATCH_SIZE = 16
 _C.MODEL.TRANS.HIDDEN_SIZE = 768  # 768(Base), 1024(Large), 1280(Huge)
 _C.MODEL.TRANS.MLP_RATIO = 4
-_C.MODEL.TRANS.NUM_HEADS = 12      # 12(Base), 16(Large), 16(Huge)
+_C.MODEL.TRANS.NUM_HEADS = None      # 12(Base), 16(Large), 16(Huge)
 _C.MODEL.TRANS.NUM_LAYERS = 12     # 12(Base), 24(Large), 32(Huge)
 _C.MODEL.TRANS.QKV_BIAS = True
+
+## special settings for SwinTransformer
+_C.MODEL.TRANS.WINDOW_SIZE = 7
+_C.MODEL.TRANS.IN_CHANNELS = 3
+_C.MODEL.TRANS.EMBED_DIM = 96  # same as HIDDEN_SIZE
+_C.MODEL.TRANS.STAGE_DEPTHS = [2, 2, 6, 2]
+_C.MODEL.TRANS.NUM_HEADS = None     # [3, 6, 12, 24]
+_C.MODEL.TRANS.QK_SCALE = None
+_C.MODEL.TRANS.APE = False   # absolute postional embedding
+_C.MODEL.TRANS.PATCH_NORM = True   
+#_C.MODEL.TRANS.DROP_PATH_RATE = None   
 _C.MODEL.TRANS.KEEP_CLS_TOKEN = False
 
 
@@ -67,11 +79,24 @@ _C.MODEL.AUXPUP.NUM_UPSAMPLE_LAYER = 2
 _C.MODEL.AUXPUP.CONV3x3_CONV1x1 = True
 _C.MODEL.AUXPUP.ALIGN_CORNERS = False
 
+# UperHead Decoder setting
+_C.MODEL.UPERHEAD = CN()
+_C.MODEL.UPERHEAD.IN_CHANNELS = [96, 192, 384, 768]
+_C.MODEL.UPERHEAD.CHANNELS = 512
+_C.MODEL.UPERHEAD.IN_INDEX = [0, 1, 2, 3]
+_C.MODEL.UPERHEAD.POOL_SCALES = [1, 2, 3, 6]
+_C.MODEL.UPERHEAD.DROP_RATIO = 0.1
+_C.MODEL.UPERHEAD.ALIGN_CORNERS = False
 
 # Auxilary Segmentation Head setting
 _C.MODEL.AUX = CN()
 _C.MODEL.AUX.AUXIHEAD = True
 _C.MODEL.AUX.AUXHEAD_ALIGN_CORNERS = False
+
+# Auxilary FCN Head
+_C.MODEL.AUXFCN = CN()
+_C.MODEL.AUXFCN.IN_CHANNELS = 384
+_C.MODEL.AUXFCN.UP_RATIO = 16
 
 #DPT Head settings
 _C.MODEL.DPT = CN()
@@ -79,8 +104,13 @@ _C.MODEL.DPT.HIDDEN_FEATURES = [256, 512, 1024, 1024]
 _C.MODEL.DPT.FEATURES = 256
 _C.MODEL.DPT.READOUT_PROCESS = "project"
 
+#Segmenter Head Settings
+_C.MODEL.SEGMENTER = CN()
+_C.MODEL.SEGMENTER.NUM_LAYERS = 2
+
 # training settings
 _C.TRAIN = CN()
+_C.TRAIN.USE_GPU = True
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
 _C.TRAIN.END_LR = 1e-4
@@ -105,9 +135,12 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 
 # val settings
 _C.VAL = CN()
+_C.VAL.USE_GPU = True
 _C.VAL.MULTI_SCALES_VAL = False
 _C.VAL.SCALE_RATIOS= [0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
-_C.VAL.IMAGE_BASE_SIZE = 520 # 520 for pascal context
+_C.VAL.IMAGE_BASE_SIZE = None # 520 for pascal context
+_C.VAL.KEEP_ORI_SIZE = False
+_C.VAL.RESCALE_FROM_ORI = False
 _C.VAL.CROP_SIZE = [480,480]
 _C.VAL.STRIDE_SIZE = [320,320]
 _C.VAL.MEAN = [123.675, 116.28, 103.53]
@@ -124,7 +157,6 @@ _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
 
-
 def _update_config_from_file(config, cfg_file):
     config.defrost()
     with open(cfg_file, 'r') as infile:
@@ -138,7 +170,6 @@ def _update_config_from_file(config, cfg_file):
     config.merge_from_file(cfg_file)
     config.freeze()
 
-
 def update_config(config, args):
     if args.cfg:
         _update_config_from_file(config, args.cfg)
@@ -147,11 +178,6 @@ def update_config(config, args):
     config.freeze()
     return config
 
-
 def get_config():
     config = _C.clone()
     return config
-
-    
-
-

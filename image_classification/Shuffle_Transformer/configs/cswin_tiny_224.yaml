@@ -1,0 +1,12 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
+MODEL:
+    TYPE: cswin
+    NAME: cswin_tiny_224
+    TRANS:
+        PATCH_SIZE: 4
+        EMBED_DIM: 64
+        DEPTHS: [1, 2, 21, 1]
+        SPLIT_SIZES: [1, 2, 7, 7]
+        NUM_HEADS: [2, 4, 8, 16]

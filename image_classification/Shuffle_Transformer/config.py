@@ -34,13 +34,13 @@ _C.DATA.BATCH_SIZE_EVAL = 8 #1024 batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size
-_C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 4 # number of data loading threads
+_C.DATA.CROP_PCT = 0.9 # input image scale ratio, scale is applied before centercrop in eval mode
+_C.DATA.NUM_WORKERS = 2 # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
-_C.MODEL.TYPE = 'Shuffle'
-_C.MODEL.NAME = 'Shuffle_tiny'
+_C.MODEL.TYPE = 'Swin'
+_C.MODEL.NAME = 'Swin'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
@@ -54,7 +54,7 @@ _C.MODEL.TRANS.PATCH_SIZE = 4 # image_size = patch_size x window_size x num_wind
 _C.MODEL.TRANS.WINDOW_SIZE = 7
 _C.MODEL.TRANS.IN_CHANNELS = 3
 _C.MODEL.TRANS.EMBED_DIM = 96 # same as HIDDEN_SIZE in ViT
-_C.MODEL.TRANS.STAGE_DEPTHS = [2, 2, 6, 2]
+_C.MODEL.TRANS.DEPTHS = [2, 2, 6, 2]
 _C.MODEL.TRANS.NUM_HEADS = [3, 6, 12, 24]
 _C.MODEL.TRANS.MLP_RATIO = 4.
 _C.MODEL.TRANS.QKV_BIAS = True
@@ -109,7 +109,7 @@ _C.VALIDATE_FREQ = 20 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
-_C.NGPUS = 1
+_C.NGPUS = -1
 
 
 def _update_config_from_file(config, cfg_file):
@@ -121,7 +121,7 @@ def _update_config_from_file(config, cfg_file):
             _update_config_from_file(
                 config, os.path.join(os.path.dirname(cfg_file), cfg)
             )
-    #print('merging config from {}'.format(cfg_file))
+    print('merging config from {}'.format(cfg_file))
     config.merge_from_file(cfg_file)
     config.freeze()
 
@@ -144,11 +144,17 @@ def update_config(config, args):
         config.DATA.IMAGE_SIZE = args.image_size
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
+    if args.ngpus:
+        config.NGPUS = args.ngpus
     if args.eval:
         config.EVAL = True
         config.DATA.BATCH_SIZE_EVAL = args.batch_size
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
+    if args.resume:
+        config.MODEL.RESUME = args.resume
+    if args.last_epoch:
+        config.TRAIN.LAST_EPOCH = args.last_epoch
 
     #config.freeze()
     return config
