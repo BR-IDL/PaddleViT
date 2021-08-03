@@ -18,7 +18,7 @@ Implement transGAN_custom
 
 import paddle
 import paddle.nn as nn
-from utils_paddle import trunc_normal_, gelu, pixel_upsample, drop_path
+from utils import trunc_normal_, gelu, pixel_upsample, drop_path
 
 class Identity(nn.Layer):
     """ Identity layer
@@ -58,7 +58,7 @@ class PixelNorm(nn.Layer):
 class CustomNorm(nn.Layer):
     """ CustomNorm layer
 
-    Custom norm method, defalut "ln"
+    Custom norm method set, defalut "ln"
 
     """
     def __init__(self, norm_layer, dim):
@@ -85,7 +85,7 @@ class CustomNorm(nn.Layer):
 class CustomAct(nn.Layer):
     """ CustomAct layer
 
-    Custom act method, defalut "gelu"
+    Custom act method set, defalut "gelu"
 
     """
     def __init__(self, act_layer):
@@ -131,6 +131,15 @@ class Mlp(nn.Layer):
         x = self.drop(x)
         return x
 
+class DropPath(nn.Layer):
+    """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
+    """
+    def __init__(self, drop_prob=None):
+        super().__init__()
+        self.drop_prob = drop_prob
+
+    def forward(self, x):
+        return drop_path(x, self.drop_prob, self.training)
 
 class Attention(nn.Layer):
     """ attention layer
@@ -202,23 +211,12 @@ class Attention(nn.Layer):
             relative_position_bias = relative_position_bias.transpose((2, 0, 1)) # nH, Wh*Ww, Wh*Ww
             attn = attn + relative_position_bias.unsqueeze(0)
 
-        #attn = attn.softmax(dim=-1)
         attn = paddle.nn.functional.softmax(attn, axis=-1)
         attn = self.attn_drop(attn)
         x = self.mat(attn, v).transpose([0, 2, 1, 3]).reshape([B, N, C])
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
-
-class DropPath(nn.Layer):
-    """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
-    """
-    def __init__(self, drop_prob=None):
-        super().__init__()
-        self.drop_prob = drop_prob
-
-    def forward(self, x):
-        return drop_path(x, self.drop_prob, self.training)
 
 class Block(nn.Layer):
     """ block layer
@@ -308,14 +306,13 @@ class Generator(nn.Layer):
 
     Generator module for transGAN
     Attributes:
-        args: the input args
-        img_size: the size of img
+        args: args
+        img_size: the resize size of img
         patch_size: the patch size of the attention
         in_chans: img's channel
-        num_classes: the num of class
         embed_dim: the dim of embedding dim
-        depth: the block depth
-        num_heads: number of heads
+        depth: the block's depth
+        num_heads: number of MLP heads
         mlp_ratio: decide the mlp_hidden_dim, defalut 4
         qkv_bias: a nn.Linear for q, k, v mapping
         qk_scale: 1 / sqrt(single_head_feature_dim)
@@ -331,7 +328,6 @@ class Generator(nn.Layer):
                  img_size=64,
                  patch_size=2,
                  in_chans=3,
-                 num_classes=10,
                  embed_dim=384,
                  depth=5,
                  num_heads=4,
@@ -346,15 +342,15 @@ class Generator(nn.Layer):
         super().__init__()
         self.args = args
         self.ch = embed_dim
-        self.bottom_width = args.BOTTOM_WIDTH
-        self.embed_dim = embed_dim = args.GF_DIM
-        norm_layer = args.G_NORM
-        mlp_ratio = args.G_MLP
-        depth = [int(i) for i in args.G_DEPTCH.split(",")]
-        act_layer = args.G_ACT
+        self.bottom_width = args.MODEL.BOTTOM_WIDTH
+        self.embed_dim = embed_dim = args.MODEL.GF_DIM
+        norm_layer = args.MODEL.G_NORM
+        mlp_ratio = args.MODEL.G_MLP
+        depth = [int(i) for i in args.MODEL.G_DEPTH.split(",")]
+        act_layer = args.MODEL.G_ACT
 
         zeros_ = nn.initializer.Constant(value=0.)
-        self.l1 = nn.Linear(args.LATENT_DIM, (self.bottom_width ** 2) * self.embed_dim)
+        self.l1 = nn.Linear(args.MODEL.LATENT_DIM, (self.bottom_width ** 2) * self.embed_dim)
         self.pos_embed_1 = self.create_parameter(
             shape=(1, self.bottom_width**2, embed_dim), default_initializer=zeros_)
         self.pos_embed_2 = self.create_parameter(
