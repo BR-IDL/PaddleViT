@@ -39,6 +39,7 @@ TRAIN:
         MOMENTUM: 0.9
 VAL:
     MULTI_SCALES_VAL: False
+    IMAGE_BASE_SIZE: 512                                                                                                                                                                                            
     CROP_SIZE: [512, 512]
     STRIDE_SIZE: [512, 512]
 SAVE_DIR: "./output/segmenter_base_distilled_linear_512x512_160k_ade20k_bs_16"
