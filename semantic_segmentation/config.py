@@ -177,7 +177,3 @@ def update_config(config, args):
 def get_config():
     config = _C.clone()
     return config
-
-    
-
-
