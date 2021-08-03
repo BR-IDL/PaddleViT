@@ -55,9 +55,9 @@ TRAIN:
 VAL:
     MULTI_SCALES_VAL: False
     SCALE_RATIOS: [0.5, 0.75, 1.0]
-    IMAGE_BASE_SIZE: (2048, 512)
-    KEEP_ORI_SIZE: True
-    RESCALE_FROM_ORI: True
+    IMAGE_BASE_SIZE: 576
+    KEEP_ORI_SIZE: False
+    RESCALE_FROM_ORI: False
     CROP_SIZE: [512,512]
     STRIDE_SIZE: [341,341]
 SAVE_DIR: "./output/UperNet_swin_base_patch4_windown7_512x512_160k_ade20k"

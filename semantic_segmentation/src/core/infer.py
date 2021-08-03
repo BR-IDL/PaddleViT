@@ -73,7 +73,8 @@ def ss_inference(model, img, ori_shape, transforms, is_slide, base_size, stride_
                 .format(type(logits)))
         logit = logits[0]
     else:
-        # when dataloader does not uses resize, rescale or padding
+        # TODO (wutianyiRosun@gmail.com): when dataloader does not uses resize,
+        #  rescale or padding
         if rescale_from_ori:
             h, w = img.shape[-2], img.shape[-1]
             if min(h,w) < min(base_size):
@@ -147,17 +148,37 @@ def ms_inference(model,
     for scale in scales:
         h = int(h_input * scale + 0.5)
         w = int(w_input * scale + 0.5)
-        # if min(h,w) is smaller than crop_size[0], the smaller edge of the image will be matched 
-        # to crop_size[0] maintaining the aspect ratio
-        if min(h,w) < crop_size[0]:
-            new_short = crop_size[0]
-            if h > w :
-                new_h, new_w = int(new_short * h / w), new_short
-            else:
-                new_h, new_w = new_short, int(new_short * w / h)
+        if rescale_from_ori:
+            # TODO (wutianyiRosun@gmail.com): whole image testing, rescale 
+            # original image according to the scale_factor between the 
+            # origianl size and scale
+            # scale_factor := min ( max(scale) / max(ori_size), min(scale) / min(ori_size) ) 
+            h_ori, w_ori = img.shape[-2], img.shape[-1]
+            max_long_edge = max(h, w)
+            max_short_edge = min(h, w)
+            scale_factor = min(max_long_edge / max(h, w),
+                               max_short_edge / min(h, w))
+            # compute new size
+            new_h = int(h_ori * float(scale_factor) + 0.5)
+            new_w = int(w_ori * float(scale_factor) + 0.5)
             h, w = new_h, new_w
-        img = F.interpolate(img, (h, w), mode='bilinear')
-        logit = slide_inference(model, img, crop_size, stride_size, num_classes)
+            img = F.interpolate(img, (h, w), mode='bilinear')
+            logits = model(img)
+            logit = logits[0]
+        else:
+            # sliding-window testing
+            # if min(h,w) is smaller than crop_size[0], the smaller edge of the image will be matched 
+            # to crop_size[0] maintaining the aspect ratio
+            if min(h,w) < crop_size[0]:
+                new_short = crop_size[0]
+                if h > w :
+                    new_h, new_w = int(new_short * h / w), new_short
+                else:
+                    new_h, new_w = new_short, int(new_short * w / h)
+                h, w = new_h, new_w
+            img = F.interpolate(img, (h, w), mode='bilinear')
+            logit = slide_inference(model, img, crop_size, stride_size, num_classes)
+
         logit = F.interpolate(logit, ori_shape, mode='bilinear', align_corners = False)  # resize to original shape
         logit = F.softmax(logit, axis=1)
         final_logit = final_logit + logit

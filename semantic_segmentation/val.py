@@ -114,7 +114,6 @@ if __name__ == '__main__':
                 label,
                 dataset_val.num_classes,
                 ignore_index=dataset_val.ignore_index)
-
             # Gather from all ranks
             if nranks > 1:
                 intersect_area_list = []

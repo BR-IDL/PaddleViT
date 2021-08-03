@@ -80,6 +80,13 @@ class PatchEmbedding(nn.Layer):
         self.norm = nn.LayerNorm(embed_dim)
 
     def forward(self, x):
+        _, _, H, W = x.shape
+        # TODO (wutianyiRosun@gmail.com): padding for processing different resolutions of input images
+        #if W % self.patch_size[1] !=0:
+        #   x = F.pad(x (0, self.patch_size[1] - W % self.patch_size[1]))
+        #if H % self.patch_size[1] !=0:
+        #   x = F.pad(x (0, 0, 0, self.patch_size[0] - H % self.patch_size[0]))
+          
         x = self.patch_embed(x) # [batch, embed_dim, h, w] h,w = patch_resolution
         x = x.flatten(start_axis=2, stop_axis=-1) # [batch, embed_dim, h*w] h*w = num_patches
         x = x.transpose([0, 2, 1]) # [batch, h*w, embed_dim]
