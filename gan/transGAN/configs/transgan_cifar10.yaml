@@ -9,4 +9,3 @@ DATA:
   NUM_EVAL_IMAGES: 2000
 
 LOAD_PATH: "./transgan.pdparams"
-FID_STAT: "./fid_stat/fid_stats_cifar10_train.npz"
