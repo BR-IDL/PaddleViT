@@ -314,9 +314,6 @@ class Generator(nn.Layer):
     Generator module for transGAN
     Attributes:
         args: args
-        img_size: the resize size of img
-        patch_size: the patch size of the attention
-        in_chans: img's channel
         embed_dim: the dim of embedding dim
         depth: the block's depth
         num_heads: number of MLP heads

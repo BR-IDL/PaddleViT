@@ -151,7 +151,6 @@ class Discriminator(nn.Layer):
         args: the input args
         img_size: the size of img
         patch_size: the patch size of the attention
-        in_chans: img's channel
         num_classes: the num of class, There are actually only two
         embed_dim: the dim of embedding dim
         depth: the block depth
@@ -162,7 +161,6 @@ class Discriminator(nn.Layer):
         drop_rate: the dropout before output
         attn_drop_rate:  dropout for attention
         drop_path_rate: the dropout before output
-        hybrid_backbone: if there some hybrid_backbone
         norm_layer: which norm method
 
     """
