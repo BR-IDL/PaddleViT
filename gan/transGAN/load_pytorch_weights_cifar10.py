@@ -255,6 +255,7 @@ def convert(torch_model, paddle_model, mapping):
             _set_value(th_name_b, pd_name_b)
 
     return paddle_model
+
 def main():
     parser = argparse.ArgumentParser('transGAN')
     parser.add_argument('-cfg', type=str, default=None)
