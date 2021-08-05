@@ -19,8 +19,8 @@ Implement ViT_custom_scale2
 import numpy as np
 import paddle
 import paddle.nn as nn
-from utils import trunc_normal_, gelu, pixel_upsample, drop_path, DiffAugment, leakyrelu
-from utils import constant_, normal_, uniform_
+from utils_paddle import trunc_normal_, gelu, pixel_upsample, drop_path, DiffAugment, leakyrelu
+from utils_paddle import constant_, normal_, uniform_
 from models.ViT_custom import Identity, matmul, PixelNorm, CustomNorm, Mlp, CustomAct, DropPath
 
 class Attention(nn.Layer):
@@ -39,8 +39,14 @@ class Attention(nn.Layer):
         window_size: attention size
 
     """
-    def __init__(self, dim, num_heads=8, qkv_bias=False,
-                 qk_scale=None, attn_drop=0., proj_drop=0., window_size=16):
+    def __init__(self,
+                 dim,
+                 num_heads=8,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 attn_drop=0.,
+                 proj_drop=0.,
+                 window_size=16):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
@@ -76,24 +82,23 @@ class Attention(nn.Layer):
 
     def forward(self, x):
         B, N, C = x.shape
-        # x = x + paddle.randn([x.shape[0], x.shape[1], 1]) * self.noise_strength_1
+        x = x + paddle.randn([x.shape[0], x.shape[1], 1]) * self.noise_strength_1
         qkv = self.qkv(x).reshape([B, N, 3, self.num_heads, C // self.num_heads])
         qkv = qkv.transpose([2, 0, 3, 1, 4])
         q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
         attn = (self.mat(q, k.transpose([0, 1, 3, 2]))) * self.scale
         if self.window_size != 0:
             relative_position_bias = self.relative_position_bias_table[
-                            self.relative_position_index.flatten().clone()]
+                self.relative_position_index.flatten().clone()]
             relative_position_bias = relative_position_bias.reshape((
-                              self.window_size * self.window_size,
-                              self.window_size * self.window_size,
-                              -1))
+                self.window_size * self.window_size,
+                self.window_size * self.window_size,
+                -1))
             # nH, Wh*Ww, Wh*Ww
             relative_position_bias = relative_position_bias.transpose((2, 0, 1))
             attn = attn + relative_position_bias.unsqueeze(0)
         attn = paddle.nn.functional.softmax(attn, axis=-1)
         attn = self.attn_drop(attn)
-
         x = self.mat(attn, v).transpose([0, 2, 1, 3]).reshape([B, N, C])
         x = self.proj(x)
         x = self.proj_drop(x)
@@ -163,9 +168,7 @@ class Discriminator(nn.Layer):
     """
     def __init__(self,
                  args,
-                 img_size=32,
                  patch_size=None,
-                 in_chans=3,
                  num_classes=1,
                  embed_dim=None,
                  depth=7,
@@ -176,7 +179,6 @@ class Discriminator(nn.Layer):
                  drop_rate=0.,
                  attn_drop_rate=0.,
                  drop_path_rate=0.,
-                 hybrid_backbone=None,
                  norm_layer=nn.LayerNorm):
         super().__init__()
         self.num_classes = num_classes
@@ -204,9 +206,9 @@ class Discriminator(nn.Layer):
         self.cls_token = self.create_parameter(
             shape=(1, 1, embed_dim), default_initializer=zeros_)
         self.pos_embed_1 = self.create_parameter(
-            shape=(1, int(num_patches_1/4), embed_dim//4*3), default_initializer=zeros_)
+            shape=(1, int(num_patches_1), embed_dim//4*3), default_initializer=zeros_)
         self.pos_embed_2 = self.create_parameter(
-            shape=(1, int(num_patches_2/4), embed_dim), default_initializer=zeros_)
+            shape=(1, int(num_patches_2), embed_dim), default_initializer=zeros_)
 
         self.pos_drop = nn.Dropout(p=drop_rate)
         # stochastic depth decay rule
@@ -258,10 +260,7 @@ class Discriminator(nn.Layer):
         trunc_normal_(self.cls_token, std=.02)
         self.apply(self._init_weights)
         self.Hz_fbank = None
-        if 'geo' in self.args.DATA.DIFF_AUG:
-            self.register_buffer('Hz_geom', upfirdn2d.setup_filter(wavelets['sym6']))
-        else:
-            self.Hz_geom = None
+        self.Hz_geom = None
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -272,39 +271,34 @@ class Discriminator(nn.Layer):
             constant_(m.bias, 0)
             constant_(m.weight, 1.0)
 
-    def forward_features(self, x, aug=True, epoch=400):
+    def forward_features(self, x, aug=True, epoch=0):
         if "None" not in self.args.DATA.DIFF_AUG and aug:
             x = DiffAugment(x, self.args.DATA.DIFF_AUG, True, [self.Hz_geom, self.Hz_fbank])
         B, _, H, W = x.shape
         H = W = H//self.patch_size
-
         x_1 = self.fRGB_1(x).flatten(2).transpose([0, 2, 1])
         x_2 = self.fRGB_2(x).flatten(2).transpose([0, 2, 1])
         B = x.shape[0]
-
         x = x_1 + self.pos_embed_1
         B, _, C = x.shape
         for blk in self.blocks_1:
             x = blk(x)
-
         _, _, C = x.shape
         x = x.transpose([0, 2, 1]).reshape([B, C, H, W])
         x = nn.AvgPool2D(2)(x)
-
         _, _, H, W = x.shape
         x = x.flatten(2).transpose([0, 2, 1])
         x = paddle.concat([x, x_2], axis=-1)
         x = x + self.pos_embed_2
         for blk in self.blocks_2:
             x = blk(x)
-
         cls_tokens = self.cls_token.expand([B, -1, -1])
         x = paddle.concat((cls_tokens, x), axis=1)
         x = self.last_block(x)
         x = self.norm(x)
         return x[:, 0]
 
-    def forward(self, x, aug=True, epoch=400):
+    def forward(self, x, aug=True, epoch=0):
         x = self.forward_features(x, aug=aug, epoch=epoch)
         x = self.head(x)
         return x

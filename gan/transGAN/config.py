@@ -24,17 +24,17 @@ _C = CN()
 _C.BASE = ['']
 
 _C.DATA = CN()
-_C.DATA.BATCH_SIZE = 32 #256 # train batch_size for single GPU
-_C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
+_C.DATA.BATCH_SIZE = 32 # train batch_size for single GPU
+_C.DATA.BATCH_SIZE_EVAL = 8 # val batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'cifar10' # dataset name
-_C.DATA.IMG_SIZE = 64 # input image size: 224 for pretrain, 384 for finetune
+_C.DATA.IMG_SIZE = 32 # input image size
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 2 # number of data loading threads 
-_C.DATA.GEN_BATCH_SIZE = 128
+_C.DATA.GEN_BATCH_SIZE = 128 # the batch size of gen
 _C.DATA.DIS_BATCH_SIZE = 64
-_C.DATA.NUM_EVAL_IMAGES = 2000
-_C.DATA.DIFF_AUG = ""
+_C.DATA.NUM_EVAL_IMAGES = 2000 # when calculate fid, default is 20000
+_C.DATA.DIFF_AUG = "" # when train the dis_net, have to choose the aug method
 
 
 # model settings
@@ -68,19 +68,16 @@ _C.MODEL.D_WINDOW_SIZE = 8
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 300
-_C.TRAIN.WARMUP_EPOCHS = 3 #34 # ~ 10k steps for 4096 batch size
-_C.TRAIN.WEIGHT_DECAY = 0.05 #0.3 # 0.0 for finetune
-_C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
-_C.TRAIN.WARMUP_START_LR = 1e-6 #0.0
+_C.TRAIN.WARMUP_EPOCHS = 3
+_C.TRAIN.WEIGHT_DECAY = 0.05
+_C.TRAIN.BASE_LR = 0.001
+_C.TRAIN.WARMUP_START_LR = 1e-6
 _C.TRAIN.END_LR = 5e-4
 _C.TRAIN.GRAD_CLIP = 1.0
 _C.TRAIN.ACCUM_ITER = 2 #1
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
-_C.TRAIN.LR_SCHEDULER.MILESTONES = "30, 60, 90" # only used in StepLRScheduler
-_C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
-_C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
 
 _C.TRAIN.OPTIMIZER = CN()
 _C.TRAIN.OPTIMIZER.NAME = 'AdamW'

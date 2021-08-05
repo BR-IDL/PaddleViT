@@ -18,7 +18,7 @@ Implement transGAN_custom
 
 import paddle
 import paddle.nn as nn
-from utils import trunc_normal_, gelu, pixel_upsample, drop_path
+from utils_paddle import trunc_normal_, gelu, pixel_upsample, drop_path
 
 class Identity(nn.Layer):
     """ Identity layer
@@ -113,8 +113,12 @@ class Mlp(nn.Layer):
         dropout2: dropout after fc2
 
     """
-    def __init__(self, in_features, hidden_features=None,
-                 out_features=None, act_layer=gelu, drop=0.):
+    def __init__(self,
+                 in_features,
+                 hidden_features=None,
+                 out_features=None,
+                 act_layer=gelu,
+                 drop=0.):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -156,8 +160,14 @@ class Attention(nn.Layer):
         window_size: window_size
 
     """
-    def __init__(self, dim, num_heads=8, qkv_bias=False,
-                 qk_scale=None, attn_drop=0., proj_drop=0., window_size=16):
+    def __init__(self,
+                 dim,
+                 num_heads=8,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 attn_drop=0.,
+                 proj_drop=0.,
+                 window_size=16):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
@@ -176,11 +186,9 @@ class Attention(nn.Layer):
                 shape=((2 * window_size - 1) * (2 * window_size - 1), num_heads),
                 default_initializer=zeros_
             )
-
             # get pair-wise relative position index for each token inside the window
             coords_h = paddle.arange(window_size)
             coords_w = paddle.arange(window_size)
-
             coords = paddle.stack(paddle.meshgrid([coords_h, coords_w]))  # 2, Wh, Ww
             coords_flatten = paddle.flatten(coords, 1)  # 2, Wh*Ww
             # 2, Wh*Ww, Wh*Ww
@@ -189,7 +197,6 @@ class Attention(nn.Layer):
             relative_coords[:, :, 0] += window_size - 1  # shift to start from 0
             relative_coords[:, :, 1] += window_size - 1
             relative_coords[:, :, 0] *= 2 * window_size - 1
-
             relative_position_index = relative_coords.sum(-1)  # Wh*Ww, Wh*Ww
             self.register_buffer("relative_position_index", relative_position_index)
             trunc_normal_(self.relative_position_bias_table, std=.02)
@@ -325,9 +332,6 @@ class Generator(nn.Layer):
     """
     def __init__(self,
                  args,
-                 img_size=64,
-                 patch_size=2,
-                 in_chans=3,
                  embed_dim=384,
                  depth=5,
                  num_heads=4,
@@ -336,8 +340,6 @@ class Generator(nn.Layer):
                  qk_scale=None,
                  drop_rate=0.,
                  attn_drop_rate=0.,
-                 drop_path_rate=0.,
-                 hybrid_backbone=None,
                  norm_layer="ln"):
         super().__init__()
         self.args = args
@@ -420,7 +422,6 @@ class Generator(nn.Layer):
 
         x = self.l1(z).reshape((-1, self.bottom_width ** 2, self.embed_dim))
         x = x + self.pos_embed[0]
-        # B = x.shape
         H, W = self.bottom_width, self.bottom_width
         x = self.blocks(x)
         for index, blk in enumerate(self.upsample_blocks):
