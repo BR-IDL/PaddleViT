@@ -1,0 +1,11 @@
+MODEL:
+  GEN_MODEL: "ViT_custom"
+  DIS_MODEL: "ViT_custom_scale2"
+
+DATA:
+  EVAL_BATCH_SIZE: 8
+  DATASET: 'cifar10'
+  IMG_SIZE: 64
+  NUM_EVAL_IMAGES: 2000
+
+LOAD_PATH: "./transgan.pdparams"
