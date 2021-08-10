@@ -9,13 +9,15 @@ import src.transforms.functional as F
 class ADE20K(Dataset):
     """ADE20K 
     
-    It is a densely annotated dataset with the instances of stuff, objects, and parts, covering a diverse set of visual concepts in scenes.
-    The annotated images cover the scene categories from the SUN and Places database.
+    It is a densely annotated dataset with the instances of stuff, objects, 
+    and parts, covering a diverse set of visual concepts in scenes. The 
+    annotated images cover the scene categories from the SUN and Places database.
    
     Args:
         transforms (list): A list of image transformations.
         dataset_root (str, optional): The ADK20K dataset directory. Default: None.
-        mode (str, optional): A subset of the entire dataset. It should be one of ('train', 'val'). Default: 'train'.
+        mode (str, optional): A subset of the entire dataset. 
+                              It should be one of ('train', 'val'). Default: 'train'.
         num_classes (int): the number of classes
     """
 
@@ -31,12 +33,8 @@ class ADE20K(Dataset):
         self.ignore_index = 255
 
         if mode not in ['train', 'val']:
-            raise ValueError(
-                "`mode` should be one of ('train', 'val') in ADE20K dataset, but got {}.".format(mode))
-
-        if self.transforms is None:
-            raise ValueError("`transforms` is necessary, but it is None.")
-
+            raise ValueError("`mode` should be one of ('train', 'val') in"
+                             "ADE20K dataset, but got {}.".format(mode))
         if mode == 'train':
             img_dir = os.path.join(self.dataset_root, 'images/training')
             label_dir = os.path.join(self.dataset_root, 'annotations/training')

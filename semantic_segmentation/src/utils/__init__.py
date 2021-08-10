@@ -1,9 +1,5 @@
-
-
 from . import logger
-from . import download
 from . import metrics
-from .env import seg_env, get_sys_env
-from .utils import *
+from .checkpoint import load_entire_model, load_pretrained_model, resume
 from .timer import TimeAverager, calculate_eta
 from . import visualize

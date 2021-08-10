@@ -11,6 +11,7 @@ class VisionTransformerUpHead(nn.Layer):
     """VisionTransformerUpHead
 
     VisionTransformerUpHead is the decoder of SETR-PUP, Ref https://arxiv.org/pdf/2012.15840.pdf
+
     Reference:                                                                                                                                                
         Sixiao Zheng, et al. *"Rethinking Semantic Segmentation from a Sequence-to-Sequence Perspective with Transformers"*
     """
@@ -100,7 +101,6 @@ class VisionTransformerUpHead(nn.Layer):
                 x = self.conv_4(x)
                 up2x_resolution = [ 2*item for item in x.shape[2:]]
                 x = F.interpolate(x, up2x_resolution, mode='bilinear', align_corners=self.align_corners)
-
         return x
 
 

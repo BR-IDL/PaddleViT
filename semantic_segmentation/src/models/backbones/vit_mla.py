@@ -1,15 +1,11 @@
-import copy
+"""
+Implement Transformer Class for ViT_MLA
+"""
+
 import math
-import numpy as np
 import paddle
 import paddle.nn as nn
-import paddle.nn.functional as F
-from src.utils.utils import load_pretrained_model
-
-
-"""
-Implement Transformer Class for ViT
-"""
+from src.utils import load_pretrained_model
 
 
 class Embeddings(nn.Layer):
@@ -294,37 +290,66 @@ class Conv_MLA(nn.Layer):
     """
     def __init__(self, in_channels=1024, mla_channels=256):
         super(Conv_MLA, self).__init__()
+        norm_bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0)) 
+        self.mla_p2_1x1 = nn.Sequential(
+            nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
+            nn.SyncBatchNorm(
+                mla_channels, 
+                weight_attr=self.get_norm_weight_attr(), 
+                bias_attr=norm_bias_attr),
+            nn.ReLU())
+        self.mla_p3_1x1 = nn.Sequential(
+            nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
+            nn.SyncBatchNorm(
+                mla_channels, 
+                weight_attr=self.get_norm_weight_attr(), 
+                bias_attr=norm_bias_attr),
+            nn.ReLU())
+        self.mla_p4_1x1 = nn.Sequential(
+            nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
+            nn.SyncBatchNorm(
+                mla_channels, 
+                weight_attr=self.get_norm_weight_attr(), 
+                bias_attr=norm_bias_attr),
+            nn.ReLU())
+        self.mla_p5_1x1 = nn.Sequential(
+            nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
+            nn.SyncBatchNorm(
+                mla_channels, 
+                weight_attr=self.get_norm_weight_attr(), 
+                bias_attr=norm_bias_attr),
+            nn.ReLU())
 
-        sync_norm_bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0)) 
+        self.mla_p2 = nn.Sequential(
+            nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
+            nn.SyncBatchNorm(
+                mla_channels, 
+                weight_attr=self.get_norm_weight_attr(), 
+                bias_attr=norm_bias_attr),
+            nn.ReLU())
+        self.mla_p3 = nn.Sequential(
+            nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
+            nn.SyncBatchNorm(
+                mla_channels, 
+                weight_attr=self.get_norm_weight_attr(), 
+                bias_attr=norm_bias_attr),
+            nn.ReLU())
+        self.mla_p4 = nn.Sequential(
+            nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
+            nn.SyncBatchNorm(
+                mla_channels, 
+                weight_attr=self.get_norm_weight_attr(), 
+                bias_attr=norm_bias_attr),
+            nn.ReLU())
+        self.mla_p5 = nn.Sequential(
+            nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
+            nn.SyncBatchNorm(
+                mla_channels,
+                weight_attr=self.get_norm_weight_attr(), 
+                bias_attr=norm_bias_attr),
+            nn.ReLU())
 
-        
-        self.mla_p2_1x1 = nn.Sequential(nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p3_1x1 = nn.Sequential(nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p4_1x1 = nn.Sequential(nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p5_1x1 = nn.Sequential(nn.Conv2D(in_channels, mla_channels, 1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-
-        self.mla_p2 = nn.Sequential(nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p3 = nn.Sequential(nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p4 = nn.Sequential(nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels, weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-        self.mla_p5 = nn.Sequential(nn.Conv2D(mla_channels, mla_channels, 3, padding=1, bias_attr=False),
-                                        nn.SyncBatchNorm(mla_channels,weight_attr=self.get_sync_norm_weight_attr(), bias_attr=sync_norm_bias_attr),
-                                        nn.ReLU())
-
-    def get_sync_norm_weight_attr(self):
+    def get_norm_weight_attr(self):
         return paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0)) 
 
     def to_2D(self, x):
@@ -359,7 +384,8 @@ class Conv_MLA(nn.Layer):
 class ViT_MLA(nn.Layer):
     """ ViT_MLA
    
-    Vision Transformer with MLA (ViT_MLA) as the backbone of SETR-MLA, Ref. https://arxiv.org/pdf/2012.15840.pdf
+    Vision Transformer with MLA (ViT_MLA) as the backbone of SETR-MLA. 
+    Ref. https://arxiv.org/pdf/2012.15840.pdf
 
     """
     def __init__(self, config):
@@ -370,11 +396,14 @@ class ViT_MLA(nn.Layer):
 
         norm_weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
         norm_bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-
-        self.norm_0 = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE,epsilon=1e-06, weight_attr=norm_weight_attr, bias_attr=norm_bias_attr)
-        self.norm_1 = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE,epsilon=1e-06, weight_attr=norm_weight_attr, bias_attr=norm_bias_attr)
-        self.norm_2 = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE,epsilon=1e-06, weight_attr=norm_weight_attr, bias_attr=norm_bias_attr)
-        self.norm_3 = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE,epsilon=1e-06, weight_attr=norm_weight_attr, bias_attr=norm_bias_attr)
+        self.norm_0 = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE, epsilon=1e-06, 
+                                   weight_attr=norm_weight_attr, bias_attr=norm_bias_attr)
+        self.norm_1 = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE, epsilon=1e-06, 
+                                   weight_attr=norm_weight_attr, bias_attr=norm_bias_attr)
+        self.norm_2 = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE, epsilon=1e-06, 
+                                   weight_attr=norm_weight_attr, bias_attr=norm_bias_attr)
+        self.norm_3 = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE, epsilon=1e-06, 
+                                   weight_attr=norm_weight_attr, bias_attr=norm_bias_attr)
 
         if config.MODEL.PRETRAINED is not None:
             load_pretrained_model(self, config.MODEL.PRETRAINED)
@@ -394,13 +423,11 @@ class ViT_MLA(nn.Layer):
             """      
 
     def forward(self, x):
-        B = x.shape[0]
         outs = self.transformer(x)
-
         c6 = self.norm_0(outs[self.mla_index[0]])
         c12 = self.norm_1(outs[self.mla_index[1]])
-        c18= self.norm_2(outs[self.mla_index[2]])
+        c18 = self.norm_2(outs[self.mla_index[2]])
         c24 = self.norm_3(outs[self.mla_index[3]])
-        mla_p2, mla_p3, mla_p4, mla_p5  = self.mla(c6, c12, c18, c24)
+        mla_p2, mla_p3, mla_p4, mla_p5 = self.mla(c6, c12, c18, c24)
         return [mla_p2, mla_p3, mla_p4, mla_p5]
 
