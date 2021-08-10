@@ -5,22 +5,26 @@ from src.transforms import Compose
 
 
 class PascalContext(Dataset):
-    """PascalContext dataset.
+    """PascalContext
 
-    This dataset is a set of additional annotations for PASCAL VOC 2010. It goes beyond the original PASCAL semantic segmentation task 
-    by providing annotations for the whole scene. The statistics section has a full list of 400+ labels. Here, we choose 59 foreground
-    and 1 background class for training segmentation models. (The ``img`` is fixed to '.jpg' and ``label`` is fixed to '.png'.)
+    This dataset is a set of additional annotations for PASCAL VOC 2010. It goes
+    beyond the original PASCAL semantic segmentation task by providing annotations 
+    for the whole scene. The statistics section has a full list of 400+ labels. 
+    Here, we choose 59 foreground and 1 background class for training segmentation 
+    models. (The ``img`` is fixed to '.jpg' and ``label`` is fixed to '.png'.)
 
     Args:
         transforms (list): Transforms for image.
         dataset_root (str): The dataset directory. Default: None
-        mode (str): Which part of dataset to use. it is one of ('train', 'trainval', 'context', 'val').
+        mode (str): Which part of dataset to use. ('train', 'trainval', 
+                    'context', 'val').
         num_classes (int): the number of classes
     """
 
-    def __init__(self, transforms=None, dataset_root=None, mode='train', num_classes=60):
-        super(PascalContext, self).__init__(transforms=transforms, num_classes=num_classes, 
-            dataset_root=dataset_root, mode=mode)
+    def __init__(self, transforms=None, dataset_root=None, mode='train', 
+            num_classes=60):
+        super(PascalContext, self).__init__(transforms=transforms, 
+            num_classes=num_classes, dataset_root=dataset_root, mode=mode)
 
         self.dataset_root = dataset_root
         self.transforms = Compose(transforms)
@@ -30,17 +34,15 @@ class PascalContext(Dataset):
         self.num_classes = num_classes
         self.ignore_index = 255
 
-
         if mode not in ['train', 'trainval', 'val']:
-            raise ValueError(
-                "`mode` should be one of ('train', 'trainval', 'val') in PascalContext dataset, but got {}.".format(mode))
+            raise ValueError("`mode` should be one of ('train', 'trainval', 'val')"
+                "in PascalContext dataset, but got {}.".format(mode))
 
-        if self.transforms is None:
-            raise ValueError("`transforms` is necessary, but it is None.")
         if self.dataset_root is None:
-            raise ValueError("The dataset is not Found or the folder structure is nonconfoumance.")
+            raise ValueError("the path of this dataset is None")
         
-        image_set_dir = os.path.join(self.dataset_root, 'ImageSets', 'SegmentationContext')
+        image_set_dir = os.path.join(self.dataset_root, 'ImageSets', 
+            'SegmentationContext')
 
         if mode == 'train':
             file_path = os.path.join(image_set_dir, 'train.txt')

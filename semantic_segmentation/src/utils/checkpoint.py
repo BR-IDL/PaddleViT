@@ -3,20 +3,9 @@ import filelock
 import math
 import os
 import paddle.nn.functional as F
-import tempfile
 from urllib.parse import urlparse, unquote
 import paddle
-from src.utils import logger, seg_env
-from src.utils.download import download_file_and_uncompress
-
-
-@contextlib.contextmanager
-def generate_tempdir(directory: str = None, **kwargs):
-    '''Generate a temporary directory'''
-    directory = seg_env.TMP_HOME if not directory else directory
-    with tempfile.TemporaryDirectory(dir=directory, **kwargs) as _dir:
-        yield _dir
-
+from src.utils import logger
 
 def load_entire_model(model, pretrained):
     """
@@ -31,7 +20,8 @@ def load_entire_model(model, pretrained):
         load_pretrained_model(model, pretrained)
     else:
         logger.warning('Not all pretrained params of {} are loaded, ' \
-                       'training from scratch or a pretrained backbone.'.format(model.__class__.__name__))
+                       'training from scratch or a pretrained backbone.'.format(
+                       model.__class__.__name__))
 
 
 def load_pretrained_model(model, pretrained_model, pos_embed_interp=True):

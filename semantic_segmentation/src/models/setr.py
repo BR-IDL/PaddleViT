@@ -8,7 +8,7 @@ import paddle
 import paddle.nn as nn
 from src.models.backbones import ViT_MLA, VisualTransformer
 from src.models.decoders import VIT_MLAHead, VIT_MLA_AUXIHead, VisionTransformerUpHead
-from src.utils.utils import load_pretrained_model
+from src.utils import load_pretrained_model
 
 
 class SETR(nn.Layer):

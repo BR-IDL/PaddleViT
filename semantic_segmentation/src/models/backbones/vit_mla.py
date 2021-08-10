@@ -5,7 +5,7 @@ Implement Transformer Class for ViT_MLA
 import math
 import paddle
 import paddle.nn as nn
-from src.utils.utils import load_pretrained_model
+from src.utils import load_pretrained_model
 
 
 class Embeddings(nn.Layer):

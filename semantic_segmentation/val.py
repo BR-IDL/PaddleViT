@@ -7,13 +7,13 @@ import numpy as np
 import paddle
 import paddle.nn.functional as F
 from config import *
-from src.core import infer
+from src.api import infer
 from src.datasets import get_dataset
 from src.transforms import Resize, Normalize 
 from src.models import get_model
 from src.utils import metrics, logger, progbar
-from src.utils import TimeAverager, calculate_eta, resume
-from src.utils.utils import load_entire_model
+from src.utils import TimeAverager, calculate_eta
+from src.utils import load_entire_model, resume
 
 
 def parse_args():
@@ -69,8 +69,8 @@ if __name__ == '__main__':
     pred_area_all = 0
     label_area_all = 0
 
-    logger.info("Start evaluating (total_samples: {}, total_iters: {}), \
-        multi-scale testing: {}".format(len(dataset_val), total_iters, args.multi_scales))
+    logger.info("Start evaluating (total_samples: {}, total_iters: {}, "
+        "multi-scale testing: {})".format(len(dataset_val), total_iters, args.multi_scales))
     progbar_val = progbar.Progbar(target=total_iters, verbose=1)
     reader_cost_averager = TimeAverager()
     batch_cost_averager = TimeAverager()
