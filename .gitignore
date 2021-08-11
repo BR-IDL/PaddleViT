@@ -132,6 +132,7 @@ dmypy.json
 ./segmentation/output
 ./segmentation/log
 *.pdparams
+*.pdopt
 ./segmentation/pytorch_2_paddle.py
 ./segmentation/readme.txt 
 setr.py.bak
