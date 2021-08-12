@@ -204,7 +204,6 @@ def leakyrelu(x):
     return nn.functional.leaky_relu(x, 0.2)
 
 def DiffAugment(x, policy='', channels_first=True, affine=None):
-    print(policy)
     if policy:
         if not channels_first:
             x = x.transpose(0, 3, 1, 2)

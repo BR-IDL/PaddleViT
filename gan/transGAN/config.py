@@ -27,14 +27,14 @@ _C.DATA = CN()
 _C.DATA.BATCH_SIZE = 32 # train batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'cifar10' # dataset name
-_C.DATA.IMG_SIZE = 32 # input image size 
+_C.DATA.IMG_SIZE = 32 # input image size
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 2 # number of data loading threads 
 _C.DATA.GEN_BATCH_SIZE = 128 # the batch size of gen
 _C.DATA.DIS_BATCH_SIZE = 64
 _C.DATA.NUM_EVAL_IMAGES = 2000 # when calculate fid, default is 20000
 _C.DATA.DIFF_AUG = "" # when train the dis_net, have to choose the aug method
-_C.DATA.BATCH_SIZE_EVAL = 32
+_C.DATA.BATCH_SIZE_EVAL = 32 # val batch_size for single GPU
 
 
 # model settings
@@ -63,7 +63,7 @@ _C.MODEL.G_ACT = "gelu" # the activation in gen_net
 _C.MODEL.D_ACT = "gelu" # the activation in dis_net
 _C.MODEL.G_MLP = 4 # decide the mlp_hidden_dim in MLP of gen_net, dim * mlp_ratio
 _C.MODEL.D_MLP = 4 # decide the mlp_hidden_dim in MLP of dis_net
-_C.MODEL.D_WINDOW_SIZE = 8
+_C.MODEL.D_WINDOW_SIZE = 8 # calculate the relative_position_bias which adjust attn
 
 # training settings
 _C.TRAIN = CN()
@@ -76,10 +76,8 @@ _C.TRAIN.WARMUP_START_LR = 1e-6
 _C.TRAIN.END_LR = 5e-4
 _C.TRAIN.GRAD_CLIP = 1.0
 _C.TRAIN.ACCUM_ITER = 2 #1
-
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
-
 _C.TRAIN.OPTIMIZER = CN()
 _C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
@@ -96,38 +94,7 @@ _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
 _C.NGPUS = -1
-_C.G_LR = 0.0001
-_C.WD = 0.001
-_C.D_LR = 0.0001
-_C.LR_DECAY = False
-_C.LOAD_PATH = ""
-_C.EVAL_BATCH_SIZE = 8
-_C.SHARED_EPOCH = 15
-_C.GROW_STEP1 = 15
-_C.GROW_STEP2 = 55
-_C.MAX_SEARCH_ITER = 90
-_C.HID_SIZE = 100
-_C.RL_NUM_EVAL_IMG = 5000
-_C.NUM_CANDIDATE = 10
-_C.ENTROPY_COEFF = 0.001
-_C.DYNAMIC_RESET_THRESHOLD = 0.001
-_C.DYNAMIC_RESET_WINDOW = 500
-_C.ARCH = None
-_C.OPTIMIZER = "adam"
-_C.LOSS = "wgangp-eps"
-_C.PHI = 1.0
-_C.GROW_STEPS = [0,0] 
-_C.D_DOWNSAMPLE = "avg"
-_C.ACCUMULATED_TIMES = 1
-_C.G_ACCUMULATED = 1
-_C.NUM_LANDMARKS = 64
-_C.D_HEADS = 4
-_C.DROPOUT = 0.0
-_C.EMA = 0.9999
-_C.EMA_WARMUP = 0.1
-_C.EMA_KIMG = 500
 _C.LATENT_NORM = False
-_C.MINISTD = False
 
 def _update_config_from_file(config, cfg_file):
     config.defrost()
@@ -179,4 +146,4 @@ def update_config(config, args):
 def get_config():
     """Return a clone of config"""
     config = _C.clone()
-    return config#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+    return config
