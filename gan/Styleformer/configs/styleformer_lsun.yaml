@@ -1,0 +1,10 @@
+DATA:
+    IMAGE_SIZE: 128
+MODEL:
+    TYPE: Styleformer
+    NAME: Styleformer_Linformer
+    GEN:
+        RESOLUTION: 8
+        NUM_LAYERS: [1,2,1,1,1]
+        G_DICT: [1024,256,64,64,64]
+        LINFORMER: True

@@ -1,0 +1,11 @@
+DATA:
+    IMAGE_SIZE: 48
+MODEL:
+    TYPE: Styleformer
+    NAME: Styleformer_Medium
+    GEN:
+        RESOLUTION: 12
+        NUM_LAYERS: [1,3,3]
+        G_DICT: [1024,256,64]
+
+
