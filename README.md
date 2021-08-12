@@ -156,6 +156,12 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 
 
 ### GAN ###
+| Model                          | FID | Image Size | Crop_pct | Interpolation | Model        |
+|--------------------------------|-----|------------|----------|---------------|--------------|
+| styleformer_cifar10            |2.82 | 32         | 1.0      | lanczos       | [google](https://drive.google.com/file/d/1T2RF5P232Jdbmy7OVfOq9hIQg7Nd1M0_/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1B8pmQdjpxf1mNWum8kwLiw)(il2u) |
+| styleformer_stl10              |15.17| 48         | 1.0      | lanczos       | [google](https://drive.google.com/file/d/1yp2b1BQuraSxPqFbts2T5_PYI4gjkcVt/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1K3PdG4BTun1vaO82ghB_aw)(z2t0) |
+| styleformer_celeba             |3.66 | 64         | 1.0      | lanczos       | [google](https://drive.google.com/file/d/1yR-i-l3OXyf1E4e7tolAIegKqLumc6h-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13vuTVWegq3wd81p80bfwHg)(v873) |
+| styleformer_lsun               |7.99 | 128        | 1.0      | lanczos       | [google](https://drive.google.com/file/d/1S95NxEtTkBm7C1tWt2WaBEo09cV5F96b/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1zCP7tBDa7lcESINdA_3Onw)(9i1s) |
 
 ## Results (Self-Trained Weights) ## 
 ### Image Classification ###
