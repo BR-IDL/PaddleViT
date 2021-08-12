@@ -19,9 +19,22 @@ Implement ViT_custom_scale2
 import numpy as np
 import paddle
 import paddle.nn as nn
-from utils_paddle import trunc_normal_, gelu, pixel_upsample, drop_path, DiffAugment, leakyrelu
-from utils_paddle import constant_, normal_, uniform_
-from models.ViT_custom import Identity, matmul, PixelNorm, CustomNorm, Mlp, CustomAct, DropPath
+from utils import trunc_normal_
+from utils import gelu
+from utils import pixel_upsample
+from utils import drop_path
+from utils import DiffAugment
+from utils import leakyrelu
+from utils import normal_
+from utils import uniform_
+from utils import constant_
+from models.ViT_custom import Identity
+from models.ViT_custom import matmul
+from models.ViT_custom import PixelNorm
+from models.ViT_custom import CustomNorm
+from models.ViT_custom import Mlp
+from models.ViT_custom import CustomAct
+from models.ViT_custom import DropPath
 
 class Attention(nn.Layer):
     """ attention layer
