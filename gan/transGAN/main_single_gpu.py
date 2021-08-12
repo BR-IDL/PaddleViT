@@ -151,7 +151,6 @@ def train(args,
     gen_net.train()
     dis_net.train()
     train_loss_meter = AverageMeter()
-    train_acc_meter = AverageMeter()
     time_st = time.time()
 
     for batch_id, data in enumerate(dataloader):
@@ -188,7 +187,6 @@ def train(args,
             gen_imgs = gen_net(gen_z, epoch)
             fake_validity = dis_net(gen_imgs)
             # cal loss
-            loss_lz = paddle.to_tensor(0)
             g_loss = -paddle.mean(fake_validity)
             g_loss.backward()
             gen_optimizer.step()
@@ -248,14 +246,8 @@ def main():
                                              )
     elif config.TRAIN.LR_SCHEDULER.NAME == "cosine":
         gen_scheduler = paddle.optimizer.lr.CosineAnnealingDecay(learning_rate=config.TRAIN.BASE_LR,
-                                                             T_max=config.TRAIN.NUM_EPOCHS,
-                                                             last_epoch=last_epoch)
-    elif config.TRAIN.LR_SCHEDULER.NAME == "multi-step":
-        milestones = [int(v.strip()) for v in config.TRAIN.LR_SCHEDULER.MILESTONES.split(",")]
-        scheduler = paddle.optimizer.lr.MultiStepDecay(learning_rate=config.TRAIN.BASE_LR,
-                                                       milestones=milestones,
-                                                       gamma=config.TRAIN.LR_SCHEDULER.DECAY_RATE,
-                                                       last_epoch=last_epoch)
+                                                                 T_max=config.TRAIN.NUM_EPOCHS,
+                                                                 last_epoch=last_epoch)
     else:
         logging.fatal(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
