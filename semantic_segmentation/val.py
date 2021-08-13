@@ -80,11 +80,6 @@ if __name__ == '__main__':
             reader_cost_averager.record(time.time() - batch_start)
             label = label.astype('int64')
             #print("img.shape: {}, label.shape: {}".format(img.shape, label.shape))
-            temp_h, temp_w = label.shape[2:]
-            if temp_h >= 1600 and temp_w >= 1600: 
-                print("img.shape: {}, label.shape: {}".format(img.shape, label.shape))
-                continue
-          
             ori_shape = label.shape[-2:]
             if args.multi_scales == True:
                 pred = infer.ms_inference(
