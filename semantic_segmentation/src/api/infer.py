@@ -46,8 +46,15 @@ def slide_inference(model, img, crop_size, stride_size, num_classes):
     return final_logit
 
 
-def ss_inference(model, img, ori_shape, transforms, is_slide, base_size, 
-        stride_size, crop_size, num_classes, rescale_from_ori=False):
+def ss_inference(model,
+                 img, 
+                 ori_shape, 
+                 is_slide, 
+                 base_size, 
+                 stride_size, 
+                 crop_size, 
+                 num_classes, 
+                 rescale_from_ori=False):
     """
     Single-scale inference for image.
 
@@ -55,7 +62,6 @@ def ss_inference(model, img, ori_shape, transforms, is_slide, base_size,
         model (paddle.nn.Layer): model to get logits of image.
         img (Tensor): the input image.
         ori_shape (list): origin shape of image.
-        transforms (list): transforms for image.
         is_slide (bool): whether to infer by sliding window.
         base_size (list): the size of short edge is resize to min(base_size) 
         when it is smaller than min(base_size)  
@@ -106,18 +112,17 @@ def ss_inference(model, img, ori_shape, transforms, is_slide, base_size,
 
 
 def ms_inference(model,
-                  img,
-                  ori_shape,
-                  transforms,
-                  is_slide,
-                  base_size,
-                  stride_size,
-                  crop_size,
-                  num_classes, 
-                  scales=[1.0,],
-                  flip_horizontal=True, 
-                  flip_vertical=False,
-                  rescale_from_ori=False):
+                 img,
+                 ori_shape,
+                 is_slide,
+                 base_size,
+                 stride_size,
+                 crop_size,
+                 num_classes, 
+                 scales=[1.0,],
+                 flip_horizontal=True, 
+                 flip_vertical=False,
+                 rescale_from_ori=False):
 
     """
     Multi-scale inference.
@@ -131,7 +136,6 @@ def ms_inference(model,
         model (paddle.nn.Layer): model to get logits of image.
         img (Tensor): the input image.
         ori_shape (list): origin shape of image.
-        transforms (list): transforms for image.
         is_slide (bool): whether to infer by sliding wimdow. 
         base_size (list): the size of short edge is resize to min(base_size) 
         when it is smaller than min(base_size)  

@@ -1,5 +1,3 @@
-
-from .predict import predict
 from . import infer
 
-__all__ = ['infer', 'predict']
+__all__ = ['infer']

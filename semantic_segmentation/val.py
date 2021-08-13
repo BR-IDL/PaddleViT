@@ -80,20 +80,24 @@ if __name__ == '__main__':
             reader_cost_averager.record(time.time() - batch_start)
             label = label.astype('int64')
             #print("img.shape: {}, label.shape: {}".format(img.shape, label.shape))
+            temp_h, temp_w = label.shape[2:]
+            if temp_h >= 1600 and temp_w >= 1600: 
+                print("img.shape: {}, label.shape: {}".format(img.shape, label.shape))
+                continue
+          
             ori_shape = label.shape[-2:]
             if args.multi_scales == True:
                 pred = infer.ms_inference(
                     model=model,
                     img=img,
                     ori_shape=ori_shape,
-                    transforms=transforms_val,
                     is_slide=True,
                     base_size=config.VAL.IMAGE_BASE_SIZE,
                     stride_size=config.VAL.STRIDE_SIZE,
                     crop_size=config.VAL.CROP_SIZE,
                     num_classes=config.DATA.NUM_CLASSES,
                     scales=config.VAL.SCALE_RATIOS,
-                    flip_horizontal=True,
+                    flip_horizontal=True,  #True
                     flip_vertical=False,
                     rescale_from_ori=config.VAL.RESCALE_FROM_ORI)
             else:
@@ -101,7 +105,6 @@ if __name__ == '__main__':
                     model=model,
                     img=img,
                     ori_shape=ori_shape,
-                    transforms=transforms_val,
                     is_slide=True,
                     base_size=config.VAL.IMAGE_BASE_SIZE,
                     stride_size=config.VAL.STRIDE_SIZE,

@@ -291,11 +291,8 @@ class VisualTransformer(nn.Layer):
         super(VisualTransformer, self).__init__()
         self.transformer = Transformer(config)
         self.out_indices = config.MODEL.ENCODER.OUT_INDICES
-
         norm_weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
         norm_bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-
-
         if config.MODEL.PRETRAINED is not None:
             load_pretrained_model(self, config.MODEL.PRETRAINED)
 

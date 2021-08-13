@@ -171,11 +171,18 @@ def _update_config_from_file(config, cfg_file):
     config.freeze()
 
 def update_config(config, args):
+    """Update config by ArgumentParser
+    Args:
+        args: ArgumentParser contains options
+    Return:
+        config: updated config
+    """
     if args.cfg:
         _update_config_from_file(config, args.cfg)
     config.defrost()
-
-    config.freeze()
+    if "pretrained_backbone" in args:
+        config.MODEL.PRETRAINED = args.pretrained_backbone
+    #config.freeze()
     return config
 
 def get_config():
