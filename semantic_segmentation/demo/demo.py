@@ -49,10 +49,10 @@ def parse_args():
         help="the directory of input images"
     )
     parser.add_argument(
-        "--results_path", 
+        "--results_dir", 
         default="./results/",
         type=str,
-        help="the path of segmentation results"
+        help="the directory of segmentation results"
     )
     return parser.parse_args()
 
@@ -69,9 +69,9 @@ if __name__ == '__main__':
         logger.info('Loaded trained params of model successfully')
     model.eval()
 
-    if os.path.exists(args.results_path):
-        shutil.rmtree(args.results_path)
-    os.makedirs(args.results_path)
+    if os.path.exists(args.results_dir):
+        shutil.rmtree(args.results_dir)
+    os.makedirs(args.results_dir)
 
     nranks = paddle.distributed.ParallelEnv().nranks
     local_rank = paddle.distributed.ParallelEnv().local_rank
@@ -107,13 +107,13 @@ if __name__ == '__main__':
             img_name = os.path.basename(img_path)
             # save image+mask
             mask_added_image = visualize(img_path, pred, weight=0.6)
-            mask_added_image_path = os.path.join(args.results_path, img_name)
+            mask_added_image_path = os.path.join(args.results_dir, img_name)
             cv2.imwrite(mask_added_image_path, mask_added_image)
             # saving color mask
             pred_mask = PILImage.fromarray(pred.astype(np.uint8), mode='P')
             color_map = get_cityscapes_color_map()
             pred_mask.putpalette(color_map)
-            pred_saved_path = os.path.join(args.results_path, 
+            pred_saved_path = os.path.join(args.results_dir, 
                 img_name.rsplit(".")[0] + "_color.png")
             pred_mask.save(pred_saved_path)
             progbar_val.update(i + 1)           
