@@ -104,7 +104,7 @@ def train(dataloader,
         image = data[0]
         label = data[1]
 
-        output, _ = model(image)
+        output = model(image)
         loss = criterion(output, label)
 
         #NOTE: division may be needed depending on the loss function
@@ -187,7 +187,7 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
                 logger.info(
                     f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
                     f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, "+
+                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
                     f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
 
     val_time = time.time() - time_st

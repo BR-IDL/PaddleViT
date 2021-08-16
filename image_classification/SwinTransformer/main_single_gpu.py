@@ -13,21 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using single GPU """
+"""Swin training/validation using single GPU """
 
 import sys
 import os
 import time
 import logging
 import argparse
+import random
+import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 from datasets import get_dataloader
 from datasets import get_dataset
-from swin_transformer import SwinTransformer
+from swin_transformer import build_swin as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
+from utils import get_exclude_from_weight_decay_fn
 from config import get_config
 from config import update_config
 
@@ -61,7 +64,7 @@ if not config.EVAL:
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 
-config.freeze()
+#config.freeze()
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
@@ -147,7 +150,8 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
         debug_steps: int, num of iters to log info
     Returns:
         val_loss_meter.avg
-        val_acc_meter.avg
+        val_acc1_meter.avg
+        val_acc5_meter.avg
         val_time
     """
     model.eval()
@@ -187,10 +191,13 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
 def main():
     # 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
+    seed = config.SEED
+    paddle.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
     #paddle.set_device('gpu:0')
     # 1. Create model
-    model = SwinTransformer(config)
-    #model = paddle.DataParallel(model)
+    model = build_model(config)
     # 2. Create train and val dataloader
     dataset_train = get_dataset(config, mode='train')
     dataset_val = get_dataset(config, mode='val')
@@ -235,6 +242,10 @@ def main():
             momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
             grad_clip=clip)
     elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
+        if config.TRAIN.GRAD_CLIP:
+            clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
+        else:
+            clip = None
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
@@ -249,7 +260,6 @@ def main():
     else:
         logging.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
-
     # 6. Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
         assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams')

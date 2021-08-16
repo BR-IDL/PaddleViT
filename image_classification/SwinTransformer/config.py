@@ -81,9 +81,9 @@ _C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
 _C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
 
 _C.TRAIN.OPTIMIZER = CN()
-_C.TRAIN.OPTIMIZER.NAME = 'SGD'
+_C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
-_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)
+_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 
 # augmentation
@@ -125,7 +125,6 @@ def _update_config_from_file(config, cfg_file):
     config.merge_from_file(cfg_file)
     config.freeze()
 
-
 def update_config(config, args):
     """Update config by ArgumentParser
     Args:
@@ -154,13 +153,15 @@ def update_config(config, args):
     if args.resume:
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
-        config.MODEL.LAST_EPOCH = args.last_epoch
+        config.TRAIN.LAST_EPOCH = args.last_epoch
 
     #config.freeze()
     return config
 
 
-def get_config():
-    """Return a clone config"""
+def get_config(cfg_file=None):
+    """Return a clone of config or load from yaml file"""
     config = _C.clone()
+    if cfg_file:
+        _update_config_from_file(config, cfg_file)
     return config

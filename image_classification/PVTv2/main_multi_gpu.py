@@ -26,7 +26,7 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader, get_dataset
-from pvtv2 import PyramidVisionTransformerV2
+from pvtv2 import build_pvtv2 as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
@@ -208,7 +208,7 @@ def main_worker(*args):
     np.random.seed(seed)
     random.seed(seed)
     # 1. Create model
-    model = PyramidVisionTransformerV2(config)
+    model = build_model(config)
     model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train, dataset_val = args[0], args[1]

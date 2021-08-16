@@ -299,11 +299,11 @@ def main_worker(*args):
     if config.EVAL:
         logger.info('----- Start Validating')
         val_loss, val_acc1, val_acc5, val_time = validate(
-                dataloader=dataloader_val,
-                model=model,
-                criterion=criterion,
-                total_batch=total_batch_val,
-                debug_steps=config.REPORT_FREQ)
+            dataloader=dataloader_val,
+            model=model,
+            criterion=criterion,
+            total_batch=total_batch_val,
+            debug_steps=config.REPORT_FREQ)
         logger.info(f"Validation Loss: {val_loss:.4f}, " +
                     f"Validation Acc@1: {val_acc1:.4f}, " +
                     f"Validation Acc@5: {val_acc5:.4f}, " +

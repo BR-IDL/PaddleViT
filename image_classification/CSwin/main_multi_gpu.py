@@ -187,7 +187,7 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
                 logger.info(
                     f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
                     f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, "+
+                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
                     f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
 
     val_time = time.time() - time_st

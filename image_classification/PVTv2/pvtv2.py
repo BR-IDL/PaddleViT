@@ -16,6 +16,7 @@
 Implement Transformer Class for PVTv2
 """
 
+import copy
 import paddle
 import paddle.nn as nn
 from droppath import DropPath
@@ -83,7 +84,7 @@ class OverlapPatchEmbedding(nn.Layer):
                                      kernel_size=patch_size, 
                                      stride=stride,
                                      padding=(patch_size[0] // 2, patch_size[1] // 2))
-        self.norm = nn.LayerNorm(embed_dim)
+        self.norm = nn.LayerNorm(embed_dim, epsilon=1e-6)
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=nn.initializer.KaimingUniform())
@@ -201,11 +202,11 @@ class Attention(nn.Layer):
         if not linear:
             if sr_ratio > 1:
                 self.sr = nn.Conv2D(dim, dim, kernel_size=sr_ratio, stride=sr_ratio)
-                self.norm = nn.LayerNorm(dim)
+                self.norm = nn.LayerNorm(dim, epsilon=1e-5)
         else:
             self.pool = nn.AdaptiveAvgPool2D(7)
             self.sr = nn.Conv2D(dim, dim, kernel_size=1, stride=1)
-            self.norm = nn.LayerNorm(dim)
+            self.norm = nn.LayerNorm(dim, epsilon=1e-5)
             self.act = nn.GELU()
 
     def _init_weights(self):
@@ -268,7 +269,7 @@ class PvTv2Block(nn.Layer):
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, dropout=0., 
                  attention_dropout=0., drop_path=0., sr_ratio=1, linear=False):
         super(PvTv2Block, self).__init__()
-        self.norm1 = nn.LayerNorm(dim)
+        self.norm1 = nn.LayerNorm(dim, epsilon=1e-6)
         self.attn = Attention(dim,
                               num_heads=num_heads, 
                               qkv_bias=qkv_bias, 
@@ -279,7 +280,7 @@ class PvTv2Block(nn.Layer):
                               linear=linear)
 
         self.drop_path = DropPath(drop_path) if drop_path > 0. else Identity()
-        self.norm2 = nn.LayerNorm(dim)
+        self.norm2 = nn.LayerNorm(dim, epsilon=1e-6)
         self.mlp = Mlp(in_features=dim, 
                        hidden_features=int(dim*mlp_ratio), 
                        dropout=dropout, 
@@ -322,27 +323,42 @@ class PyramidVisionTransformerV2(nn.Layer):
         fc: nn.Linear, classifier op.
     """
 
-    def __init__(self, config):
+    def __init__(self,
+                 image_size=224,
+                 patch_size=4,
+                 embed_dims=[32, 64, 160, 256],
+                 num_classes=1000,
+                 in_channels=3,
+                 num_heads=[1, 2, 5, 8],
+                 depths=[2, 2, 2, 2],
+                 mlp_ratio=[8, 8, 4, 4],
+                 sr_ratio=[8, 4, 2, 1],
+                 qkv_bias=True,
+                 qk_scale=None,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 drop_path=0.,
+                 linear=False):
         super(PyramidVisionTransformerV2, self).__init__()
 
-        self.patch_size = config.MODEL.TRANS.PATCH_SIZE
-        self.image_size = config.DATA.IMAGE_SIZE
-        self.num_classes = config.MODEL.NUM_CLASSES
-        self.in_channels = config.MODEL.TRANS.IN_CHANNELS
-        self.num_heads = config.MODEL.TRANS.NUM_HEADS
-        self.num_stages = len(config.MODEL.TRANS.STAGE_DEPTHS)
-        self.depths = config.MODEL.TRANS.STAGE_DEPTHS
-        self.mlp_ratio = config.MODEL.TRANS.MLP_RATIO
-        self.sr_ratio = config.MODEL.TRANS.SR_RATIO
-        self.qkv_bias = config.MODEL.TRANS.QKV_BIAS
-        self.qk_scale = config.MODEL.TRANS.QK_SCALE
-        self.embed_dims = config.MODEL.TRANS.EMBED_DIMS
-        self.dropout = config.MODEL.DROPOUT
-        self.attention_dropout = config.MODEL.ATTENTION_DROPOUT
-        self.drop_path = config.MODEL.DROP_PATH
-        self.linear = config.MODEL.TRANS.LINEAR
+        self.patch_size = patch_size 
+        self.image_size = image_size
+        self.num_classes = num_classes
+        self.in_channels = in_channels
+        self.num_heads = num_heads
+        self.depths = depths
+        self.num_stages = len(self.depths)
+        self.mlp_ratio = mlp_ratio 
+        self.sr_ratio = sr_ratio
+        self.qkv_bias = qkv_bias
+        self.qk_scale = qk_scale
+        self.embed_dims = embed_dims
+        self.dropout = dropout
+        self.attention_dropout = attention_dropout 
+        self.drop_path = drop_path
+        self.linear = linear
 
-        depth_decay = [x for x in paddle.linspace(0, self.drop_path, sum(self.depths))]
+        depth_decay = [x.item() for x in paddle.linspace(0, self.drop_path, sum(self.depths))]
         cur = 0
 
         for i in range(self.num_stages):
@@ -352,12 +368,12 @@ class PyramidVisionTransformerV2(nn.Layer):
                                                 in_channels=self.in_channels if i == 0 else self.embed_dims[i - 1],
                                                 embed_dim=self.embed_dims[i])
 
-            block = nn.LayerList([PvTv2Block(
+            block = nn.LayerList([copy.deepcopy(PvTv2Block(
                 dim=self.embed_dims[i], num_heads=self.num_heads[i], mlp_ratio=self.mlp_ratio[i], qkv_bias=self.qkv_bias, 
                 qk_scale=self.qk_scale, dropout=self.dropout, attention_dropout=self.attention_dropout, 
-                drop_path=depth_decay[cur + j], sr_ratio=self.sr_ratio[i], linear=self.linear)
+                drop_path=depth_decay[cur + j], sr_ratio=self.sr_ratio[i], linear=self.linear))
                 for j in range(self.depths[i])])
-            norm = nn.LayerNorm(self.embed_dims[i])
+            norm = nn.LayerNorm(self.embed_dims[i], epsilon=1e-6)
             cur += self.depths[i]
 
             setattr(self, f"patch_embedding{i + 1}", patch_embedding)
@@ -383,7 +399,8 @@ class PyramidVisionTransformerV2(nn.Layer):
             block = getattr(self, f"block{i + 1}")
             norm = getattr(self, f"norm{i + 1}")
             x, H, W = patch_embedding(x)
-            for blk in block:
+
+            for idx, blk in enumerate(block):
                 x = blk(x, H, W)
             x = norm(x)
             if i != self.num_stages - 1:
@@ -396,3 +413,23 @@ class PyramidVisionTransformerV2(nn.Layer):
         x = self.head(x)
 
         return x
+
+
+def build_pvtv2(config):
+    model = PyramidVisionTransformerV2(
+        image_size=config.DATA.IMAGE_SIZE,
+        patch_size=config.MODEL.TRANS.PATCH_SIZE,
+        embed_dims=config.MODEL.TRANS.EMBED_DIMS,
+        num_classes=config.MODEL.NUM_CLASSES,
+        in_channels=config.MODEL.TRANS.IN_CHANNELS,
+        num_heads=config.MODEL.TRANS.NUM_HEADS,
+        depths=config.MODEL.TRANS.STAGE_DEPTHS,
+        mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+        sr_ratio=config.MODEL.TRANS.SR_RATIO,
+        qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+        qk_scale=config.MODEL.TRANS.QK_SCALE,
+        dropout=config.MODEL.DROPOUT,
+        attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+        drop_path=config.MODEL.DROP_PATH,
+        linear=config.MODEL.TRANS.LINEAR)
+    return model

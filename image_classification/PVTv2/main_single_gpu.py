@@ -20,12 +20,14 @@ import os
 import time
 import logging
 import argparse
+import random
+import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 from datasets import get_dataloader
 from datasets import get_dataset
-from pvtv2 import PyramidVisionTransformerV2
+from pvtv2 import build_pvtv2 as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
@@ -61,7 +63,7 @@ if not config.EVAL:
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 
-config.freeze()
+#config.freeze()
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
@@ -187,9 +189,13 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
 def main():
     # 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
+    seed = config.SEED
+    paddle.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
     #paddle.set_device('gpu:0')
     # 1. Create model
-    model = PyramidVisionTransformerV2(config)
+    model = build_model(config)
     #model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train = get_dataset(config, mode='train')
@@ -235,9 +241,14 @@ def main():
             momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
             grad_clip=clip)
     elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
+        if config.TRAIN.GRAD_CLIP:
+            clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
+        else:
+            clip = None
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             weight_decay=config.TRAIN.WEIGHT_DECAY,
@@ -263,7 +274,7 @@ def main():
         model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
-        optimizer.set_state_dict(opt_state)
+        optimizer.set_dict(opt_state)
         logger.info(
             f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
     # 7. Validation

@@ -203,6 +203,7 @@ class ResMlp(nn.Layer):
 def build_res_mlp(config):
     model = ResMlp(num_classes=config.MODEL.NUM_CLASSES,
                    image_size=config.DATA.IMAGE_SIZE,
+                   patch_size=config.MODEL.MIXER.PATCH_SIZE,
                    in_channels=3,
                    num_mixer_layers=config.MODEL.MIXER.NUM_LAYERS,
                    embed_dim=config.MODEL.MIXER.HIDDEN_SIZE,

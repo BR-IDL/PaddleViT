@@ -1,0 +1,12 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: GatedMLP
+    NAME: gmlp_b16_224
+    MIXER:
+        PATCH_SIZE: 16
+        HIDDEN_SIZE: 512
+        NUM_LAYERS: 30
+        MLP_RATIO: 6.0
+

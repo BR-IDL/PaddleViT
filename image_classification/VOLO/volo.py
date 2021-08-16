@@ -23,9 +23,8 @@ import paddle
 import paddle.nn as nn
 from droppath import DropPath
 from fold import fold
-from utils import MyPrint
-
-myprint = MyPrint()
+#from utils import MyPrint
+#myprint = MyPrint()
 
 class Identity(nn.Layer):
     """ Identity layer

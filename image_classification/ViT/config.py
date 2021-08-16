@@ -44,17 +44,16 @@ _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.1
-_C.MODEL.ATTENTION_DROPOUT = 0.0
+_C.MODEL.DROPPATH = 0.1
+_C.MODEL.ATTENTION_DROPOUT = 0.1
 
 # transformer settings
 _C.MODEL.TRANS = CN()
-_C.MODEL.TRANS.HYBRID = False #TODO
-_C.MODEL.TRANS.PATCH_GRID = None #TODO
 _C.MODEL.TRANS.PATCH_SIZE = 32
-_C.MODEL.TRANS.HIDDEN_SIZE = 768
-_C.MODEL.TRANS.MLP_DIM = 3072
+_C.MODEL.TRANS.EMBED_DIM = 768
+_C.MODEL.TRANS.MLP_RATIO= 4.0
 _C.MODEL.TRANS.NUM_HEADS = 12
-_C.MODEL.TRANS.NUM_LAYERS = 12
+_C.MODEL.TRANS.DEPTH = 12
 _C.MODEL.TRANS.QKV_BIAS = True
 
 # training settings
@@ -140,7 +139,9 @@ def update_config(config, args):
     return config
 
 
-def get_config():
-    """Return a clone of config"""
+def get_config(cfg_file=None):
+    """Return a clone of config or load from yaml file"""
     config = _C.clone()
+    if cfg_file:
+        _update_config_from_file(config, cfg_file)
     return config

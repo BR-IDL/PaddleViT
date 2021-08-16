@@ -34,7 +34,7 @@ _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
 _C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 4 # number of data loading threads 
+_C.DATA.NUM_WORKERS = 2 # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
@@ -44,7 +44,7 @@ _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.1
-_C.MODEL.DROPPATH = 0.0
+_C.MODEL.DROPPATH = 0.1
 
 # transformer settings
 _C.MODEL.MIXER = CN()
@@ -129,13 +129,15 @@ def update_config(config, args):
     if args.resume:
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
-        config.MODEL.LAST_EPOCH = args.last_epoch
+        config.TRAIN.LAST_EPOCH = args.last_epoch
 
     #config.freeze()
     return config
 
 
-def get_config():
-    """Return a clone of config"""
+def get_config(cfg_file=None):
+    """Return a clone of config or load from yaml file"""
     config = _C.clone()
+    if cfg_file:
+        _update_config_from_file(config, cfg_file)
     return config

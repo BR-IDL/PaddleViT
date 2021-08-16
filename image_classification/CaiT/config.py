@@ -142,7 +142,9 @@ def update_config(config, args):
     return config
 
 
-def get_config():
-    """Return a clone of config"""
+def get_config(cfg_file=None):
+    """Return a clone of config or load from yaml file"""
     config = _C.clone()
+    if cfg_file:
+        _update_config_from_file(config, cfg_file)
     return config

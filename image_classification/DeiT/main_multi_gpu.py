@@ -25,7 +25,8 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
-from datasets import get_dataloader, get_dataset
+from datasets import get_dataloader
+from datasets import get_dataset
 from deit import build_deit as build_model
 from regnet import build_regnet as build_teacher_model
 from utils import AverageMeter
@@ -48,6 +49,7 @@ parser.add_argument('-data_path', type=str, default=None)
 parser.add_argument('-ngpus', type=int, default=None)
 parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-resume', type=str, default=None)
+parser.add_argument('-teacher_model', type=str, default=None)
 parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
 arguments = parser.parse_args()

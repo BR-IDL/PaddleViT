@@ -23,6 +23,29 @@ import math
 from paddle.optimizer.lr import LRScheduler
 
 
+class MyPrint():
+    """" Print tensor and its shape, used for debug """
+    def __init__(self):
+        self.cnt = 0
+    def myprint(self, prefix, var, cnt=None, save=None):
+        """print tensor and its shape, optionly save to npy
+        Args:
+            prefix: str, print info in 1st and last lines
+            var: Tensor, tensor needs to print
+            cnt: int, if self.cnt is exceed this value, print will stop
+            save: str, file name (should end with .npy) to save the tensor, if None no save
+        """
+        if cnt is None or self.cnt < cnt:
+            print(f'------------ {prefix} ---------------')
+            print(var.shape, var)
+            print(f'------------ END {prefix} ---------------')
+            if save is not None:
+                var = var.numpy()
+                with open(save,'wb') as ofile:
+                    np.save(ofile, var)
+        self.cnt += 1
+
+
 class AverageMeter():
     """ Meter for monitoring losses"""
     def __init__(self):
