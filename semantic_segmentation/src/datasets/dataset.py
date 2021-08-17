@@ -62,21 +62,12 @@ class Dataset(paddle.io.Dataset):
             im = im[np.newaxis, ...]
             return im, image_path
         elif self.mode == 'val':
-            '''
-            normalize = paddle.vision.transforms.Normalize(mean=[123.675, 116.28, 103.53],
-                        std=[58.395, 57.12, 57.375],
-                        data_format='HWC')
-            im = np.asarray(normalize(Image.open(image_path).resize((512, 512), Image.BILINEAR))).transpose(2, 0, 1)
-            label = np.asarray(Image.open(label_path).resize((512, 512), Image.BILINEAR))
-            return im, label
-            '''
             im, _ = self.transforms(im=image_path)
-            label = np.asarray(Image.open(label_path).convert('P'))
+            label = np.asarray(Image.open(label_path))
             label = label[np.newaxis, :, :]
             return im, label
         else:
             im, label = self.transforms(im=image_path, label=label_path)
-            
             return im, label
 
     def __len__(self):

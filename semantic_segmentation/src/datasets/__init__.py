@@ -3,7 +3,6 @@ from .cityscapes import Cityscapes
 from .ade import ADE20K
 from .pascal_context import PascalContext
 from .vaihingen import Vaihingen
-from .trans10k_cls12 import Trans10K_cls12
 
 
 def get_dataset(config, data_transform, mode='train'):
@@ -35,13 +34,6 @@ def get_dataset(config, data_transform, mode='train'):
                 dataset_root=config.DATA.DATA_PATH, num_classes=config.DATA.NUM_CLASSES, mode='train')
         elif mode == 'val':
             dataset =  Vaihingen(transforms=data_transform,
-                dataset_root=config.DATA.DATA_PATH, num_classes=config.DATA.NUM_CLASSES, mode='val')
-    elif config.DATA.DATASET == "Trans10K_cls12":
-        if mode == 'train':
-            dataset = Trans10K_cls12(transforms=data_transform,                                                                                                                                                                                   
-                dataset_root=config.DATA.DATA_PATH, num_classes=config.DATA.NUM_CLASSES, mode='train')
-        elif mode == 'val':
-            dataset =  Trans10K_cls12(transforms=data_transform,
                 dataset_root=config.DATA.DATA_PATH, num_classes=config.DATA.NUM_CLASSES, mode='val')
     else:
         raise NotImplementedError("{} dataset is not supported".format(config.DATA.DATASET))

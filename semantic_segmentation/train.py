@@ -42,32 +42,6 @@ def optimizer_setting(model, config):
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
             weight_decay=config.TRAIN.WEIGHT_DECAY,
             momentum=config.TRAIN.OPTIMIZER.MOMENTUM)
-    elif config.TRAIN.OPTIMIZER.NAME == "ADAM":
-        optimizer = paddle.optimizer.Adam(
-            parameters=model.parameters(),
-            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-            epsilon=config.TRAIN.OPTIMIZER.EPS,
-            weight_decay=config.TRAIN.WEIGHT_DECAY)
-    elif config.TRAIN.OPTIMIZER.NAME == "ADAMW":
-        optimizer = paddle.optimizer.AdamW(
-            parameters=model.parameters(),
-            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-            epsilon=config.TRAIN.OPTIMIZER.EPS,
-            weight_decay=config.TRAIN.WEIGHT_DECAY)
-    elif config.TRAIN.OPTIMIZER.NAME == "ADADELTA":
-        optimizer = paddle.optimizer.Adadelta(
-            parameters=model.parameters(),
-            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-            epsilon=config.TRAIN.OPTIMIZER.EPS,
-            weight_decay=config.TRAIN.WEIGHT_DECAY)
-    elif config.TRAIN.OPTIMIZER.NAME == "RMSPROP":
-        optimizer = paddle.optimizer.RMSprop(
-            parameters=model.parameters(),
-            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-            rho=config.TRAIN.OPTIMIZER.RHO,
-            epsilon=config.TRAIN.OPTIMIZER.EPS,
-            weight_decay=config.TRAIN.WEIGHT_DECAY,
-            momentum=config.TRAIN.OPTIMIZER.MOMENTUM)
     else:
         raise NotImplementedError(
             f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
