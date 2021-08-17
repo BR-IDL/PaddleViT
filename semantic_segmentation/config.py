@@ -15,8 +15,17 @@ _C.DATA.CROP_SIZE = (480,480) # input_size (training)
 _C.DATA.NUM_CLASSES = 60  # 19 for cityscapes, 60 for Pascal-Context
 _C.DATA.NUM_WORKERS = 0 # number of data loading threads (curren paddle must set to 0)
 
+# dataset augumentation
+_C.AUG = CN()
+_C.AUG.COLOR_JITTER = None # color jitter, float or tuple: (0.1, 0.2, 0.3, 0.4)
+_C.AUG.MIRROR = True # data augment image mirror
+_C.AUG.CROP = True
+_C.AUG.BLUR_PROB = 0.0 # blur probability
+_C.AUG.BLUR_RADIUS = 0.0 # blur radius
+
 # model settings
 _C.MODEL = CN()
+_C.MODEL.BN_TYPE = 'BN'
 _C.MODEL.NAME = 'SETR_MLA'
 _C.MODEL.ENCODER = CN()
 _C.MODEL.ENCODER.TYPE = 'ViT_MLA'
@@ -29,6 +38,12 @@ _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.0 # 0.0
 _C.MODEL.ATTENTION_DROPOUT = 0.0
 _C.MODEL.DROP_PATH = 0.1  # for SwinTransformer
+_C.MODEL.OUTPUT_STRIDE = 16
+_C.MODEL.BACKBONE_SCALE = 1.0
+
+_C.MODEL.DANET = CN()
+_C.MODEL.DANET.MULTI_GRID = False
+_C.MODEL.DANET.MULTI_DILATION = None
 
 # Transformer backbone settings 
 _C.MODEL.TRANS = CN()
@@ -40,6 +55,7 @@ _C.MODEL.TRANS.MLP_RATIO = 4
 _C.MODEL.TRANS.NUM_HEADS = None      # 12(Base), 16(Large), 16(Huge)
 _C.MODEL.TRANS.NUM_LAYERS = 12     # 12(Base), 24(Large), 32(Huge)
 _C.MODEL.TRANS.QKV_BIAS = True
+_C.MODEL.BACKBONE = None # set trans2seg backbone
 
 ## special settings for SwinTransformer
 _C.MODEL.TRANS.WINDOW_SIZE = 7
@@ -110,6 +126,8 @@ _C.MODEL.SEGMENTER.NUM_LAYERS = 2
 
 # training settings
 _C.TRAIN = CN()
+_C.PHASE = 'train'
+_C.TRAIN.BACKBONE_PRETRAINED = True
 _C.TRAIN.USE_GPU = True
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
@@ -120,18 +138,36 @@ _C.TRAIN.ITERS = 80000
 _C.TRAIN.WEIGHT_DECAY = 0.0 # 0.0 for finetune
 _C.TRAIN.POWER=0.9
 _C.TRAIN.DECAY_STEPS= 80000
+_C.TRAIN.BACKBONE_PRETRAINED_PATH = ''
+_C.TRAIN.APEX = False
+_C.TRAIN.BASE_SIZE = 512
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'PolynomialDecay'
 _C.TRAIN.LR_SCHEDULER.MILESTONES = "30, 60, 90" # only used in StepLRScheduler
 _C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
 _C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
+_C.TRAIN.LR_SCHEDULER.POWER = 0.9 # only used in PolynomialDecay
+_C.TRAIN.LR_SCHEDULER.GAMMA = 0.1
+_C.TRAIN.LR_SCHEDULER.OHEM = False # whether to use ohem
+_C.TRAIN.LR_SCHEDULER.AUX = False # whether to use aux loss
+_C.TRAIN.LR_SCHEDULER.AUX_WEIGHT = 0.4 # aux loss weight
+_C.TRAIN.LR_SCHEDULER.LOSS_NAME = '' # loss name
+_C.TRAIN.LR_SCHEDULER.DECODER_LR_FACTOR = 10.0 # decoder lr x10
 
 _C.TRAIN.OPTIMIZER = CN()
 _C.TRAIN.OPTIMIZER.NAME = 'SGD'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
 _C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
+
+# Trans2Seg settings
+_C.MODEL.TRANS2Seg = CN()
+_C.MODEL.TRANS2Seg.embed_dim = 256
+_C.MODEL.TRANS2Seg.depth = 4
+_C.MODEL.TRANS2Seg.num_heads = 8
+_C.MODEL.TRANS2Seg.mlp_ratio = 3.
+_C.MODEL.TRANS2Seg.hid_dim = 64
 
 # val settings
 _C.VAL = CN()
