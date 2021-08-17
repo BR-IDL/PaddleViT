@@ -8,7 +8,7 @@ This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree
 
 
 
-<img src="./Styleformer.png" alt="drawing" width="100%" height="100%"/>
+<img src="./Styleformer.jpg" alt="drawing" width="100%" height="100%"/>
 <figcaption align = "center">Styleformer Model Overview</figcaption>
 
 ### Update 
