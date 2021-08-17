@@ -37,6 +37,7 @@ if __name__ == '__main__':
     model = get_model(config)
     if args.model_path:
         load_entire_model(model, args.model_path)
+        # model.set_state_dict(paddle.load(args.model_path))
         logger.info('Loaded trained params of model successfully')
     model.eval()
 
