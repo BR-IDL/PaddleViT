@@ -31,6 +31,7 @@ We provide a few notebooks in aistudio to help you get started:
 ## Requirements
 - Python>=3.6
 - yaml>=0.2.5
+- lmdb>=1.2.1
 - [PaddlePaddle](https://www.paddlepaddle.org.cn/documentation/docs/en/install/index_en.html)>=2.1.0
 - [yacs](https://github.com/rbgirshick/yacs)>=0.1.8
 
