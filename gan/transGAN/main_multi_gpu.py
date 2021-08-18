@@ -23,13 +23,14 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import paddle
-import paddle.nn as nn
+import paddle.distributed as dist
 from datasets import get_dataloader
 from datasets import get_dataset
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from utils import normal_
 from utils import constant_
+from utils import all_gather
 from config import get_config
 from config import update_config
 from metrics.fid import FID
@@ -48,7 +49,8 @@ parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-resume', type=str, default=None)
 parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
-args = parser.parse_args()
+parser_args = parser.parse_args()
+
 
 # log format
 log_format = "%(asctime)s %(message)s"
@@ -58,7 +60,10 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
 # get default config
 config = get_config()
 # update config by arguments
-config = update_config(config, args)
+config = update_config(config, parser_args)
+
+
+config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS
 
 # set output folder
 if not config.EVAL:
@@ -71,9 +76,9 @@ if not os.path.exists(config.SAVE):
 
 # set logging format
 logger = logging.getLogger()
-fh = logging.FileHandler(os.path.join(config.SAVE, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logger.addHandler(fh)
+file_handler = logging.FileHandler(os.path.join(config.SAVE, 'log.txt'))
+file_handler.setFormatter(logging.Formatter(log_format))
+logger.addHandler(file_handler)
 logger.info(f'config= {config}')
 
 def weights_init(m):
@@ -139,8 +144,15 @@ def validate(dataloader,
             fid.update(gen_imgs_paddle, real_image)
 
             if batch_id < max_gen_batch:
-                fid_preds_all.extend(fid.preds)
-            fid_gts_all.extend(fid.gts)
+                # gather all fid related data from other gpus
+                fid_preds_list = all_gather(fid.preds)
+                fid_preds = sum(fid_preds_list, [])
+                fid_preds_all.extend(fid_preds)
+
+            fid_gts_list = all_gather(fid.gts)
+            fid_gts = sum(fid_gts_list, [])
+            fid_gts_all.extend(fid_gts)
+
             fid.reset()
             if batch_id % debug_steps == 0:
                 if batch_id >= max_gen_batch:
@@ -237,10 +249,14 @@ def train(args,
     return train_loss_meter.avg, train_time
 
 
-def main():
+def main_worker(*args):
     # 0. Preparation
+    dist.init_parallel_env()
     last_epoch = config.TRAIN.LAST_EPOCH
-    seed = config.SEED
+    world_size = dist.get_world_size()
+    local_rank = dist.get_rank()
+    logger.info(f'----- world_size = {world_size}, local_rank = {local_rank}')
+    seed = config.SEED + local_rank
     paddle.seed(seed)
     np.random.seed(seed)
     random.seed(seed)
@@ -254,11 +270,13 @@ def main():
     dis_net.apply(weights_init)
 
     # 2. Create train and val dataloader
-    dataset_train = get_dataset(config, mode='train')
-    dataset_val = get_dataset(config, mode='test')
-    dataloader_train = get_dataloader(config, dataset_train, 'train', False)
-    dataloader_val = get_dataloader(config, dataset_val, 'test', False)
-
+    dataset_train, dataset_val = args[0], args[1]
+    dataloader_train = get_dataloader(config, dataset_train, 'train', True)
+    dataloader_val = get_dataloader(config, dataset_val, 'val', True)
+    total_batch_train = len(dataloader_train)
+    total_batch_val = len(dataloader_val)
+    logging.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
+    logging.info(f'----- Total # of val batch (single gpu): {total_batch_val}')
     # 3. Define criterion
     # training loss is defined in train method
     # validation criterion (FID) is defined in validate method
@@ -343,13 +361,13 @@ def main():
     if config.EVAL:
         logger.info('----- Start Validating')
         fid_score, val_time = validate(
-            dataloader=dataloader_train, # using training set
+            dataloader=dataloader_train, # using training set 
             model=gen_net,
             batch_size=config.DATA.BATCH_SIZE,
-            total_batch=len(dataloader_train), # using training set
+            total_batch=total_batch_train, # using training set size
             num_classes=config.MODEL.NUM_CLASSES,
-            max_real_num=config.DATA.MAX_REAL_NUM,
-            max_gen_num=config.DATA.MAX_GEN_NUM,
+            max_real_num=config.DATA.MAX_REAL_NUM // config.NGPUS if config.DATA.MAX_REAL_NUM else None,
+            max_gen_num=config.DATA.MAX_GEN_NUM // config.NGPUS if config.DATA.MAX_GEN_NUM else None,
             debug_steps=config.REPORT_FREQ)
         logger.info(f"Validation fid_score: {fid_score:.4f}, " +
                     f"time: {val_time:.2f}")
@@ -372,8 +390,7 @@ def main():
                                        epoch=epoch,
                                        total_batch=len(dataloader_train),
                                        debug_steps=config.REPORT_FREQ,
-                                       accum_iter=config.TRAIN.ACCUM_ITER,
-                                      )
+                                       accum_iter=config.TRAIN.ACCUM_ITER)
         # lr_schedulers.step()
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                     f"Train Loss: {train_loss:.4f}, " +
@@ -385,10 +402,10 @@ def main():
                 dataloader=dataloader_val,
                 model=gen_net,
                 batch_size=config.DATA.BATCH_SIZE,
-                total_batch=len(dataloader_val),
+                total_batch=total_batch_val,
                 num_classes=config.MODEL.NUM_CLASSES,
-                max_real_num=config.DATA.MAX_REAL_NUM,
-                max_gen_num=config.DATA.MAX_GEN_NUM,
+                max_real_num=config.DATA.MAX_REAL_NUM // config.NGPUS if config.DATA.MAX_REAL_NUM else None,
+                max_gen_num=config.DATA.MAX_GEN_NUM // config.NGPUS if config.DATA.MAX_GEN_NUM else None,
                 debug_steps=config.REPORT_FREQ)
             logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                         f"Validation fid_score: {fid_score:.4f}, " +
@@ -403,6 +420,12 @@ def main():
                          "dis_state_dict":dis_optimizer.state_dict()}, model_path + '.pdopt')
             logger.info(f"----- Save model: {model_path}.pdparams")
             logger.info(f"----- Save optim: {model_path}.pdopt")
+
+def main():
+    dataset_train = get_dataset(config, mode='train')
+    dataset_val = get_dataset(config, mode='val')
+    dist.spawn(main_worker, args=(dataset_train, dataset_val, ), nprocs=config.NGPUS)
+
 
 if __name__ == "__main__":
     main()

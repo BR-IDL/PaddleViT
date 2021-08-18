@@ -210,8 +210,8 @@ class Discriminator(nn.Layer):
                                 stride=patch_size*2,
                                 padding=0)
 
-        num_patches_1 = (args.DATA.IMG_SIZE // patch_size)**2
-        num_patches_2 = ((args.DATA.IMG_SIZE//2) // patch_size)**2
+        num_patches_1 = (args.DATA.IMAGE_SIZE // patch_size)**2
+        num_patches_2 = ((args.DATA.IMAGE_SIZE//2) // patch_size)**2
 
         zeros_ = nn.initializer.Constant(value=0.)
         self.cls_token = self.create_parameter(

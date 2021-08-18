@@ -18,11 +18,15 @@ and WarmupCosineScheduler for training
 """
 
 import math
+import pickle
 from scipy import special
+import numpy as np
 import paddle
 import paddle.nn as nn
+import paddle.distributed as dist
 from paddle.optimizer.lr import LRScheduler
 import paddle.nn.functional as F
+
 
 # Several initialization methods
 @paddle.no_grad()
@@ -31,17 +35,20 @@ def constant_(x, value):
     x.set_value(temp_value)
     return x
 
+
 @paddle.no_grad()
 def normal_(x, mean=0., std=1.):
     temp_value = paddle.normal(mean, std, shape=x.shape)
     x.set_value(temp_value)
     return x
 
+
 @paddle.no_grad()
 def uniform_(x, a=-1., b=1.):
     temp_value = paddle.uniform(min=a, max=b, shape=x.shape)
     x.set_value(temp_value)
     return x
+
 
 def gelu(x):
     """ Original Implementation of the gelu activation function in Google Bert repo
@@ -52,6 +59,7 @@ def gelu(x):
         Also see https://arxiv.org/abs/1606.08415
     """
     return x * 0.5 * (1.0 + paddle.erf(x / math.sqrt(2.0)))
+
 
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     # Cut & paste from PyTorch official master until it's in a few official releases - RW
@@ -88,6 +96,7 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
         tensor = paddle.clip(tensor, min=a, max=b)
         return tensor
 
+
 def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
     # type: (Tensor, float, float, float, float) -> Tensor
     r"""Fills the input Tensor with values drawn from a truncated
@@ -108,6 +117,7 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
     """
     return _no_grad_trunc_normal_(tensor, mean, std, a, b)
 
+
 class AverageMeter():
     """ Meter for monitoring losses"""
     def __init__(self):
@@ -127,7 +137,6 @@ class AverageMeter():
         self.sum += val * n
         self.cnt += n
         self.avg = self.sum / self.cnt
-
 
 
 def get_exclude_from_weight_decay_fn(exclude_list=[]):
@@ -200,8 +209,10 @@ class WarmupCosineScheduler(LRScheduler):
         val = max(0.0, val * (self.start_lr - self.end_lr) + self.end_lr)
         return val
 
+
 def leakyrelu(x):
     return nn.functional.leaky_relu(x, 0.2)
+
 
 def DiffAugment(x, policy='', channels_first=True, affine=None):
     if policy:
@@ -214,10 +225,12 @@ def DiffAugment(x, policy='', channels_first=True, affine=None):
             x = x.transpose(0, 2, 3, 1)
     return x
 
+
 # belong to DiffAugment
 def rand_brightness(x, affine=None):
     x = x + (paddle.rand(x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) - 0.5)
     return x
+
 
 # belong to DiffAugment
 def rand_saturation(x, affine=None):
@@ -232,6 +245,7 @@ def rand_contrast(x, affine=None):
     x = (x - x_mean) * (paddle.rand(
                   x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) + 0.5) + x_mean
     return x
+
 
 # belong to DiffAugment
 def rand_cutout(x, ratio=0.5, affine=None):
@@ -261,6 +275,7 @@ def rand_cutout(x, ratio=0.5, affine=None):
         del grid_batch
     return x
 
+
 # belong to DiffAugment
 def rand_translation(x, ratio=0.2, affine=None):
     shift_x, shift_y = int(x.shape[2] * ratio + 0.5), int(x.shape[3] * ratio + 0.5)
@@ -277,11 +292,13 @@ def rand_translation(x, ratio=0.2, affine=None):
     x = x_pad.transpose([0, 2, 3, 1])[grid_batch, grid_x, grid_y].transpose([0, 3, 1, 2])
     return x
 
+
 AUGMENT_FNS = {
     'color': [rand_brightness, rand_saturation, rand_contrast],
     'translation': [rand_translation],
     'cutout': [rand_cutout],
 }
+
 
 def drop_path(x, drop_prob: float = 0., training: bool = False):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
@@ -301,6 +318,7 @@ def drop_path(x, drop_prob: float = 0., training: bool = False):
     output = x.div(keep_prob) * random_tensor
     return output
 
+
 def pixel_upsample(x, H, W):
     B, N, C = x.shape
     assert N == H*W
@@ -311,3 +329,40 @@ def pixel_upsample(x, H, W):
     x = x.reshape((-1, C, H*W))
     x = x.transpose((0, 2, 1))
     return x, H, W
+
+
+def all_gather(data):
+    """ run all_gather on any picklable data (do not requires tensors)
+    Args:
+        data: picklable object
+    Returns:
+        data_list: list of data gathered from each rank
+    """
+    world_size = dist.get_world_size()
+    if world_size == 1:
+        return [data]
+
+    buffer = pickle.dumps(data) #write data into Bytes and stores in buffer
+    np_buffer = np.frombuffer(buffer, dtype=np.int8)
+    tensor = paddle.to_tensor(np_buffer, dtype='int32') # uint8 doese not have many ops in paddle
+
+    # obtain Tensor size of each rank
+    local_size = paddle.to_tensor([tensor.shape[0]])
+    size_list = []
+    dist.all_gather(size_list, local_size)
+    max_size = max(size_list)
+
+    # receiving tensors from all ranks,
+    # all_gather does not support different shape, so we use padding
+    tensor_list = []
+    if local_size != max_size:
+        padding = paddle.empty(shape=(max_size - local_size, ), dtype='int32')
+        tensor = paddle.concat((tensor, padding), axis=0)
+    dist.all_gather(tensor_list, tensor)
+
+    data_list = []
+    for size, tensor in zip(size_list, tensor_list):
+        buffer = tensor.astype('uint8').cpu().numpy().tobytes()[:size]
+        data_list.append(pickle.loads(buffer))
+
+    return data_list

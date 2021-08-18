@@ -22,8 +22,10 @@ import math
 from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
 
+
 class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
+
     This class gets train/val imagenet datasets, which loads transfomed data and labels.
     Attributes:
         file_folder: path where imagenet images are stored
@@ -76,10 +78,11 @@ def get_train_transforms(config):
     """
 
     transforms_train = transforms.Compose([
-        # transforms.RandomResizedCrop((config.DATA.IMG_SIZE, config.DATA.IMG_SIZE),
-        #                              scale=(0.05, 1.0)),
+        #transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
+        #                             scale=(0.05, 1.0)),
         transforms.ToTensor(),
-        # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        #transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        #transforms.ToTensor(),
     ])
     return transforms_train
 
@@ -96,10 +99,10 @@ def get_val_transforms(config):
         transforms_train: training transforms
     """
 
-    scale_size = int(math.floor(config.DATA.IMG_SIZE / config.DATA.CROP_PCT))
+    scale_size = int(math.floor(config.DATA.IMAGE_SIZE / config.DATA.CROP_PCT))
     transforms_val = transforms.Compose([
         transforms.Resize(scale_size, 'bicubic'), # single int for resize shorter side of image
-        transforms.CenterCrop((config.DATA.IMG_SIZE, config.DATA.IMG_SIZE)),
+        transforms.CenterCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ])
@@ -114,16 +117,18 @@ def get_dataset(config, mode='train'):
     Returns:
         dataset: dataset object
     """
-
+    assert mode in ['train', 'val', 'test']
     if config.DATA.DATASET == "cifar10":
         if mode == 'train':
             dataset = datasets.Cifar10(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar10(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "cifar100":
         if mode == 'train':
             dataset = datasets.Cifar100(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar100(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "imagenet2012":
         if mode == 'train':
@@ -131,6 +136,7 @@ def get_dataset(config, mode='train'):
                                           mode=mode,
                                           transform=get_train_transforms(config))
         else:
+            mode = 'val'
             dataset = ImageNet2012Dataset(config.DATA.DATA_PATH,
                                           mode=mode,
                                           transform=get_val_transforms(config))
@@ -142,7 +148,7 @@ def get_dataset(config, mode='train'):
 
 def get_dataloader(config, dataset, mode='train', multi_process=False):
     """Get dataloader with config, dataset, mode as input, allows multiGPU settings.
-        Multi-GPU loader is implements as distributedBatchSampler.
+    Multi-GPU loader is implements as distributedBatchSampler.
     Args:
         config: see config.py for details
         dataset: paddle.io.dataset object
