@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ Cifar10, Cifar100 and ImageNet2012 are supported
 
 import os
 import math
+from PIL import Image
 from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
 from auto_augment import auto_augment_policy_original
@@ -38,7 +39,7 @@ class ImageNet2012Dataset(Dataset):
     """
 
     def __init__(self, file_folder, mode="train", transform=None):
-        """Init ImageNet2012Dataset with dataset file path, mode(train/val), and transform"""
+        """Init ImageNet2012 Dataset with dataset file path, mode(train/val), and transform"""
         super(ImageNet2012Dataset, self).__init__()
         assert mode in ["train", "val"]
         self.file_folder = file_folder
@@ -63,7 +64,7 @@ class ImageNet2012Dataset(Dataset):
         return len(self.label_list)
 
     def __getitem__(self, index):
-        data = image_load(self.img_path_list[index]).convert('RGB')
+        data = Image.open(self.img_path_list[index]).convert('RGB')
         data = self.transform(data)
         label = self.label_list[index]
 
@@ -152,11 +153,13 @@ def get_dataset(config, mode='train'):
         if mode == 'train':
             dataset = datasets.Cifar10(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar10(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "cifar100":
         if mode == 'train':
             dataset = datasets.Cifar100(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar100(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "imagenet2012":
         if mode == 'train':

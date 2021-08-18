@@ -42,6 +42,9 @@ def rand_bbox(image_shape, lam, count=None):
     bbox_x2 = np.clip(cx + cut_w // 2, 0, image_w)
     bbox_y2 = np.clip(cy + cut_h // 2, 0, image_h)
 
+    # NOTE: in paddle, tensor indexing e.g., a[x1:x2],
+    # if x1 == x2, paddle will raise ValueErros, 
+    # while in pytorch, it will return [] tensor
     return bbox_x1, bbox_y1, bbox_x2, bbox_y2
 
 
@@ -188,6 +191,7 @@ class Mixup:
                 alpha = self.cutmix_alpha if use_cutmix else self.mixup_alpha
                 lam_mix = np.random.beta(alpha, alpha)
             elif self.mixup_alpha == 0. and self.cutmix_alpha > 0.:
+                use_cutmix=True
                 lam_mix = np.random.beta(self.cutmix_alpha, self.cutmix_alpha)
             elif self.mixup_alpha > 0. and self.cutmix_alpha == 0.:
                 lam_mix = np.random.beta(self.mixup_alpha, self.mixup_alpha)
@@ -207,8 +211,13 @@ class Mixup:
                 lam,
                 minmax=self.cutmix_minmax,
                 correct_lam=self.correct_lam)
-            x[:, :, int(bbox_x1): int(bbox_x2), int(bbox_y1): int(bbox_y2)] = x.flip(axis=[0])[
-                :, :, int(bbox_x1): int(bbox_x2), int(bbox_y1): int(bbox_y2)]
+
+            # NOTE: in paddle, tensor indexing e.g., a[x1:x2],
+            # if x1 == x2, paddle will raise ValueErros, 
+            # but in pytorch, it will return [] tensor without errors
+            if int(bbox_x1) != int(bbox_x2) and int(bbox_y1) != int(bbox_y2):
+                x[:, :, int(bbox_x1): int(bbox_x2), int(bbox_y1): int(bbox_y2)] = x.flip(axis=[0])[
+                    :, :, int(bbox_x1): int(bbox_x2), int(bbox_y1): int(bbox_y2)]
         else:
             x_flipped = x.flip(axis=[0])
             x_flipped = x_flipped * (1 - lam)

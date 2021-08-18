@@ -11,7 +11,7 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 1. ViT ([An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929))
 2. DeiT ([Training data-efficient image transformers & distillation through attention](https://arxiv.org/abs/2012.12877))
 3. Swin Transformer ([Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030))
-4. PVT ([Pyramid Vision Transformer: A Versatile Backbone for Dense Prediction without Convolutions](https://arxiv.org/abs/2102.12122))
+4. PVTv2 ([PVTv2: Improved Baselines with Pyramid Vision Transformer](https://arxiv.org/abs/2106.13797))
 5. MLP-Mixer ([MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601))
 6. ResMLP ([ResMLP: Feedforward networks for image classification with data-efficient training](https://arxiv.org/abs/2105.03404))
 7. gMLP ([Pay Attention to MLPs](https://arxiv.org/abs/2105.08050))
@@ -69,19 +69,27 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 
 ## Results (Ported Weights) ## 
 ### Image Classification ###
-| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Model        |
+| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
 |--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| vit_base_patch16_224           | 81.66 | 96.09 | 224        | 0.875    | bilinear      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kUQo1hhWZA0A1d7hNMvIYw)(nxhy) |
-| vit_base_patch16_384           | 84.20 | 97.22 | 384        | 1.0      | bilinear      | [google](https://drive.google.com/file/d/1kWKaAgneDx0QsECxtf7EnUdUZej6vSFT/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1MW8Osbe4M70IPDNKygP9kQ)(8ack) |
-| vit_large_patch16_224          | 83.00 | 96.47 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Jc8wrIydAsc-i2gL4DjztA)(g7ij) |
-| swin_base_patch4_window7_224   | 85.27 | 97.56 | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1yjZFJoJeDFIfsxh9x10XGqCb8s2-Gtbp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1j8Air9uFudq71S4FhogpWA)(ps9m) |
-| swin_base_patch4_window12_384  | 86.43 | 98.07 | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1ThmGsTDZ8217-Zuo9o5EGLfzw8AI6N0w/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ZrTDMeKtr2Bm5uB63gxxQA)(ef9t) |
-| swin_large_patch4_window12_384 | 87.14 | 98.23 | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1f30Mt80g5yLfEiViT4-kMLpyDjTUTV5B/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RwKqdlR5N6BSZIptai7LrA)(5shn) |
-| pvtv2_tiny_224                 | 70.47 | 90.16 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/13xboSs9W3rvFM-j5JK4MeXi-5IFyyo8O/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YHT8oDEtYgZDiDLss__YnA)(575w) |
-| pvtv2_medium_224               | 82.02 | 95.99 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1B2ETlmmGqkxEIHkNg1Jq3h8NhJpUg9OZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1XZC5YBBTCK7yUOXgDFhrSg)(ezfc) |
-| pvtv2_large_224                | 83.77 | 96.61 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1QaRBbmKq2aPYLEKMxTUo4M1-8KdLzKR7/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1vonKDOLvrIGjrf2BGh5ULA)(fbc4) |
-| mixer_b16_224                  | 76.60 | 92.23 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
+| vit_base_patch16_224           | 84.58 | 97.30 | 224        | 0.875    | bicubic      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ms3o2fHMQpIoVqnEHitRtA)(qv4n) |
+| vit_base_patch16_384           | 85.99 | 98.00 | 384        | 1.0      | bicubic      | [google](https://drive.google.com/file/d/1kWKaAgneDx0QsECxtf7EnUdUZej6vSFT/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15ggLdiL98RPcz__SXorrXA)(wsum) |
+| vit_large_patch16_224          | 85.81 | 97.82 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1HRxUJAwEiKgrWnJSjHyU0A)(1bgk) |
+| swin_base_patch4_window7_224   | 85.27 | 97.56 | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1yjZFJoJeDFIfsxh9x10XGqCb8s2-Gtbp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1AseY3CKmJvlxoSwXnxHEwA)(wyck) |
+| swin_base_patch4_window12_384  | 86.43 | 98.07 | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1ThmGsTDZ8217-Zuo9o5EGLfzw8AI6N0w/view?usp=sharing)/[baidu](https://pan.baidu.com/s/10E3F9jqBeBTcasIvJ8iMzg)(4a95) |
+| swin_large_patch4_window12_384 | 87.14 | 98.23 | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1f30Mt80g5yLfEiViT4-kMLpyDjTUTV5B/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1w5w8QNfg0zY3nSfGs-Tx3A)(j71u) |
+| pvtv2_b0 			| 70.47	| 90.16	| 224 | 0.875 | bicubic | [google](https://drive.google.com/file/d/1wkx4un6y7V87Rp_ZlD4_pV63QRst-1AE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1mab4dOtBB-HsdzFJYrvgjA)(dxgb) |
+| pvtv2_b1 			| 78.70	| 94.49	| 224 | 0.875 | bicubic | [google](https://drive.google.com/file/d/11hqLxL2MTSnKPb-gp2eMZLAzT6q2UsmG/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Ur0s4SEOxVqggmgq6AM-sQ)(2e5m) |
+| pvtv2_b2 			| 82.02	| 95.99	| 224 | 0.875 | bicubic | [google](https://drive.google.com/file/d/1-KY6NbS3Y3gCaPaUam0v_Xlk1fT-N1Mz/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1FWx0QB7_8_ikrPIOlL7ung)(are2) |
+| pvtv2_b3 			| 83.14	| 96.47	| 224 | 0.875 | bicubic | [google](https://drive.google.com/file/d/16yYV8x7aKssGYmdE-YP99GMg4NKGR5j1/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ge0rBsCqIcpIjrVxsrFhnw)(nc21) |
+| pvtv2_b4 			| 83.61	| 96.69	| 224 | 0.875 | bicubic | [google](https://drive.google.com/file/d/1gvPdvDeq0VchOUuriTnnGUKh0N2lj-fA/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1VMSD_Kr_hduCZ5dxmDbLoA)(tthf) |
+| pvtv2_b5 			| 83.77	| 96.61	| 224 | 0.875 | bicubic | [google](https://drive.google.com/file/d/1OHaHiHN_AjsGYBN2gxFcQCDhBbTvZ02g/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ey4agxI2Nb0F6iaaX3zAbA)(9v6n) |
+| pvtv2_b2_linear 	| 82.06	| 96.04	| 224 | 0.875 | bicubic | [google](https://drive.google.com/file/d/1hC8wE_XanMPi0_y9apEBKzNc4acZW5Uy/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1IAhiiaJPe-Lg1Qjxp2p30w)(a4c8) |
+| mlp_mixer_b16_224                  | 76.60 | 92.23 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
+| mlp_mixer_l16_224           | 72.06 | 87.67 | 224        | 0.875      | bicubic      | [google](https://drive.google.com/file/d/1mkmvqo5K7JuvqGm92a-AdycXIcsv1rdg/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1AmSVpwCaGR9Vjsj_boL7GA)(8q7r) |
 | resmlp_24_224                  | 79.38 | 94.55 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/15A5q1XSXBz-y1AcXhy_XaDymLLj2s2Tn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nLAvyG53REdwYNCLmp4yBA)(jdcx) |
+| resmlp_36_224             | 79.77 | 94.89 | 224        | 0.875      | bicubic      | [google](https://drive.google.com/file/d/1WrhVm-7EKnLmPU18Xm0C7uIqrg-RwqZL/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1QD4EWmM9b2u1r8LsnV6rUA)(33w3) |
+| resmlp_big_24_224         | 81.04 | 95.02 | 224        | 0.875      | bicubic      | [google](https://drive.google.com/file/d/1KLlFuzYb17tC5Mmue3dfyr2L_q4xHTZi/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1oXU6CR0z7O0XNwu_UdZv_w)(r9kb) |
+| resmlp_big_24_distilled_224 | 83.59 | 96.65 | 224        | 0.875      | bicubic      | [google](https://drive.google.com/file/d/199q0MN_BlQh9-HbB28RdxHj1ApMTHow-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1yUrfbqW8vLODDiRV5WWkhQ)(4jk5) |
 | gmlp_s16_224                   | 79.64 | 94.63 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1TLypFly7aW0oXzEHfeDSz2Va4RHPRqe5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13UUz1eGIKyqyhtwedKLUMA)(bcth) |
 | volo_d5_224_86.10              | 86.08 | 97.58 | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1GBOBPCBJYZfWybK-Xp0Otn0N4NXpct0G/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1t9gPLRAOkdXaG55fVADQZg)(td49) |
 | volo_d5_512_87.07              | 87.05 | 97.97 | 512        | 1.15     | bicubic       | [google](https://drive.google.com/file/d/1Phf_wHsjRZ1QrZ8oFrqsYuhDr4TXrVkc/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1X-WjpNqvWva2M977jgHosg)(irik) |
@@ -109,6 +117,7 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 | t2t_vit_t_19   | 82.44 | 96.08 | 224   | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1Ty-42SYOu15Nk8Uo6VRTJ7J0JV_6t7zJ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YdQd6l8tj5xMCWvcHWm7sg)(mier) |
 | t2t_vit_t_24   | 82.55 | 96.07 | 224   | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1cvvXrGr2buB8Np2WlVL7n_F1_CnI1qow/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1BMU3KX_TRmPxQ1jN5cmWhg)(6vxc) |
 | t2t_vit_14_384 | 83.34 | 96.50 | 384   | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1Yuso8WD7Q8Lu_9I8dTvAvkcXXtPSkmnm/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1AOMhyVRF9zPqJe-lTrd7pw)(r685) |
+
 
 
 
@@ -156,7 +165,13 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 
 
 ### GAN ###
-
+| Model                          | FID | Image Size | Crop_pct | Interpolation | Model        |
+|--------------------------------|-----|------------|----------|---------------|--------------|
+| styleformer_cifar10            |2.73 | 32         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1VnldZcvh-d7fAoC0_U3tVW8U3InhtuB8/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12hIzNLKpNJpAC31QwdtuiA)(7cg2)  |
+| styleformer_stl10              |15.65| 48         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1IGxpGLmCq74JBEfrjTq_m9hSEif3R5dZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/16m3lZA00-oJOryTNYP64pQ)(8pus)|
+| styleformer_celeba             |3.32 | 64         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1Ux4zNmkFUa6mAZsMbvSBGpxfSdTok0wn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1zDC_3YUWmdsxM1FUDEQuuQ)(ymh7) |
+| styleformer_lsun               | 9.68 | 128        | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1kMX9vHhNKkTjzxRBAnBji5yV1B-fgfsi/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1PM4D-eH2ITU6vKgAAMNY5w)(ue28)|
+> *The results are evaluated on Cifar10, STL10, Celeba and LSUNchurch dataset, using **fid50k_full** metric.
 ## Results (Self-Trained Weights) ## 
 ### Image Classification ###
 ### Object Detection ###

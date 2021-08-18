@@ -31,7 +31,7 @@ class PVTv2Test(unittest.TestCase):
         cls.config = get_config()
         cls.dummy_img = np.random.randn(4, 3, 224, 224).astype('float32')
         cls.dummy_tensor = paddle.to_tensor(cls.dummy_img)
-        cls.pvtv2 = PyramidVisionTransformerV2(cls.config)
+        cls.pvtv2 = build_pvtv2(cls.config)
 
     @classmethod
     def tearDown(cls):

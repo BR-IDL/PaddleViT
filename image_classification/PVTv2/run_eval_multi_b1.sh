@@ -1,0 +1,9 @@
+CUDA_VISIBLE_DEVICES=4,5,6,7 \
+python main_multi_gpu.py \
+-cfg='./configs/pvtv2_b1.yaml' \
+-dataset='imagenet2012' \
+-batch_size=64 \
+-data_path='/dataset/imagenet' \
+-eval \
+-pretrained='./pvtv2_b1' \
+-ngpus=4

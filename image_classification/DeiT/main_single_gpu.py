@@ -20,6 +20,8 @@ import time
 import logging
 import copy
 import argparse
+import random
+import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
@@ -47,6 +49,7 @@ parser.add_argument('-data_path', type=str, default=None)
 parser.add_argument('-ngpus', type=int, default=None)
 parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-resume', type=str, default=None)
+parser.add_argument('-teacher_model', type=str, default=None)
 parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
 args = parser.parse_args()
@@ -209,6 +212,11 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
 def main():
     # 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
+    seed = config.SEED
+    paddle.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    #paddle.set_device('gpu:0')
     # 1. Create model
     model = build_model(config)
     # 2. Define model ema
@@ -301,6 +309,7 @@ def main():
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             epsilon=config.TRAIN.OPTIMIZER.EPS,

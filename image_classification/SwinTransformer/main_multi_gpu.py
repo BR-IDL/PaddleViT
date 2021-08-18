@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using multiple GPU """
+"""Swin training/validation using multiple GPU """
 
 import sys
 import os
@@ -26,14 +26,15 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader, get_dataset
-from swin_transformer import SwinTransformer
+from swin_transformer import build_swin as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
+from utils import get_exclude_from_weight_decay_fn
 from config import get_config
 from config import update_config
 
 
-parser = argparse.ArgumentParser('ViT')
+parser = argparse.ArgumentParser('Swin')
 parser.add_argument('-cfg', type=str, default=None)
 parser.add_argument('-dataset', type=str, default=None)
 parser.add_argument('-batch_size', type=int, default=None)
@@ -208,7 +209,7 @@ def main_worker(*args):
     np.random.seed(seed)
     random.seed(seed)
     # 1. Create model
-    model = SwinTransformer(config)
+    model = build_model(config)
     model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train, dataset_val = args[0], args[1]

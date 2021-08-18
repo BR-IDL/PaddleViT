@@ -130,11 +130,13 @@ def get_dataset(config, mode='train'):
         if mode == 'train':
             dataset = datasets.Cifar10(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar10(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "cifar100":
         if mode == 'train':
             dataset = datasets.Cifar100(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar100(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "imagenet2012":
         if mode == 'train':

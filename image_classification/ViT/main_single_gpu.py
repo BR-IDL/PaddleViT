@@ -19,12 +19,14 @@ import os
 import time
 import logging
 import argparse
+import random
+import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 from datasets import get_dataloader
 from datasets import get_dataset
-from transformer import VisualTransformer
+from transformer import build_vit as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
@@ -104,7 +106,7 @@ def train(dataloader,
         image = data[0]
         label = data[1]
 
-        output, _ = model(image)
+        output = model(image)
         loss = criterion(output, label)
 
         #NOTE: division may be needed depending on the loss function
@@ -161,7 +163,7 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
             image = data[0]
             label = data[1]
 
-            output, _ = model(image)
+            output = model(image)
             loss = criterion(output, label)
 
             pred = F.softmax(output)
@@ -187,9 +189,13 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
 def main():
     # 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
+    seed = config.SEED
+    paddle.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
     #paddle.set_device('gpu:0')
     # 1. Create model
-    model = VisualTransformer(config)
+    model = build_model(config)
     #model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train = get_dataset(config, mode='train')
@@ -242,6 +248,7 @@ def main():
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             epsilon=config.TRAIN.OPTIMIZER.EPS,

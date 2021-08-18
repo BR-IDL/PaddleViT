@@ -1,0 +1,13 @@
+DATA:
+    IMAGE_SIZE: 32
+    MAX_GEN_NUM: 50000
+    MAX_REAL_NUM: None
+MODEL:
+    TYPE: Styleformer
+    NAME: Styleformer_Large
+    NUM_CLASSES: 10
+    GEN:
+        RESOLUTION: 8
+        NUM_LAYERS: [1,3,3]
+        G_DICT: [1024,512,512]
+

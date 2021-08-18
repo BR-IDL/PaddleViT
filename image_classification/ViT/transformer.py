@@ -19,64 +19,63 @@ Implement Transformer Class for ViT
 import copy
 import paddle
 import paddle.nn as nn
+from droppath import DropPath
+from config import get_config
 
 
-class Embeddings(nn.Layer):
-    """Patch Embeddings and Position Embeddings
+class Identity(nn.Layer):
+    """ Identity layer
+    The output of this layer is the input without any change.
+    Use this layer to avoid using 'if' condition in forward methods
+    """
+    def __init__(self):
+        super(Identity, self).__init__()
 
-    Apply patch embeddings and position embeddings on input images.
-    Currently hybrid is not supported yet.
+    def forward(self, x):
+        return x
+
+
+class PatchEmbedding(nn.Layer):
+    """Patch Embedding and Position Embedding
+
+    Apply patch embedding and position embedding on input images.
 
     Attributes:
-        hybrid: TODO.
         patch_embddings: impl using a patch_size x patch_size Conv2D operation
         position_embddings: a parameter with len = num_patch + 1(for cls_token)
         cls_token: token insert to the patch feature for classification
         dropout: dropout for embeddings
     """
 
-    def __init__(self, config, in_channels=3):
-        super(Embeddings, self).__init__()
-        self.hybrid = config.MODEL.TRANS.HYBRID
-        image_size = (config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)
+    def __init__(self,
+                 image_size=224,
+                 patch_size=16,
+                 in_channels=3,
+                 embed_dim=768,
+                 dropout=0.):
+        super().__init__()
+        n_patches = (image_size // patch_size) * (image_size // patch_size)
 
-        if self.hybrid:
-            #TODO: add resnet model
-            self.hybrid_model = None
-
-        if config.MODEL.TRANS.PATCH_GRID is not None:
-            self.hybrid = True
-            grid_size = config.MODEL.TRANS.PATCH_GRID
-            patch_size = (image_size[0] // 16 // grid_size, image_size[1] // 16 // grid_size)
-            n_patches = (image_size[0] // 16) * (image_size[1] // 16)
-        else:
-            self.hybrid = False
-            patch_size = config.MODEL.TRANS.PATCH_SIZE
-            n_patches = (image_size[0] // patch_size) * (image_size[1] // patch_size)
-
-        self.patch_embeddings = nn.Conv2D(in_channels=in_channels,
-                                          out_channels=config.MODEL.TRANS.HIDDEN_SIZE,
-                                          kernel_size=patch_size,
-                                          stride=patch_size)
+        self.patch_embedding = nn.Conv2D(in_channels=in_channels,
+                                         out_channels=embed_dim,
+                                         kernel_size=patch_size,
+                                         stride=patch_size)
 
         self.position_embeddings = paddle.create_parameter(
-            shape=[1, n_patches+1, config.MODEL.TRANS.HIDDEN_SIZE],
+            shape=[1, n_patches+1, embed_dim],
             dtype='float32',
             default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
 
         self.cls_token = paddle.create_parameter(
-            shape=[1, 1, config.MODEL.TRANS.HIDDEN_SIZE],
+            shape=[1, 1, embed_dim],
             dtype='float32',
             default_initializer=paddle.nn.initializer.Constant(0))
 
-        self.dropout = nn.Dropout(config.MODEL.DROPOUT)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         cls_tokens = self.cls_token.expand((x.shape[0], -1, -1))
-        if self.hybrid:
-            #x = self.hybrid_model(x) #TODO
-            pass
-        x = self.patch_embeddings(x)
+        x = self.patch_embedding(x)
         x = x.flatten(2)
         x = x.transpose([0, 2, 1])
         x = paddle.concat((cls_tokens, x), axis=1)
@@ -103,30 +102,33 @@ class Attention(nn.Layer):
         proj_dropout: final dropout before output
         softmax: softmax op for attention
     """
-    def __init__(self, config):
-        """init Attention"""
-        super(Attention, self).__init__()
-        self.num_heads = config.MODEL.TRANS.NUM_HEADS
-        self.attn_head_size = int(config.MODEL.TRANS.HIDDEN_SIZE / self.num_heads)
+    def __init__(self,
+                 embed_dim,
+                 num_heads,
+                 qkv_bias=True,
+                 dropout=0.,
+                 attention_dropout=0.):
+        super().__init__()
+        self.num_heads = num_heads 
+        self.attn_head_size = int(embed_dim / self.num_heads)
         self.all_head_size = self.attn_head_size * self.num_heads
 
         w_attr_1, b_attr_1 = self._init_weights()
-        self.qkv = nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
+        self.qkv = nn.Linear(embed_dim,
                              self.all_head_size*3, #weights for q, k, and v
                              weight_attr=w_attr_1,
-                             bias_attr=b_attr_1 if config.MODEL.TRANS.QKV_BIAS else False)
+                             bias_attr=b_attr_1 if qkv_bias else False)
 
         self.scales = self.attn_head_size ** -0.5
 
         w_attr_2, b_attr_2 = self._init_weights()
-        self.out = nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                             config.MODEL.TRANS.HIDDEN_SIZE,
+        self.out = nn.Linear(embed_dim,
+                             embed_dim,
                              weight_attr=w_attr_2,
                              bias_attr=b_attr_2)
 
-        self.attn_dropout = nn.Dropout(config.MODEL.ATTENTION_DROPOUT)
-        self.proj_dropout = nn.Dropout(config.MODEL.DROPOUT)
-
+        self.attn_dropout = nn.Dropout(attention_dropout)
+        self.proj_dropout = nn.Dropout(dropout)
         self.softmax = nn.Softmax(axis=-1)
 
     def _init_weights(self):
@@ -173,23 +175,25 @@ class Mlp(nn.Layer):
         dropout1: dropout after fc1
         dropout2: dropout after fc2
     """
-    def __init__(self, config):
-        super(Mlp, self).__init__()
-
+    def __init__(self,
+                 embed_dim,
+                 mlp_ratio,
+                 dropout=0.):
+        super().__init__()
         w_attr_1, b_attr_1 = self._init_weights()
-        self.fc1 = nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                             config.MODEL.TRANS.MLP_DIM,
+        self.fc1 = nn.Linear(embed_dim,
+                             int(embed_dim * mlp_ratio),
                              weight_attr=w_attr_1,
                              bias_attr=b_attr_1)
 
         w_attr_2, b_attr_2 = self._init_weights()
-        self.fc2 = nn.Linear(config.MODEL.TRANS.MLP_DIM,
-                             config.MODEL.TRANS.HIDDEN_SIZE,
+        self.fc2 = nn.Linear(int(embed_dim * mlp_ratio),
+                             embed_dim,
                              weight_attr=w_attr_2,
                              bias_attr=b_attr_2)
         self.act = nn.GELU()
-        self.dropout1 = nn.Dropout(config.MODEL.DROPOUT)
-        self.dropout2 = nn.Dropout(config.MODEL.DROPOUT)
+        self.dropout1 = nn.Dropout(dropout)
+        self.dropout2 = nn.Dropout(dropout)
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
@@ -219,22 +223,35 @@ class EncoderLayer(nn.Layer):
         mlp: mlp modual
         attn: attention modual
     """
-    def __init__(self, config):
-        super(EncoderLayer, self).__init__()
-        self.hidden_size = config.MODEL.TRANS.HIDDEN_SIZE
-
+    def __init__(self,
+                 embed_dim,
+                 num_heads,
+                 qkv_bias=True,
+                 mlp_ratio=4.,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 droppath=0.):
+        super().__init__()
         w_attr_1, b_attr_1 = self._init_weights()
-        self.attn_norm = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE,
+        self.attn_norm = nn.LayerNorm(embed_dim,
                                       weight_attr=w_attr_1,
                                       bias_attr=b_attr_1,
                                       epsilon=1e-6)
+
+        self.attn = Attention(embed_dim,
+                              num_heads,
+                              qkv_bias,
+                              dropout,
+                              attention_dropout)
+        self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
+
         w_attr_2, b_attr_2 = self._init_weights()
-        self.mlp_norm = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE,
+        self.mlp_norm = nn.LayerNorm(embed_dim,
                                      weight_attr=w_attr_2,
                                      bias_attr=b_attr_2,
                                      epsilon=1e-6)
-        self.mlp = Mlp(config)
-        self.attn = Attention(config)
+
+        self.mlp = Mlp(embed_dim, mlp_ratio, dropout)
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
@@ -245,31 +262,53 @@ class EncoderLayer(nn.Layer):
         h = x
         x = self.attn_norm(x)
         x, attn = self.attn(x)
+        x = self.drop_path(x)
         x = x + h
 
         h = x
         x = self.mlp_norm(x)
         x = self.mlp(x)
+        x = self.drop_path(x)
         x = x + h
 
         return x, attn
 
 
 class Encoder(nn.Layer):
-    """Encoder
+    """Transformer encoder
 
-    Encoder contains a list of EncoderLayer, and a LayerNorm at the end.
+    Encoder encoder contains a list of EncoderLayer, and a LayerNorm.
 
     Attributes:
         layers: nn.LayerList contains multiple EncoderLayers
         encoder_norm: nn.LayerNorm which is applied after last encoder layer
     """
-    def __init__(self, config):
+    def __init__(self,
+                 embed_dim,
+                 num_heads,
+                 depth,
+                 qkv_bias=True,
+                 mlp_ratio=4.0,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 droppath=0.):
         super(Encoder, self).__init__()
-        self.layers = nn.LayerList([
-            copy.deepcopy(EncoderLayer(config)) for _ in range(config.MODEL.TRANS.NUM_LAYERS)])
+        # stochatic depth decay
+        depth_decay = [x.item() for x in paddle.linspace(0, droppath, depth)]
+        layer_list = []
+        for i in range(depth):
+            encoder_layer = EncoderLayer(embed_dim,
+                                         num_heads,
+                                         qkv_bias=True,
+                                         mlp_ratio=4.,
+                                         dropout=0.,
+                                         attention_dropout=0.,
+                                         droppath=depth_decay[i])
+            layer_list.append(copy.deepcopy(encoder_layer))
+        self.layers = nn.LayerList(layer_list)
+
         w_attr_1, b_attr_1 = self._init_weights()
-        self.encoder_norm = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE,
+        self.encoder_norm = nn.LayerNorm(embed_dim,
                                          weight_attr=w_attr_1,
                                          bias_attr=b_attr_1,
                                          epsilon=1e-6)
@@ -288,24 +327,6 @@ class Encoder(nn.Layer):
         return out, self_attn
 
 
-class Transformer(nn.Layer):
-    """Transformer
-
-    Attributes:
-        embeddings: patch embeddings and position embeddings
-        encoder: encoder layers with multihead self attention
-    """
-    def __init__(self, config):
-        super(Transformer, self).__init__()
-        self.embeddings = Embeddings(config)
-        self.encoder = Encoder(config)
-
-    def forward(self, x):
-        embedding_out = self.embeddings(x)
-        encoder_out, self_attn = self.encoder(embedding_out)
-        return encoder_out, self_attn
-
-
 class VisualTransformer(nn.Layer):
     """ViT transformer
 
@@ -313,35 +334,75 @@ class VisualTransformer(nn.Layer):
     For training from scratch, two layer mlp should be used.
     Classification is done using cls_token.
 
-    Attributes:
-        transformer: transformer with embeddings and multiple encoder layers.
-        classifier: single Linear layer for image classification
+    Args:
+        image_size: int, input image size, default: 224
+        patch_size: int, patch size, default: 16
+        in_channels: int, input image channels, default: 3
+        num_classes: int, number of classes for classification, default: 1000
+        embed_dim: int, embedding dimension (patch embed out dim), default: 768
+        depth: int, number ot transformer blocks, default: 12
+        num_heads: int, number of attention heads, default: 12
+        mlp_ratio: float, ratio of mlp hidden dim to embed dim(mlp in dim), default: 4.0
+        qkv_bias: bool, If True, enable qkv(nn.Linear) layer with bias, default: True
+        dropout: float, dropout rate for linear layers, default: 0.
+        attention_dropout: float, dropout rate for attention layers default: 0.
+        droppath: float, droppath rate for droppath layers, default: 0.
     """
-    def __init__(self, config):
+    def __init__(self,
+                 image_size=224,
+                 patch_size=16,
+                 in_channels=3,
+                 num_classes=1000,
+                 embed_dim=768,
+                 depth=12,
+                 num_heads=12,
+                 mlp_ratio=4,
+                 qkv_bias=True,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 droppath=0.,
+                 train_from_scratch=False):
         super(VisualTransformer, self).__init__()
-        self.transformer = Transformer(config)
-        # pretrain
-        #w_attr_1, b_attr_1 = self._init_weights()
-        #w_attr_2, b_attr_2 = self._init_weights()
-        #self.classifier = nn.Sequential(
-        #                    nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-        #                              config.MODEL.TRANS.HIDDEN_SIZE,
-        #                              weight_attr=w_attr_1,
-        #                              bias_attr=b_attr_1),
-        #                    nn.ReLU(),
-        #                    nn.Dropout(config.MODEL.DROPOUT),
-        #                    nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-        #                              config.MODEL.NUM_CLASSES,
-        #                              weight_attr=w_attr_2,
-        #                              bias_attr=b_attr_2),
-        #                    nn.Dropout(config.MODEL.DROPOUT),
-        #                    )
-        # finetune
-        w_attr_1, b_attr_1 = self._init_weights()
-        self.classifier = nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                                    config.MODEL.NUM_CLASSES,
-                                    weight_attr=w_attr_1,
-                                    bias_attr=b_attr_1)
+        # create patch embedding with positional embedding
+        self.patch_embedding = PatchEmbedding(image_size,
+                                              patch_size,
+                                              in_channels,
+                                              embed_dim,
+                                              dropout)
+        # create multi head self-attention layers
+        self.encoder = Encoder(embed_dim,
+                               num_heads,
+                               depth,
+                               qkv_bias,
+                               mlp_ratio,
+                               dropout,
+                               attention_dropout,
+                               droppath)
+
+        # classifier head (for training from scracth)
+        if train_from_scratch:
+            w_attr_1, b_attr_1 = self._init_weights()
+            w_attr_2, b_attr_2 = self._init_weights()
+            self.classifier = nn.Sequential(
+                                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
+                                          config.MODEL.TRANS.HIDDEN_SIZE,
+                                          weight_attr=w_attr_1,
+                                          bias_attr=b_attr_1),
+                                nn.ReLU(),
+                                nn.Dropout(config.MODEL.DROPOUT),
+                                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
+                                          config.MODEL.NUM_CLASSES,
+                                          weight_attr=w_attr_2,
+                                          bias_attr=b_attr_2),
+                                nn.Dropout(config.MODEL.DROPOUT),
+                                )
+        else:
+        # classifier head (for finetuning)
+            w_attr_1, b_attr_1 = self._init_weights()
+            self.classifier = nn.Linear(embed_dim,
+                                        num_classes,
+                                        weight_attr=w_attr_1,
+                                        bias_attr=b_attr_1)
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
@@ -351,10 +412,24 @@ class VisualTransformer(nn.Layer):
         return weight_attr, bias_attr
 
     def forward(self, x):
-        x, self_attn = self.transformer(x)
+        x = self.patch_embedding(x)
+        x, attn = self.encoder(x)
         logits = self.classifier(x[:, 0]) # take only cls_token as classifier
-        return logits, self_attn
+        return logits
 
-    def flops(self):
-        flops = 0
-        flops += self.transformer.flops()
+
+def build_vit(config):
+    model = VisualTransformer(image_size=config.DATA.IMAGE_SIZE,
+                              patch_size=config.MODEL.TRANS.PATCH_SIZE,
+                              in_channels=3,
+                              num_classes=config.MODEL.NUM_CLASSES,
+                              embed_dim=config.MODEL.TRANS.EMBED_DIM,
+                              depth=config.MODEL.TRANS.DEPTH,
+                              num_heads=config.MODEL.TRANS.NUM_HEADS,
+                              mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+                              qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                              dropout=config.MODEL.DROPOUT,
+                              attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                              droppath=config.MODEL.DROPPATH,
+                              train_from_scratch=False)
+    return model

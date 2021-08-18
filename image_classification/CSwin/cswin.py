@@ -459,7 +459,7 @@ class CSwinTransformer(nn.Layer):
                                               in_channels=in_channels,
                                               embed_dim=embed_dim)
         # drop path decay by stage
-        depth_decay = [x for x in paddle.linspace(0, droppath, sum(depths))]
+        depth_decay = [x.item() for x in paddle.linspace(0, droppath, sum(depths))]
         dim = embed_dim
         resolution = image_size // 4
         self.stages = nn.LayerList()

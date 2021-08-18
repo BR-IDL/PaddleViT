@@ -499,27 +499,35 @@ class SwinTransformer(nn.Layer):
         avgpool: nn.AveragePool2D, pooling layer before classifer
         fc: nn.Linear, classifier op.
     """
-    def __init__(self, config):
+    def __init__(self,
+                 image_size=224,
+                 patch_size=4,
+                 in_channels=3,
+                 num_classes=1000,
+                 embed_dim=96,
+                 depths=[2, 2, 6, 2],
+                 num_heads=[3, 6, 12, 24],
+                 window_size=7,
+                 mlp_ratio=4.,
+                 qkv_bias=True,
+                 qk_scale=None,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 droppath=0.,
+                 ape=False):
         super(SwinTransformer, self).__init__()
 
-        self.num_classes = config.MODEL.NUM_CLASSES
-        self.num_stages = len(config.MODEL.TRANS.STAGE_DEPTHS)
-        self.depths = config.MODEL.TRANS.STAGE_DEPTHS
-        self.num_heads = config.MODEL.TRANS.NUM_HEADS
-        self.embed_dim = config.MODEL.TRANS.EMBED_DIM
+        self.num_classes = num_classes 
+        self.num_stages = len(depths)
+        self.embed_dim = embed_dim 
         self.num_features = int(self.embed_dim * 2 ** (self.num_stages - 1))
-        self.mlp_ratio = config.MODEL.TRANS.MLP_RATIO
-        self.qkv_bias = config.MODEL.TRANS.QKV_BIAS
-        self.qk_scale = config.MODEL.TRANS.QK_SCALE
-        self.ape = config.MODEL.TRANS.APE
-        self.window_size = config.MODEL.TRANS.WINDOW_SIZE
-        self.dropout = config.MODEL.DROPOUT
-        self.attention_dropout = config.MODEL.ATTENTION_DROPOUT
+        self.mlp_ratio = mlp_ratio
+        self.ape = ape
 
-        self.patch_embedding = PatchEmbedding(image_size=config.DATA.IMAGE_SIZE,
-                                              patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                                              in_channels=config.MODEL.TRANS.IN_CHANNELS,
-                                              embed_dim=config.MODEL.TRANS.EMBED_DIM)
+        self.patch_embedding = PatchEmbedding(image_size=image_size,
+                                              patch_size=patch_size,
+                                              in_channels=in_channels,
+                                              embed_dim=embed_dim)
         num_patches = self.patch_embedding.num_patches
         self.patches_resolution = self.patch_embedding.patches_resolution
 
@@ -530,9 +538,9 @@ class SwinTransformer(nn.Layer):
                     shape=[1, num_patches, self.embed_dim], dtype='float32',
                     default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))])
 
-        self.position_dropout = nn.Dropout(config.MODEL.DROPOUT)
+        self.position_dropout = nn.Dropout(dropout)
 
-        depth_decay = [x for x in paddle.linspace(0, config.MODEL.DROP_PATH, sum(self.depths))]
+        depth_decay = [x.item() for x in paddle.linspace(0, droppath, sum(depths))]
 
         self.stages = nn.LayerList()
         for stage_idx in range(self.num_stages):
@@ -541,16 +549,16 @@ class SwinTransformer(nn.Layer):
                 input_resolution=(
                     self.patches_resolution[0] // (2 ** stage_idx),
                     self.patches_resolution[1] // (2 ** stage_idx)),
-                depth=self.depths[stage_idx],
-                num_heads=self.num_heads[stage_idx],
-                window_size=self.window_size,
-                mlp_ratio=self.mlp_ratio,
-                qkv_bias=self.qkv_bias,
-                qk_scale=self.qk_scale,
-                dropout=self.dropout,
-                attention_dropout=self.attention_dropout,
+                depth=depths[stage_idx],
+                num_heads=num_heads[stage_idx],
+                window_size=window_size,
+                mlp_ratio=mlp_ratio,
+                qkv_bias=qkv_bias,
+                qk_scale=qk_scale,
+                dropout=dropout,
+                attention_dropout=attention_dropout,
                 droppath=depth_decay[
-                    sum(self.depths[:stage_idx]):sum(self.depths[:stage_idx+1])],
+                    sum(depths[:stage_idx]):sum(depths[:stage_idx+1])],
                 downsample=PatchMerging if (
                     stage_idx < self.num_stages-1) else None,
                 )
@@ -579,3 +587,23 @@ class SwinTransformer(nn.Layer):
         x = self.forward_features(x)
         x = self.fc(x)
         return x
+
+
+def build_swin(config):
+    model = SwinTransformer(
+        image_size=config.DATA.IMAGE_SIZE,
+        patch_size=config.MODEL.TRANS.PATCH_SIZE,
+        in_channels=config.MODEL.TRANS.IN_CHANNELS,
+        embed_dim=config.MODEL.TRANS.EMBED_DIM,
+        num_classes=config.MODEL.NUM_CLASSES,
+        depths=config.MODEL.TRANS.STAGE_DEPTHS,
+        num_heads=config.MODEL.TRANS.NUM_HEADS,
+        mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+        qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+        qk_scale=config.MODEL.TRANS.QK_SCALE,
+        ape=config.MODEL.TRANS.APE,
+        window_size=config.MODEL.TRANS.WINDOW_SIZE,
+        dropout=config.MODEL.DROPOUT,
+        attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+        droppath=config.MODEL.DROP_PATH)
+    return model

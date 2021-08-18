@@ -19,7 +19,6 @@ Config can be set by .yaml file or by argparser(limited usage)
 
 
 """
-
 import os
 from yacs.config import CfgNode as CN
 import yaml
@@ -125,7 +124,6 @@ def _update_config_from_file(config, cfg_file):
     config.merge_from_file(cfg_file)
     config.freeze()
 
-
 def update_config(config, args):
     """Update config by ArgumentParser
     Args:
@@ -160,7 +158,9 @@ def update_config(config, args):
     return config
 
 
-def get_config():
-    """Return a clone config"""
+def get_config(cfg_file=None):
+    """Return a clone of config or load from yaml file"""
     config = _C.clone()
+    if cfg_file:
+        _update_config_from_file(config, cfg_file)
     return config

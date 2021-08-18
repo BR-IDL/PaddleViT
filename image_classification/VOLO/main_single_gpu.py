@@ -19,6 +19,8 @@ import os
 import time
 import logging
 import argparse
+import random
+import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
@@ -187,6 +189,10 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
 def main():
     # STEP 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
+    seed = config.SEED
+    paddle.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
     #paddle.set_device('gpu:0')
 
     # STEP 1. Create model
@@ -246,6 +252,7 @@ def main():
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             epsilon=config.TRAIN.OPTIMIZER.EPS,
@@ -263,7 +270,7 @@ def main():
 
     if config.MODEL.RESUME:
         assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME+'.pdopt')
+        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
         model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')

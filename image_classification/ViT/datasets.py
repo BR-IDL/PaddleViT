@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -125,17 +125,18 @@ def get_dataset(config, mode='train'):
     Returns:
         dataset: dataset object
     """
-
     assert mode in ['train', 'val']
     if config.DATA.DATASET == "cifar10":
         if mode == 'train':
             dataset = datasets.Cifar10(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar10(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "cifar100":
         if mode == 'train':
             dataset = datasets.Cifar100(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar100(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "imagenet2012":
         if mode == 'train':

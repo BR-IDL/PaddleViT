@@ -123,6 +123,7 @@ class Attention(nn.Module):
         x = self.proj(x)
         x = self.proj_drop(x)
 
+
         return x
 
 
@@ -162,6 +163,7 @@ class Block(nn.Module):
     def forward(self, x, H, W):
         x = x + self.drop_path(self.attn(self.norm1(x), H, W))
         x = x + self.drop_path(self.mlp(self.norm2(x), H, W))
+
 
         return x
 
@@ -283,7 +285,8 @@ class PyramidVisionTransformerV2(nn.Module):
             block = getattr(self, f"block{i + 1}")
             norm = getattr(self, f"norm{i + 1}")
             x, H, W = patch_embed(x)
-            for blk in block:
+
+            for idx, blk in enumerate(block):
                 x = blk(x, H, W)
             x = norm(x)
             if i != self.num_stages - 1:

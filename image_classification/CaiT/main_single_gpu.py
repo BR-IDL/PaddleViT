@@ -19,6 +19,8 @@ import os
 import time
 import logging
 import argparse
+import random
+import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
@@ -60,7 +62,7 @@ if not config.EVAL:
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 
-config.freeze()
+#config.freeze()
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
@@ -187,6 +189,11 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
 def main():
     # 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
+    seed = config.SEED
+    paddle.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    #paddle.set_device('gpu:0')
     # 1. Create model
     model = build_model(config)
     # 2. Create train and val dataloader
@@ -222,7 +229,6 @@ def main():
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
     # 5. Define optimizer
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
-        print(config.TRAIN.GRAD_CLIP)
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
         else:
@@ -241,6 +247,7 @@ def main():
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             epsilon=config.TRAIN.OPTIMIZER.EPS,
@@ -315,7 +322,7 @@ def main():
         if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             model_path = os.path.join(
                 config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
-            paddle.save(model.state_dict(), model_path + 'pdparams')
+            paddle.save(model.state_dict(), model_path + '.pdparams')
             paddle.save(optimizer.state_dict(), model_path + '.pdopt')
             logger.info(f"----- Save model: {model_path}.pdparams")
             logger.info(f"----- Save optim: {model_path}.pdopt")

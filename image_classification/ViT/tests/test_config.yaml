@@ -6,9 +6,9 @@ MODEL:
     NAME: vit_base_patch16_224
     TRANS:
         PATCH_SIZE: 16
-        HIDDEN_SIZE: 768
-        MLP_DIM: 3072 # same as mlp_ratio = 4.0
-        NUM_LAYERS: 12
+        EMBED_DIM: 768
+        MLP_RATIO: 4.0
+        DEPTH: 12
         NUM_HEADS: 12
         QKV_BIAS: true
 

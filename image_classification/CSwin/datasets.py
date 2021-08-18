@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ Cifar10, Cifar100 and ImageNet2012 are supported
 
 import os
 import math
+from PIL import Image
 from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
 
@@ -60,7 +61,7 @@ class ImageNet2012Dataset(Dataset):
         return len(self.label_list)
 
     def __getitem__(self, index):
-        data = image_load(self.img_path_list[index]).convert('RGB')
+        data = Image.open(self.img_path_list[index]).convert('RGB')
         data = self.transform(data)
         label = self.label_list[index]
 
@@ -106,6 +107,7 @@ def get_val_transforms(config):
 
     scale_size = int(math.floor(config.DATA.IMAGE_SIZE / config.DATA.CROP_PCT))
     transforms_val = transforms.Compose([
+        # scale_size must be single int, which will resize the shorter side of image
         transforms.Resize(scale_size, 'bicubic'),
         transforms.CenterCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)),
         transforms.ToTensor(),
@@ -131,11 +133,13 @@ def get_dataset(config, mode='train'):
         if mode == 'train':
             dataset = datasets.Cifar10(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar10(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "cifar100":
         if mode == 'train':
             dataset = datasets.Cifar100(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar100(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "imagenet2012":
         if mode == 'train':

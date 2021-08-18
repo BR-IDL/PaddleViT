@@ -23,9 +23,12 @@ class ConfigTest(unittest.TestCase):
         parser.add_argument('-dataset', type=str, default="cifar10")
         parser.add_argument('-batch_size', type=int, default=128)
         parser.add_argument('-image_size', type=int, default=256)
+        parser.add_argument('-ngpus', type=int, default=None)
         parser.add_argument('-data_path', type=str, default='/cifar10/')
         parser.add_argument('-eval', action='store_false') # enable eval
         parser.add_argument('-pretrained', type=str, default='pretrained')
+        parser.add_argument('-resume', type=str, default=None)
+        parser.add_argument('-last_epoch', type=int, default=None)
         self.args = parser.parse_args()
 
     def tearDown(self):
@@ -47,15 +50,16 @@ class ConfigTest(unittest.TestCase):
         config = get_config()
         self.args.cfg = './tests/test_config.yaml'
         self.args.image_size = None
+        self.args.ngpus = None
         config = update_config(config, self.args)
 
         self.assertEqual(config.DATA.IMAGE_SIZE, 384)
         self.assertEqual(config.DATA.CROP_PCT, 1.0)
 
         self.assertEqual(config.MODEL.TRANS.PATCH_SIZE, 16)
-        self.assertEqual(config.MODEL.TRANS.HIDDEN_SIZE, 768)
-        self.assertEqual(config.MODEL.TRANS.MLP_DIM, 3072)
-        self.assertEqual(config.MODEL.TRANS.NUM_LAYERS, 12)
+        self.assertEqual(config.MODEL.TRANS.EMBED_DIM, 768)
+        self.assertEqual(config.MODEL.TRANS.MLP_RATIO, 4.0)
+        self.assertEqual(config.MODEL.TRANS.DEPTH, 12)
         self.assertEqual(config.MODEL.TRANS.NUM_HEADS, 12)
         self.assertEqual(config.MODEL.TRANS.QKV_BIAS, True)
 

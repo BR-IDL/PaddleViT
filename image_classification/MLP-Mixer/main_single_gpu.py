@@ -20,6 +20,8 @@ import os
 import time
 import logging
 import argparse
+import random
+import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
@@ -105,7 +107,7 @@ def train(dataloader,
         image = data[0]
         label = data[1]
 
-        output, _ = model(image)
+        output = model(image)
         loss = criterion(output, label)
 
         #NOTE: division may be needed depending on the loss function
@@ -188,6 +190,10 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
 def main():
     # 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
+    seed = config.SEED
+    paddle.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
     #paddle.set_device('gpu:0')
     # 1. Create model
     model = build_model(config)
@@ -225,7 +231,6 @@ def main():
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
     # 5. Define optimizer
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
-        print(config.TRAIN.GRAD_CLIP)
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
         else:
@@ -237,11 +242,17 @@ def main():
             momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
             grad_clip=clip)
     elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
+        if config.TRAIN.GRAD_CLIP:
+            clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
+        else:
+            clip = None
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
+            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-            epsilon=config.TRAIN.OPTIMIZER.EPS)
+            epsilon=config.TRAIN.OPTIMIZER.EPS,
+            grad_clip=clip)
     else:
         logging.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")

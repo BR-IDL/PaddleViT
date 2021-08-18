@@ -19,6 +19,8 @@ import os
 import time
 import logging
 import argparse
+import random
+import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
@@ -60,7 +62,7 @@ if not config.EVAL:
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 
-config.freeze()
+#config.freeze()
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
@@ -187,6 +189,10 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
 def main():
     # 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
+    seed = config.SEED
+    paddle.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
     #paddle.set_device('gpu:0')
     # 1. Create model
     model = build_model(config)
@@ -242,6 +248,7 @@ def main():
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             epsilon=config.TRAIN.OPTIMIZER.EPS,
@@ -257,12 +264,12 @@ def main():
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME+'.pdparams')
-        assert os.path.isfile(config.MODEL.RESUME+'.pdopt')
+        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
         model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
-        optimizer.set_dict(opt_state)
+        optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
     # 7. Validation

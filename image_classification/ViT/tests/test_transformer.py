@@ -17,10 +17,10 @@ import numpy as np
 import paddle
 import paddle.nn as nn
 from config import *
-from transformer import VisualTransformer
-from transformer import Embeddings
+from transformer import build_vit
+from transformer import PatchEmbedding
 from transformer import Attention
-from transformer import MLP
+from transformer import Mlp
 from transformer import Encoder
 
 
@@ -31,7 +31,7 @@ class TransformerTest(unittest.TestCase):
         cls.config = get_config()
         cls.dummy_img = np.random.randn(4, 3, 224, 224).astype('float32')
         cls.dummy_tensor = paddle.to_tensor(cls.dummy_img)
-        cls.vit = VisualTransformer(cls.config)
+        cls.vit = build_vit(cls.config)
 
     @classmethod
     def tearDown(cls):
@@ -58,7 +58,7 @@ class TransformerTest(unittest.TestCase):
 
     @unittest.skip('skip for debug') 
     def test_embeddings(self):
-        embed = Embeddings(TransformerTest.config)
+        embed = PatchEmbedding()
         dummy_img = np.random.randn(4, 3, 224, 224).astype('float32')
         dummy_tensor = paddle.to_tensor(dummy_img)
 
@@ -70,7 +70,10 @@ class TransformerTest(unittest.TestCase):
 
     @unittest.skip('skip for debug') 
     def test_attention(self):
-        attn_op = Attention(TransformerTest.config)
+        attn_op = Attention(
+            TransformerTest.config.MODEL.TRANS.EMBED_DIM,
+            TransformerTest.config.MODEL.TRANS.NUM_HEADS,
+            TransformerTest.config.MODEL.TRANS.QKV_BIAS)
         dummy_img = np.random.randn(4, 50, 768).astype('float32')
         dummy_tensor = paddle.to_tensor(dummy_img)
 
@@ -79,7 +82,9 @@ class TransformerTest(unittest.TestCase):
         self.assertEqual(out.shape, [4, 50, 768])
 
     def test_mlp(self):
-        mlp_op = MLP(TransformerTest.config)
+        mlp_op = Mlp(
+            TransformerTest.config.MODEL.TRANS.EMBED_DIM,
+            TransformerTest.config.MODEL.TRANS.MLP_RATIO)
         dummy_img = np.random.randn(4, 50, 768).astype('float32')
         dummy_tensor = paddle.to_tensor(dummy_img)
 
@@ -87,10 +92,14 @@ class TransformerTest(unittest.TestCase):
         self.assertEqual(out.shape, [4, 50, 768])
         
     def test_encoder(self):
-        encoder_op = Encoder(TransformerTest.config)
+        encoder_op = Encoder(
+            TransformerTest.config.MODEL.TRANS.EMBED_DIM,
+            TransformerTest.config.MODEL.TRANS.NUM_HEADS,
+            TransformerTest.config.MODEL.TRANS.DEPTH,
+        )
         dummy_img = np.random.randn(4, 50, 768).astype('float32')
         dummy_tensor = paddle.to_tensor(dummy_img)
 
-        out = encoder_op(dummy_tensor)
+        out, _ = encoder_op(dummy_tensor)
         self.assertEqual(out.shape, [4, 50, 768])
 
