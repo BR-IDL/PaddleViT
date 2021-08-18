@@ -167,11 +167,11 @@ PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image
 ### GAN ###
 | Model                          | FID | Image Size | Crop_pct | Interpolation | Model        |
 |--------------------------------|-----|------------|----------|---------------|--------------|
-| styleformer_cifar10            |2.82 | 32         | 1.0      | lanczos       | [google](https://drive.google.com/file/d/1T2RF5P232Jdbmy7OVfOq9hIQg7Nd1M0_/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1B8pmQdjpxf1mNWum8kwLiw)(il2u) |
-| styleformer_stl10              |15.17| 48         | 1.0      | lanczos       | [google](https://drive.google.com/file/d/1yp2b1BQuraSxPqFbts2T5_PYI4gjkcVt/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1K3PdG4BTun1vaO82ghB_aw)(z2t0) |
-| styleformer_celeba             |3.66 | 64         | 1.0      | lanczos       | [google](https://drive.google.com/file/d/1yR-i-l3OXyf1E4e7tolAIegKqLumc6h-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13vuTVWegq3wd81p80bfwHg)(v873) |
-| styleformer_lsun               |7.99 | 128        | 1.0      | lanczos       | [google](https://drive.google.com/file/d/1S95NxEtTkBm7C1tWt2WaBEo09cV5F96b/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1zCP7tBDa7lcESINdA_3Onw)(9i1s) |
-
+| styleformer_cifar10            |2.73 | 32         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1VnldZcvh-d7fAoC0_U3tVW8U3InhtuB8/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12hIzNLKpNJpAC31QwdtuiA)(7cg2)  |
+| styleformer_stl10              |15.65| 48         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1IGxpGLmCq74JBEfrjTq_m9hSEif3R5dZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/16m3lZA00-oJOryTNYP64pQ)(8pus)|
+| styleformer_celeba             |3.32 | 64         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1Ux4zNmkFUa6mAZsMbvSBGpxfSdTok0wn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1zDC_3YUWmdsxM1FUDEQuuQ)(ymh7) |
+| styleformer_lsun               | 9.68 | 128        | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1kMX9vHhNKkTjzxRBAnBji5yV1B-fgfsi/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1PM4D-eH2ITU6vKgAAMNY5w)(ue28)|
+> *The results are evaluated on Cifar10, STL10, Celeba and LSUNchurch dataset, using **fid50k_full** metric.
 ## Results (Self-Trained Weights) ## 
 ### Image Classification ###
 ### Object Detection ###
