@@ -25,6 +25,7 @@ import numpy as np
 import paddle
 from paddle.optimizer.lr import LRScheduler
 import paddle.distributed as dist
+from paddle.optimizer.lr import LRScheduler
 
 
 class AverageMeter():

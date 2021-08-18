@@ -51,6 +51,9 @@ class LSUNchurchDataset(Dataset):
             # efficient way of loading keys only
             self.keys = list(txn.cursor().iternext(values=False))
 
+        self.txn = None
+        self.env = None
+
         if max_num_images is not None:
             self.num_images = min(self.num_images, max_num_images)
 
