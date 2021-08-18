@@ -1,5 +1,5 @@
-CUDA_VISIBLE_DEVICES=0 \
-python main_single_gpu.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 \
+python main_multi_gpu.py \
 -cfg='./configs/styleformer_lsun.yaml' \
 -dataset='lsun' \
 -batch_size=128 \

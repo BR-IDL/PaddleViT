@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-CelebA Dataset related classes and methods 
+CelebA Dataset related classes and methods
 Currently only support for GAN
 """
 
@@ -44,17 +44,17 @@ class CelebADataset(Dataset):
         return len(self.img_path_list)
 
     def __getitem__(self, index):
-        data = Image.open(self.img_path_list[index]).convert('RGB')
+        img = Image.open(self.img_path_list[index]).convert('RGB')
         if self.transform is not None:
-            data = self.transform(data)
+            img = self.transform(img)
         label = 0
-        return data, label
+        return img, label
 
-if __name__ == "__main__":
-    dataset = CelebADataset(file_folder='./celeba/img_align_celeba')
-    for idx, (data, label) in enumerate(dataset):
-        print(idx)
-        print(data.size)
-        print('-----')
-        if idx == 10:
-            break 
+#if __name__ == "__main__":
+#    dataset = CelebADataset(file_folder='./celeba/img_align_celeba')
+#    for idx, (data, label) in enumerate(dataset):
+#        print(idx)
+#        print(data.size)
+#        print('-----')
+#        if idx == 10:
+#            break

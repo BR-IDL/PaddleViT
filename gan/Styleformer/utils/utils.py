@@ -20,7 +20,11 @@ and WarmupCosineScheduler for training
 """
 
 import math
+import pickle
+import numpy as np
+import paddle
 from paddle.optimizer.lr import LRScheduler
+import paddle.distributed as dist
 
 
 class AverageMeter():
@@ -118,3 +122,40 @@ class WarmupCosineScheduler(LRScheduler):
         val = max(0.0, 0.5 * (1. + math.cos(math.pi * float(self.cycles) * 2.0 * progress)))
         val = max(0.0, val * (self.start_lr - self.end_lr) + self.end_lr)
         return val
+
+
+def all_gather(data):
+    """ run all_gather on any picklable data (do not requires tensors)
+    Args:
+        data: picklable object
+    Returns:
+        data_list: list of data gathered from each rank
+    """
+    world_size = dist.get_world_size()
+    if world_size == 1:
+        return [data]
+
+    buffer = pickle.dumps(data) #write data into Bytes and stores in buffer
+    np_buffer = np.frombuffer(buffer, dtype=np.int8)
+    tensor = paddle.to_tensor(np_buffer, dtype='int32') # uint8 doese not have many ops in paddle
+
+    # obtain Tensor size of each rank
+    local_size = paddle.to_tensor([tensor.shape[0]])
+    size_list = []
+    dist.all_gather(size_list, local_size)
+    max_size = max(size_list)
+
+    # receiving tensors from all ranks,
+    # all_gather does not support different shape, so we use padding
+    tensor_list = []
+    if local_size != max_size:
+        padding = paddle.empty(shape=(max_size - local_size, ), dtype='int32')
+        tensor = paddle.concat((tensor, padding), axis=0)
+    dist.all_gather(tensor_list, tensor)
+
+    data_list = []
+    for size, tensor in zip(size_list, tensor_list):
+        buffer = tensor.astype('uint8').cpu().numpy().tobytes()[:size]
+        data_list.append(pickle.loads(buffer))
+
+    return data_list

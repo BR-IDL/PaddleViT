@@ -19,14 +19,15 @@ Cifar10, STL10Dataset, LSUNchurch, Celeba and ImageNet2012 are supported
 
 import os
 import math
-import sys
-import numpy as np
-from paddle.io import Dataset, DataLoader, DistributedBatchSampler
-from paddle.vision import transforms, datasets, image_load
-sys.path.append('../')
-from stl10_dataset import *
-from lsun_church_dataset import *
-from celeba_dataset import *
+from paddle.io import Dataset
+from paddle.io import DataLoader
+from paddle.io import DistributedBatchSampler
+from paddle.vision import transforms
+from paddle.vision import datasets
+from paddle.vision import image_load
+from stl10_dataset import STL10Dataset
+from lsun_church_dataset import LSUNchurchDataset
+from celeba_dataset import CelebADataset
 
 class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
@@ -140,7 +141,8 @@ def get_dataset(config, mode='train'):
                                    mode=mode,
                                    transform=get_train_transforms(config))
         else:
-            mode = 'test'
+            #mode = 'test'
+            mode = 'unlabeled'
             dataset = STL10Dataset(file_folder=config.DATA.DATA_PATH,
                                    mode=mode,
                                    transform=get_val_transforms(config))
@@ -156,10 +158,10 @@ def get_dataset(config, mode='train'):
     elif config.DATA.DATASET == "celeba":
         if mode == 'train':
             dataset = CelebADataset(file_folder=config.DATA.DATA_PATH,
-                                        transform=get_train_transforms(config))
+                                    transform=get_train_transforms(config))
         else:
             dataset = CelebADataset(file_folder=config.DATA.DATA_PATH,
-                                        transform=get_val_transforms(config))
+                                    transform=get_val_transforms(config))
     elif config.DATA.DATASET == "imagenet2012":
         if mode == 'train':
             dataset = ImageNet2012Dataset(config.DATA.DATA_PATH,
@@ -171,7 +173,7 @@ def get_dataset(config, mode='train'):
                                           transform=get_val_transforms(config))
     else:
         raise NotImplementedError(
-            "[{config.DATA.DATASET}] Only cifar10, cifar100, imagenet2012 are supported now")
+            "Only support cifar10, cifar100, imagenet2012, celeba, stl10, lsun")
     return dataset
 
 

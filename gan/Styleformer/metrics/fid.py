@@ -126,7 +126,6 @@ def _get_activations_from_ims(img, model, batch_size, dims, use_gpu):
         images = img[start:end]
         # if images.shape[1] != 3:
         #     images = images.transpose((0, 3, 1, 2))
-        
         # images = paddle.to_tensor(images)
         pred = model(images)[0][0]
         pred_arr[start:end] = pred.reshape([end - start, -1]).cpu().numpy()

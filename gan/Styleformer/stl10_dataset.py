@@ -35,23 +35,28 @@ class STL10Dataset(Dataset):
     """
     def __init__(self, file_folder, mode='train', transform=None):
         super().__init__()
-        assert mode in ['train', 'test']
+        assert mode in ['train', 'test', 'unlabeled']
         self.folder = file_folder
         self.transform = transform
         self.height = 96
         self.width = 96
         self.channels = 3
+        self.mode = mode
         # num of bytes of a single image
         self.image_bytes = self.height * self.width * self.channels
         self.train_filepath = os.path.join(file_folder, f'{mode}_X.bin')
-        self.label_filepath = os.path.join(file_folder, f'{mode}_y.bin')
-
         self.images = read_all_images(self.train_filepath)
-        self.labels = read_labels(self.label_filepath)
+
+        if mode != 'unlabeled':
+            self.label_filepath = os.path.join(file_folder, f'{mode}_y.bin')
+            self.labels = read_labels(self.label_filepath)
+        else:
+            self.labels = np.zeros(self.__len__())
+
         print(f'----- STL-10 dataset {mode} len = {self.labels.shape[0]}')
 
     def __len__(self):
-        return self.labels.shape[0]
+        return self.images.shape[0]
 
     def __getitem__(self, index):
         data = self.images[index]
@@ -74,7 +79,7 @@ def read_labels(label_path):
 
 
 def read_all_images(data_path):
-    """read all images from binary file 
+    """read all images from binary file
     Args:
         data_path: data binary file path, e.g.,'train_X.bin'
     Returns:
@@ -89,30 +94,30 @@ def read_all_images(data_path):
         # outputs are with shape [num_images, height, width, channels]
         images = np.transpose(images, (0, 3, 2, 1))
         return images
-        
+
 
 def save_image(image, name):
-    im = Image.fromarray(image)
-    im.save(f"{name}.png")
+    img = Image.fromarray(image)
+    img.save(f"{name}.png")
 
 
 def save_images(images, labels, out_path):
     for idx, image in enumerate(images):
-        out_path = os.path.join(out_path, str(labels[i]))
+        out_path = os.path.join(out_path, str(labels[idx]))
         os.makedirs(out_path, exist_ok=True)
         save_image(image, os.path.join(out_path, str(idx)+'.png'))
 
 
-# NOTE: this is for test, can be removed later
-if __name__ == "__main__":
-    dataset = STL10Dataset(file_folder='./stl10_binary')
-    print(dataset.labels.shape)
-    for idx, (data, label) in enumerate(dataset):
-        print(idx)
-        print(data.shape)
-        # save images to file
-        save_image(data, f'{idx}.png')
-        print(label)
-        print('-----')
-        if idx == 10:
-            break
+## NOTE: this is for test, can be removed later
+#if __name__ == "__main__":
+#    dataset = STL10Dataset(file_folder='./stl10_binary')
+#    print(dataset.labels.shape)
+#    for idx, (data, label) in enumerate(dataset):
+#        print(idx)
+#        print(data.shape)
+#        # save images to file
+#        save_image(data, f'{idx}.png')
+#        print(label)
+#        print('-----')
+#        if idx == 10:
+#            break

@@ -17,7 +17,6 @@
 Configuration for data, model archtecture, and training, etc.
 Config can be set by .yaml file or by argparser(limited usage)
 
-
 """
 
 import os
@@ -37,6 +36,8 @@ _C.DATA.IMAGE_SIZE = 32 # input image size
 _C.DATA.CHANNEL = 3 # input image channel
 _C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 2 # number of data loading threads
+_C.DATA.MAX_REAL_NUM = None # number of images used in the dataset (real images)
+_C.DATA.MAX_GEN_NUM = None # number of images used in the generator (fake images)
 
 # model settings
 _C.MODEL = CN()
@@ -73,7 +74,6 @@ _C.TRAIN.BASE_LR = 0.002
 _C.TRAIN.WARMUP_START_LR = 0.0
 _C.TRAIN.END_LR = 0.0
 _C.TRAIN.GRAD_CLIP = 1.0
-_C.TRAIN.ACCUM_ITER = 2
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -161,7 +161,9 @@ def update_config(config, args):
     return config
 
 
-def get_config():
-    """Return a clone config"""
+def get_config(cfg_file=None):
+    """Return a clone of config or load from yaml file"""
     config = _C.clone()
+    if cfg_file:
+        _update_config_from_file(config, cfg_file)
     return config

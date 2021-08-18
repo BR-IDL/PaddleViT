@@ -69,7 +69,7 @@ def modulated_style_mlp(x, weight, styles):
     w = w * styles.reshape([batch_size, 1, -1])
     dcoefs = (w.square().sum(axis=[2]) + 1e-8).rsqrt()
 
-    x = x.reshape([batch_size, channel, width*height]).transpose([0, 2, 1])
+    x = x.reshape([batch_size, channel, width * height]).transpose([0, 2, 1])
     x = x * paddle.to_tensor(styles, dtype='float32').reshape([batch_size, 1, -1])
     x = paddle.matmul(x, weight.t())
     x = x * paddle.to_tensor(dcoefs, dtype='float32').reshape([batch_size, 1, -1])
@@ -79,7 +79,7 @@ def modulated_style_mlp(x, weight, styles):
 
 
 def modulated_channel_attention(x, q_weight, k_weight, v_weight, w_weight,
-                                u_weight, proj_weight, styles, num_heads):
+    u_weight, proj_weight, styles, num_heads):
     """Style modulation effect to the input.
        input feature map is scaled through a style vector,
        which is equivalent to scaling the linear weight.
@@ -115,27 +115,31 @@ def modulated_channel_attention(x, q_weight, k_weight, v_weight, w_weight,
     w_dcoefs = (w.square().sum(axis=[2]) + 1e-8).rsqrt()
 
     q_value = paddle.matmul(x, q_weight.t()) * q_dcoefs.reshape([batch_size, 1, -1])
-    q_value = q_value.reshape([batch_size, seq_length, num_heads, depth]).transpose([0,2,1,3])
+    q_value = q_value.reshape([batch_size, seq_length, num_heads, depth]).transpose([0, 2, 1, 3])
     k_value = paddle.matmul(x, k_weight.t()) * k_dcoefs.reshape([batch_size, 1, -1])
-    k_value = k_value.reshape([batch_size, seq_length, num_heads, depth]).transpose([0,2,1,3])
+    k_value = k_value.reshape([batch_size, seq_length, num_heads, depth]).transpose([0, 2, 1, 3])
     if proj_weight is not None:
-        k_value = paddle.matmul(k_value.transpose([0,1,3,2]), proj_weight.t()).transpose([0,1,3,2])
+        k_value = paddle.matmul(k_value.transpose([0, 1, 3, 2]), 
+                                proj_weight.t()).transpose([0, 1, 3, 2])
     v_value = paddle.matmul(x, v_weight.t())
     v_value = v_value * v_dcoefs.reshape([batch_size, 1, -1])
 
     v_value = v_value * styles2.reshape([batch_size, 1, -1])
     skip = v_value
     if proj_weight is not None:
-        v_value = paddle.matmul(v_value.transpose([0,2,1]), proj_weight.t()).transpose([0,2,1])
-        v_value = v_value.reshape([batch_size, 256, num_heads, depth]).transpose([0,2,1,3])
+        v_value = paddle.matmul(v_value.transpose([0, 2, 1]), proj_weight.t())
+        v_value = v_value.transpose([0, 2, 1])
+        v_value = v_value.reshape([batch_size, 256, num_heads, depth]).transpose([0, 2, 1, 3])
     else:
-        v_value = v_value.reshape([batch_size, seq_length, num_heads, depth]).transpose([0,2,1,3])
+        v_value = v_value.reshape([batch_size, seq_length, num_heads, depth])
+        v_value = v_value.transpose([0, 2, 1, 3])
 
-    attn = paddle.matmul(q_value, k_value.transpose([0,1,3,2])) * attention_scale
+    attn = paddle.matmul(q_value, k_value.transpose([0, 1, 3, 2])) * attention_scale
     revised_attn = attn
     attn_score = F.softmax(revised_attn, axis=-1)
 
-    x = paddle.matmul(attn_score , v_value).transpose([0, 2, 1, 3]).reshape([batch_size, seq_length, hidden_dimension])
+    x = paddle.matmul(attn_score , v_value).transpose([0, 2, 1, 3])
+    x = x.reshape([batch_size, seq_length, hidden_dimension])
     x = paddle.matmul(x, paddle.to_tensor(w_weight.t(), dtype='float32'))
     x = x * paddle.to_tensor(w_dcoefs, dtype='float32').reshape([batch_size, 1, -1])
 
@@ -162,15 +166,13 @@ class FullyConnectedLayer(nn.Layer):
         lr_multiplier: Learning rate multiplier.
         bias_init: Initial value for the additive bias.
     """
-
     def __init__(self,
-        in_features,
-        out_features,
-        bias            = True,
-        activation      = 'linear',
-        lr_multiplier   = 1,
-        bias_init       = 0,
-    ):
+                 in_features,
+                 out_features,
+                 bias=True,
+                 activation='linear',
+                 lr_multiplier=1,
+                 bias_init=0):
         super().__init__()
         self.activation = activation
         self.in_features = in_features
@@ -202,65 +204,6 @@ class FullyConnectedLayer(nn.Layer):
         return x
 
 
-# class FullyConnectedLayer(nn.Layer):
-#     """ FullyConnectedLayer
-
-#     Attributes:
-#         in_features: Number of input features.
-#         out_features: Number of output features.
-#         bias: Apply additive bias before the activation function
-#         activation: Activation function: 'relu', 'lrelu', etc.
-#         lr_multiplier: Learning rate multiplier.
-#         bias_init: Initial value for the additive bias.
-#     """
-
-#     def __init__(self,
-#         in_features,
-#         out_features,
-#         bias            = True,
-#         activation      = 'linear',
-#         lr_multiplier   = 1,
-#         bias_init       = 0,
-#     ):
-#         super().__init__()
-#         self.activation = activation
-#         self.in_features = in_features
-#         self.out_features = out_features
-#         self.weight = self.create_parameter(
-#             shape=[out_features, in_features],
-#             dtype='float32',
-#             default_initializer=paddle.nn.initializer.Normal(std=1e-6))
-#         self.linear = nn.Linear(in_features, out_features, bias_attr=False)
-#         self.bias = self.create_parameter(
-#             shape=[out_features],
-#             dtype='float32',
-#             default_initializer=paddle.nn.initializer.Constant(bias_init)) if bias else None
-#         self.weight_gain = lr_multiplier / np.sqrt(in_features)
-#         self.bias_gain = lr_multiplier
-
-#     def forward(self, x):
-#         w = paddle.to_tensor(self.weight, dtype='float32') * self.weight_gain
-#         b = self.bias
-#         if b is not None:
-#             b = paddle.to_tensor(b, dtype='float32')
-#             if self.bias_gain != 1:
-#                 b = b * self.bias_gain
-
-#         if self.activation == 'linear' and b is not None:
-#             x = self.linear(x)
-#             x = x + b.unsqueeze(0)
-#             # x = paddle.addmm(b.unsqueeze(0), x, w.t())
-
-#         else:
-#             # print("1:",x[0],x[1])
-#             x = self.linear(x)
-#             # x = x.matmul(w.t())
-#             # print("2:",x[0][:5],x[1][:5])
-#             x = fused_leaky_relu(x, b)
-#             # print("3:",x[0],x[1])
-#         return x
-
-
 class MappingNetwork(nn.Layer):
     """ MappingNetwork
 
@@ -280,17 +223,16 @@ class MappingNetwork(nn.Layer):
     """
 
     def __init__(self,
-        z_dim,
-        c_dim,
-        w_dim,
-        num_ws,
-        num_layers      = 2,
-        embed_features  = None,
-        layer_features  = None,
-        activation      = 'lrelu',
-        lr_multiplier   = 0.01,
-        w_avg_beta      = 0.995,
-    ):
+                 z_dim,
+                 c_dim,
+                 w_dim,
+                 num_ws,
+                 num_layers=2,
+                 embed_features=None,
+                 layer_features=None,
+                 activation='lrelu',
+                 lr_multiplier=0.01,
+                 w_avg_beta=0.995):
         super().__init__()
         self.z_dim = z_dim
         self.c_dim = c_dim
@@ -312,7 +254,10 @@ class MappingNetwork(nn.Layer):
         for idx in range(num_layers):
             in_features = features_list[idx]
             out_features = features_list[idx + 1]
-            layer = FullyConnectedLayer(in_features, out_features, activation=activation, lr_multiplier=lr_multiplier)
+            layer = FullyConnectedLayer(in_features,
+                                        out_features,
+                                        activation=activation,
+                                        lr_multiplier=lr_multiplier)
             setattr(self, f'fc{idx}', layer)
 
         if num_ws is not None and w_avg_beta is not None:
@@ -351,14 +296,9 @@ class MappingNetwork(nn.Layer):
 
 
 class Encoderlayer(nn.Layer):
-    """ Encoderlayer
-
-    """
-
-    def __init__(self, h_dim, w_dim, out_dim,
-                 seq_length, depth, minimum_head,
-                 use_noise=True, conv_clamp=None,
-                 proj_weight=None, channels_last=False):
+    """ Encoderlayer"""
+    def __init__(self, h_dim, w_dim, out_dim, seq_length, depth, minimum_head, use_noise=True,
+        conv_clamp=None, proj_weight=None, channels_last=False):
         super().__init__()
         self.h_dim = h_dim
         self.num_heads = max(minimum_head, h_dim // depth)
@@ -367,7 +307,7 @@ class Encoderlayer(nn.Layer):
         self.seq_length = seq_length
         self.use_noise = use_noise
         self.conv_clamp = conv_clamp
-        self.affine1 = FullyConnectedLayer(w_dim, h_dim*2, bias_init=1)
+        self.affine1 = FullyConnectedLayer(w_dim, h_dim * 2, bias_init=1)
 
         # memory_format = paddle.channels_last if channels_last else paddle.contiguous_format
         weight_min = -1./math.sqrt(h_dim)
@@ -405,7 +345,6 @@ class Encoderlayer(nn.Layer):
             dtype='float32',
             default_initializer=paddle.nn.initializer.Constant(0.0))
 
-
     def forward(self, x, w, noise_mode='random', gain=1):
         styles1 = self.affine1(w)
         noise = None
@@ -416,9 +355,8 @@ class Encoderlayer(nn.Layer):
             noise = self.noise_const * self.noise_strength[0]
 
         x = modulated_channel_attention(x=x, q_weight=self.q_weight, k_weight=self.k_weight,
-                                        v_weight=self.v_weight, w_weight=self.w_weight,
-                                        u_weight=self.u_weight, proj_weight=self.proj_weight,
-                                        styles=styles1, num_heads=self.num_heads)
+            v_weight=self.v_weight, w_weight=self.w_weight, u_weight=self.u_weight,
+            proj_weight=self.proj_weight, styles=styles1, num_heads=self.num_heads)
 
         if noise is not None:
             x = x.add_(noise)
@@ -428,6 +366,7 @@ class Encoderlayer(nn.Layer):
         x = x + paddle.to_tensor(self.bias, dtype='float32')
         x = F.leaky_relu(x, negative_slope=0.2)
         x = paddle.clip(x, max=act_clamp, min=-act_clamp)
+
         return x
 
 
@@ -446,7 +385,8 @@ class ToRGBLayer(nn.Layer):
         self.weight = self.create_parameter(
             shape=[out_channels, in_channels],
             dtype='float32',
-            default_initializer=paddle.nn.initializer.Uniform(-1./math.sqrt(in_channels), 1./math.sqrt(in_channels)))
+            default_initializer=paddle.nn.initializer.Uniform(
+                -1./math.sqrt(in_channels), 1./math.sqrt(in_channels)))
         self.bias = self.create_parameter(
             shape=[out_channels],
             dtype='float32',
@@ -470,12 +410,10 @@ class EncoderBlock(nn.Layer):
         img_channels: int, channel of input image
     """
 
-    def __init__(self, h_dim, w_dim, out_dim, depth, minimum_head,
-                 img_resolution, resolution, img_channels, is_first,
-                 is_last, init_resolution, architecture='skip',
-                 linformer=False, conv_clamp=None, use_fp16=False,
-                 fp16_channels_last=False, resample_filter =[1,3,3,1],
-                 scale_ratio=2):
+    def __init__(self, h_dim, w_dim, out_dim, depth, minimum_head, img_resolution, resolution,
+        img_channels, is_first, is_last, init_resolution, architecture='skip', linformer=False,
+        conv_clamp=None, use_fp16=False, fp16_channels_last=False, resample_filter =[1,3,3,1],
+        scale_ratio=2):
         super().__init__()
         self.h_dim = h_dim
         self.w_dim = w_dim
@@ -505,7 +443,8 @@ class EncoderBlock(nn.Layer):
             self.proj_weight = self.create_parameter(
                 shape=[256, self.seq_length],
                 dtype='float32',
-                default_initializer=paddle.nn.initializer.Uniform(-1./math.sqrt(self.seq_length), 1./math.sqrt(self.seq_length)))
+                default_initializer=paddle.nn.initializer.Uniform(
+                    -1./math.sqrt(self.seq_length), 1./math.sqrt(self.seq_length)))
 
         if self.resolution == self.init_resolution and self.is_first:
             self.const = self.create_parameter(
@@ -523,9 +462,8 @@ class EncoderBlock(nn.Layer):
             self.out_dim = h_dim
 
         self.enc = Encoderlayer(h_dim=self.h_dim, w_dim=self.w_dim, out_dim=self.out_dim,
-                                seq_length=self.seq_length, depth=self.depth,
-                                minimum_head=self.minimum_head, conv_clamp=self.conv_clamp,
-                                proj_weight=self.proj_weight)
+            seq_length=self.seq_length, depth=self.depth, minimum_head=self.minimum_head,
+            conv_clamp=self.conv_clamp, proj_weight=self.proj_weight)
         self.num_attention += 1
 
         if self.is_last and self.architecture == 'skip':
@@ -551,7 +489,8 @@ class EncoderBlock(nn.Layer):
             x = x + self.pos_embedding
 
         if self.architecture == 'resnet':
-            y = self.skip(x.transpose([0,2,1]).reshape([ws.shape[0], self.h_dim, self.resolution, self.resolution]))
+            y = self.skip(x.transpose([0,2,1]).reshape(
+                [ws.shape[0], self.h_dim, self.resolution, self.resolution]))
             x = self.enc(x, next(w_iter))
             y = y.reshape([ws.shape[0], self.h_dim, self.seq_length])
             x = y.add_(x)
@@ -565,8 +504,10 @@ class EncoderBlock(nn.Layer):
                 img = upsample2d(img)
 
             if self.architecture == 'skip':
-                y = self.torgb(x.transpose([0,2,1]).reshape([ws.shape[0], self.out_dim, self.resolution,
-                               self.resolution]), next(w_iter), fused_modconv=fused_modconv)
+                y = self.torgb(x.transpose([0,2,1]).reshape(
+                    [ws.shape[0], self.out_dim, self.resolution, self.resolution]),
+                    next(w_iter),
+                    fused_modconv=fused_modconv)
                 y = paddle.to_tensor(y, dtype='float32')
                 img = img.add_(y) if img is not None else y
 
@@ -575,7 +516,8 @@ class EncoderBlock(nn.Layer):
                 upsample2d = Upfirdn2dUpsample(self.resample_filter)
                 x = upsample2d(x.transpose([0,2,1]).reshape([ws.shape[0],
                                self.out_dim, self.resolution, self.resolution]))
-                x = x.reshape([ws.shape[0], self.out_dim, self.seq_length * self.scale_ratio **2]).transpose([0,2,1])
+                x = x.reshape([ws.shape[0], self.out_dim, self.seq_length * self.scale_ratio **2])
+                x = x.transpose([0,2,1])
 
         return x, img
 
@@ -590,10 +532,8 @@ class SynthesisNetwork(nn.Layer):
         num_block: int, Number of layers
         num_ws: Number of intermediate latents to output, None = do not broadcast.
     """
-
-    def __init__(self, w_dim, img_resolution, img_channels, depth, 
-                 num_layers, G_dict, linformer, init_resolution,
-                 minimum_head=1, conv_clamp=256, num_fp16_res=0):
+    def __init__(self, w_dim, img_resolution, img_channels, depth, num_layers, G_dict,
+        linformer, init_resolution, minimum_head=1, conv_clamp=256, num_fp16_res=0):
         super().__init__()
         self.w_dim = w_dim
         self.img_resolution = img_resolution
@@ -602,9 +542,9 @@ class SynthesisNetwork(nn.Layer):
         self.num_block = num_layers
         self.linformer = linformer
         if init_resolution==12:
-            self.block_resolutions = [3*2**i for i in range(2, self.img_resolution_log2)]
+            self.block_resolutions = [3 * 2 ** i for i in range(2, self.img_resolution_log2)]
         else:
-            self.block_resolutions = [2**i for i in range(3, self.img_resolution_log2 + 1)]
+            self.block_resolutions = [2 ** i for i in range(3, self.img_resolution_log2 + 1)]
 
         channels_dict = dict(zip(*[self.block_resolutions, G_dict]))
         fp16_resolution = max(2 ** (self.img_resolution_log2 + 1 - num_fp16_res), 8)
@@ -680,9 +620,9 @@ class Generator(nn.Layer):
         self.linformer = config.MODEL.GEN.LINFORMER
         self.init_resolution = config.MODEL.GEN.RESOLUTION
         self.synthesis = SynthesisNetwork(w_dim=self.w_dim, img_resolution=self.img_resolution,
-                                          depth=self.depth, num_layers=self.num_layers,
-                                          G_dict=self.G_dict, img_channels=self.img_channels,
-                                          linformer=self.linformer, init_resolution=self.init_resolution)
+            depth=self.depth, num_layers=self.num_layers, G_dict=self.G_dict,
+            img_channels=self.img_channels, linformer=self.linformer,
+            init_resolution=self.init_resolution)
         self.num_ws = self.synthesis.num_ws
         self.mapping = MappingNetwork(z_dim=self.z_dim, c_dim=self.c_dim,
                                       w_dim=self.w_dim, num_ws=self.num_ws)

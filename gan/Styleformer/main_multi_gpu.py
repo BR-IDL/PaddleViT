@@ -22,12 +22,14 @@ import argparse
 import random
 import numpy as np
 import paddle
+import paddle.distributed as dist
 from datasets import get_dataloader
 from datasets import get_dataset
 from generator import Generator
 from discriminator import StyleGANv2Discriminator
 from utils.utils import AverageMeter
 from utils.utils import WarmupCosineScheduler
+from utils.utils import all_gather
 from config import get_config
 from config import update_config
 from metrics.fid import FID
@@ -43,7 +45,7 @@ parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-resume', type=str, default=None)
 parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
-args = parser.parse_args()
+parser_args = parser.parse_args()
 
 
 log_format = "%(asctime)s %(message)s"
@@ -53,7 +55,10 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
 # get default config
 config = get_config()
 # update config by arguments
-config = update_config(config, args)
+config = update_config(config, parser_args)
+
+
+config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS
 
 # set output folder
 if not config.EVAL:
@@ -61,7 +66,7 @@ if not config.EVAL:
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 
-config.freeze()
+#config.freeze()
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
@@ -114,6 +119,7 @@ def gradient_penalty(discriminator, real, fake):
 def train(dataloader,
           gen,
           dis,
+          z_dim,
           gen_optimizer,
           dis_optimizer,
           epoch,
@@ -123,6 +129,7 @@ def train(dataloader,
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
         model: nn.Layer, a ViT model
+        z_dim: int, input dimenstion of generator
         criterion: nn.criterion
         epoch: int, current epoch
         total_epoch: int, total num of epoch, for logging
@@ -142,7 +149,7 @@ def train(dataloader,
         real_img = data[0]
         batch_size = real_img.shape[0]
 
-        noise = paddle.randn([batch_size, gen.z_dim])
+        noise = paddle.randn([batch_size, z_dim])
         fake_img = gen(noise, c=paddle.zeros([0]))
         fake_img = (fake_img * 127.5 + 128).clip(0, 255).astype('uint8')
         fake_img = fake_img / 255.0
@@ -160,7 +167,7 @@ def train(dataloader,
 
         for _ in range(5):
             gen_optimizer.clear_grad()
-            noise = paddle.randn([batch_size, gen.z_dim])
+            noise = paddle.randn([batch_size, z_dim])
             gen_img = gen(noise, c=paddle.zeros([0]))
             gen_img = (gen_img * 127.5 + 128).clip(0, 255).astype('uint8')
             gen_img = gen_img / 255.0
@@ -211,6 +218,7 @@ def r1_penalty(real_pred, real_img):
 
 def validate(dataloader,
              model,
+             z_dim,
              batch_size,
              total_batch,
              num_classes,
@@ -221,10 +229,9 @@ def validate(dataloader,
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
         model: nn.Layer, a ViT model
+        z_dim: int, input dimenstion of generator
         batch_size: int, batch size (used to init FID measturement)
         total_epoch: int, total num of epoch, for logging
-        max_real_num: int, max num of real images loaded from dataset
-        max_gen_num: int, max num of fake images genearted for validation
         debug_steps: int, num of iters to log info
     Returns:
         fid_score: float, fid score
@@ -253,7 +260,7 @@ def validate(dataloader,
             fid.batch_size = curr_batch_size
 
             real_image = data[0]
-            z = paddle.randn([curr_batch_size, model.z_dim])
+            z = paddle.randn([curr_batch_size, z_dim])
             fake_image = model(z, c=paddle.randint(0, num_classes, [curr_batch_size]))
 
             fake_image = (fake_image * 127.5 + 128).clip(0, 255).astype('uint8')
@@ -261,10 +268,19 @@ def validate(dataloader,
 
             fid.update(fake_image, real_image)
 
+            # if exceed max num of gen, skip gather
             if batch_id < max_gen_batch:
-                fid_preds_all.extend(fid.preds)
-            fid_gts_all.extend(fid.gts)
+                # gather all fid related data from other gpus
+                fid_preds_list = all_gather(fid.preds)
+                fid_preds = sum(fid_preds_list, [])
+                fid_preds_all.extend(fid_preds)
+
+            fid_gts_list = all_gather(fid.gts)
+            fid_gts = sum(fid_gts_list, [])
+            fid_gts_all.extend(fid_gts)
+
             fid.reset()
+
             if batch_id % debug_steps == 0:
                 if batch_id >= max_gen_batch:
                     logger.info(f"Val Step[{batch_id:04d}/{total_batch:04d}] done (no gen)")
@@ -278,24 +294,31 @@ def validate(dataloader,
     return fid_score, val_time
 
 
-def main():
-    """main function for training and validation"""
+def main_worker(*args):
     # 0. Preparation
+    dist.init_parallel_env()
     last_epoch = config.TRAIN.LAST_EPOCH
-    #paddle.set_device('gpu:0')
-    seed = config.SEED
+    world_size = dist.get_world_size()
+    local_rank = dist.get_rank()
+    logger.info(f'----- world_size = {world_size}, local_rank = {local_rank}')
+    seed = config.SEED + local_rank
     paddle.seed(seed)
     np.random.seed(seed)
     random.seed(seed)
     # 1. Create model
     gen = Generator(config)
+    gen = paddle.DataParallel(gen)
     # dis = Discriminator(c_dim=0,img_resolution=32,img_channels=3)
     dis = StyleGANv2Discriminator(config)
+    dis = paddle.DataParallel(dis)
     # 2. Create train and val dataloader
-    dataset_train = get_dataset(config, mode='train')
-    dataset_val = get_dataset(config, mode='val')
-    dataloader_train = get_dataloader(config, dataset_train, 'train', False)
-    dataloader_val = get_dataloader(config, dataset_val, 'val', False)
+    dataset_train, dataset_val = args[0], args[1]
+    dataloader_train = get_dataloader(config, dataset_train, 'train', True)
+    dataloader_val = get_dataloader(config, dataset_val, 'val', True)
+    total_batch_train = len(dataloader_train)
+    total_batch_val = len(dataloader_val)
+    logging.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
+    logging.info(f'----- Total # of val batch (single gpu): {total_batch_val}')
     # 3. Define criterion
     # validation criterion (FID) is defined in validate method
     # 4. Define lr_scheduler
@@ -385,11 +408,12 @@ def main():
         fid_score, val_time = validate(
             dataloader=dataloader_val,
             model=gen,
+            z_dim=config.MODEL.GEN.Z_DIM,
             batch_size=config.DATA.BATCH_SIZE,
-            total_batch=len(dataloader_val),
+            total_batch=total_batch_val,
             num_classes=config.MODEL.NUM_CLASSES,
-            max_real_num=config.DATA.MAX_REAL_NUM,
-            max_gen_num=config.DATA.MAX_GEN_NUM,
+            max_real_num=config.DATA.MAX_REAL_NUM // config.NGPUS if config.DATA.MAX_REAL_NUM else None,
+            max_gen_num=config.DATA.MAX_GEN_NUM // config.NGPUS if config.DATA.MAX_GEN_NUM else None,
             debug_steps=config.REPORT_FREQ)
         logger.info(f" ----- FID: {fid_score:.4f}, time: {val_time:.2f}")
         return
@@ -403,8 +427,9 @@ def main():
                                        dis=dis,
                                        gen_optimizer=gen_optimizer,
                                        dis_optimizer=dis_optimizer,
+                                       z_dim=config.MODEL.GEN.Z_DIM,
                                        epoch=epoch,
-                                       total_batch=len(dataloader_train),
+                                       total_batch=total_batch_train,
                                        debug_steps=config.REPORT_FREQ)
         scheduler.step()
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
@@ -416,25 +441,33 @@ def main():
             fid_score, val_time = validate(
                 dataloader=dataloader_val,
                 model=gen,
+                z_dim=config.MODEL.GEN.Z_DIM,
                 batch_size=config.DATA.BATCH_SIZE,
-                total_batch=len(dataloader_val),
+                total_batch=total_batch_val,
                 num_classes=config.MODEL.NUM_CLASSES,
-                max_real_num=config.DATA.MAX_REAL_NUM,
-                max_gen_num=config.DATA.MAX_GEN_NUM,
+                max_real_num=config.DATA.MAX_REAL_NUM // config.NGPUS if config.DATA.MAX_REAL_NUM else None,
+                max_gen_num=config.DATA.MAX_GEN_NUM // config.NGPUS if config.DATA.MAX_GEN_NUM else None,
                 debug_steps=config.REPORT_FREQ)
             logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                         f"Validation FID: {fid_score:.4f}, " +
                         f"time: {val_time:.2f}")
         # model save
-        if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
-            model_path = os.path.join(
-                config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
-            paddle.save(gen.state_dict(), model_path + '.pdparams')
-            paddle.save(gen_optimizer.state_dict(), model_path + "_gen.pdopt")
-            paddle.save(dis_optimizer.state_dict(), model_path + "_dis.pdopt")
-            logger.info(f"----- Save model: {model_path}.pdparams")
-            logger.info(f"----- Save gen optim: {model_path}_gen.pdopt")
-            logger.info(f"----- Save dis optim: {model_path}_dis.pdopt")
+        if local_rank == 0:
+            if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
+                model_path = os.path.join(
+                    config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
+                paddle.save(gen.state_dict(), model_path + '.pdparams')
+                paddle.save(gen_optimizer.state_dict(), model_path + "_gen.pdopt")
+                paddle.save(dis_optimizer.state_dict(), model_path + "_dis.pdopt")
+                logger.info(f"----- Save model: {model_path}.pdparams")
+                logger.info(f"----- Save gen optim: {model_path}_gen.pdopt")
+                logger.info(f"----- Save dis optim: {model_path}_dis.pdopt")
+
+
+def main():
+    dataset_train = get_dataset(config, mode='train')
+    dataset_val = get_dataset(config, mode='val')
+    dist.spawn(main_worker, args=(dataset_train, dataset_val, ), nprocs=config.NGPUS)
 
 
 if __name__ == "__main__":
