@@ -1,10 +1,8 @@
-# SEgmentation TRansformers -- SETR
+# Rethinking Semantic Segmentation from a Sequence-to-Sequence Perspective with Transformers, [arxiv](https://arxiv.org/pdf/2012.15840.pdf)
 
+The official pytorch implementation is [here](https://github.com/fudan-zvg/SETR).
 ## Framework
-<div align="center">
-  <img src="../../figure/setr_framework.png" width="700px" />
-</div>
-
+<img src="../../figure/setr_framework.png" alt="drawing" width="100%" height="100%"/>
 
 ## Model Zoo ##
 ### Pascal Context ###
@@ -34,7 +32,7 @@
 |SETR_MLA   | ViT_Large |     8      |     160k   |  47.80   |       -        |   [google](https://drive.google.com/file/d/1TPgh7Po6ayYb1DksJeZp60LGnNyznr-r/view?usp=sharing)/[baidu](https://pan.baidu.com/s/18WSi8Jp3tCZgv_Vr3V1i7A)(owoj)    | [baidu](https://pan.baidu.com/s/1L83sdXWL4XT02dvH2WFzCA)(mrrv)    | [config](./SETR_MLA_Large_512x512_160k_ade20k_bs_8.yaml)| 
 
 
-## Citing SETR
+## Reference
 ```
 @inproceedings{zheng2021rethinking,
   title={Rethinking semantic segmentation from a sequence-to-sequence perspective with transformers},
