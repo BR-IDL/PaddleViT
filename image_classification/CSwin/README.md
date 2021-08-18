@@ -13,7 +13,7 @@ This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree
 <figcaption align = "center">CSWin Transformer Model Overview</figcaption>
 
 ### Update 
-Update (2020-08-11): Code is released and ported weights are uploaded.
+Update (2021-08-11): Code is released and ported weights are uploaded.
 
 ## Models Zoo
 | Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
