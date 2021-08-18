@@ -18,6 +18,7 @@ import sys
 import os
 import time
 import logging
+import copy
 import argparse
 import random
 import numpy as np
@@ -25,7 +26,8 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
-from datasets import get_dataloader, get_dataset
+from datasets import get_dataloader
+from datasets import get_dataset
 from t2t_vit import build_t2t_vit as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
@@ -187,7 +189,7 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
                 logger.info(
                     f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
                     f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, "+
+                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
                     f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
 
     val_time = time.time() - time_st
