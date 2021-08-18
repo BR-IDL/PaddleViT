@@ -1,14 +1,16 @@
-import numpy as np
+"""RetinaNetPostProcess process the output of retinaNet_head."""
 import paddle
-import paddle.nn as nn
 import paddle.nn.functional as F
 
-from box_ops import nonempty_bbox, rbox2poly, delta2bbox
+from box_ops import nonempty_bbox, delta2bbox
 
-class RetinaNetPostProcess(object):
+class RetinaNetPostProcess:
+    '''
+    This class used to post_process the RetianNet-Head's output.
+    '''
     __inject__ = ['nms']
 
-    def __init__(self, 
+    def __init__(self,
                  nms,
                  bbox_reg_weights=[1.0, 1.0, 1.0, 1.0]):
 
@@ -21,16 +23,16 @@ class RetinaNetPostProcess(object):
             scale_factor_wh = paddle.concat(scale_factor_wh)
         if isinstance(img_whwh, list):
             img_whwh = paddle.concat(img_whwh)
-        
+
         score_lvl = paddle.transpose(score_lvl, [0, 2, 1])
         score_lvl = F.sigmoid(score_lvl)
 
         batch_lvl = []
         for i in range(len(img_whwh)):
-            box_lvl_i = delta2bbox(box_lvl[i], 
-                                    anchors, 
+            box_lvl_i = delta2bbox(box_lvl[i],
+                                    anchors,
                                     self.bbox_reg_weights).reshape(anchors.shape)
-            
+
             box_lvl_i[:, 0::2] = paddle.clip(
                 box_lvl_i[:, 0::2], min=0, max=img_whwh[i][0]
             ) / scale_factor_wh[i][0]
@@ -67,15 +69,15 @@ class RetinaNetPostProcess(object):
 
         for i in range(len(pred_boxes_list)):
             lvl_res_b, lvl_res_s = self._process_single_level_pred(
-                pred_boxes_list[i], 
-                pred_scores_list[i], 
+                pred_boxes_list[i],
+                pred_scores_list[i],
                 anchors[i],
-                scale_factor_wh, 
+                scale_factor_wh,
                 img_whwh)
 
             mutil_level_bbox.append(lvl_res_b)
             mutil_level_score.append(lvl_res_s)
-        
+
         pred_boxes = paddle.concat(mutil_level_bbox, axis=1)     # [N, \sum_{i=0}^{n} (Hi * Wi), 4]
         pred_scores = paddle.concat(mutil_level_score, axis=2)
 
@@ -90,7 +92,7 @@ class RetinaNetPostProcess(object):
         keep_mask = paddle.unsqueeze(keep_mask, [1])
         pred_label = paddle.where(keep_mask, pred_label,
                                   paddle.ones_like(pred_label) * -1)
-                                  
+
         pred_result = paddle.concat([pred_label, pred_score, pred_bbox], axis=1)
-        
+
         return pred_result, bbox_num

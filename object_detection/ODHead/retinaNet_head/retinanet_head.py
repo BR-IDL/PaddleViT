@@ -1,3 +1,4 @@
+"""RetinaNet head class"""
 import math
 
 import paddle

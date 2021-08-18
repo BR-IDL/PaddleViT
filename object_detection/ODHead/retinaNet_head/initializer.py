@@ -119,7 +119,8 @@ def _calculate_fan_in_and_fan_out(tensor, reverse=False):
     Calculate (fan_in, _fan_out) for tensor
     Args:
         tensor (Tensor): paddle.Tensor
-        reverse (bool: False): tensor data format order, False by default as [fout, fin, ...]. e.g. : conv.weight [cout, cin, kh, kw] is False; linear.weight [cin, cout] is True
+        reverse (bool: False): tensor data format order, False by default as [fout, fin, ...].
+        e.g. : conv.weight [cout, cin, kh, kw] is False; linear.weight [cin, cout] is True
     Return:
         Tuple[fan_in, fan_out]
     """
@@ -149,7 +150,7 @@ def xavier_uniform_(tensor, gain=1., reverse=False):
     Args:
         tensor (paddle.Tensor): paddle Tensor
         gain (float): super parameter, 1. default.
-        reverse (bool):  reverse (bool: False): tensor data format order, False by default as [fout, fin, ...].
+        reverse (bool): reverse (bool: False): tensor data format order, False by default as [fout, fin, ...].
     Return:
         tensor
     """
@@ -165,7 +166,7 @@ def xavier_normal_(tensor, gain=1., reverse=False):
     Args:
         tensor (paddle.Tensor): paddle Tensor
         gain (float): super parameter, 1. default.
-        reverse (bool):  reverse (bool: False): tensor data format order, False by default as [fout, fin, ...].
+        reverse (bool): reverse (bool: False): tensor data format order, False by default as [fout, fin, ...].
     Return:
         tensor
     """

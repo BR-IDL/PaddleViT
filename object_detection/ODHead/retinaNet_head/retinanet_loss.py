@@ -18,7 +18,7 @@ class RetinaNetLoss(nn.Layer):
         weights=[1.0, 1.0, 1.0, 1.0]
     ):
         super(RetinaNetLoss, self).__init__()
-        
+
         self.num_classes = num_classes
         self.focal_loss_alpha = focal_loss_alpha
         self.focal_loss_gamma = focal_loss_gamma
@@ -63,7 +63,7 @@ class RetinaNetLoss(nn.Layer):
 
             gt_boxes_list.append(matched_boxes_i)
             gt_labels_list.append(matched_classes_i)
-        
+
         return gt_boxes_list, gt_labels_list
 
     def forward(self, anchors, preds, inputs):
@@ -74,7 +74,6 @@ class RetinaNetLoss(nn.Layer):
         p_b = paddle.concat(pred_boxes_list, axis=1)  # [N, R, 4]
 
         gt_boxes, gt_classes = self.label_anchors(anchors, inputs)
-        bs = len(gt_classes)
         gt_labels = paddle.stack(gt_classes).reshape([-1])  # [N * R]
 
         valid_idx = paddle.nonzero(gt_labels >= 0)
@@ -92,13 +91,13 @@ class RetinaNetLoss(nn.Layer):
         gt_labels = F.one_hot(paddle.gather(gt_labels, valid_idx), num_classes=self.num_classes + 1)[
             :, :-1
         ]
-        
+
         gt_labels.stop_gradient = True
 
         cls_loss = F.sigmoid_focal_loss(pred_logits,
                                         gt_labels,
-                                        alpha=self.focal_loss_alpha, 
-                                        gamma=self.focal_loss_gamma, 
+                                        alpha=self.focal_loss_alpha,
+                                        gamma=self.focal_loss_gamma,
                                         reduction='sum')
 
         gt_deltas_list = [

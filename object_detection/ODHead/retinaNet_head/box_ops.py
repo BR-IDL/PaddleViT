@@ -80,6 +80,34 @@ def box_iou(boxes1, boxes2):
     iou = inter / union
     return iou, union
 
+def bbox_overlaps(boxes1, boxes2):
+    """
+    Calculate overlaps between boxes1 and boxes2
+    Args:
+        boxes1 (Tensor): boxes with shape [M, 4]
+        boxes2 (Tensor): boxes with shape [N, 4]
+    Return:
+        overlaps (Tensor): overlaps between boxes1 and boxes2 with shape [M, N]
+    """
+    M = boxes1.shape[0]
+    N = boxes2.shape[0]
+    if M * N == 0:
+        return paddle.zeros([M, N], dtype='float32')
+    area1 = bbox_area(boxes1)
+    area2 = bbox_area(boxes2)
+
+    xy_max = paddle.minimum(
+        paddle.unsqueeze(boxes1, 1)[:, :, 2:], boxes2[:, 2:])
+    xy_min = paddle.maximum(
+        paddle.unsqueeze(boxes1, 1)[:, :, :2], boxes2[:, :2])
+    width_height = xy_max - xy_min
+    width_height = width_height.clip(min=0)
+    inter = width_height.prod(axis=2)
+
+    overlaps = paddle.where(inter > 0, inter /
+                            (paddle.unsqueeze(area1, 1) + area2 - inter),
+                            paddle.zeros_like(inter))
+    return overlaps
 
 def generalized_box_iou(boxes1, boxes2):
     """Compute GIoU of each pais in boxes1 and boxes2 

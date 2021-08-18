@@ -8,7 +8,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Anchor generator for retinaNet head"""
 
 import os
 import sys
@@ -20,16 +20,18 @@ from tqdm import tqdm
 import paddle
 import paddle.nn as nn
 
+from box_ops import bbox_overlaps
+
 class BaseAnchorCluster(object):
-    def __init__(self, n, cache_path, cache, verbose=True):
-        """
+    """
         Base Anchor Cluster
         Args:
             n (int): number of clusters
             cache_path (str): cache directory path
             cache (bool): whether using cache
             verbose (bool): whether print results
-        """
+    """
+    def __init__(self, n, cache_path, cache, verbose=True):
         super(BaseAnchorCluster, self).__init__()
         self.n = n
         self.cache_path = cache_path
@@ -37,8 +39,88 @@ class BaseAnchorCluster(object):
         self.verbose = verbose
 
     def print_result(self, centers):
+        '''
+            print_result will print the important information.
+            But this function should be implement in sub class.
+        '''
         raise NotImplementedError('%s.print_result is not available' %
                                   self.__class__.__name__)
+
+    def get_whs(self):
+        raise NotImplementedError('%s.calc_anchors is not available' %
+                                  self.__class__.__name__)
+
+    def calc_anchors(self):
+        raise NotImplementedError('%s.calc_anchors is not available' %
+                                  self.__class__.__name__)
+
+    def __call__(self):
+        self.get_whs()
+        centers = self.calc_anchors()
+        if self.verbose:
+            self.print_result(centers)
+        return centers
+
+
+class YOLOv5AnchorCluster(BaseAnchorCluster):
+    """
+        YOLOv5 Anchor Cluster
+        Reference:
+            https://github.com/ultralytics/yolov5/blob/master/utils/general.py
+        Args:
+            n (int): number of clusters
+            dataset (DataSet): DataSet instance, VOC or COCO
+            size (list): [w, h]
+            cache_path (str): cache directory path
+            cache (bool): whether using cache
+            iters (int): iters of kmeans algorithm
+            gen_iters (int): iters of genetic algorithm
+            threshold (float): anchor scale threshold
+            verbose (bool): whether print results
+    """
+    def __init__(self,
+                 n,
+                 dataset,
+                 size,
+                 cache_path,
+                 cache,
+                 iters=300,
+                 gen_iters=1000,
+                 thresh=0.25,
+                 verbose=True):
+        super(YOLOv5AnchorCluster, self).__init__(
+            n, cache_path, cache, verbose=verbose)
+        self.dataset = dataset
+        self.size = size
+        self.iters = iters
+        self.gen_iters = gen_iters
+        self.thresh = thresh
+
+    def print_result(self, centers):
+        whs = self.whs
+        centers = centers[np.argsort(centers.prod(1))]
+        x, best = self.metric(whs, centers)
+        bpr, aat = (
+            best > self.thresh).mean(), (x > self.thresh).mean() * self.n
+        print(
+            'thresh=%.2f: %.4f best possible recall, %.2f anchors past thr' %
+            (self.thresh, bpr, aat))
+        print(
+            f'n=%g, img_size=%s, metric_all=%.3f/%.3f-mean/best, past_thresh=%.3f-mean: '
+            % (self.n, self.size, x.mean(), best.mean(),
+               x[x > self.thresh].mean()))
+        print('%d anchor cluster result: [w, h]' % self.n)
+        for w, h in centers:
+            print('[%d, %d]' % (round(w), round(h)))
+
+    def metric(self, whs, centers):
+        r = whs[:, None] / centers[None]
+        x = np.minimum(r, 1. / r).min(2)
+        return x, x.max(1)
+
+    def fitness(self, whs, centers):
+        _, best = self.metric(whs, centers)
+        return (best * (best > self.thresh)).mean()
 
     def get_whs(self):
         whs_cache_path = os.path.join(self.cache_path, 'whs.npy')
@@ -71,92 +153,20 @@ class BaseAnchorCluster(object):
         return self.whs, self.shapes
 
     def calc_anchors(self):
-        raise NotImplementedError('%s.calc_anchors is not available' %
-                                  self.__class__.__name__)
-
-    def __call__(self):
-        self.get_whs()
-        centers = self.calc_anchors()
-        if self.verbose:
-            self.print_result(centers)
-        return centers
-
-
-class YOLOv5AnchorCluster(BaseAnchorCluster):
-    def __init__(self,
-                 n,
-                 dataset,
-                 size,
-                 cache_path,
-                 cache,
-                 iters=300,
-                 gen_iters=1000,
-                 thresh=0.25,
-                 verbose=True):
-        super(YOLOv5AnchorCluster, self).__init__(
-            n, cache_path, cache, verbose=verbose)
-        """
-        YOLOv5 Anchor Cluster
-        Reference:
-            https://github.com/ultralytics/yolov5/blob/master/utils/general.py
-        Args:
-            n (int): number of clusters
-            dataset (DataSet): DataSet instance, VOC or COCO
-            size (list): [w, h]
-            cache_path (str): cache directory path
-            cache (bool): whether using cache
-            iters (int): iters of kmeans algorithm
-            gen_iters (int): iters of genetic algorithm
-            threshold (float): anchor scale threshold
-            verbose (bool): whether print results
-        """
-        self.dataset = dataset
-        self.size = size
-        self.iters = iters
-        self.gen_iters = gen_iters
-        self.thresh = thresh
-
-    def print_result(self, centers):
-        whs = self.whs
-        centers = centers[np.argsort(centers.prod(1))]
-        x, best = self.metric(whs, centers)
-        bpr, aat = (
-            best > self.thresh).mean(), (x > self.thresh).mean() * self.n
-        logger.info(
-            'thresh=%.2f: %.4f best possible recall, %.2f anchors past thr' %
-            (self.thresh, bpr, aat))
-        logger.info(
-            'n=%g, img_size=%s, metric_all=%.3f/%.3f-mean/best, past_thresh=%.3f-mean: '
-            % (self.n, self.size, x.mean(), best.mean(),
-               x[x > self.thresh].mean()))
-        logger.info('%d anchor cluster result: [w, h]' % self.n)
-        for w, h in centers:
-            logger.info('[%d, %d]' % (round(w), round(h)))
-
-    def metric(self, whs, centers):
-        r = whs[:, None] / centers[None]
-        x = np.minimum(r, 1. / r).min(2)
-        return x, x.max(1)
-
-    def fitness(self, whs, centers):
-        _, best = self.metric(whs, centers)
-        return (best * (best > self.thresh)).mean()
-
-    def calc_anchors(self):
         self.whs = self.whs * self.shapes / self.shapes.max(
             1, keepdims=True) * np.array([self.size])
         wh0 = self.whs
         i = (wh0 < 3.0).any(1).sum()
         if i:
-            logger.warning('Extremely small objects found. %d of %d'
+            print('Extremely small objects found. %d of %d'
                            'labels are < 3 pixels in width or height' %
                            (i, len(wh0)))
 
         wh = wh0[(wh0 >= 2.0).any(1)]
-        logger.info('Running kmeans for %g anchors on %g points...' %
+        print('Running kmeans for %g anchors on %g points...' %
                     (self.n, len(wh)))
         s = wh.std(0)
-        centers, dist = kmeans(wh / s, self.n, iter=self.iters)
+        centers, _ = kmeans(wh / s, self.n, iter=self.iters)
         centers *= s
 
         f, sh, mp, s = self.fitness(wh, centers), centers.shape, 0.9, 0.1
@@ -195,7 +205,7 @@ def label_box(anchors,
         default_matches = paddle.full((iou.shape[1], ), 0, dtype='int64')
         default_match_labels = paddle.full((iou.shape[1], ), 0, dtype='int32')
         return default_matches, default_match_labels
-    # if ignore_thresh > 0, remove anchor if it is closed to 
+    # if ignore_thresh > 0, remove anchor if it is closed to
     # one of the crowded ground-truth
     if n_gt_crowd > 0:
         N_a = anchors.shape[0]
@@ -233,4 +243,3 @@ def label_box(anchors,
     match_labels = match_labels.flatten()
 
     return matches, match_labels
-
