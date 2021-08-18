@@ -2,8 +2,8 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 
-from .generator_utils import label_box
-from .box_ops import bbox2delta
+from generator_utils import label_box
+from box_ops import bbox2delta
 
 class RetinaNetLoss(nn.Layer):
     def __init__(

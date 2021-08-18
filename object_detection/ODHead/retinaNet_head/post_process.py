@@ -3,7 +3,7 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 
-from .box_ops import nonempty_bbox, rbox2poly, delta2bbox
+from box_ops import nonempty_bbox, rbox2poly, delta2bbox
 
 class RetinaNetPostProcess(object):
     __inject__ = ['nms']
