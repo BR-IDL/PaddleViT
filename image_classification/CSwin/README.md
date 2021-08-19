@@ -7,10 +7,13 @@ The official pytorch implementation is [here](https://github.com/microsoft/CSWin
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 
+<p align="center">
 
-<img src="./cswin1.png" alt="drawing" width="100%" height="100%"/>
-<img src="./cswin2.png" alt="drawing" width="100%" height="100%"/>
-<figcaption align = "center">CSWin Transformer Model Overview</figcaption>
+<img src="./cswin1.png" alt="drawing" width="90%" height="90%"/>
+<img src="./cswin2.png" alt="drawing" width="90%" height="90%"/>
+    <h4 align="center">CSWin Transformer Model Overview</h4>
+</p>
+
 
 ### Update 
 Update (2021-08-11): Code is released and ported weights are uploaded.

@@ -8,9 +8,11 @@ The official and 3rd party pytorch implementation are [here](https://github.com/
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 
+<p align="center">
+<img src="./resmlp.png" alt="drawing" width="90%" height="90%"/>
+    <h4 align="center">ResMLP Model Overview</h4>
+</p>
 
-<img src="./resmlp.png" alt="drawing" width="100%" height="100%"/>
-<figcaption align = "center">ResMLP Model Overview</figcaption>
 
 ### Update 
 Update (2021-08-11): Code is released and ported weights are uploaded.

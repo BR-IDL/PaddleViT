@@ -18,7 +18,10 @@ Implement transGAN_custom
 
 import paddle
 import paddle.nn as nn
-from utils_paddle import trunc_normal_, gelu, pixel_upsample, drop_path
+from utils import trunc_normal_
+from utils import gelu
+from utils import pixel_upsample
+from utils import drop_path
 
 class Identity(nn.Layer):
     """ Identity layer

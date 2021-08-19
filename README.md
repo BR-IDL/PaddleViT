@@ -1,10 +1,38 @@
-# PPViT #
-Implementation of SOTA visual transformers and mlp models on PaddlePaddle 2.0+
+# PaddleViT #
 
-## Introduction ##
-PaddlePaddle Visual Transformers (`PPViT`) is a collection of PaddlePaddle image models beyond convolution, which are mostly based on visual transformers, visual attentions, and MLPs, etc. PPViT also integrates popular layers, utilities, optimizers, schedulers, data augmentations, training/validation scripts for PaddlePaddle 2.0+. The aim is to reproduce a wide variety of SOTA ViT models with full training/validation procedures.
+[![GitHub license](https://img.shields.io/github/license/xperzy/PPViT?color=blue)](https://github.com/xperzy/PPViT/blob/master/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/xperzy/PPViT?style=social)](https://github.com/xperzy/PPViT/stargazers)
 
-## Models ##
+
+<p align="center">    
+    <img src="./PaddleViT.png" width="100%"/>
+</p>
+ 
+## State-of-the-art Visual Transformer and MLP Models for Paddle 2.0 ##
+
+:robot: PaddlePaddle Visual Transformers (`PaddleViT` or `PPViT`) is a collection of vision models beyond convolution. Most of the models are based on Visual Transformers, Visual Attentions, and MLPs, etc. PaddleViT also integrates popular layers, utilities, optimizers, schedulers, data augmentations, training/validation scripts for PaddlePaddle 2.0+. The aim is to reproduce a wide variety of state-of-the-art ViT and MLP models with full training/validation procedures. We are passionate about making cuting-edge CV techniques easier to use for everyone.
+
+:robot: PaddleViT provides models and tools for a variety of vision tasks, such as classifications, object detection, semantic segmentation, GAN, and more. Each model architecture is defined in standalone python module and can be modified to enable quick research experiments. At the same time, pretrained weights can be downloaded and used to finetune on your own datasets. PaddleViT also integrates popular tools and modules for custimized dataset, data preprocessing, performance metrics, DDP and more.
+
+:robot: PaddleViT is backed by popular deep learning framework [PaddlePaddle](https://www.paddlepaddle.org/), we also provide tutorials and projects on [Paddle AI Studio](https://aistudio.baidu.com/aistudio/index). It's intuitive and straightforward to get started for new users.
+
+
+## Quick Tour ##
+### - Image Classification ###
+
+### - Object Detection ###
+
+### - Semantic Segmentation ###
+
+### - GAN ###
+
+
+## Installation ##
+
+
+
+
+## Model architectures ##
 
 ### Image Classification ###
 #### Now: ####
