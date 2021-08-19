@@ -1,4 +1,9 @@
 # PaddleViT #
+
+[![GitHub license](https://img.shields.io/github/license/xperzy/PPViT?color=blue)](https://github.com/xperzy/PPViT/blob/master/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/xperzy/PPViT?style=social)](https://github.com/xperzy/PPViT/stargazers)
+
+
 <p align="center">    
     <img src="./PaddleViT.png" width="100%"/>
 </p>
