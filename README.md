@@ -1,8 +1,9 @@
+# PaddleViT #
 <p align="center">    
     <img src="./PaddleViT.png" width="100%"/>
-<p>
+</p>
  
-## PaddleViT: State-of-the-art Visual Transformer and MLP Models for Paddle 2.0 ##
+## State-of-the-art Visual Transformer and MLP Models for Paddle 2.0 ##
 
 :robot: PaddlePaddle Visual Transformers (`PaddleViT` or `PPViT`) is a collection of vision models beyond convolution. Most of the models are based on Visual Transformers, Visual Attentions, and MLPs, etc. PaddleViT also integrates popular layers, utilities, optimizers, schedulers, data augmentations, training/validation scripts for PaddlePaddle 2.0+. The aim is to reproduce a wide variety of state-of-the-art ViT and MLP models with full training/validation procedures. We are passionate about making cuting-edge CV techniques easier to use for everyone.
 
