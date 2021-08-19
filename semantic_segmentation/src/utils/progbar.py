@@ -13,11 +13,10 @@ class Progbar(object):
         target (int): Total number of steps expected, None if unknown.
         width (int): Progress bar width on screen.
         verbose (int): Verbosity mode, 0 (silent), 1 (verbose), 2 (semi-verbose)
-        stateful_metrics (list|tuple): Iterable of string names of metrics that
-        should *not* be
-        averaged over time: Metrics in this list will be displayed as-is. All 
-        others will be averaged by the progbar before display.
         interval (float): Minimum visual progress update interval (in seconds).
+        stateful_metrics (list|tuple): Iterable of string names of metrics that
+        should not be averaged over time. Metrics in this list will be displayed as-is. All 
+        others will be averaged by the progbar before display.
         unit_name (str): Display name for step counts (usually "step" or "sample").
     """
 

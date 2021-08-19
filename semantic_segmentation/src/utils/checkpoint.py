@@ -1,9 +1,6 @@
-import contextlib
-import filelock
 import math
 import os
 import paddle.nn.functional as F
-from urllib.parse import urlparse, unquote
 import paddle
 from src.utils import logger
 
@@ -27,13 +24,11 @@ def load_entire_model(model, pretrained):
 def load_pretrained_model(model, pretrained_model, pos_embed_interp=True):
     if pretrained_model is not None:
         logger.info('Loading pretrained model from {}'.format(pretrained_model))
-
         if os.path.exists(pretrained_model):
             para_state_dict = paddle.load(pretrained_model)
             model_state_dict = model.state_dict()
             keys = model_state_dict.keys()
             # 4 debug
-            #print("pretrain_model.param: ", para_state_dict.keys())
             #print("pretrained para_state_dict.len: ", len(para_state_dict.keys()))
             #print("current model weight.len: ",len(keys))
             match_list=[]

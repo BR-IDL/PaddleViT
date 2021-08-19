@@ -8,7 +8,8 @@ def visualize(img_path, pred, weight=0.6):
     Args:
         img_path (str): The path of input image.
         pred (np.ndarray): The predict result of segmentation model.
-        weight (float): The image weight of visual image, and the result weight is (1 - weight). Default: 0.6
+        weight (float): The image weight of visual image, and the result weight 
+        is (1 - weight). Default: 0.6
 
     Returns:
         vis_result (np.ndarray): the visualized result.
@@ -57,7 +58,6 @@ def get_cityscapes_color_map():
     color_map[54:57] = (119, 11, 32)      # 18 'bicycle'
     color_map[57:60] = (105, 105, 105)
     return color_map
-
 
 def get_pseudo_color_map(num_classes=256):
     """

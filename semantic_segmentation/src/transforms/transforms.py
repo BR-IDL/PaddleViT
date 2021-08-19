@@ -8,12 +8,15 @@ from src.transforms import functional
 
 class Compose:
     """
-    Do transformation on input data with corresponding pre-processing and augmentation operations.
-    The shape of input data to all operations is [height, width, channels].
+    Do transformation on input data with corresponding pre-processing and 
+    augmentation operations. The shape of input data to all operations is 
+    [height, width, channels].
 
     Args:
-        transforms (list): A list contains data pre-processing or augmentation. Empty list means only reading images, no transformation.
-        to_rgb (bool, optional): If converting image to RGB color space. Default: True.
+        transforms (list): A list contains data pre-processing or augmentation. 
+        Empty list means only reading images, no transformation.
+        to_rgb (bool, optional): If converting image to RGB color space.
+        Default: True.
 
     Raises:
         TypeError: When 'transforms' is not a list.
@@ -33,7 +36,7 @@ class Compose:
             label (str|np.ndarray): It is either label path or label ndarray.
 
         Returns:
-            (tuple). A tuple including image, image info, and label after transformation.
+            (tuple). A tuple including image and label after transformation.
         """
         if isinstance(im, str):
             im = cv2.imread(im).astype('float32')
@@ -58,7 +61,7 @@ class RandomHorizontalFlip:
     Flip an image horizontally with a certain probability.
 
     Args:
-        prob (float, optional): A probability of horizontally flipping. Default: 0.5.
+        prob (float, optional): A probability of horizontally flipping. 
     """
 
     def __init__(self, prob=0.5):
@@ -73,7 +76,6 @@ class RandomHorizontalFlip:
             return (im, )
         else:
             return (im, label)
-
 
 class RandomVerticalFlip:
     """
@@ -96,25 +98,23 @@ class RandomVerticalFlip:
         else:
             return (im, label)
 
-
-
 class Resize:
     """
-    Resize an image.
-     Desired output size. If size is a sequence like (h, w), output size will be matched to this.
-     If size is an int, smaller edge of the image will be matched to this number. i.e, if height > width, 
-     then image will be rescaled to (size * height / width, size).
+    Resize an image. If size is a sequence like (h, w), output size will be 
+    matched to this. If size is an int, smaller edge of the image will be 
+    matched to this number. i.e, if height > width, then image will be 
+    rescaled to (size * height / width, size).
 
     Args:
-        target_size (list|tuple|int, optional): The target size of image. Default: 512.
-        interp (str, optional): The interpolation mode of resize is consistent with opencv.
-            ['NEAREST', 'LINEAR', 'CUBIC', 'AREA', 'LANCZOS4', 'RANDOM']. Note that when it is
-            'RANDOM', a random interpolation mode would be specified. Default: "LINEAR".
+        target_size (list|tuple|int, optional): The target size of image.
+        interp (str, optional): The interpolation mode of resize is consistent
+        with opencv. ['NEAREST', 'LINEAR', 'CUBIC', 'AREA', 'LANCZOS4', 'RANDOM']. 
+        Note that when it is 'RANDOM', a random interpolation mode would be specified. 
 
     Raises:
         TypeError: When 'target_size' type is neither list nor tuple.
-        ValueError: When "interp" is out of pre-defined methods ('NEAREST', 'LINEAR', 'CUBIC',
-        'AREA', 'LANCZOS4', 'RANDOM').
+        ValueError: When "interp" is out of pre-defined methods ('NEAREST', 
+        'LINEAR', 'CUBIC', 'AREA', 'LANCZOS4', 'RANDOM').
     """
 
     def __init__(self, target_size=520, interp='LINEAR', keep_ori_size=False):
@@ -129,7 +129,8 @@ class Resize:
                     '`target_size` should include 2 elements, but it is {}'.format(target_size))
         else:
             raise TypeError(
-                "Type of `target_size` is invalid. It should be list or tuple, but it is {}".format(type(target_size)))
+                "Type of `target_size` is invalid. It should be list or tuple, "
+                "but it is {}".format(type(target_size)))
         self.target_size = target_size
 
     def __call__(self, im, label=None):
@@ -139,7 +140,8 @@ class Resize:
             label (np.ndarray, optional): The label data. Default: None.
 
         Returns:
-            (tuple). When label is None, it returns (im, ), otherwise it returns (im, label),
+            (tuple). When label is None, it returns (im, ), otherwise it 
+            returns (im, label),
 
         Raises:
             TypeError: When the 'img' type is not numpy.
@@ -164,7 +166,6 @@ class Resize:
             return (im, )
         else:
             return (im, label)
-
 
 class ResizeStepScaling:
     """

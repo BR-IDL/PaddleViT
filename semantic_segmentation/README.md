@@ -16,7 +16,7 @@ Software: Centos 6.10, CUDA=10.2 Python=3.8, Paddle=2.1.0
 1. Create a conda virtual environment and activate it.
 
 ```shell
-conda create -n ppvit python=3.8
+conda create -n paddlevit python=3.8
 conda activate ppvit
 ```
 
@@ -25,15 +25,15 @@ conda activate ppvit
 conda install paddlepaddle-gpu==2.1.0 cudatoolkit=10.2 --channel https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/Paddle/
 ```
 
-3. Install PPViT
+3. Install PaddleViT
 ```shell
-git clone https://github.com/xperzy/PPViT.git
-cd PPViT/semantic_segmentation
+git clone https://github.com/BR-IDL/PaddleViT.git
+cd PaddleViT/semantic_segmentation
 pip3 install -r requirements.txt
 ```
 
 ## Demo
-We provide a demo script [demo.py](./demo/demo.py). This script performs inference on single images. You can put the input images in the [./demo/img](./demo/img/] directory.
+We provide a demo script [demo.py](./demo/demo.py). This script performs inference on single images. You can put the input images in `./demo/img`.
 ```shell
 cd demo
 CUDA_VISIBLE_DEVICES=0 python3 demo.py \
@@ -158,4 +158,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -u -m paddle.distributed.launch train.py \
 
 
 ## Contact
-If you have any questions regarding the repo, please create an issue.
+If you have any questions regarding this repo, please create an issue.

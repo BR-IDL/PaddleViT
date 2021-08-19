@@ -18,8 +18,13 @@ from src.utils import TimeAverager, calculate_eta, resume
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Visual Transformer for semantic segmentation')
-    parser.add_argument("--config", dest='cfg',help="The config file.", 
-        default=None, type=str)
+    parser.add_argument(
+        "--config", 
+        dest='cfg',
+        default=None, 
+        type=str,
+        help="The config file."
+    )
     return parser.parse_args()
 
 def optimizer_setting(model, config):
@@ -47,8 +52,10 @@ def optimizer_setting(model, config):
             f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
     return optimizer
 
-def multi_cross_entropy_loss(pred_list, label,
-                             num_classes=60, weights=[1, 0.4, 0.4, 0.4, 0.4]):
+def multi_cross_entropy_loss(pred_list, 
+                             label,
+                             num_classes=60, 
+                             weights=[1, 0.4, 0.4, 0.4, 0.4]):
     label = paddle.reshape(label, [-1, 1]) # (b, h, w) -> (bhw, 1)                                      
     label.stop_gradient = True
     loss = 0
@@ -107,7 +114,6 @@ def main():
         if os.path.exists(config.SAVE_DIR):
             os.remove(config.SAVE_DIR)
         os.makedirs(config.SAVE_DIR)
-
     if nranks > 1:
         # Initialize parallel environment if not done.
         if not paddle.distributed.parallel.parallel_helper._is_parallel_ctx_initialized():
@@ -116,7 +122,6 @@ def main():
             ddp_model = paddle.DataParallel(model)
         else:
             ddp_model = paddle.DataParallel(model)
-
     avg_loss = 0.0
     avg_loss_list = []
     iters_per_epoch = len(batch_sampler)

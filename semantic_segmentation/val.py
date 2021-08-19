@@ -17,12 +17,27 @@ from src.utils import load_entire_model, resume
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Evaluation of Segmenatation Models')
-    parser.add_argument("--config", dest='cfg', default=None, type=str, help='The config file.')
-    parser.add_argument('--model_path', dest='model_path', 
-        help='The path of weights file (segmentation model)', type=str, default=None)
-    parser.add_argument("--multi_scales", type=bool, default=False, 
-        help='whether employing multiple scales testing')
+    parser = argparse.ArgumentParser(description='Evaluation of Seg. Models')
+    parser.add_argument(
+        "--config", 
+        dest='cfg', 
+        default=None, 
+        type=str, 
+        help='The config file.'
+    )
+    parser.add_argument(
+        '--model_path', 
+        dest='model_path', 
+        help='The path of weights file (segmentation model)', 
+        type=str, 
+        default=None
+    )
+    parser.add_argument(
+        "--multi_scales", 
+        type=bool, 
+        default=False, 
+        help='whether employing multiple scales testing'
+    )
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -30,7 +45,8 @@ if __name__ == '__main__':
     args = parse_args()
     config = update_config(config, args)
     if args.model_path is None:
-        args.model_path = os.path.join(config.SAVE_DIR,"iter_{}_model_state.pdparams".format(config.TRAIN.ITERS))
+        args.model_path = os.path.join(config.SAVE_DIR,
+            "iter_{}_model_state.pdparams".format(config.TRAIN.ITERS))
     place = 'gpu' if config.VAL.USE_GPU else 'cpu'
     paddle.set_device(place)
     # build model
@@ -54,9 +70,9 @@ if __name__ == '__main__':
                               keep_ori_size=config.VAL.KEEP_ORI_SIZE),
                        Normalize(mean=config.VAL.MEAN, std=config.VAL.STD)]
     dataset_val = get_dataset(config, data_transform=transforms_val, mode='val')
-    batch_sampler = paddle.io.DistributedBatchSampler(
-        dataset_val, batch_size=config.DATA.BATCH_SIZE_VAL, shuffle=True, drop_last=True)
-    loader_val = paddle.io.DataLoader( dataset_val, batch_sampler=batch_sampler,
+    batch_sampler = paddle.io.DistributedBatchSampler(dataset_val, 
+        batch_size=config.DATA.BATCH_SIZE_VAL, shuffle=True, drop_last=True)
+    loader_val = paddle.io.DataLoader(dataset_val, batch_sampler=batch_sampler,
         num_workers=config.DATA.NUM_WORKERS, return_list=True)
     total_iters = len(loader_val)
     # build workspace for saving checkpoints
@@ -64,11 +80,9 @@ if __name__ == '__main__':
         if os.path.exists(config.SAVE_DIR):
             os.remove(config.SAVE_DIR)
         os.makedirs(config.SAVE_DIR)
-
     intersect_area_all = 0
     pred_area_all = 0
     label_area_all = 0
-
     logger.info("Start evaluating (total_samples: {}, total_iters: {}, "
         "multi-scale testing: {})".format(len(dataset_val), total_iters, args.multi_scales))
     progbar_val = progbar.Progbar(target=total_iters, verbose=1)
@@ -92,7 +106,7 @@ if __name__ == '__main__':
                     crop_size=config.VAL.CROP_SIZE,
                     num_classes=config.DATA.NUM_CLASSES,
                     scales=config.VAL.SCALE_RATIOS,
-                    flip_horizontal=True,  #True
+                    flip_horizontal=True,  
                     flip_vertical=False,
                     rescale_from_ori=config.VAL.RESCALE_FROM_ORI)
             else:
@@ -126,7 +140,6 @@ if __name__ == '__main__':
                     intersect_area_list = intersect_area_list[:valid]
                     pred_area_list = pred_area_list[:valid]
                     label_area_list = label_area_list[:valid]
-
                 for i in range(len(intersect_area_list)):
                     intersect_area_all = intersect_area_all + intersect_area_list[i]
                     pred_area_all = pred_area_all + pred_area_list[i]
@@ -138,7 +151,6 @@ if __name__ == '__main__':
             batch_cost_averager.record(time.time() - batch_start, num_samples=len(label))
             batch_cost = batch_cost_averager.get_average()
             reader_cost = reader_cost_averager.get_average()
-
             if local_rank == 0 :
                 progbar_val.update(iter + 1, [('batch_cost', batch_cost), ('reader cost', reader_cost)])
             reader_cost_averager.reset()
