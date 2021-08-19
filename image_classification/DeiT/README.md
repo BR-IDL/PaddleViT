@@ -7,9 +7,10 @@ The official pytorch implementation is [here](https://github.com/facebookresearc
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 
-
-<img src="./deit.png" alt="drawing" width="100%" height="100%"/>
-<figcaption align = "center">DeiT Model Overview</figcaption>
+<p align="center">
+<img src="./deit.png" alt="drawing" width="60%" height="60%"/>
+<h4 align="center">DeiT Model Overview</h4>
+</p>
 
 ### Update 
 Update (2021-08-11): Code is released and ported weights are uploaded.
