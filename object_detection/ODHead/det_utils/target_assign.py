@@ -118,7 +118,7 @@ def subsample_labels(labels,
 
     # randomly select positive and negative examples
     negative = negative.cast('int32').flatten()
-    neg_perm = paddle.randperm(negative.numel(), dtype='int32')[:int(num_neg[0])]
+    neg_perm = paddle.randperm(negative.numel(), dtype='int32')[:int(num_neg)]
     neg_idx = paddle.gather(negative, neg_perm)
 
     if num_pos == 0:

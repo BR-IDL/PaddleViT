@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 from paddle.nn.initializer import Normal
 
-from .generator_utils import AnchorGenerator, ProposalGenerator
-from .target_assign import anchor_target_assign
+import sys
+sys.path.append("PPViT-od_head/object_detection/head")
+from det_utils.generator_utils import AnchorGenerator, ProposalGenerator
+from det_utils.target_assign import anchor_target_assign
 
 
 class RPNHead(nn.Layer):

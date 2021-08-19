@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import math
 
 import paddle
@@ -211,6 +210,16 @@ def batch_iou(boxes1, boxes2, mode='a'):
         return ious, union_area
     else:
         raise ValueError("Only support mode 'a' or 'b'")
+
+
+def nonempty_bbox(boxes, min_size=0, return_mask=False):
+    w = boxes[:, 2] - boxes[:, 0]
+    h = boxes[:, 3] - boxes[:, 1]
+    mask = paddle.logical_and(h > min_size, w > min_size)
+    if return_mask:
+        return mask
+    keep = paddle.nonzero(mask).flatten()
+    return keep
 
 
 def multiclass_nms(bboxes,

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import math
 
 import paddle
@@ -132,15 +131,7 @@ class AnchorGenerator(nn.Layer):
     def num_anchors(self):
         return [len(num_a) for num_a in self.base_anchors][0]
 
-# feats = []
-# h, w = 800., 800
-# for i in range(4):
-#     feats.append(paddle.rand([4, 256, h / (2 ** (i + 2)), w / (2 ** (i + 2))]))
 
-# anchorgenerator = AnchorGenerator()
-# res = anchorgenerator(feats)
-# print(anchorgenerator.num_anchors)
-# print(res)
 def generate_proposals(scores,
                        bbox_deltas,
                        im_shape,

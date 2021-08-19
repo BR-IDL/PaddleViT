@@ -12,17 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import numpy as np
-
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 from paddle.nn.initializer import XavierNormal, XavierUniform, Normal
 
-from .target_assign import roi_target_assign
-from .generator_utils import RoIAlign
-from .box_utils import bbox2delta, delta2bbox, multiclass_nms
+from det_utils.target_assign import roi_target_assign
+from det_utils.generator_utils import RoIAlign
+from det_utils.box_utils import bbox2delta, delta2bbox, multiclass_nms
 
 
 class BoxHead(nn.Layer):
@@ -249,7 +246,7 @@ class RoIHead(nn.Layer):
             boxes_w = post_boxes[:, 2] - post_boxes[:, 0]
             boxes_h = post_boxes[:, 3] - post_boxes[:, 1]
 
-            keep = paddle.nonzero(paddle.logical_and(boxes_w > 0., boxes_h > 0.)).squeeze()
+            keep = paddle.nonzero(paddle.logical_and(boxes_w > 0., boxes_h > 0.)).flatten()
 
             post_label = paddle.gather(post_label, keep)
             post_score = paddle.gather(post_score, keep)

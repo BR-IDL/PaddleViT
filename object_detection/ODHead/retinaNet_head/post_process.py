@@ -1,21 +1,37 @@
-"""RetinaNetPostProcess process the output of retinaNet_head."""
+#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import paddle
 import paddle.nn.functional as F
 
-from box_ops import nonempty_bbox, delta2bbox
+from det_utils.box_utils import nonempty_bbox, delta2bbox, multiclass_nms
 
-class RetinaNetPostProcess:
+class RetinaNetPostProcess(object):
     '''
     This class used to post_process the RetianNet-Head's output.
     '''
-    __inject__ = ['nms']
-
-    def __init__(self,
-                 nms,
+    def __init__(self, 
+                 score_threshold,
+                 keep_top_k,
+                 nms_top_k,
+                 nms_threshold,
                  bbox_reg_weights=[1.0, 1.0, 1.0, 1.0]):
-
         super(RetinaNetPostProcess, self).__init__()
-        self.nms = nms
+        self.score_threshold=score_threshold
+        self.keep_topk=keep_top_k
+        self.topk_candidates=nms_top_k
+        self.num_thresh=nms_threshold
         self.bbox_reg_weights = bbox_reg_weights
 
     def _process_single_level_pred(self, box_lvl, score_lvl, anchors, scale_factor_wh, img_whwh):
@@ -83,7 +99,14 @@ class RetinaNetPostProcess:
 
         assert pred_boxes.shape[1] == pred_scores.shape[2]
 
-        bbox_pred, bbox_num, _ = self.nms(pred_boxes, pred_scores)
+        bbox_pred, bbox_num, _ = multiclass_nms(
+            pred_boxes, 
+            pred_scores,
+            score_threshold=self.score_threshold,
+            keep_top_k=self.keep_topk,
+            nms_top_k=self.topk_candidates,
+            nms_threshold=self.num_thresh,
+        )
 
         pred_label = bbox_pred[:, 0:1]
         pred_score = bbox_pred[:, 1:2]

@@ -1,9 +1,25 @@
+#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 
-from generator_utils import label_box
-from box_ops import bbox2delta
+import sys
+sys.path.append("PPViT-od_head/object_detection/head")
+from det_utils.box_utils import bbox2delta, boxes_iou
+from det_utils.target_assign import anchor_target_matcher
 
 class RetinaNetLoss(nn.Layer):
     def __init__(
@@ -32,8 +48,8 @@ class RetinaNetLoss(nn.Layer):
         self.loss_normalizer_momentum = 0.9
 
     def label_anchors(self, anchors, gt):
-        batch_gt_box = gt["gt_bbox"]
-        batch_gt_class = gt["gt_class"]
+        batch_gt_box = gt["gt_boxes"]
+        batch_gt_class = gt["gt_classes"]
 
         gt_labels_list = []
         gt_boxes_list = []
@@ -41,12 +57,15 @@ class RetinaNetLoss(nn.Layer):
         for i in range(len(batch_gt_box)):
             gt_boxes = batch_gt_box[i]
             gt_classes = batch_gt_class[i].flatten()
-            matches_idxs, match_labels = label_box(anchors,
-                                                   gt_boxes,
-                                                   self.positive_thresh,
-                                                   self.negative_thresh,
-                                                   self.allow_low_quality,
-                                                   -1)
+
+            match_quality_matrix, _ = boxes_iou(gt_boxes, anchors)
+            matches_idxs, match_labels = anchor_target_matcher(
+                match_quality_matrix, 
+                self.positive_thresh,
+                self.negative_thresh,
+                self.allow_low_quality,
+                low_thresh = -float("inf")
+            )
 
             if len(gt_boxes) > 0:
                 matched_boxes_i = paddle.gather(gt_boxes, matches_idxs)
@@ -120,26 +139,3 @@ class RetinaNetLoss(nn.Layer):
             "cls_loss": cls_loss / self.loss_normalizer,
             "reg_loss": reg_loss / self.loss_normalizer
         }
-
-
-def sigmoid_focal_loss(inputs, targets, alpha, gamma, reduction="sum"):
-
-    assert reduction in ["sum", "mean"
-                         ], f'do not support this {reduction} reduction?'
-
-    p = F.sigmoid(inputs)
-    ce_loss = F.binary_cross_entropy_with_logits(
-        inputs, targets, reduction="none")
-    p_t = p * targets + (1 - p) * (1 - targets)
-    loss = ce_loss * ((1 - p_t)**gamma)
-
-    if alpha >= 0:
-        alpha_t = alpha * targets + (1 - alpha) * (1 - targets)
-        loss = alpha_t * loss
-
-    if reduction == "mean":
-        loss = loss.mean()
-    elif reduction == "sum":
-        loss = loss.sum()
-
-    return loss
