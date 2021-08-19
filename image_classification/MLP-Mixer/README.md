@@ -7,9 +7,10 @@ The official TF implementation is [here](https://github.com/google-research/visi
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 
-
-<img src="./mlp_mixer.png" alt="drawing" width="100%"/>
-<figcaption align = "center">MLP-Mixer Model Overview</figcaption>
+<p align="center">
+<img src="./mlp_mixer.png" alt="drawing" width="90%"/>
+    <h4 align="center">MLP-Mixer Model Overview</h4>
+</p>
 
 ### Update 
 Update (2021-08-11): Code is released and ported weights are uploaded.
