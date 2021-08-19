@@ -7,9 +7,11 @@ The official pytorch implementation is [here](https://github.com/yitu-opensource
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 
-
+<p align="center">
 <img src="./t2t_vit.png" alt="drawing" width="100%" height="100%"/>
-<figcaption align = "center">T2T-ViT Model Overview</figcaption>
+    <h4 align="center">T2T-ViT Model Overview</h4>
+</p>
+
 
 ### Update 
 Update (2021-08-18): Code is released and ported weights are uploaded.
