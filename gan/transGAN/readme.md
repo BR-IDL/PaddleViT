@@ -7,9 +7,16 @@ The official pytorch implementation is [here](https://github.com/VITA-Group/Tran
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 
+<p align="center">
+<img src="./assets/TransGAN_1.png" alt="drawing" width="90%" height="90%"/>
+<h4 align="center">TransGAN Model Overview</h4>
+</p>
 
-<img src="./assets/TransGAN_1.png" alt="drawing" width="100%" height="100%"/>
-<figcaption align = "center">TransGAN Model Overview</figcaption>
+
+
+
+
+
 
 ## Models Zoo
 | Model                          | FID | Image Size |  Link        |
@@ -69,12 +76,36 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg="transgan_cifar10.yaml" \
+  -cfg="./configs/transgan_cifar10.yaml" \
   -dataset='cifar10' \
   -batch_size=32 \
   -eval \
   -pretrained='./transgan_cifar10'
 ```
+<details>
+
+<summary>
+Run evaluation using multi-GPUs:
+</summary>
+
+
+```shell
+sh run_eval_multi.sh
+```
+or
+```shell
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
+python main_multi_gpu.py \
+    -cfg='./configs/transgan_cifar10.yaml' \
+    -dataset='cifar10' \
+    -batch_size=32 \
+    -data_path='/dataset/imagenet' \
+    -eval \
+    -pretrained='./transgan_cifar10'
+```
+
+</details>
+
 
 
 ## Training
@@ -86,16 +117,37 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg="transgan_cifar10.yaml" \
+  -cfg="./configs/transgan_cifar10.yaml" \
   -dataset='cifar10' \
   -batch_size=32 \
-  -pretrained='./transgan_cifar10'
 ```
+<details>
+
+<summary>
+Run evaluation using multi-GPUs:
+</summary>
+
+
+```shell
+sh run_train_multi.sh
+```
+or
+```shell
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
+python main_multi_gpu.py \
+    -cfg='./configs/transgan_cifar10.yaml' \
+    -dataset='cifar10' \
+    -batch_size=16 \
+    -data_path='/dataset/imagenet' \
+```
+
+</details>
+
 
 
 ## Visualization of Generated Images
 ### Generated Images after Training
-<img src="./assets/cifar_9_2.jpg" alt="drawing" width="60%" height="60%"/>
+<img src="./assets/cifar_9_2.jpg" alt="drawing" width="40%" height="40%"/>
 <figcaption align = "center">Generated Images from Cifar10 datasets</figcaption>
 
 ### Generated Images during Training 
@@ -103,12 +155,10 @@ python main_single_gpu.py \
 
 ## Reference
 ```
-@article{park2021styleformer,
-      title={Styleformer: Transformer based Generative Adversarial Networks with Style Vector}, 
-      author={Jeeseung Park and Younggeun Kim},
-      year={2021},
-      eprint={2106.07023},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
+@article{jiang2021transgan,
+  title={Transgan: Two transformers can make one strong gan},
+  author={Jiang, Yifan and Chang, Shiyu and Wang, Zhangyang},
+  journal={arXiv preprint arXiv:2102.07074},
+  year={2021}
 }
 ```
