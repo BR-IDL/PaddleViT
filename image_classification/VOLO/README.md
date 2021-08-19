@@ -7,9 +7,10 @@ The official pytorch implementation is [here](https://github.com/sail-sg/volo).
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 
-
+<p align="center">
 <img src="./volo.png" alt="drawing" width="100%" height="100%"/>
-<figcaption align = "center">VOLO Model Overview</figcaption>
+    <h4 align="center">VOLO Model Overview</h4>
+</p>
 
 ### Update 
 Update (2021-08-11): Code is released and ported weights are uploaded.
