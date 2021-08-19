@@ -7,9 +7,11 @@ The official TF implementation is [here](https://github.com/google-research/visi
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 
+<p align="center">
+<img src="./vit.png" alt="drawing" width="90%"/>
+<h4 align="center">ViT Model Overview</h4>
+</p>
 
-<img src="./vit.png" alt="drawing" width="100%"/>
-<figcaption align = "center">ViT Model Overview</figcaption>
 
 ### Update 
 Update (2021-08-11): Code is released and ported weights are uploaded.
