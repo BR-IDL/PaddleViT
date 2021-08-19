@@ -7,9 +7,11 @@ The official pytorch implementation is [here](https://github.com/whai362/PVT).
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 
+<p align="center">
+<img src="./pvtv2.png" alt="drawing" width="60%" height="60%"/>
+<h4 align="center">PVTv2 Model Overview</h4>
+</p>
 
-<img src="./pvtv2.png" alt="drawing" width="100%" height="100%"/>
-<figcaption align = "center">PVTv2 Model Overview</figcaption>
 
 ### Update 
 Update (2021-08-11): Code is released and ported weights are uploaded.
