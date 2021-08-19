@@ -25,36 +25,42 @@ _C.BASE = ['']
 
 _C.DATA = CN()
 _C.DATA.BATCH_SIZE = 32 # train batch_size for single GPU
-_C.DATA.BATCH_SIZE_EVAL = 8 # val batch_size for single GPU
+_C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'cifar10' # dataset name
-_C.DATA.IMG_SIZE = 32 # input image size
+_C.DATA.IMAGE_SIZE = 32 # input image size
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 2 # number of data loading threads 
 _C.DATA.GEN_BATCH_SIZE = 128 # the batch size of gen
 _C.DATA.DIS_BATCH_SIZE = 64
 _C.DATA.NUM_EVAL_IMAGES = 2000 # when calculate fid, default is 20000
 _C.DATA.DIFF_AUG = "" # when train the dis_net, have to choose the aug method
+_C.DATA.BATCH_SIZE_EVAL = 32 # val batch_size for single GPU
+_C.DATA.MAX_GEN_NUM = None # max num of generate images for validation
+_C.DATA.MAX_REAL_NUM = None # max num of real images for validation
 
 
 # model settings
 _C.MODEL = CN()
+_C.MODEL.TYPE = 'TransGAN'
+_C.MODEL.NAME = 'TransGAN'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
-_C.MODEL.NUM_CLASSES = 1000
+_C.MODEL.NUM_CLASSES = 10
 _C.MODEL.DROPOUT = 0.1
 
 # transformer settings
 _C.MODEL.TRANS = CN()
+_C.MODEL.TYPE = "transGAN"
 _C.MODEL.GEN_MODEL = "ViT_custom"
 _C.MODEL.DIS_MODEL = "ViT_custom_scale2"
 _C.MODEL.PATCH_SIZE = 2
-_C.MODEL.LATENT_DIM = 256 # nn.Linear's input dim in Generator
-_C.MODEL.GF_DIM = 1024 # equal embed_dim, decide the pos_embed in gen_net
-_C.MODEL.DF_DIM = 384 # equal embed_dim, decide the pos_embed in dis_net
+_C.MODEL.LATENT_DIM = 256 # Hidden dim
+_C.MODEL.GF_DIM = 1024
+_C.MODEL.DF_DIM = 384
 _C.MODEL.BOTTOM_WIDTH = 8 # decide the DisBlock's window_size
 _C.MODEL.FAED_IN = 0.0
 _C.MODEL.D_DEPTH = 3 # the depth of DisBlock
-_C.MODEL.G_DEPTH = "5,4,2" # the depth of the Block in each StageBlock
+_C.MODEL.G_DEPTH = "5,4,2" # the depth of the Block in StageBlock
 _C.MODEL.G_NORM = "ln" # the norm in gen_net
 _C.MODEL.D_NORM = "ln" # the norm in dis_net
 _C.MODEL.G_ACT = "gelu" # the activation in gen_net
@@ -76,6 +82,10 @@ _C.TRAIN.GRAD_CLIP = 1.0
 _C.TRAIN.ACCUM_ITER = 2 #1
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
+_C.TRAIN.LR_SCHEDULER.MILESTONES = "30, 60, 90" # only used in StepLRScheduler
+_C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
+_C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
+
 _C.TRAIN.OPTIMIZER = CN()
 _C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
@@ -88,10 +98,12 @@ _C.TAG = "default"
 _C.SAVE_FREQ = 10 # freq to save chpt
 _C.REPORT_FREQ = 100 # freq to logging info
 _C.VALIDATE_FREQ = 100 # freq to do validation
-_C.SEED = 0
+_C.SEED = 20
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
 _C.NGPUS = -1
+_C.LATENT_NORM = False
+_C.LR_DECAY = False
 
 def _update_config_from_file(config, cfg_file):
     config.defrost()
@@ -105,6 +117,7 @@ def _update_config_from_file(config, cfg_file):
     print('merging config from {}'.format(cfg_file))
     config.merge_from_file(cfg_file)
     config.freeze()
+
 
 def update_config(config, args):
     """Update config by ArgumentParser
@@ -140,7 +153,9 @@ def update_config(config, args):
     return config
 
 
-def get_config():
-    """Return a clone of config"""
+def get_config(cfg_file=None):
+    """Return a clone of config or load from yaml file"""
     config = _C.clone()
+    if cfg_file:
+        _update_config_from_file(config, cfg_file)
     return config
