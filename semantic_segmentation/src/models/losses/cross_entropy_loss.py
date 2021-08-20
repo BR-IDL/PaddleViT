@@ -3,41 +3,31 @@ from paddle import nn
 import paddle.nn.functional as F
 
 
-
 class CrossEntropyLoss(nn.Layer):
     """
     Implements the cross entropy loss function.
 
     Args:
-        weight (tuple|list|ndarray|Tensor, optional): A manual rescaling weight
-            given to each class. Its length must be equal to the number of classes.
-            Default ``None``.
-        ignore_index (int64, optional): Specifies a target value that is ignored
-            and does not contribute to the input gradient. Default ``255``.
-        top_k_percent_pixels (float, optional): the value lies in [0.0, 1.0]. When its value < 1.0, only compute the loss for
-            the top k percent pixels (e.g., the top 20% pixels). This is useful for hard pixel mining.
+        weight (ndarray, optional): A manual rescaling weight given to each 
+        class. Its length must be equal to the number of classes. Default ``None``.
+        ignore_index (int64, optional): The ignored class. 
     """
 
-    def __init__(self, weight=None, ignore_index=255, top_k_percent_pixels=1.0):
+    def __init__(self, weight=None, ignore_index=255):
         super(CrossEntropyLoss, self).__init__()
         if weight is not None:
             weight = paddle.to_tensor(weight, dtype='float32')
         self.weight = weight
         self.ignore_index = ignore_index
-        self.top_k_percent_pixels = top_k_percent_pixels
-        self.EPS = 1e-8
+        self.eps = 1e-8
 
     def forward(self, logit, label, semantic_weights=None):
         """
         Forward computation.
 
         Args:
-            logit (Tensor): Logit tensor, the data type is float32, float64. Shape is
-                (N, C), where C is number of classes, and if shape is more than 2D, this
-                is (N, C, D1, D2,..., Dk), k >= 1.
-            label (Tensor): Label tensor, the data type is int64. Shape is (N), where each
-                value is 0 <= label[i] <= C-1, and if shape is more than 2D, this is
-                (N, D1, D2,..., Dk), k >= 1.
+            logit (Tensor): Logit tensor. shape: (B,C,H,W)
+            label (Tensor): Label tensor, the data type is int64. shape: (B,H,W)
         """
         if self.weight is not None and logit.shape[1] != len(self.weight):
             raise ValueError(
@@ -46,8 +36,6 @@ class CrossEntropyLoss(nn.Layer):
 
         logit = paddle.transpose(logit, [0, 2, 3, 1])
         if self.weight is None:
-            print("logit.shape: ", logit.shape)
-            print("label.shape: ", label.shape)
             loss = F.cross_entropy(
                 logit, label, ignore_index=self.ignore_index, reduction='none')
         else:
@@ -65,15 +53,7 @@ class CrossEntropyLoss(nn.Layer):
         loss = loss * mask
         if semantic_weights is not None:
             loss = loss * semantic_weights
-
         label.stop_gradient = True
         mask.stop_gradient = True
-        if self.top_k_percent_pixels == 1.0:
-            avg_loss = paddle.mean(loss) / (paddle.mean(mask) + self.EPS)
-            return avg_loss
-
-        loss = loss.reshape((-1, ))
-        top_k_pixels = int(self.top_k_percent_pixels * loss.numel())
-        loss, _ = paddle.topk(loss, top_k_pixels)
-
-        return loss.mean()
+        avg_loss = paddle.mean(loss) / (paddle.mean(mask) + self.eps)
+        return avg_loss

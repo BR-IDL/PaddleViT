@@ -51,16 +51,16 @@ class ADE20K(Dataset):
     def __getitem__(self, idx):
         image_path, label_path = self.file_list[idx]
         if self.mode == 'val':
-            im, _ = self.transforms(im=image_path)
+            img, _ = self.transforms(img=image_path)
             label = np.asarray(Image.open(label_path))
             # The class 0 is ignored. And it will equal to 255 after
             # subtracted 1, because the dtype of label is uint8.
             label = label - 1
             label = label[np.newaxis, :, :]
-            return im, label
+            return img, label
         else:
-            im, label = self.transforms(im=image_path, label=label_path)
+            img, label = self.transforms(img=image_path, label=label_path)
             label = label - 1
             # Recover the ignore pixels adding by transform
             label[label == 254] = 255
-            return im, label
+            return img, label

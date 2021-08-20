@@ -4,11 +4,11 @@ from PIL import Image, ImageEnhance
 from scipy.ndimage.morphology import distance_transform_edt
 
 
-def normalize(im, mean, std):
-    im = im.astype(np.float32, copy=False) / 255.0
-    im -= mean
-    im /= std
-    return im
+def normalize(img, mean, std):
+    img = img.astype(np.float32, copy=False) / 255.0
+    img -= mean
+    img /= std
+    return img
 
 def imnormalize(img, mean, std):
     """Normalize an image with mean and std.
@@ -45,43 +45,43 @@ def imnormalize_(img, mean, std):
     cv2.multiply(img, stdinv, img)  # inplace
     return img
 
-def horizontal_flip(im):
-    if len(im.shape) == 3:
-        im = im[:, ::-1, :]
-    elif len(im.shape) == 2:
-        im = im[:, ::-1]
-    return im
+def horizontal_flip(img):
+    if len(img.shape) == 3:
+        img = img[:, ::-1, :]
+    elif len(img.shape) == 2:
+        img = img[:, ::-1]
+    return img
 
-def vertical_flip(im):
-    if len(im.shape) == 3:
-        im = im[::-1, :, :]
-    elif len(im.shape) == 2:
-        im = im[::-1, :]
-    return im
+def vertical_flip(img):
+    if len(img.shape) == 3:
+        img = img[::-1, :, :]
+    elif len(img.shape) == 2:
+        img = img[::-1, :]
+    return img
 
-def brightness(im, brightness_lower, brightness_upper):
+def brightness(img, brightness_lower, brightness_upper):
     brightness_delta = np.random.uniform(brightness_lower, brightness_upper)
-    im = ImageEnhance.Brightness(im).enhance(brightness_delta)
-    return im
+    img = ImageEnhance.Brightness(img).enhance(brightness_delta)
+    return img
 
-def contrast(im, contrast_lower, contrast_upper):
+def contrast(img, contrast_lower, contrast_upper):
     contrast_delta = np.random.uniform(contrast_lower, contrast_upper)
-    im = ImageEnhance.Contrast(im).enhance(contrast_delta)
-    return im
+    img = ImageEnhance.Contrast(img).enhance(contrast_delta)
+    return img
 
-def saturation(im, saturation_lower, saturation_upper):
+def saturation(img, saturation_lower, saturation_upper):
     saturation_delta = np.random.uniform(saturation_lower, saturation_upper)
-    im = ImageEnhance.Color(im).enhance(saturation_delta)
-    return im
+    img = ImageEnhance.Color(img).enhance(saturation_delta)
+    return img
 
-def hue(im, hue_lower, hue_upper):
+def hue(img, hue_lower, hue_upper):
     hue_delta = np.random.uniform(hue_lower, hue_upper)
-    im = np.array(im.convert('HSV'))
-    im[:, :, 0] = im[:, :, 0] + hue_delta
-    im = Image.fromarray(im, mode='HSV').convert('RGB')
-    return im
+    img = np.array(img.convert('HSV'))
+    img[:, :, 0] = img[:, :, 0] + hue_delta
+    img = Image.fromarray(img, mode='HSV').convert('RGB')
+    return img
 
-def rotate(im, rotate_lower, rotate_upper):
+def rotate(img, rotate_lower, rotate_upper):
     rotate_delta = np.random.uniform(rotate_lower, rotate_upper)
-    im = im.rotate(int(rotate_delta))
-    return im
+    img = img.rotate(int(rotate_delta))
+    return img

@@ -39,9 +39,9 @@ class Progbar(object):
 
         self._dynamic_display = ((hasattr(sys.stderr, 'isatty')
                                   and sys.stderr.isatty())
-                                 or 'ipykernel' in sys.modules
-                                 or 'posix' in sys.modules
-                                 or 'PYCHARM_HOSTED' in os.environ)
+                                  or 'ipykernel' in sys.modules
+                                  or 'posix' in sys.modules
+                                  or 'PYCHARM_HOSTED' in os.environ)
         self._total_width = 0
         self._seen_so_far = 0
         # We use a dict + list to avoid garbage collection
@@ -57,11 +57,12 @@ class Progbar(object):
 
         Args:
             current (int): Index of current step.
-            values (list): List of tuples: `(name, value_for_last_step)`. If `name` is in
-                `stateful_metrics`, `value_for_last_step` will be displayed as-is.
-                Else, an average of the metric over time will be displayed.
-            finalize (bool): Whether this is the last update for the progress bar. If
-                `None`, defaults to `current >= self.target`.
+            values (list): List of tuples: `(name, value_for_last_step)`. 
+            If `name` is in `stateful_metrics`, `value_for_last_step` will be 
+            displayed as-is. Else, an average of the metric over time will be 
+            displayed.
+            finalize (bool): Whether this is the last update for the progress bar.
+            If `None`, defaults to `current >= self.target`.
         """
 
         if finalize is None:

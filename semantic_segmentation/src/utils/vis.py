@@ -27,7 +27,6 @@ def visualize(img_path, pred, weight=0.6):
     vis_result = cv2.addWeighted(img, weight, pseudo_img, 1 - weight, 0)
     return vis_result
 
-
 def get_cityscapes_color_map():
     """
     Get the color map of Cityscapes dataset 

@@ -28,24 +28,20 @@ class CocoStuff(Dataset):
         self.mode = mode
         self.num_classes = num_classes
         self.ignore_index = 255
-
         if mode not in ['train', 'val']:
             raise ValueError("mode should be 'train', 'val',"
-                "but got {}.".format(mode))
-
+                             "but got {}.".format(mode))
         img_dir = os.path.join(self.dataset_root, 'images')
         label_dir = os.path.join(self.dataset_root, 'annotations')
         if self.dataset_root is None or not os.path.isdir(
                 self.dataset_root) or not os.path.isdir(
                     img_dir) or not os.path.isdir(label_dir):
             raise ValueError("The dataset is not Found or the folder structure"
-                "is nonconfoumance.")
+                             "is nonconfoumance.")
         label_files = sorted(
             glob.glob(os.path.join(label_dir, mode + '2017', '*.png')))
-
         img_files = sorted(
             glob.glob(os.path.join(img_dir, mode + '2017', '*.jpg')))
-
         self.file_list = [[
             img_path, label_path
         ] for img_path, label_path in zip(img_files, label_files)]

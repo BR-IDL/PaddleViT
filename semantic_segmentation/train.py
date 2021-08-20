@@ -86,7 +86,7 @@ def main():
                           max_scale_factor=2.0, 
                           scale_step_size=0.25),
         RandomPaddingCrop(crop_size=config.DATA.CROP_SIZE, 
-                          im_padding_value=(123.675, 116.28, 103.53), 
+                          img_padding_value=(123.675, 116.28, 103.53), 
                           label_padding_value=255),
         RandomHorizontalFlip(prob=0.5),
         RandomDistort(brightness_range=0.4, 
@@ -94,7 +94,7 @@ def main():
                       saturation_range=0.4),
         Normalize(mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375])
     ]
-    dataset_train = get_dataset(config, data_transform = transforms_train, mode = 'train')
+    dataset_train = get_dataset(config, data_transform=transforms_train, mode='train')
     batch_sampler = paddle.io.DistributedBatchSampler(
         dataset_train, 
         batch_size=config.DATA.BATCH_SIZE, 

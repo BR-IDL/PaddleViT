@@ -17,12 +17,14 @@ class Vaihingen(Dataset):
     Args:
         transforms (list): A list of image transformations.
         dataset_root (str, optional): The Vaihingen dataset directory. Default: None.
-        mode (str, optional): A subset of the entire dataset. It should be one of ('train', 'val'). Default: 'train'.
+        mode (str, optional): A subset of the entire dataset. It should be 
+        one of ('train', 'val'). Default: 'train'.
         num_classes (int): the number of classes
     """
 
     def __init__(self, transforms, dataset_root=None, mode='train', num_classes=6):
-        super(Vaihingen, self).__init__(transforms=transforms, num_classes=num_classes,
+        super(Vaihingen, self).__init__(
+            transforms=transforms, num_classes=num_classes, 
             dataset_root=dataset_root, mode=mode)
         self.dataset_root = dataset_root
         self.transforms = Compose(transforms)
@@ -33,12 +35,10 @@ class Vaihingen(Dataset):
         self.ignore_index = 255
 
         if mode not in ['train', 'val']:
-            raise ValueError(
-                "`mode` should be one of ('train', 'val') in Vaihingen dataset, but got {}.".format(mode))
-
+            raise ValueError("`mode` should be one of ('train', 'val') in "
+                             "Vaihingen dataset, but got {}.".format(mode))
         if self.transforms is None:
             raise ValueError("`transforms` is necessary, but it is None.")
-
         if mode == 'train':
             img_dir = os.path.join(self.dataset_root, 'images/training')
             label_dir = os.path.join(self.dataset_root, 'annotations/training')
@@ -56,16 +56,16 @@ class Vaihingen(Dataset):
     def __getitem__(self, idx):
         image_path, label_path = self.file_list[idx]
         if self.mode == 'val':
-            im, _ = self.transforms(im=image_path)
+            img, _ = self.transforms(img=image_path)
             label = np.asarray(Image.open(label_path))
             # The class 0 is ignored. And it will equal to 255 after
             # subtracted 1, because the dtype of label is uint8.
             label = label - 1
             label = label[np.newaxis, :, :]
-            return im, label
+            return img, label
         else:
-            im, label = self.transforms(im=image_path, label=label_path)
+            img, label = self.transforms(img=image_path, label=label_path)
             label = label - 1
             # Recover the ignore pixels adding by transform
             label[label == 254] = 255
-            return im, label
+            return img, label

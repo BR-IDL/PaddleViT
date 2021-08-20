@@ -36,13 +36,13 @@ class PascalContext(Dataset):
 
         if mode not in ['train', 'trainval', 'val']:
             raise ValueError("`mode` should be one of ('train', 'trainval', 'val')"
-                "in PascalContext dataset, but got {}.".format(mode))
+                             "in PascalContext dataset, but got {}.".format(mode))
 
         if self.dataset_root is None:
             raise ValueError("the path of this dataset is None")
         
-        image_set_dir = os.path.join(self.dataset_root, 'ImageSets', 
-            'SegmentationContext')
+        image_set_dir = os.path.join(
+            self.dataset_root, 'ImageSets', 'SegmentationContext')
 
         if mode == 'train':
             file_path = os.path.join(image_set_dir, 'train.txt')
@@ -53,7 +53,7 @@ class PascalContext(Dataset):
             file_path = os.path.join(image_set_dir, 'trainval.txt')
         print("file_path: ", file_path)
         if not os.path.exists(file_path):
-            raise RuntimeError("PASCAL-Context annotations are not ready, ")
+            raise RuntimeError("PASCAL-Context annotations are not ready.")
 
         img_dir = os.path.join(self.dataset_root, 'JPEGImages')
         label_dir = os.path.join(self.dataset_root, 'SegmentationClassContext')

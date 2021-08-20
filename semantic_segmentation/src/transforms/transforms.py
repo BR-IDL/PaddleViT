@@ -1,6 +1,6 @@
 import random
-import cv2
 import numpy as np
+import cv2
 from PIL import Image
 from paddle.vision.transforms import functional as F
 from src.transforms import functional
@@ -29,31 +29,31 @@ class Compose:
         self.transforms = transforms
         self.to_rgb = to_rgb
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         """
         Args:
-            im (str|np.ndarray): It is either image path or image object.
+            img (str|np.ndarray): It is either image path or image object.
             label (str|np.ndarray): It is either label path or label ndarray.
 
         Returns:
             (tuple). A tuple including image and label after transformation.
         """
-        if isinstance(im, str):
-            im = cv2.imread(im).astype('float32')
+        if isinstance(img, str):
+            img = cv2.imread(img).astype('float32')
         if isinstance(label, str):
             label = np.asarray(Image.open(label), dtype=np.uint8)
-        if im is None:
-            raise ValueError('Can\'t read The image file {}!'.format(im))
+        if img is None:
+            raise ValueError('Can\'t read The image file {}!'.format(img))
         if self.to_rgb:
-            cv2.cvtColor(im, cv2.COLOR_BGR2RGB,im)
+            cv2.cvtColor(img, cv2.COLOR_BGR2RGB,img)
 
         for op in self.transforms:
-            outputs = op(im, label)
-            im = outputs[0]
+            outputs = op(img, label)
+            img = outputs[0]
             if len(outputs) == 2:
                 label = outputs[1]
-        im = np.transpose(im, (2, 0, 1))
-        return (im, label)
+        img = np.transpose(img, (2, 0, 1))
+        return (img, label)
 
 
 class RandomHorizontalFlip:
@@ -67,15 +67,15 @@ class RandomHorizontalFlip:
     def __init__(self, prob=0.5):
         self.prob = prob
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         if random.random() < self.prob:
-            im = functional.horizontal_flip(im)
+            img = functional.horizontal_flip(img)
             if label is not None:
                 label = functional.horizontal_flip(label)
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
+            return (img, label)
 
 class RandomVerticalFlip:
     """
@@ -88,15 +88,15 @@ class RandomVerticalFlip:
     def __init__(self, prob=0.1):
         self.prob = prob
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         if random.random() < self.prob:
-            im = functional.vertical_flip(im)
+            img = functional.vertical_flip(img)
             if label is not None:
                 label = functional.vertical_flip(label)
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
+            return (img, label)
 
 class Resize:
     """
@@ -125,18 +125,18 @@ class Resize:
             assert target_size>0
         elif isinstance(target_size, list) or isinstance(target_size, tuple):
             if len(target_size) != 2:
-                raise ValueError(
-                    '`target_size` should include 2 elements, but it is {}'.format(target_size))
+                raise ValueError("`target_size` should include 2 elements, "
+                                 "but it is {}".format(target_size))
         else:
             raise TypeError(
                 "Type of `target_size` is invalid. It should be list or tuple, "
                 "but it is {}".format(type(target_size)))
         self.target_size = target_size
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         """
         Args:
-            im (np.ndarray): The Image data.
+            img (np.ndarray): The Image data.
             label (np.ndarray, optional): The label data. Default: None.
 
         Returns:
@@ -148,24 +148,24 @@ class Resize:
             ValueError: When the length of "im" shape is not 3.
         """
 
-        if not isinstance(im, np.ndarray):
+        if not isinstance(img, np.ndarray):
             raise TypeError("Resize: image type is not numpy.")
-        if len(im.shape) != 3:
+        if len(img.shape) != 3:
             raise ValueError('Resize: image is not 3-dimensional.')
         if self.interp == "RANDOM":
             interp = random.choice(list(self.interp_dict.keys()))
         else:
             interp = self.interp
         if not self.keep_ori_size:
-            im = F.resize(im, self.target_size, 'bilinear')
+            img = F.resize(img, self.target_size, 'bilinear')
 
         if label is not None:
             label = F.resize(label, self.target_size,'nearest')
 
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
+            return (img, label)
 
 class ResizeStepScaling:
     """
@@ -186,21 +186,22 @@ class ResizeStepScaling:
                  scale_step_size=0.25):
         if min_scale_factor > max_scale_factor:
             raise ValueError(
-                'min_scale_factor must be less than max_scale_factor, '
-                'but they are {} and {}.'.format(min_scale_factor,
+                "min_scale_factor must be less than max_scale_factor, "
+                "but they are {} and {}.".format(min_scale_factor,
                                                  max_scale_factor))
         self.min_scale_factor = min_scale_factor
         self.max_scale_factor = max_scale_factor
         self.scale_step_size = scale_step_size
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         """
         Args:
-            im (np.ndarray): The Image data.
+            img (np.ndarray): The Image data.
             label (np.ndarray, optional): The label data. Default: None.
 
         Returns:
-            (tuple). When label is None, it returns (im, ), otherwise it returns (im, label).
+            (tuple). When label is None, it returns (img, ), otherwise it 
+            returns (img, label).
         """
 
         if self.min_scale_factor == self.max_scale_factor:
@@ -212,32 +213,32 @@ class ResizeStepScaling:
 
         else:
             # option 1
-            scale_factor = np.random.random_sample() * (self.max_scale_factor - self.min_scale_factor) + self.min_scale_factor
+            scale_factor = np.random.random_sample() * (self.max_scale_factor 
+                - self.min_scale_factor) + self.min_scale_factor
             # option 2
             #num_steps = int((self.max_scale_factor - self.min_scale_factor) /self.scale_step_size + 1)
             #scale_factors = np.linspace(self.min_scale_factor,self.max_scale_factor, num_steps).tolist()
             #np.random.shuffle(scale_factors)
             #scale_factor = scale_factors[0]
-        w = int(round(scale_factor * im.shape[1]))
-        h = int(round(scale_factor * im.shape[0]))
-
-        im = F.resize(im, (w, h), 'bilinear')
+        w = int(round(scale_factor * img.shape[1]))
+        h = int(round(scale_factor * img.shape[0]))
+        img = F.resize(img, (w, h), 'bilinear')
         if label is not None:
             label = F.resize(label, (w, h), 'nearest')
-
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
-
+            return (img, label)
 
 class Normalize:
     """
     Normalize an image.
 
     Args:
-        mean (list, optional): The mean value of a data set. Default: [0.5, 0.5, 0.5].
-        std (list, optional): The standard deviation of a data set. Default: [0.5, 0.5, 0.5].
+        mean (list, optional): The mean value of a dataset. Default: 
+        [0.5, 0.5, 0.5].
+        std (list, optional): The standard deviation of a dataset. Default: 
+        [0.5, 0.5, 0.5].
 
     Raises:
         ValueError: When mean/std is not list or any value in std is 0.
@@ -248,37 +249,33 @@ class Normalize:
         self.std = std
         if not (isinstance(self.mean, (list, tuple))
                 and isinstance(self.std, (list, tuple))):
-            raise ValueError(
-                "{}: input type is invalid. It should be list or tuple".format(
-                    self))
+            raise ValueError("{}: input type is invalid. It should be list or "
+                             "tuple".format(self))
         from functools import reduce
         if reduce(lambda x, y: x * y, self.std) == 0:
             raise ValueError('{}: std is invalid!'.format(self))
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         """
         Args:
-            im (np.ndarray): The Image data.
+            img (np.ndarray): The Image data.
             label (np.ndarray, optional): The label data. Default: None.
 
         Returns:
-            (tuple). When label is None, it returns (im, ), otherwise it returns (im, label).
+            (tuple). When label is None, it returns (img, ), otherwise it 
+            returns (im, label).
         """
 
         mean = np.array(self.mean).reshape(1,-1)
         std = np.array(self.std).reshape(1,-1)
-
         # option 1
-        #im = functional.normalize(im, mean, std)
-
+        #img = functional.normalize(img, mean, std)
         # option 2
-        im = functional.imnormalize(im, mean, std)
-
+        img = functional.imnormalize(img, mean, std)
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
-
+            return (img, label)
 
 class Padding:
     """
@@ -287,8 +284,9 @@ class Padding:
     Args:
         target_size (list|tuple): The target size after padding.
         im_padding_value (list, optional): The padding value of raw image.
-            Default: [127.5, 127.5, 127.5].
-        label_padding_value (int, optional): The padding value of annotation image. Default: 255.
+        Default: [127.5, 127.5, 127.5].
+        label_padding_value (int, optional): The padding value of annotation
+        image. Default: 255.
 
     Raises:
         TypeError: When target_size is neither list nor tuple.
@@ -302,75 +300,64 @@ class Padding:
         if isinstance(target_size, list) or isinstance(target_size, tuple):
             if len(target_size) != 2:
                 raise ValueError(
-                    '`target_size` should include 2 elements, but it is {}'.
+                    "`target_size` should include 2 elements, but it is {}".
                     format(target_size))
         else:
-            raise TypeError(
-                "Type of target_size is invalid. It should be list or tuple, now is {}"
-                .format(type(target_size)))
+            raise TypeError("Type of target_size is invalid. It should be list "
+                            "or tuple, now is {}".format(type(target_size)))
         self.target_size = target_size
         self.im_padding_value = im_padding_value
         self.label_padding_value = label_padding_value
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         """
         Args:
-            im (np.ndarray): The Image data.
+            img (np.ndarray): The Image data.
             label (np.ndarray, optional): The label data. Default: None.
 
         Returns:
-            (tuple). When label is None, it returns (im, ), otherwise it returns (im, label).
+            (tuple): When label is None, it returns (img, ), otherwise it 
+            returns (img, label).
         """
 
-        im_height, im_width = im.shape[0], im.shape[1]
+        img_height, img_width = img.shape[0], img.shape[1]
         if isinstance(self.target_size, int):
             target_height = self.target_size
             target_width = self.target_size
         else:
             target_height = self.target_size[1]
             target_width = self.target_size[0]
-        pad_height = target_height - im_height
-        pad_width = target_width - im_width
+        pad_height = target_height - img_height
+        pad_width = target_width - img_width
         if pad_height < 0 or pad_width < 0:
-            raise ValueError(
-                'The size of image should be less than `target_size`, but the size of image ({}, {}) is larger than `target_size` ({}, {})'
-                .format(im_width, im_height, target_width, target_height))
+            raise ValueError("The size of image should be less than `target_size`, "
+                             "but the size of image ({}, {}) is larger than `target_size` "
+                             "({}, {})".format(img_width, img_height, target_width, target_height))
         else:
-            im = cv2.copyMakeBorder(
-                im,
-                0,
-                pad_height,
-                0,
-                pad_width,
-                cv2.BORDER_CONSTANT,
+            img = cv2.copyMakeBorder(
+                img, 0, pad_height, 0, pad_width, cv2.BORDER_CONSTANT,
                 value=self.im_padding_value)
             if label is not None:
                 label = cv2.copyMakeBorder(
-                    label,
-                    0,
-                    pad_height,
-                    0,
-                    pad_width,
-                    cv2.BORDER_CONSTANT,
+                    label, 0, pad_height, 0, pad_width, cv2.BORDER_CONSTANT,
                     value=self.label_padding_value)
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
-
-
-
+            return (img, label)
 
 class RandomPaddingCrop:
     """
-    Crop a sub-image from a raw image and annotation image randomly. If the target cropping size
-    is larger than original image, then the bottom-right padding will be added.
+    Crop a sub-image from a raw image and annotation image randomly. If the 
+    target cropping siz is larger than original image, then the bottom-right 
+    padding will be added.
 
     Args:
-        crop_size (tuple, optional): The target cropping size. Default: (512, 512).
-        im_padding_value (list, optional): The padding value of raw image.
-            Default: [127.5, 127.5, 127.5].
-        label_padding_value (int, optional): The padding value of annotation image. Default: 255.
+        crop_size (tuple, optional): The target cropping size.
+        img_padding_value (list, optional): The padding value of raw image.
+        Default: (123.675, 116.28, 103.53).
+        label_padding_value (int, optional): The padding value of annotation
+        image. Default: 255.
 
     Raises:
         TypeError: When crop_size is neither list nor tuple.
@@ -379,29 +366,30 @@ class RandomPaddingCrop:
 
     def __init__(self,
                  crop_size=(512, 512),
-                 im_padding_value=(123.675, 116.28, 103.53),
+                 img_padding_value=(123.675, 116.28, 103.53),
                  label_padding_value=255):
         if isinstance(crop_size, list) or isinstance(crop_size, tuple):
             if len(crop_size) != 2:
-                raise ValueError(
-                    'Type of `crop_size` is list or tuple. It should include 2 elements, but it is {}'
-                    .format(crop_size))
+                raise ValueError("Type of `crop_size` is list or tuple. It "
+                                 "should include 2 elements, but it is {}"
+                                 .format(crop_size))
         else:
-            raise TypeError(
-                "The type of `crop_size` is invalid. It should be list or tuple, but it is {}"
-                .format(type(crop_size)))
+            raise TypeError("The type of `crop_size` is invalid. It should "
+                            "be list or tuple, but it is {}"
+                            .format(type(crop_size)))
         self.crop_size = crop_size
-        self.im_padding_value = im_padding_value
+        self.img_padding_value = img_padding_value
         self.label_padding_value = label_padding_value
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         """
         Args:
-            im (np.ndarray): The Image data.
+            img (np.ndarray): The Image data.
             label (np.ndarray, optional): The label data. Default: None.
 
         Returns:
-            (tuple). When label is None, it returns (im, ), otherwise it returns (im, label).
+            (tuple): When label is None, it returns (img, ), otherwise it 
+            returns (img, label).
         """
 
         if isinstance(self.crop_size, int):
@@ -411,38 +399,39 @@ class RandomPaddingCrop:
             crop_width = self.crop_size[0]
             crop_height = self.crop_size[1]
 
-        img_height = im.shape[0]
-        img_width = im.shape[1]
+        img_height = img.shape[0]
+        img_width = img.shape[1]
 
         if img_height == crop_height and img_width == crop_width:
             if label is None:
-                return (im, )
+                return (img, )
             else:
-                return (im, label)
+                return (img, label)
         else:
             pad_height = max(crop_height - img_height, 0)
             pad_width = max(crop_width - img_width, 0)
             if (pad_height > 0 or pad_width > 0):
-                im = cv2.copyMakeBorder(im, 0, pad_height, 0, pad_width,
-                    cv2.BORDER_CONSTANT, value=self.im_padding_value)
+                img = cv2.copyMakeBorder(
+                    img, 0, pad_height, 0, pad_width, cv2.BORDER_CONSTANT, 
+                    value=self.img_padding_value)
                 if label is not None:
-                    label = cv2.copyMakeBorder(label, 0, pad_height, 0, pad_width,
-                        cv2.BORDER_CONSTANT, value=self.label_padding_value)
-                img_height = im.shape[0]
-                img_width = im.shape[1]
+                    label = cv2.copyMakeBorder(
+                        label, 0, pad_height, 0, pad_width, cv2.BORDER_CONSTANT, 
+                        value=self.label_padding_value)
+                img_height = img.shape[0]
+                img_width = img.shape[1]
 
             if crop_height > 0 and crop_width > 0:
                 h_off = np.random.randint(img_height - crop_height + 1)
                 w_off = np.random.randint(img_width - crop_width + 1)
 
-                im = im[h_off:(crop_height + h_off), w_off:(w_off + crop_width), :]
+                img = img[h_off:(crop_height + h_off), w_off:(w_off + crop_width), :]
                 if label is not None:
                     label = label[h_off:(crop_height + h_off), w_off:(w_off + crop_width)]
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
-
+            return (img, label)
 
 class RandomBlur:
     """
@@ -455,14 +444,15 @@ class RandomBlur:
     def __init__(self, prob=0.1):
         self.prob = prob
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         """
         Args:
-            im (np.ndarray): The Image data.
+            img (np.ndarray): The Image data.
             label (np.ndarray, optional): The label data. Default: None.
 
         Returns:
-            (tuple). When label is None, it returns (im, ), otherwise it returns (im, label).
+            (tuple). When label is None, it returns (img, ), otherwise 
+            it returns (img, label).
         """
 
         if self.prob <= 0:
@@ -478,13 +468,12 @@ class RandomBlur:
                     radius = radius + 1
                 if radius > 9:
                     radius = 9
-                im = cv2.GaussianBlur(im, (radius, radius), 0, 0)
+                img = cv2.GaussianBlur(img, (radius, radius), 0, 0)
 
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
-
+            return (img, label)
 
 class RandomRotation:
     """
@@ -492,31 +481,33 @@ class RandomRotation:
 
     Args:
         max_rotation (float, optional): The maximum rotation degree. Default: 15.
-        im_padding_value (list, optional): The padding value of raw image.
-            Default: [127.5, 127.5, 127.5].
-        label_padding_value (int, optional): The padding value of annotation image. Default: 255.
+        img_padding_value (list, optional): The padding value of raw image.
+        Default: [127.5, 127.5, 127.5].
+        label_padding_value (int, optional): The padding value of annotation
+        image. Default: 255.
     """
 
     def __init__(self,
                  max_rotation=15,
-                 im_padding_value=(127.5, 127.5, 127.5),
+                 img_padding_value=(127.5, 127.5, 127.5),
                  label_padding_value=255):
         self.max_rotation = max_rotation
-        self.im_padding_value = im_padding_value
+        self.img_padding_value = img_padding_value
         self.label_padding_value = label_padding_value
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         """
         Args:
-            im (np.ndarray): The Image data.
+            img (np.ndarray): The Image data.
             label (np.ndarray, optional): The label data. Default: None.
 
         Returns:
-            (tuple). When label is None, it returns (im, ), otherwise it returns (im, label).
+            (tuple): When label is None, it returns (img, ), otherwise 
+            it returns (img, label).
         """
 
         if self.max_rotation > 0:
-            (h, w) = im.shape[:2]
+            (h, w) = img.shape[:2]
             do_rotation = np.random.uniform(-self.max_rotation,
                                             self.max_rotation)
             pc = (w // 2, h // 2)
@@ -531,43 +522,34 @@ class RandomRotation:
             r[0, 2] += (nw / 2) - cx
             r[1, 2] += (nh / 2) - cy
             dsize = (nw, nh)
-            im = cv2.warpAffine(
-                im,
-                r,
-                dsize=dsize,
-                flags=cv2.INTER_LINEAR,
+            img = cv2.warpAffine(
+                img, r, dsize=dsize, flags=cv2.INTER_LINEAR, 
                 borderMode=cv2.BORDER_CONSTANT,
                 borderValue=self.im_padding_value)
             if label is not None:
                 label = cv2.warpAffine(
-                    label,
-                    r,
-                    dsize=dsize,
-                    flags=cv2.INTER_NEAREST,
+                    label, r, dsize=dsize, flags=cv2.INTER_NEAREST,
                     borderMode=cv2.BORDER_CONSTANT,
                     borderValue=self.label_padding_value)
 
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
-
-
-
+            return (img, label)
 
 class RandomDistort:
     """
     Distort an image with random configurations.
 
     Args:
-        brightness_range (float, optional): A range of brightness. Default: 0.5.
-        brightness_prob (float, optional): A probability of adjusting brightness. Default: 0.5.
-        contrast_range (float, optional): A range of contrast. Default: 0.5.
-        contrast_prob (float, optional): A probability of adjusting contrast. Default: 0.5.
-        saturation_range (float, optional): A range of saturation. Default: 0.5.
-        saturation_prob (float, optional): A probability of adjusting saturation. Default: 0.5.
-        hue_range (int, optional): A range of hue. Default: 18.
-        hue_prob (float, optional): A probability of adjusting hue. Default: 0.5.
+        brightness_range (float, optional): The range of brightness.
+        brightness_prob (float, optional): The probability of adjusting brightness.
+        contrast_range (float, optional): The range of contrast.
+        contrast_prob (float, optional): The probability of adjusting contrast.
+        saturation_range (float, optional): The range of saturation.
+        saturation_prob (float, optional): The probability of adjusting saturation.
+        hue_range (int, optional): The range of hue.
+        hue_prob (float, optional): The probability of adjusting hue.
     """
 
     def __init__(self,
@@ -588,14 +570,15 @@ class RandomDistort:
         self.hue_range = hue_range
         self.hue_prob = hue_prob
 
-    def __call__(self, im, label=None):
+    def __call__(self, img, label=None):
         """
         Args:
-            im (np.ndarray): The Image data.
+            img (np.ndarray): The Image data.
             label (np.ndarray, optional): The label data. Default: None.
 
         Returns:
-            (tuple). When label is None, it returns (im, ), otherwise it returns (im, label).
+            (tuple): When label is None, it returns (img, ), 
+            otherwise it returns (img, label).
         """
 
         brightness_lower = 1 - self.brightness_range
@@ -635,16 +618,16 @@ class RandomDistort:
             'saturation': self.saturation_prob,
             'hue': self.hue_prob
         }
-        im = im.astype('uint8')
-        im = Image.fromarray(im)
+        img = img.astype('uint8')
+        img = Image.fromarray(img)
         for id in range(len(ops)):
             params = params_dict[ops[id].__name__]
             prob = prob_dict[ops[id].__name__]
-            params['im'] = im
+            params['img'] = img
             if np.random.uniform(0, 1) < prob:
-                im = ops[id](**params)
-        im = np.asarray(im).astype('float32')
+                img = ops[id](**params)
+        img = np.asarray(img).astype('float32')
         if label is None:
-            return (im, )
+            return (img, )
         else:
-            return (im, label)
+            return (img, label)
