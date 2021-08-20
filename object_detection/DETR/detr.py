@@ -45,7 +45,7 @@ def build_detr(config):
     weight_dict = {'loss_ce': 1, 'loss_bbox': 5, 'loss_giou': 2}
     if aux_loss:
         aux_weight_dict = {}
-        for i in range(config.MODEL.NUM_DECODER_LAYERS-1):
+        for i in range(config.MODEL.TRANS.NUM_DECODER_LAYERS-1):
             aux_weight_dict.update({k + f'_{i}': v for k, v in weight_dict.items()})
         weight_dict.update(aux_weight_dict)
 
