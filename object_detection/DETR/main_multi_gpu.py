@@ -351,6 +351,8 @@ def main_worker(*args):
         train_loss, train_acc, train_time = train(dataloader=dataloader_train,
                                                   model=model,
                                                   criterion=criterion,
+                                                  postprocessors=postprocessors,
+                                                  base_ds=base_ds,
                                                   optimizer=optimizer,
                                                   epoch=epoch,
                                                   total_batch=total_batch_train,
