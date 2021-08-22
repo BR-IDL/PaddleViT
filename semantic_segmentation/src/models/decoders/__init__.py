@@ -6,3 +6,4 @@ from .fcn_head import FCNHead
 from .dpt_head import DPTHead
 from .segmentor_head import MaskTransformer
 from .segmentor_head import LinearDecoder
+from .trans2seg_head import *
