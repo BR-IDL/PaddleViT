@@ -74,7 +74,7 @@ def hflip(image, target):
         boxes = target['boxes'] # n x 4
         boxes = boxes.index_select(paddle.to_tensor([2, 1, 0, 3]), axis=1)
         boxes = boxes * paddle.to_tensor(
-                [-1, 1, -1, 1]) + paddle.to_tensor([w, 0, w, 0])
+            [-1, 1, -1, 1], dtype='float32') + paddle.to_tensor([w, 0, w, 0], dtype='float32')
         target['boxes'] = boxes
 
     if 'masks' in target:
