@@ -64,7 +64,7 @@ class HungarianMatcher(nn.Layer):
             # conver back to numpy for temp use
             out_bbox = out_bbox.cpu().numpy()
             tgt_bbox = tgt_bbox.cpu().numpy()
-            cost_bbox = distance.cdist(out_bbox, tgt_bbox,'minkowski', p=1)
+            cost_bbox = distance.cdist(out_bbox, tgt_bbox,'minkowski', p=1).astype('float32')
             cost_bbox = paddle.to_tensor(cost_bbox)
 
             out_bbox = paddle.to_tensor(out_bbox)
