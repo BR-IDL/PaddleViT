@@ -64,7 +64,7 @@ class HungarianMatcher(nn.Layer):
             # conver back to numpy for temp use
             out_bbox = out_bbox.cpu().numpy()
             tgt_bbox = tgt_bbox.cpu().numpy()
-            cost_bbox = distance.cdist(out_bbox, tgt_bbox,'minkowski', p=1).astype('float32')
+            cost_bbox = distance.cdist(out_bbox, tgt_bbox, 'minkowski', p=1).astype('float32')
             cost_bbox = paddle.to_tensor(cost_bbox)
 
             out_bbox = paddle.to_tensor(out_bbox)
@@ -80,10 +80,23 @@ class HungarianMatcher(nn.Layer):
 
             C = self.cost_bbox * cost_bbox + self.cost_class * cost_class + self.cost_giou * cost_giou
             C = C.reshape([batch_size, num_queries, -1])
-            
             sizes = [len(v['boxes']) for v in targets]
-            #print(sizes)
-            idxs = [linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))]
+
+            # When sizes = [0, n] (no boxes)
+            # pytorch C.split(sizes, -1)[0][0] returns: tensor([], size=(100, 0))
+            # but paddle C.split(sizes, -1)[0][0] raises error
+            # original code in pytorch:
+            #idxs = [linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))]
+            # We fix for paddle:
+            idxs = []
+            for i, c in enumerate(C.split(sizes, -1)):
+                if c.shape[-1] == 0:
+                    idx = linear_sum_assignment(paddle.empty((c.shape[1], c.shape[2])))
+                else:
+                    idx = linear_sum_assignment(c[i])
+                idxs.append(idx)
+
+
             #SAME
             #print('idxs=', idxs)
 
