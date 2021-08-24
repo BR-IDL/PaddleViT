@@ -34,7 +34,7 @@ def crop(image, target, region):
     if 'boxes' in target:
         boxes = target['boxes']
         max_size = paddle.to_tensor([h, w], dtype='float32')
-        cropped_boxes = boxes - paddle.to_tensor([j, i, j, i])
+        cropped_boxes = boxes - paddle.to_tensor([j, i, j, i], dtype='float32')
         cropped_boxes = paddle.minimum(cropped_boxes.reshape([-1, 2, 2]), max_size)
         cropped_boxes = cropped_boxes.clip(min=0)
         area = (cropped_boxes[:, 1, :] - cropped_boxes[:, 0, :]).prod(axis=1)
