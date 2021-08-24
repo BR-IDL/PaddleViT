@@ -3,6 +3,7 @@ from .upernet import UperNet
 from .dpt import DPTSeg
 from .segmentor import Segmentor
 from .trans2seg import Trans2Seg
+from .segformer import Segformer
 
 
 def get_model(config):
@@ -16,4 +17,6 @@ def get_model(config):
        model = Segmentor(config)
     elif 'Trans2Seg' in config.MODEL.NAME:
        model = Trans2Seg(config)
+    elif "Segformer" in config.MODEL.NAME:
+       model = Segformer(config)
     return model

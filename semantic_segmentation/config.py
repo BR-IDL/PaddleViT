@@ -38,11 +38,11 @@ _C.MODEL.BACKBONE_SCALE = 1.0
 _C.MODEL.TRANS = CN()
 _C.MODEL.TRANS.HYBRID = False       #TODO: implement
 _C.MODEL.TRANS.PATCH_GRID = None    #TODO: implement
-_C.MODEL.TRANS.PATCH_SIZE = 16
+_C.MODEL.TRANS.PATCH_SIZE = None    # 16
 _C.MODEL.TRANS.HIDDEN_SIZE = 768  # 768(Base), 1024(Large), 1280(Huge)
 _C.MODEL.TRANS.MLP_RATIO = 4
 _C.MODEL.TRANS.NUM_HEADS = None      # 12(Base), 16(Large), 16(Huge)
-_C.MODEL.TRANS.NUM_LAYERS = 12     # 12(Base), 24(Large), 32(Huge)
+_C.MODEL.TRANS.NUM_LAYERS = None     # 12(Base), 24(Large), 32(Huge)
 _C.MODEL.TRANS.QKV_BIAS = True
 
 ## special settings for SwinTransformer
@@ -57,6 +57,10 @@ _C.MODEL.TRANS.PATCH_NORM = True
 #_C.MODEL.TRANS.DROP_PATH_RATE = None   
 _C.MODEL.TRANS.KEEP_CLS_TOKEN = False
 
+## special settings for Segformer
+_C.MODEL.TRANS.NUM_STAGES = 4
+_C.MODEL.TRANS.STRIDES = [4, 2, 2, 2]
+_C.MODEL.TRANS.SR_RATIOS = [8, 4, 2, 1]
 
 # MLA Decoder setting
 _C.MODEL.MLA = CN()
@@ -111,6 +115,12 @@ _C.MODEL.DPT.READOUT_PROCESS = "project"
 #Segmenter Head Settings
 _C.MODEL.SEGMENTER = CN()
 _C.MODEL.SEGMENTER.NUM_LAYERS = 2
+
+#Segformer Head Settings
+_C.MODEL.SEGFORMER = CN()
+_C.MODEL.SEGFORMER.IN_CHANNELS = [32, 64, 160, 256]
+_C.MODEL.SEGFORMER.CHANNELS = 256
+_C.MODEL.SEGFORMER.ALIGN_CORNERS = False
 
 # training settings
 _C.TRAIN = CN()
