@@ -50,14 +50,44 @@ class HungarianMatcher(nn.Layer):
             out_prob = F.softmax(outputs['pred_logits'].flatten(0, 1), -1) # [batch_size*num_queries, num_classes]
             out_bbox = outputs['pred_boxes'].flatten(0, 1) #[batch_size*num_queries, 4]
 
-            tgt_idx = paddle.concat([v['labels'] for v in targets])
-            tgt_bbox = paddle.concat([v['boxes'] for v in targets])
+            #print('-------targets----------')
+            #print(targets)
+            # torch no error: torch.cat([torch.empty([0])]), returns tensor([])
+            # paddle raise error: paddle.concat([paddle.empty([0])]), raise ValueError 
+            #print([v['labels'] for v in targets])
+
+            idx_list = []
+            for v in targets:
+                if not v['labels'].is_empty():
+                    idx_list.append(v['labels'])
+            if len(idx_list) > 0:
+                tgt_idx = paddle.concat(idx_list)
+                tgt_idx = tgt_idx.astype('int32')
+            else:
+                tgt_idx = paddle.empty([0], dtype='int32')
+                    
+            #tgt_idx = paddle.concat([v['labels'] for v in targets])
+            #tgt_idx = tgt_idx.astype('int32')
+
+            #tgt_bbox = paddle.concat([v['boxes'] for v in targets])
+            bbox_list = []
+            for v in targets:
+                if not v['boxes'].is_empty():
+                    bbox_list.append(v['boxes'])
+            if len(bbox_list) > 0:
+                tgt_bbox = paddle.concat(bbox_list)
+            else:
+                tgt_bbox = paddle.empty([0], dtype='float32')
+
             
             ## SAME
             #print('out_bbox', out_bbox, out_bbox.shape)
             #print('tgt_bbox,', tgt_bbox, tgt_bbox.shape)
 
-            cost_class = -paddle.index_select(out_prob, tgt_idx, axis=1)
+            if tgt_idx.is_empty():
+                cost_class = 0
+            else:
+                cost_class = -paddle.index_select(out_prob, tgt_idx, axis=1)
             #print('cost_class = ', cost_class)
 
             #cost_bbox = paddle.cdist(out_bbox, tgt_bbox, p=1) # TODO: impl paddle cdist for tensors
