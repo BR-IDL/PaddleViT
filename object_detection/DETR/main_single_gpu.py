@@ -17,6 +17,8 @@ import os
 import time
 import logging
 import argparse
+import random
+import numpy as np
 import paddle
 import paddle.nn.functional as F
 import paddle.distributed as dist
@@ -165,6 +167,10 @@ def validate(dataloader, model, criterion, postprocessors, base_ds, total_batch,
 def main():
     # 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
+    seed = config.SEED
+    paddle.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
     # TODO: set backbone_lr
     # 1. Create model and criterion
     model, criterion, postprocessors = build_detr(config)
@@ -210,7 +216,6 @@ def main():
 
     # 5. Define optimizer
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
-        print(config.TRAIN.GRAD_CLIP)
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
         else:
