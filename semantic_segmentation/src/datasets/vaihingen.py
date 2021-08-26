@@ -51,7 +51,6 @@ class Vaihingen(Dataset):
             img_path = os.path.join(img_dir, img_files[i])
             label_path = os.path.join(label_dir, label_files[i])
             self.file_list.append([img_path, label_path])
-            print([img_path, label_path])
 
     def __getitem__(self, idx):
         image_path, label_path = self.file_list[idx]

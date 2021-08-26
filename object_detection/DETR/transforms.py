@@ -34,7 +34,7 @@ def crop(image, target, region):
     if 'boxes' in target:
         boxes = target['boxes']
         max_size = paddle.to_tensor([h, w], dtype='float32')
-        cropped_boxes = boxes - paddle.to_tensor([j, i, j, i])
+        cropped_boxes = boxes - paddle.to_tensor([j, i, j, i], dtype='float32') # box are (x1, y1, x2, y2)
         cropped_boxes = paddle.minimum(cropped_boxes.reshape([-1, 2, 2]), max_size)
         cropped_boxes = cropped_boxes.clip(min=0)
         area = (cropped_boxes[:, 1, :] - cropped_boxes[:, 0, :]).prod(axis=1)
@@ -46,17 +46,24 @@ def crop(image, target, region):
         target['masks'] = target['masks'][:, i:i + h, j:j + w]
         fields.append('masks')
 
+
+    # remove the boxe or mask if the area is zero
     if 'boxes' in target or 'masks' in target:
         if 'boxes' in target:
             cropped_boxes = target['boxes'].reshape((-1, 2, 2))
-            keep = paddle.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], axis=1)
+            # FIXME: select indices where x2 > x1 and y2 > y1
+            # This paddle api will raise error in current env
+            #keep = paddle.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], axis=1)
+            # Instead we use numpy for temp fix
+            cropped_boxes = cropped_boxes.cpu().numpy()
+            keep  = np.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], axis=1)
+            #keep = keep.cpu().numpy()
         else:
             keep = target['masks'].flatten(1).any(1)
+            keep = keep.cpu().numpy()
 
-        keep = keep.cpu().numpy()
-        keep_idx = np.where(keep)[0]
+        keep_idx = np.where(keep)[0].astype('int32')
         keep = paddle.to_tensor(keep_idx)
-        boxes = boxes.index_select(keep, axis=0)
 
         for field in fields:
             target[field] = target[field].index_select(keep, axis=0)
@@ -72,9 +79,9 @@ def hflip(image, target):
     target = target.copy()
     if 'boxes' in target:
         boxes = target['boxes'] # n x 4
-        boxes = boxes.index_select(paddle.to_tensor([2, 1, 0, 3]), axis=1)
+        boxes = boxes.index_select(paddle.to_tensor([2, 1, 0, 3], dtype='int32'), axis=1)
         boxes = boxes * paddle.to_tensor(
-                [-1, 1, -1, 1]) + paddle.to_tensor([w, 0, w, 0])
+                [-1, 1, -1, 1], dtype='float32') + paddle.to_tensor([w, 0, w, 0], dtype='float32')
         target['boxes'] = boxes
 
     if 'masks' in target:
@@ -90,12 +97,17 @@ def resize(image, target, size, max_size=None):
             image_size: tuple/list of image width and height
             size: length of shorter side of scaled image
             max_size: max length of longer side of scaled image
+        Returns:
+            size: output image size in (h, w) order.
         """
         w, h = image_size
         if max_size is not None:
             min_original_size = float(min(w, h))
             max_original_size = float(max(w, h))
+            # size is shorter side and keep the aspect ratio, if the longer side
+            # is larger than the max_size
             if max_original_size / min_original_size * size > max_size:
+                # longer side is the max_size, shorter side size is:
                 size = int(round(max_size * min_original_size / max_original_size))
         if (w <= h and w == size) or (h <= w and h == size):
             return (h, w)
@@ -110,14 +122,28 @@ def resize(image, target, size, max_size=None):
         return (oh, ow)
 
     def get_size(image_size, size, max_size=None):
+        """"get new image size to rescale
+        Args:
+            image_size: tuple, Pillow image size, (width, height)
+            size: int or list/tuple, if size is list or tuple, return
+            this size as the new image size to rescale, if size is a
+            single int, then compute the new image size by this size
+            (as shorter side) and max_size (as longer side), also keep
+            the same aspect_ratio as original image.
+            max_size: longest side max size of new image size
+        Return:
+            size: tuple, (width, height)
+        """
         if isinstance(size, (list, tuple)):
             return size[::-1]
         else:
             return get_size_with_aspect_ratio(image_size, size, max_size)
 
+    # STEP0: get new image size
     size = get_size(image.size, size, max_size)
-    rescaled_image = T.resize(image, size)
-
+    # STEP1: resize image with new size
+    rescaled_image = T.resize(image, size) # here size is (h, w)
+    # STEP2: resize targets
     if target is None:
         return rescaled_image, None
 
@@ -127,9 +153,10 @@ def resize(image, target, size, max_size=None):
     target = target.copy()
     if 'boxes' in target:
         boxes = target['boxes']
-        #print('id ====== ', target['image_id'])
-        #print('boxes ==========', boxes)
-        scaled_boxes = boxes * paddle.to_tensor([ratio_width, ratio_height, ratio_width, ratio_height])
+        if boxes.shape[0] == 0: # empty boxes
+            scaled_boxes = boxes
+        else: # this line works well in pytorch, but not in paddle
+            scaled_boxes = boxes * paddle.to_tensor([ratio_width, ratio_height, ratio_width, ratio_height])
         target['boxes'] = scaled_boxes
 
     if 'area' in target:
@@ -292,7 +319,7 @@ class Normalize():
             return image, None
         target = target.copy()
         h, w = image.shape[-2:]
-        if 'boxes' in target:
+        if 'boxes' in target and target['boxes'].shape[0] != 0:
             boxes = target['boxes']
             boxes = box_xyxy_to_cxcywh(boxes)
             boxes = boxes / paddle.to_tensor([w, h, w, h], dtype='float32')
@@ -307,7 +334,6 @@ class Compose():
     def __call__(self, image, target):
         for t in self.transforms:
             image, target = t(image, target)
-            #print(image)
         return image, target
 
     def __repr__(self):

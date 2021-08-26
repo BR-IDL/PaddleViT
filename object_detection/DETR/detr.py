@@ -45,7 +45,7 @@ def build_detr(config):
     weight_dict = {'loss_ce': 1, 'loss_bbox': 5, 'loss_giou': 2}
     if aux_loss:
         aux_weight_dict = {}
-        for i in range(config.MODEL.NUM_DECODER_LAYERS-1):
+        for i in range(config.MODEL.TRANS.NUM_DECODER_LAYERS-1):
             aux_weight_dict.update({k + f'_{i}': v for k, v in weight_dict.items()})
         weight_dict.update(aux_weight_dict)
 
@@ -182,7 +182,7 @@ class SetCriterion(nn.Layer):
         #print('src_logits: ', src_logits)
         #print('target_classes: ', target_classes)
         #print('self.empty_weight: ', self.empty_weight)
-        loss_ce = F.cross_entropy(src_logits, target_classes, self.empty_weight)
+        loss_ce = F.cross_entropy(input=src_logits, label=target_classes, weight=self.empty_weight)
         #loss_ce = F.cross_entropy(src_logits.transpose([0, 2, 1]), target_classes, self.empty_weight)
         losses = {'loss_ce': loss_ce}
 

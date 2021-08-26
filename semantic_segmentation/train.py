@@ -47,6 +47,25 @@ def optimizer_setting(model, config):
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
             weight_decay=config.TRAIN.WEIGHT_DECAY,
             momentum=config.TRAIN.OPTIMIZER.MOMENTUM)
+    elif config.TRAIN.OPTIMIZER.NAME == "ADAM":
+        optimizer = paddle.optimizer.Adam(
+            parameters=model.parameters(),
+            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            epsilon=config.TRAIN.OPTIMIZER.EPS,
+            weight_decay=config.TRAIN.WEIGHT_DECAY)
+    elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
+        if config.TRAIN.GRAD_CLIP:
+            clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
+        else:
+            clip = None
+        optimizer = paddle.optimizer.AdamW(
+            parameters=model.parameters(),
+            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
+            beta1=config.TRAIN.OPTIMIZER.BETAS[0],
+            beta2=config.TRAIN.OPTIMIZER.BETAS[1],
+            epsilon=config.TRAIN.OPTIMIZER.EPS,
+            grad_clip=clip)
     else:
         raise NotImplementedError(
             f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")

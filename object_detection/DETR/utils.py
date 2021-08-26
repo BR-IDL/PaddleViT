@@ -50,15 +50,20 @@ def collate_fn(batch):
     and generate the corresponding mask, so that the whole batch is of the same size.
 
     """
+    # eliminate invalid data (where boxes is [] tensor)
+    old_batch_len = len(batch)
+    batch = [x for x in batch if x[1]['boxes'].shape[0] != 0]
+    # try refill empty sample by other sample in current batch
+    #print('batch len = ', old_batch_len)
+    #print('new batch len = ', len(batch))
+    new_batch_len = len(batch)
+    for i in range(new_batch_len, old_batch_len):
+        batch.append(copy.deepcopy(batch[i%new_batch_len]))
+    #print('batch = ', batch)
+    #print('filled batch len = ', len(batch))
+    batch = list(zip(*batch)) # batch[0]: data tensor, batch[1]: targets dict
 
-    batch = list(zip(*batch))
-    #print(batch[0])
-    #print('===================')
-    # add pad mask to each image in batch, so that different image sizes in batch is supported
-    #print(batch[0])
     batch[0] = nested_tensor_from_tensor_list(batch[0])
-    #print(batch[0])
-    #print(batch[0].tensors[0])
     return tuple(batch)
 
 
@@ -96,7 +101,7 @@ def nested_tensor_from_tensor_list(tensor_list):
     batch_shape = [len(tensor_list)] + max_size # len is the num of images in this batch
     b, c, h, w  = batch_shape
     dtype = tensor_list[0].dtype
-    tensor = paddle.zeros(batch_shape, dtype=dtype)
+    data_tensor = paddle.zeros(batch_shape, dtype=dtype)
     mask = paddle.ones((b, h, w), dtype='int32')
     # zip has broadcast for tensor and mask
     #print('===== inside nested_tensor_from_tensor_list')
@@ -108,10 +113,11 @@ def nested_tensor_from_tensor_list(tensor_list):
         s0 = tensor_list[idx].shape[0]
         s1 = tensor_list[idx].shape[1]
         s2 = tensor_list[idx].shape[2]
-        tensor[idx, : s0, : s1, : s2] = tensor_list[idx]
+        # direct set value raise error in current env, we use numpy to bypass
+        data_tensor[idx, : s0, : s1, : s2] = tensor_list[idx].cpu().numpy()
+        #data_tensor[idx, : s0, : s1, : s2] = tensor_list[idx]
         mask[idx, : s1, : s2] = 0
-    #print(mask)
-    return NestedTensor(tensor, mask)
+    return NestedTensor(data_tensor, mask)
 
 
 def reduce_dict(input_dict, average=True):

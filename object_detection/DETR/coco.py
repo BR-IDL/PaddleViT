@@ -33,10 +33,10 @@ class CocoDetection(paddle.io.Dataset):
     Transform(preprocessing) can be applied in __getitem__ method.
 
     Attributes:
-        img_folder: path where coco images is stored, e.g.{COCO_PATH}/train2017
-        anno_file: path where annotation json file is stored
+        img_folder: str, file path of coco images, e.g.{COCO_PATH}/train2017
+        anno_file: str, path where annotation json file is stored
         transforms: transforms applied on data, see make_coco_transform for details
-        return_masks: if true, return coco masks, default: False (now only support False)
+        return_masks: bool, if true, return coco masks, default: False (now only support False)
     """
 
     def __init__(self, img_folder, anno_file, transforms, return_masks):
@@ -47,7 +47,8 @@ class CocoDetection(paddle.io.Dataset):
         # remove ids where anno has no bboxes
         self.ids = self._remove_images_without_annotations(ids)
         self._transforms = transforms
-        # prepare filters labels and put image and label to paddle tensors
+        # Prepare has __call__ method takes image and target as inputs
+        # and applies label filtering and output image and label as paddle tensors
         self.prepare = ConvertCocoPolysToMasks(return_masks)
         self.root = img_folder
 
@@ -127,14 +128,21 @@ class ConvertCocoPolysToMasks():
         anno = [obj for obj in anno if 'iscrowd' not in obj or obj['iscrowd'] == 0]
 
         boxes = [obj['bbox'] for obj in anno]
-        boxes = paddle.to_tensor(boxes, dtype='float32')
+        # Temp Fix: do it in numpy to skip paddl cuda error
+        boxes = np.array(boxes)
         boxes = boxes.reshape([-1, 4])
-        boxes[:, 2:] += boxes[:, :2]
-        boxes[:, 0::2].clip_(min=0, max=w)
-        boxes[:, 1::2].clip_(min=0, max=h)
+        boxes[:, 2:] += boxes[:, :2] # (n, (x1, y1, x2, y2))
+
+        boxes = paddle.to_tensor(boxes, dtype='float32')
+        # paddle indexing may cause cuda errors
+        #boxes = boxes.reshape([-1, 4]) # (n, (x1, y1, box_w, box_h))
+        #boxes[:, 2:] += boxes[:, :2] # (n, (x1, y1, x2, y2))
+
+        boxes[:, 0::2].clip_(min=0, max=w) # clip bbox inside image
+        boxes[:, 1::2].clip_(min=0, max=h) # clip bbox inside image
 
         classes = [obj['category_id'] for obj in anno]
-        classes = paddle.to_tensor(classes, dtype='int64')
+        classes = paddle.to_tensor(classes, dtype='float32')
 
         if self.return_masks:
             segmentations = [obj['segmentation'] for obj in anno]
@@ -151,7 +159,7 @@ class ConvertCocoPolysToMasks():
         #TODO: should be replaced with paddle buildin logical ops in the future
         boxes_tmp = boxes.cpu().numpy()
         keep = (boxes_tmp[:, 3] > boxes_tmp[:, 1]) & (boxes_tmp[:, 2] > boxes_tmp[:, 0])
-        keep_idx = np.where(keep)[0]
+        keep_idx = np.where(keep)[0].astype('int32')
         keep = paddle.to_tensor(keep_idx)
 
         boxes = boxes.index_select(keep, axis=0)

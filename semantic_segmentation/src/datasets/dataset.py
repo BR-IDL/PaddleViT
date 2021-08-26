@@ -61,7 +61,7 @@ class Dataset(paddle.io.Dataset):
             return img, image_path
         elif self.mode == 'val':
             img, _ = self.transforms(img=image_path)
-            label = np.asarray(Image.open(label_path))
+            label = np.asarray(Image.open(label_path).convert('P'))
             label = label[np.newaxis, :, :]
             return img, label
         else:
