@@ -23,6 +23,11 @@ class Segmentor(nn.Layer):
             self.decoder = LinearDecoder(config)
         self.norm = nn.LayerNorm(config.MODEL.TRANS.HIDDEN_SIZE)
         self.token_num = 2 if 'DeiT' in config.MODEL.ENCODER.TYPE else 1
+        self.init__decoder_lr_coef(config.TRAIN.DECODER_LR_COEF)
+
+    def init__decoder_lr_coef(self, coef):
+        for param in self.decoder.parameters():
+            param.optimize_attr['learning_rate'] = coef
 
     def forward(self, x):
         x = self.encoder(x)

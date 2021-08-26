@@ -21,3 +21,7 @@ class DPTSeg(nn.Layer):
         features = self.backbone(inputs)
         out = self.head(features)
         return out
+
+    def init__decoder_lr_coef(self, coef):
+        for param in self.head.parameters():
+            param.optimize_attr['learning_rate'] = coef
