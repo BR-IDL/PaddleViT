@@ -2,6 +2,9 @@
 
 The official pytorch implementation is [here](https://github.com/NVlabs/SegFormer)
 
+## Framework
+<img src="../../figure/segformer_framework.png" alt="drawing" width="100%" height="100%"/>
+
 ## Model Zoo ##
 ### ADE20K ###
 |Model      | Backbone  | Batch_size | Iteration | mIoU (ss) | mIoU (ms+flip) | Backbone_checkpoint | Model_checkpoint     |     ConfigFile  |

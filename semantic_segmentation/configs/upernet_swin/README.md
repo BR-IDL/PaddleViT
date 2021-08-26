@@ -2,7 +2,7 @@
 
 The official pytorch implementation is [here](https://github.com/SwinTransformer/Swin-Transformer-Semantic-Segmentation)
 ## Framework
-<img src="../../figure/upernet_swin.png" alt="drawing" width="100%" height="100%"/>
+<img src="../../figure/upernet_swin_framework.png" alt="drawing" width="100%" height="100%"/>
 
 ## Model Zoo ##
 ### ADE20K ###
