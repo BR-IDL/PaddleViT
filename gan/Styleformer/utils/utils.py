@@ -199,6 +199,7 @@ def gradient_penalty(discriminator, real, fake):
     return gp
 
 def DiffAugment(x, policy='', channels_first=True, affine=None):
+    "method based on Revisiting unreasonable effectiveness of data in deep learning era"
     if policy:
         if not channels_first:
             x = x.transpose(0, 3, 1, 2)
