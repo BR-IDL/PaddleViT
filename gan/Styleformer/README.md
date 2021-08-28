@@ -15,12 +15,12 @@ This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree
 Update (2021-08-17): Code is released and ported weights are uploaded.
 
 ## Models Zoo
-| Model                          | FID | Image Size | Crop_pct | Interpolation | Link        |
+| Model                          | FID | Image Size | Crop_pct | Interpolation | Model        |
 |--------------------------------|-----|------------|----------|---------------|--------------|
-| styleformer_cifar10            |2.73 | 32         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1VnldZcvh-d7fAoC0_U3tVW8U3InhtuB8/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12hIzNLKpNJpAC31QwdtuiA)(7cg2)  |
-| styleformer_stl10              |15.65| 48         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1IGxpGLmCq74JBEfrjTq_m9hSEif3R5dZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/16m3lZA00-oJOryTNYP64pQ)(8pus)|
-| styleformer_celeba             |3.32 | 64         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1Ux4zNmkFUa6mAZsMbvSBGpxfSdTok0wn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1zDC_3YUWmdsxM1FUDEQuuQ)(ymh7) |
-| styleformer_lsun               | 9.68 | 128        | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1kMX9vHhNKkTjzxRBAnBji5yV1B-fgfsi/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1PM4D-eH2ITU6vKgAAMNY5w)(ue28)|
+| styleformer_cifar10            |2.73 | 32         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1iW76QmwbYz6GeAPQn8vKvsG0GvFdhV4T/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Ax7BNEr1T19vgVjXG3rW7g)(ztky)  |
+| styleformer_stl10              |15.65| 48         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/15p785y9eP1TeoqUcHPbwFPh98WNof7nw/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1rSORxMYAiGkLQZ4zTA2jcg)(i973)|
+| styleformer_celeba             |3.32 | 64         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1_YauwZN1osvINCboVk2VJMscrf-8KlQc/view?usp=sharing)/[baidu](https://pan.baidu.com/s/16NetcPxLQF9C_Zlp1SpkLw)(fh5s) |
+| styleformer_lsun               | 9.68 | 128        | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1i5kNzWK04ippFSmrmcAPMItkO0OFukTd/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1jTS9ExAMz5H2lhue4NMV2A)(158t)|
 > *The results are evaluated on Cifar10, STL10, Celeba and LSUNchurch dataset, using **fid50k_full** metric.
 ## Notebooks
 We provide a few notebooks in aistudio to help you get started:
