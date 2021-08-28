@@ -29,6 +29,7 @@ from generator import Generator
 from discriminator import StyleGANv2Discriminator
 from utils.utils import AverageMeter
 from utils.utils import WarmupCosineScheduler
+from utils.utils import gradient_penalty
 from utils.utils import all_gather
 from config import get_config
 from config import update_config
@@ -77,44 +78,6 @@ file_handler = logging.FileHandler(os.path.join(config.SAVE, 'log.txt'))
 file_handler.setFormatter(logging.Formatter(log_format))
 logger.addHandler(file_handler)
 logger.info(f'config= {config}')
-
-
-# GP
-def gradient_penalty(discriminator, real, fake):
-    """gradient penalty"""
-    # BATCH_SIZE,C,H,W = real.shape
-    # 该OP返回数值服从范围[min, max)内均匀分布的随机Tensor，形状为 shape，数据类型为 dtype。
-    #  epsilon ∼ U[0, 1].
-    epsilon = paddle.randn((real.shape[0], 1, 1, 1)).cuda()
-    # 将epsilon扩展到real形状大小
-    # x_hat = real * epsilon + fake * (1 - epsilon) 插值后的图片
-    interpolated_images = paddle.to_tensor((real * epsilon + fake * (1 - epsilon)),
-                                           stop_gradient=False)
-    # 插值后的图片计算判别器得分
-    mixed_scores = discriminator(interpolated_images)
-    # print(mixed_scores)
-    #fake=paddle.to_tensor(paddle.ones((real.shape[0], 1)), stop_gradient=True).cuda()
-    fake = paddle.ones((real.shape[0], 1))
-    # 计算关于插值图的混合梯度
-    # paddle. grad (outputs, inputs, grad_outputs=None, retain_graph=None, create_graph=False,
-        #only_inputs=True, allow_unused=False, no_grad_vars=None )
-    # 对于每个 inputs ，计算所有 outputs 相对于其的梯度和
-    gradient = paddle.grad(
-        inputs=interpolated_images,
-        outputs=mixed_scores,
-        grad_outputs=fake,
-        create_graph=True,
-        retain_graph=True,
-        only_inputs=True)[0]
-    # 做渐变点试图，把gradient展平
-    gradient = paddle.reshape(gradient, (gradient.shape[0], -1))
-    # L2 norm,计算范数
-    # paddle.norm:该OP将计算给定Tensor的矩阵范数（Frobenius 范数）和向量范数（向量1范数、2范数、或者通常的p范数）.
-    gradient_norm = gradient.norm(2, axis=1)
-    # 计算gradient_penalty
-    gp = paddle.mean((gradient_norm - 1) ** 2)
-    return gp
-
 
 def train(dataloader,
           gen,
@@ -388,20 +351,22 @@ def main_worker(*args):
     if config.MODEL.PRETRAINED:
         assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams')
         model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
-        gen.set_dict(model_state)
+        gen.set_dict(model_state["gen_state_dict"])
+        dis.set_dict(model_state["dis_state_dict"])
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
+    if config.MODEL.RESUME:
+        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
+        # load model weights
+        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
+        gen.set_dict(model_state["gen_state_dict"])
+        dis.set_dict(model_state["dis_state_dict"])
+        # load optimizer
+        opt_state = paddle.load(config.MODEL.RESUME + '.pdopt')
+        gen_optimizer.set_state_dict(opt_state["gen_state_dict"])
+        dis_optimizer.set_state_dict(opt_state["dis_state_dict"])
+        logger.info(f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
 
-    if config.MODEL.RESUME and os.path.isfile(
-            config.MODEL.RESUME+'.pdparams') and os.path.isfile(
-                config.MODEL.RESUME+'.pdopt'):
-        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
-        gen.set_dict(model_state)
-        gen_opt_state = paddle.load(config.MODEL.RESUME+'_gen.pdopt')
-        gen_optimizer.set_state_dict(gen_opt_state)
-        dis_opt_state = paddle.load(config.MODEL.RESUME+'_dis.pdopt')
-        dis_optimizer.set_state_dict(dis_opt_state)
-        logger.info(
-            f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
     # 7. Validation
     if config.EVAL:
         logger.info('----- Start Validating')
@@ -417,6 +382,7 @@ def main_worker(*args):
             debug_steps=config.REPORT_FREQ)
         logger.info(f" ----- FID: {fid_score:.4f}, time: {val_time:.2f}")
         return
+
     # 8. Start training and validation
     logging.info(f"Start training from epoch {last_epoch+1}.")
     for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
@@ -456,13 +422,12 @@ def main_worker(*args):
             if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
                 model_path = os.path.join(
                     config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
-                paddle.save(gen.state_dict(), model_path + '.pdparams')
-                paddle.save(gen_optimizer.state_dict(), model_path + "_gen.pdopt")
-                paddle.save(dis_optimizer.state_dict(), model_path + "_dis.pdopt")
+                paddle.save({"gen_state_dict":gen.state_dict(),
+                            "dis_state_dict":dis.state_dict()}, model_path + '.pdparams')
+                paddle.save({"gen_state_dict":gen_optimizer.state_dict(),
+                            "dis_state_dict":dis_optimizer.state_dict()}, model_path + '.pdopt')
                 logger.info(f"----- Save model: {model_path}.pdparams")
-                logger.info(f"----- Save gen optim: {model_path}_gen.pdopt")
-                logger.info(f"----- Save dis optim: {model_path}_dis.pdopt")
-
+                logger.info(f"----- Save optim: {model_path}.pdopt")
 
 def main():
     dataset_train = get_dataset(config, mode='train')
