@@ -64,7 +64,7 @@ PPViT uses this [Git branching model](http://nvie.com/posts/a-successful-git-bra
       $ git push origin my-cool-stuff
       ```
 
-      The push allows you to create a pull request, requesting owners of this [official repo](https://github.com/xperzy/PPViT) to pull your change into the official one.
+      The push allows you to create a pull request, requesting owners of this [official repo](https://github.com/BR-IDL/PaddleViT) to pull your change into the official one.
 
    2. To create a `Pull Request`, please follow [these steps](https://help.github.com/articles/creating-a-pull-request/).
 
