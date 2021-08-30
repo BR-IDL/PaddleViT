@@ -1,7 +1,7 @@
 # PaddleViT-GAN: Visual Transformer Models for GAN
 PaddlePaddle training/validation code and pretrained models for **GAN**.
 
-This implementation is part of [PaddleViT](https://github.com/xperzy/PPViT/tree/master) project.
+This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT) project.
 
 ## Update 
 Update (2021-08-25): Init readme uploaded.
@@ -9,8 +9,8 @@ Update (2021-08-25): Init readme uploaded.
 ## Quick Start
 
  The following links are provided for the code and detail usage of each model architecture:
-1. **[Styleformer](https://github.com/xperzy/PPViT/tree/develop/gan/Styleformer)**
-2. **[TransGAN](https://github.com/xperzy/PPViT/tree/develop/gan/transGAN)**
+1. **[Styleformer](./Styleformer)**
+2. **[TransGAN](./transGAN)**
 
 
 ## Installation
@@ -88,24 +88,24 @@ The output images are stored in `-out_folder` path.
 
 ## Basic Concepts
 PaddleViT image classification module is developed in separate folders for each model with similar structure. Each implementation is around 3 type of classes and 2 types of scripts:
-1. **Model classes** such as **[ViT_custom.py](https://github.com/xperzy/PPViT/blob/develop/gan/transGAN/models/ViT_custom.py)**, in which the core *transformer model* and related methods are defined.
+1. **Model classes** such as **[ViT_custom.py](./transGAN/models/ViT_custom.py)**, in which the core *transformer model* and related methods are defined.
    
-2. **Dataset classes** such as **[dataset.py](https://github.com/xperzy/PPViT/blob/develop/gan/transGAN/datasets.py)**, in which the dataset, dataloader, data transforms are defined. We provided flexible implementations for you to customize the data loading scheme. Both single GPU and multi-GPU loading are supported.
+2. **Dataset classes** such as **[dataset.py](./gan/transGAN/datasets.py)**, in which the dataset, dataloader, data transforms are defined. We provided flexible implementations for you to customize the data loading scheme. Both single GPU and multi-GPU loading are supported.
    
-3. **Config classes** such as **[config.py](https://github.com/xperzy/PPViT/blob/develop/gan/transGAN/config.py)**, in which the model and training/validation configurations are defined. Usually, you don't need to change the items in the configuration, we provide updating configs by python `arguments` or `.yaml` config file. You can see [here](https://github.com/xperzy/PPViT/blob/develop/docs/ppvit-config.md) for details of our configuration design and usage.
+3. **Config classes** such as **[config.py](./gan/transGAN/config.py)**, in which the model and training/validation configurations are defined. Usually, you don't need to change the items in the configuration, we provide updating configs by python `arguments` or `.yaml` config file. You can see [here](../docs/ppvit-config.md) for details of our configuration design and usage.
    
-4. **main scripts** such as **[main_single_gpu.py](https://github.com/xperzy/PPViT/blob/develop/gan/transGAN/main_single_gpu.py)**, in which the whole training/validation procedures are defined. The major steps of training or validation are provided, such as logging, loading/saving models, finetuning, etc. Multi-GPU is also supported and implemented in separate python script `main_multi_gpu.py`.
+4. **main scripts** such as **[main_single_gpu.py](./transGAN/main_single_gpu.py)**, in which the whole training/validation procedures are defined. The major steps of training or validation are provided, such as logging, loading/saving models, finetuning, etc. Multi-GPU is also supported and implemented in separate python script `main_multi_gpu.py`.
    
-5. **run scripts** such as **[run_eval_cifar.sh](https://github.com/xperzy/PPViT/blob/develop/gan/transGAN/run_eval_cifar.sh)**, in which the shell command for running python script with specific configs and arguments are defined.
+5. **run scripts** such as **[run_eval_cifar.sh](./transGAN/run_eval_cifar.sh)**, in which the shell command for running python script with specific configs and arguments are defined.
    
 
 ## Model Architectures
 
 PaddleViT now provides the following **transfomer based models**:
-1. **[TransGAN](https://github.com/xperzy/PPViT/tree/develop/gan/transGAN)** (from Seoul National University and NUUA), released with paper [TransGAN: Two Pure Transformers Can Make One Strong GAN, and That Can Scale Up](https://arxiv.org/abs/2102.07074), by Yifan Jiang, Shiyu Chang, Zhangyang Wang.
-2. **[Styleformer](https://github.com/xperzy/PPViT/tree/develop/gan/Styleformer)** (from Facebook and Sorbonne), released with paper [Styleformer: Transformer based Generative Adversarial Networks with Style Vector](https://arxiv.org/abs/2106.07023), by Jeeseung Park, Younggeun Kim.
+1. **[TransGAN](./transGAN)** (from Seoul National University and NUUA), released with paper [TransGAN: Two Pure Transformers Can Make One Strong GAN, and That Can Scale Up](https://arxiv.org/abs/2102.07074), by Yifan Jiang, Shiyu Chang, Zhangyang Wang.
+2. **[Styleformer](./Styleformer)** (from Facebook and Sorbonne), released with paper [Styleformer: Transformer based Generative Adversarial Networks with Style Vector](https://arxiv.org/abs/2106.07023), by Jeeseung Park, Younggeun Kim.
 
 
 
 ## Contact
-If you have any questions, please create an [issue](https://github.com/xperzy/PPViT/issues) on our Github.
+If you have any questions, please create an [issue](https://github.com/BR-IDL/PaddleViT/issues) on our Github.
