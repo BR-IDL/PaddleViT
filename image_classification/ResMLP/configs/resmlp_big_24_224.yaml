@@ -1,0 +1,11 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: ResMLP
+    NAME: resmlp_big_24_224
+    MIXER:
+        PATCH_SIZE: 8
+        HIDDEN_SIZE: 768
+        NUM_LAYERS: 24
+

@@ -1,0 +1,13 @@
+DATA:
+    IMAGE_SIZE: 32
+    DATASET: 'cifar10'
+    MAX_GEN_NUM: 50000
+    MAX_REAL_NUM: None
+MODEL:
+    TYPE: TransGAN
+    NAME: TransGAN
+    NUM_CLASSES: 10
+    GEN_MODEL: "ViT_custom"
+    DIS_MODEL: "ViT_custom_scale2"
+
+

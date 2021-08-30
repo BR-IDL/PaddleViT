@@ -1,0 +1,54 @@
+DATA:
+    BATCH_SIZE: 2  # per GPU [total bs is set to 8 or 16]
+    BATCH_SIZE_VAL: 1  # per GPU
+    DATASET: 'ADE20K' # dataset name
+    DATA_PATH: '/home/aistudio/data/ADEChallengeData2016'
+    CROP_SIZE: (512,512)  # input_size (training)
+    NUM_CLASSES: 150
+MODEL:
+    NAME: 'Segformer'
+    ENCODER:
+        TYPE: 'MixVisionTransformer'
+        OUT_INDICES: [0,1,2,3]
+    PRETRAINED: None
+    DECODER_TYPE: 'SegformerHead'
+    SEGFORMER:
+        IN_CHANNELS: [64, 128, 320, 512]     # BO is half of B1-B5
+        CHANNELS: 256
+        ALIGN_CORNERS: False
+    TRANS:
+        IN_CHANNELS: 3
+        EMBED_DIM: 64               # BO is half of B1-B5
+        NUM_STAGES: 4 
+        NUM_LAYERS: [3, 6, 40, 3]    # BO-B5 differs
+        NUM_HEADS: [1, 2, 5, 8]
+        PATCH_SIZE: [7, 3, 3, 3]
+        STRIDES: [4, 2, 2, 2]
+        SR_RATIOS: [8, 4, 2, 1]
+        HIDDEN_SIZE: 768 
+        MLP_RATIO: 4             
+        QKV_BIAS: True
+    DROPOUT: 0.0
+    ATTENTION_DROPOUT: 0.0
+    DROP_PATH: 0.1
+
+TRAIN:
+    BASE_LR: 0.00006
+    END_LR: 0.0
+    DECODER_LR_COEF: 10.0
+    GRAD_CLIP: 1.0
+    ITERS: 2000
+    WEIGHT_DECAY: 0.01
+    POWER: 1.0
+    DECAY_STEPS: 2000
+    LR_SCHEDULER:
+        NAME: 'PolynomialDecay'
+    OPTIMIZER:
+        NAME: 'AdamW'
+        MOMENTUM: 0.9
+VAL:
+    MULTI_SCALES_VAL: False
+    IMAGE_BASE_SIZE: 512                                                                                                                                                                                            
+    CROP_SIZE: [512, 512]
+    STRIDE_SIZE: [512, 512]
+SAVE_DIR: "./output/segformer_mit-b5_512x512_160k_ade20k"

@@ -104,7 +104,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
-env/
+#env/
 venv/
 ENV/
 env.bak/
@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# segmentation
+./segmentation/output
+./segmentation/log
+*.pdparams
+*.pdopt
+./segmentation/pytorch_2_paddle.py
+./segmentation/readme.txt 
+setr.py.bak
+
+

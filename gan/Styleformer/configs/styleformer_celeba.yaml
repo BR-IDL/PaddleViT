@@ -1,0 +1,13 @@
+DATA:
+    IMAGE_SIZE: 64
+    MAX_GEN_NUM: 50000
+    MAX_REAL_NUM: None
+MODEL:
+    TYPE: Styleformer
+    NAME: Styleformer_Linformer
+    NUM_CLASSES: 10177
+    GEN:
+        RESOLUTION: 8
+        NUM_LAYERS: [1,2,1,1]
+        G_DICT: [1024,256,64,64]
+        LINFORMER: True

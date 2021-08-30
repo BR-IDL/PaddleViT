@@ -1,0 +1,14 @@
+DATA:
+    IMAGE_SIZE: 48
+    MAX_GEN_NUM: 50000
+    MAX_REAL_NUM: None
+MODEL:
+    TYPE: Styleformer
+    NAME: Styleformer_Medium
+    NUM_CLASSES: 1 # unlabeled data, all class 0
+    GEN:
+        RESOLUTION: 12
+        NUM_LAYERS: [1,3,3]
+        G_DICT: [1024,256,64]
+
+

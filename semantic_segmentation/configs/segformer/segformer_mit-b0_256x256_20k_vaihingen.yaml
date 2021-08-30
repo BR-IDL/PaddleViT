@@ -1,0 +1,59 @@
+DATA:
+    BATCH_SIZE: 2  # per GPU [total bs is set to 8 or 16]
+    BATCH_SIZE_VAL: 1  # per GPU
+    DATASET: 'Vaihingen' # dataset name
+    DATA_PATH: 'G:\Datasets\Vaihingen'
+    CROP_SIZE: (256,256)  # input_size (training)
+    NUM_CLASSES: 6
+MODEL:
+    NAME: 'Segformer'
+    ENCODER:
+        TYPE: 'MixVisionTransformer'
+        OUT_INDICES: [0,1,2,3]
+    PRETRAINED: None
+    DECODER_TYPE: 'SegformerHead'
+    SEGFORMER:
+        IN_CHANNELS: [32, 64, 160, 256]     # BO is half of B1-B5
+        CHANNELS: 256
+        ALIGN_CORNERS: False
+    TRANS:
+        IN_CHANNELS: 3
+        EMBED_DIM: 32               # BO is half of B1-B5
+        NUM_STAGES: 4 
+        NUM_LAYERS: [2, 2, 2, 2]    # BO-B5 differs
+        NUM_HEADS: [1, 2, 5, 8]
+        PATCH_SIZE: [7, 3, 3, 3]
+        STRIDES: [4, 2, 2, 2]
+        SR_RATIOS: [8, 4, 2, 1]
+        HIDDEN_SIZE: 768 
+        MLP_RATIO: 4             
+        QKV_BIAS: True
+    DROPOUT: 0.0
+    ATTENTION_DROPOUT: 0.0
+    DROP_PATH: 0.1
+
+TRAIN:
+    BASE_LR: 0.00006
+    END_LR: 0.0
+    DECODER_LR_COEF: 10.0
+    GRAD_CLIP: 1.0
+    ITERS: 2000
+    WEIGHT_DECAY: 0.01
+    POWER: 1.0
+    DECAY_STEPS: 2000
+    LR_SCHEDULER:
+        NAME: 'PolynomialDecay'
+    OPTIMIZER:
+        NAME: 'AdamW'
+        MOMENTUM: 0.9
+VAL:
+    MULTI_SCALES_VAL: False
+    IMAGE_BASE_SIZE: [2048, 1536]
+    CROP_SIZE: [256, 256]
+    STRIDE_SIZE: [171, 171]
+    MEAN: [123.675, 116.28, 103.53]
+    STD: [58.395, 57.12, 57.375]
+SAVE_DIR: "./output/segformer_mit-b0_256x256_20k_vaihingen"
+
+        
+
