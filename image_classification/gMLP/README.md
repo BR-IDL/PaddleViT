@@ -4,7 +4,7 @@ PaddlePaddle training/validation code and pretrained models for **gMLP**.
 
 The 3rd party pytorch implementation is [here](https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/mlp_mixer.py).
 
-This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
+This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT.git).
 
 
 <p align="center">

@@ -4,7 +4,7 @@ PaddlePaddle training/validation code and pretrained models for **VOLO**.
 
 The official pytorch implementation is [here](https://github.com/sail-sg/volo).
 
-This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
+This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT.git).
 
 
 <p align="center">

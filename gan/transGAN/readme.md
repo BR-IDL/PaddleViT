@@ -4,7 +4,7 @@ PaddlePaddle training/validation code and pretrained models for **TransGAN**.
 
 The official pytorch implementation is [here](https://github.com/VITA-Group/TransGAN).
 
-This implementation is developed by [PPViT](https://github.com/BR-IDL/PaddleViT).
+This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT.git).
 
 
 <p align="center">

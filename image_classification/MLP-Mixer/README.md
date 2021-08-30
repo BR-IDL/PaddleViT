@@ -4,7 +4,7 @@ PaddlePaddle training/validation code and pretrained models for **MLP-Mixer**.
 
 The official TF implementation is [here](https://github.com/google-research/vision_transformer).
 
-This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
+This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT.git).
 
 
 <p align="center">
