@@ -4,7 +4,7 @@ PaddlePaddle training/validation code and pretrained models for **Styleformer**.
 
 The official pytorch implementation is [here](https://github.com/Jeeseung-Park/Styleformer).
 
-This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
+This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT).
 
 
 
