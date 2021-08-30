@@ -1,4 +1,4 @@
-# PaddleViT #
+# PaddlePaddle Vision Transformers #
 
 [![GitHub license](https://img.shields.io/github/license/xperzy/PPViT?color=blue)](https://github.com/xperzy/PPViT/blob/master/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/xperzy/PPViT?style=social)](https://github.com/xperzy/PPViT/stargazers)
@@ -8,92 +8,135 @@
     <img src="./PaddleViT.png" width="100%"/>
 </p>
  
-## State-of-the-art Visual Transformer and MLP Models for Paddle 2.0 ##
+## State-of-the-art Visual Transformer and MLP Models for PaddlePaddle ##
 
-:robot: PaddlePaddle Visual Transformers (`PaddleViT` or `PPViT`) is a collection of vision models beyond convolution. Most of the models are based on Visual Transformers, Visual Attentions, and MLPs, etc. PaddleViT also integrates popular layers, utilities, optimizers, schedulers, data augmentations, training/validation scripts for PaddlePaddle 2.0+. The aim is to reproduce a wide variety of state-of-the-art ViT and MLP models with full training/validation procedures. We are passionate about making cuting-edge CV techniques easier to use for everyone.
+:robot: PaddlePaddle Visual Transformers (`PaddleViT` or `PPViT`) is a collection of vision models beyond convolution. Most of the models are based on Visual Transformers, Visual Attentions, and MLPs, etc. PaddleViT also integrates popular layers, utilities, optimizers, schedulers, data augmentations, training/validation scripts for PaddlePaddle 2.1+. The aim is to reproduce a wide variety of state-of-the-art ViT and MLP models with full training/validation procedures. We are passionate about making cuting-edge CV techniques easier to use for everyone.
 
-:robot: PaddleViT provides models and tools for a variety of vision tasks, such as classifications, object detection, semantic segmentation, GAN, and more. Each model architecture is defined in standalone python module and can be modified to enable quick research experiments. At the same time, pretrained weights can be downloaded and used to finetune on your own datasets. PaddleViT also integrates popular tools and modules for custimized dataset, data preprocessing, performance metrics, DDP and more.
+:robot: PaddleViT provides models and tools for multiple vision tasks, such as classifications, object detection, semantic segmentation, GAN, and more. Each model architecture is defined in standalone python module and can be modified to enable quick research experiments. At the same time, pretrained weights can be downloaded and used to finetune on your own datasets. PaddleViT also integrates popular tools and modules for custimized dataset, data preprocessing, performance metrics, DDP and more.
 
 :robot: PaddleViT is backed by popular deep learning framework [PaddlePaddle](https://www.paddlepaddle.org/), we also provide tutorials and projects on [Paddle AI Studio](https://aistudio.baidu.com/aistudio/index). It's intuitive and straightforward to get started for new users.
 
 
-## Quick Tour ##
-### - Image Classification ###
-
-### - Object Detection ###
-
-### - Semantic Segmentation ###
-
-### - GAN ###
-
-
-## Installation ##
-
-
+## Quick Links ##
+PaddleViT implements model architectures and tools for multiple vision tasks, go to the following links for detailed information.
+- [PaddleViT-Cls](https://github.com/xperzy/PPViT/tree/develop/image_classification) for Image Classification
+- [PaddleViT-Det](https://github.com/xperzy/PPViT/tree/develop/object_detection/DETR) for object detection
+- [PaddleViT-Seg](https://github.com/xperzy/PPViT/tree/develop/semantic_segmentation) for Semantic Segmentation
+- [PaddleViT-GAN](https://github.com/xperzy/PPViT/tree/develop/gan) for GANs.
+  
+We also provide tutorials:
+- Notebooks (coming soon)
+- Online Course (coming soon)
 
 
 ## Model architectures ##
 
-### Image Classification ###
-#### Now: ####
-1. ViT ([An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929))
-2. DeiT ([Training data-efficient image transformers & distillation through attention](https://arxiv.org/abs/2012.12877))
-3. Swin Transformer ([Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030))
-4. PVTv2 ([PVTv2: Improved Baselines with Pyramid Vision Transformer](https://arxiv.org/abs/2106.13797))
-5. MLP-Mixer ([MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601))
-6. ResMLP ([ResMLP: Feedforward networks for image classification with data-efficient training](https://arxiv.org/abs/2105.03404))
-7. gMLP ([Pay Attention to MLPs](https://arxiv.org/abs/2105.08050))
-8. VOLO ([VOLO: Vision Outlooker for Visual Recognition](https://arxiv.org/abs/2106.13112))
-9. CaiT ([Going deeper with Image Transformers](https://arxiv.org/abs/2103.17239))
-10. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
-11. CSwin ([CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows](https://arxiv.org/pdf/2107.00652.pdf))
-12. T2T-ViT ([Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet](https://arxiv.org/abs/2101.11986))
+### Image Classification (Transformers) ###
+1. **[ViT](https://github.com/xperzy/PPViT/tree/develop/image_classification/ViT)** (from Google), released with paper [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929), by Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, Neil Houlsby.
+2. **[DeiT](https://github.com/xperzy/PPViT/tree/develop/image_classification/DeiT)** (from Facebook and Sorbonne), released with paper [Training data-efficient image transformers & distillation through attention](https://arxiv.org/abs/2012.12877), by Hugo Touvron, Matthieu Cord, Matthijs Douze, Francisco Massa, Alexandre Sablayrolles, Hervé Jégou.
+3. **[Swin Transformer](https://github.com/xperzy/PPViT/tree/develop/image_classification/SwinTransformer)** (from Microsoft), released with paper [Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030), by Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, Baining Guo.
+4. **[VOLO](https://github.com/xperzy/PPViT/tree/develop/image_classification/VOLO)** (from Sea AI Lab and NUS), released with paper [VOLO: Vision Outlooker for Visual Recognition](https://arxiv.org/abs/2106.13112), by Li Yuan, Qibin Hou, Zihang Jiang, Jiashi Feng, Shuicheng Yan.
+5. **[CSwin Transformer](https://github.com/xperzy/PPViT/tree/develop/image_classification/CSwin)** (from USTC and Microsoft), released with paper [CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows
+](https://arxiv.org/abs/2107.00652), by Xiaoyi Dong, Jianmin Bao, Dongdong Chen, Weiming Zhang, Nenghai Yu, Lu Yuan, Dong Chen, Baining Guo.
+6. **[CaiT](https://github.com/xperzy/PPViT/tree/develop/image_classification/CaiT)** (from Facebook and Sorbonne), released with paper [Going deeper with Image Transformers](https://arxiv.org/abs/2103.17239), by Hugo Touvron, Matthieu Cord, Alexandre Sablayrolles, Gabriel Synnaeve, Hervé Jégou.
+7. **[PVTv2](https://github.com/xperzy/PPViT/tree/develop/image_classification/PVTv2)** (from NJU/HKU/NJUST/IIAI/SenseTime), released with paper [PVTv2: Improved Baselines with Pyramid Vision Transformer](https://arxiv.org/abs/2106.13797), by Wenhai Wang, Enze Xie, Xiang Li, Deng-Ping Fan, Kaitao Song, Ding Liang, Tong Lu, Ping Luo, Ling Shao.
+8. **[Shuffle Transformer](https://github.com/xperzy/PPViT/tree/develop/image_classification/Shuffle_Transformer)** (from Tencent), released with paper [Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/abs/2106.03650), by Zilong Huang, Youcheng Ben, Guozhong Luo, Pei Cheng, Gang Yu, Bin Fu.
+9. **[T2T-ViT](https://github.com/xperzy/PPViT/tree/develop/image_classification/T2T_ViT)** (from NUS and YITU), released with paper [Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet
+](https://arxiv.org/abs/2101.11986), by Li Yuan, Yunpeng Chen, Tao Wang, Weihao Yu, Yujun Shi, Zihang Jiang, Francis EH Tay, Jiashi Feng, Shuicheng Yan.
 
 #### Coming Soon: ####
-1. CrossViT ([CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899))
-2. Focal Self-attention ([Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641))
-3. HaloNet ([Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731))
+1. **[CrossViT]()** (from IBM), released with paper [CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899), by Chun-Fu Chen, Quanfu Fan, Rameswar Panda.
+2. **[Focal Transformer]()** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
+3. **[HaloNet]()**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.
+
+
+### Image Classification (MLPs) ###
+1. **[MLP-Mixer](https://github.com/xperzy/PPViT/tree/develop/image_classification/MLP-Mixer)** (from Google), released with paper [MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601), by Ilya Tolstikhin, Neil Houlsby, Alexander Kolesnikov, Lucas Beyer, Xiaohua Zhai, Thomas Unterthiner, Jessica Yung, Andreas Steiner, Daniel Keysers, Jakob Uszkoreit, Mario Lucic, Alexey Dosovitskiy
+2. **[ResMLP](https://github.com/xperzy/PPViT/tree/develop/image_classification/ResMLP)** (from Facebook/Sorbonne/Inria/Valeo), released with paper [ResMLP: Feedforward networks for image classification with data-efficient training](https://arxiv.org/abs/2105.03404), by Hugo Touvron, Piotr Bojanowski, Mathilde Caron, Matthieu Cord, Alaaeldin El-Nouby, Edouard Grave, Gautier Izacard, Armand Joulin, Gabriel Synnaeve, Jakob Verbeek, Hervé Jégou.
+3. **[gMLP](https://github.com/xperzy/PPViT/tree/develop/image_classification/gMLP)** (from Google), released with paper [Pay Attention to MLPs](https://arxiv.org/abs/2105.08050), by Hanxiao Liu, Zihang Dai, David R. So, Quoc V. Le.
+
+
 
 
 
 
 ### Detection ###
-#### Now: ####
-1. DETR ([End-to-End Object Detection with Transformers](https://arxiv.org/abs/2005.12872))
+1. **[DETR](https://github.com/xperzy/PPViT/tree/develop/object_detection/DETR)** (from Facebook), released with paper [End-to-End Object Detection with Transformers](https://arxiv.org/abs/2005.12872), by Nicolas Carion, Francisco Massa, Gabriel Synnaeve, Nicolas Usunier, Alexander Kirillov, Sergey Zagoruyko.
 
 #### Coming Soon: ####
-1. Swin Transformer ([Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030))
-2. PVTv2 ([PVTv2: Improved Baselines with Pyramid Vision Transformer](https://arxiv.org/abs/2106.13797))
-3. Focal Self-attention ([Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641))
-5. CSwin ([CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows](https://arxiv.org/pdf/2107.00652.pdf))
-6. UP-DETR ([UP-DETR: Unsupervised Pre-training for Object Detection with Transformers](https://arxiv.org/abs/2011.09094))
+1. **[Swin Transformer]()** (from Microsoft), released with paper [Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030), by Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, Baining Guo.
+2. **[PVTv2]()** (from NJU/HKU/NJUST/IIAI/SenseTime), released with paper [PVTv2: Improved Baselines with Pyramid Vision Transformer](https://arxiv.org/abs/2106.13797), by Wenhai Wang, Enze Xie, Xiang Li, Deng-Ping Fan, Kaitao Song, Ding Liang, Tong Lu, Ping Luo, Ling Shao.
+3. **[Focal Transformer]()** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
+4. **[UP-DETR]()** (from Tencent), released with paper [UP-DETR: Unsupervised Pre-training for Object Detection with Transformers](https://arxiv.org/abs/2011.09094), by Zhigang Dai, Bolun Cai, Yugeng Lin, Junying Chen.
 
 
 
 
 ### Semantic Segmentation ###
 #### Now: ####
-1. SETR ([Rethinking Semantic Segmentation from a Sequence-to-Sequence Perspective with Transformers](https://arxiv.org/abs/2012.15840))
-2. DPT ([Vision Transformers for Dense Prediction](https://arxiv.org/abs/2103.13413))
-3. Swin Transformer ([Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030))
-4. Segmenter: ([Transformer for Semantic Segmentation](https://arxiv.org/pdf/2105.05633.pdf))
-5. Trans2seg: ([Segmenting Transparent Object in the Wild with Transformer](https://arxiv.org/pdf/2101.08461.pdf))
-6. SegFormer ([SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203))
+1. **[SETR]()** (from Fudan/Oxford/Surrey/Tencent/Facebook), released with paper [Rethinking Semantic Segmentation from a Sequence-to-Sequence Perspective with Transformers](https://arxiv.org/abs/2012.15840), by Sixiao Zheng, Jiachen Lu, Hengshuang Zhao, Xiatian Zhu, Zekun Luo, Yabiao Wang, Yanwei Fu, Jianfeng Feng, Tao Xiang, Philip H.S. Torr, Li Zhang.
+2. **[DPT]()** (from Intel), released with paper [Vision Transformers for Dense Prediction](https://arxiv.org/abs/2103.13413), by René Ranftl, Alexey Bochkovskiy, Vladlen Koltun.
+3. **[Swin Transformer]()** (from Microsoft), released with paper [Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030), by Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, Baining Guo.
+2. **[Segmenter]()** (from Inria), realeased with paper [Segmenter: Transformer for Semantic Segmentation](https://arxiv.org/pdf/2105.05633.pdf), by Robin Strudel, Ricardo Garcia, Ivan Laptev, Cordelia Schmid.
+3. **[Trans2seg]()** (from HKU/Sensetime/NJU), released with paper [Segmenting Transparent Object in the Wild with Transformer](https://arxiv.org/pdf/2101.08461.pdf), by Enze Xie, Wenjia Wang, Wenhai Wang, Peize Sun, Hang Xu, Ding Liang, Ping Luo.
+4. **[SegFormer]()** (from HKU/NJU/NVIDIA/Caltech), released with paper [SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203), by Enze Xie, Wenhai Wang, Zhiding Yu, Anima Anandkumar, Jose M. Alvarez, Ping Luo.
 
 #### Coming Soon:  ####
-1. FTN ([Fully Transformer Networks for Semantic Image Segmentation](https://arxiv.org/pdf/2106.04108.pdf))
-2. Shuffle Transformer ([Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/pdf/2106.03650))
-3. Focal Self-attention ([Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641))
-4. CSwin ([CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows](https://arxiv.org/pdf/2107.00652.pdf))
-
-
+1. **[FTN]()** (from Baidu), released with paper [Fully Transformer Networks for Semantic Image Segmentation](https://arxiv.org/pdf/2106.04108.pdf), by Sitong Wu, Tianyi Wu, Fangjian Lin, Shengwei Tian, Guodong Guo.
+2. **[Shuffle Transformer]()** (from Tencent), released with paper [Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/abs/2106.03650), by Zilong Huang, Youcheng Ben, Guozhong Luo, Pei Cheng, Gang Yu, Bin Fu
+3. **[Focal Transformer]()** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
+4. **[CSwin Transformer]()** (from USTC and Microsoft), released with paper [CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows
+](https://arxiv.org/abs/2107.00652), by Xiaoyi Dong, Jianmin Bao, Dongdong Chen, Weiming Zhang, Nenghai Yu, Lu Yuan, Dong Chen, Baining Guo.
 
 
 ### GAN ###
-1. TransGAN ([TransGAN: Two Pure Transformers Can Make One Strong GAN, and That Can Scale Up](https://arxiv.org/abs/2102.07074))
-2. Styleformer ([Styleformer: Transformer based Generative Adversarial Networks with Style Vector](https://arxiv.org/abs/2106.07023))
+1. **[TransGAN](https://github.com/xperzy/PPViT/tree/develop/gan/transGAN)** (from Seoul National University and NUUA), released with paper [TransGAN: Two Pure Transformers Can Make One Strong GAN, and That Can Scale Up](https://arxiv.org/abs/2102.07074), by Yifan Jiang, Shiyu Chang, Zhangyang Wang.
+2. **[Styleformer](https://github.com/xperzy/PPViT/tree/develop/gan/Styleformer)** (from Facebook and Sorbonne), released with paper [Styleformer: Transformer based Generative Adversarial Networks with Style Vector](https://arxiv.org/abs/2106.07023), by Jeeseung Park, Younggeun Kim.
 #### Coming Soon: ####
-1. ViTGAN ([ViTGAN: Training GANs with Vision Transformers](https://arxiv.org/pdf/2107.04589))
+1. **[ViTGAN]()** (from UCSD/Google), released with paper [ViTGAN: Training GANs with Vision Transformers](https://arxiv.org/pdf/2107.04589), by Kwonjoon Lee, Huiwen Chang, Lu Jiang, Han Zhang, Zhuowen Tu, Ce Liu.
+
+
+
+## Installation
+### Prerequistites
+* Linux/MacOS/Windows
+* Python 3.6/3.7
+* PaddlePaddle 2.1.0+
+* CUDA10.2+
+### Installation
+1. Create a conda virtual environment and activate it.
+   ```shell
+   conda create -n paddlevit python=3.7 -y
+   conda activate paddlevit
+   ```
+2. Install PaddlePaddle following the official instructions, e.g.,
+   ```shell
+   conda install paddlepaddle-gpu==2.1.2 cudatoolkit=10.2 --channel https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/Paddle/
+   ```
+   > Note: please change the paddlepaddle version and cuda version accordingly to your environment.
+
+3. Install dependency packages
+    * General dependencies:
+        ```
+        pip install yacs, yaml
+        ```
+    * Packages for Segmentation:
+        ```
+        pip install cityscapesScripts, detail
+        ```
+    * Packages for GAN:
+        ```
+        pip install lmdb
+        ```
+4. Clone project from GitHub
+    ```
+    git clone https://github.com/BR-IDL/PaddleViT.git 
+    ```
+
+
+
+### Docker Install ###
+(coming soon)
 
 
 
@@ -214,133 +257,136 @@
 | styleformer_celeba             |3.32 | 64         | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1Ux4zNmkFUa6mAZsMbvSBGpxfSdTok0wn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1zDC_3YUWmdsxM1FUDEQuuQ)(ymh7) |
 | styleformer_lsun               | 9.68 | 128        | 1.0      | lanczos       |[google](https://drive.google.com/file/d/1kMX9vHhNKkTjzxRBAnBji5yV1B-fgfsi/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1PM4D-eH2ITU6vKgAAMNY5w)(ue28)|
 > *The results are evaluated on Cifar10, STL10, Celeba and LSUNchurch dataset, using **fid50k_full** metric.
-## Results (Self-Trained Weights) ## 
-### Image Classification ###
-### Object Detection ###
-### Segmentation ###
-### GAN ###
 
 
+## Quick Demo for Image Classification
+To use the model with pretrained weights, go to the specific subfolder e.g., `/image_classification/ViT/`, then download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `。、configs/`.  
+
+Assume the downloaded weight file is stored in `./vit_base_patch16_224.pdparams`, to use the `vit_base_patch16_224` model in python:
+```python
+from config import get_config
+from visual_transformer import build_vit as build_model
+# config files in ./configs/
+config = get_config('./configs/vit_base_patch16_224.yaml')
+# build model
+model = build_model(config)
+# load pretrained weights, .pdparams is NOT needed
+model_state_dict = paddle.load('./vit_base_patch16_224')
+model.set_dict(model_state_dict)
+```
+> :robot: See the README file in each model folder for detailed usages.
 
 
-## Validation Scripts ##
-### Run on single GPU: ###
-
-`sh run_eval.sh`
-
- or you can run the python script:
-
- `python main_single_gpu.py`
-
- with proper settings.
-
-The script `run_eval.sh` calls the main python script `main_single_gpu.py` with a number of options, usually you need to change the following settings, e.g., for ViT base model:
+### Evaluation ###
+To evaluate ViT model performance on ImageNet2012 with a single GPU, run the following script using command line:
 ```shell
+sh run_eval.sh
+```
+or
+```shell
+CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
--cfg='./configs/vit_base_patch16_224.yaml' \
--dataset='imagenet2021' \
--data_path='/dataset/imagenet' \
--batch_size=128 \
--eval \
--pretrained='./vit_base_patch16_224'
+    -cfg='./configs/vit_base_patch16_224.yaml' \
+    -dataset='imagenet2012' \
+    -batch_size=16 \
+    -data_path='/dataset/imagenet' \
+    -eval \
+    -pretrained='./vit_base_patch16_224'
 ```
-> Note:
-> - The `-pretrained` option accepts the path of pretrained weights file **without** the file extension (.pdparams).
 
-### Run on multi GPU: ###
+<details>
 
-`sh run_eval_multi.sh`
+<summary>
+Run evaluation using multi-GPUs:
+</summary>
 
- or you can run the python script:
 
- `python main_multi_gpu.py`
-
- with proper settings.
-
-The script `run_eval_multi.sh` calls the main python script `main_multi_gpu.py` with a number of options, usually you need to change the following settings, e.g., for ViT base model:
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+sh run_eval_multi.sh
+```
+or
+```shell
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
--cfg='./configs/vit_base_patch16_224.yaml' \
--dataset='imagenet2021' \
--data_path='/dataset/imagenet' \
--batch_size=128 \
--eval \
--pretrained='./vit_base_patch16_224'
--ngpus=8
+    -cfg='./configs/vit_base_patch16_224.yaml' \
+    -dataset='imagenet2012' \
+    -batch_size=16 \
+    -data_path='/dataset/imagenet' \
+    -eval \
+    -pretrained='./vit_base_patch16_224'
 ```
-> Note:
->
-> - that the `-pretrained` option accepts the path of pretrained weights file **without** the file extension (.pdparams).
->
-> - If `-ngpu` is not set, all the available GPU devices will be used.
+
+</details>
 
 
-## Training Scripts ##
-### Train on single GPU: ###
-
-`sh run_train.sh`
-
- or you can run the python script:
-
- `python main_single_gpu.py`
-
- with proper settings.
-
-The script `run_train.sh` calls the main python script `main_single_gpu.py` with a number of options, usually you need to change the following settings, e.g., for ViT base model:
+### Training ###
+To train the ViT model on ImageNet2012 with single GPU, run the following script using command line:
 ```shell
+sh run_train.sh
+```
+or
+```shell
+CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
--cfg='./configs/vit_base_patch16_224.yaml' \
--dataset='imagenet2021' \
--data_path='/dataset/imagenet' \
--batch_size=128 \
+  -cfg='./configs/vit_base_patch16_224.yaml' \
+  -dataset='imagenet2012' \
+  -batch_size=32 \
+  -data_path='/dataset/imagenet' \
 ```
-> Note:
-> - The training options such as lr, image size, model layers, etc., can be changed in the `.yaml` file set in `-cfg`. All the available settings can be found in `./config.py`
 
-### Run on multi GPU: ###
 
-`sh run_train_multi.sh`
+<details>
 
- or you can run the python script:
+<summary>
+Run training using multi-GPUs:
+</summary>
 
- `python main_multi_gpu.py`
 
- with proper settings.
-
-The script `run_train_multi.sh` calls the main python script `main_multi_gpu.py` with a number of options, usually you need to change the following settings, e.g., for ViT base model:
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-python main_multi_gpu.py \
--cfg='./configs/vit_base_patch16_224.yaml' \
--dataset='imagenet2021' \
--data_path='/dataset/imagenet' \
--batch_size=128 \
--ngpus=8
+sh run_train_multi.sh
 ```
-> Note:
->
-> - The training options such as lr, image size, model layers, etc., can be changed in the `.yaml` file set in `-cfg`. All the available settings can be found in `./config.py`
-> - If `-ngpu` is not set, all the available GPU devices will be used.
+or
+```shell
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
+python main_multi_gpu.py \
+    -cfg='./configs/vit_base_patch16_224.yaml' \
+    -dataset='imagenet2012' \
+    -batch_size=16 \
+    -data_path='/dataset/imagenet' \
+```
+
+</details>
+
 
 
 ## Features ##
-* optimizers
-* Schedulers
-* DDP
-* Data Augumentation
-* DropPath
+1. State-of-the-art
+   - State-of-the-art transformer models for multiple CV tasks
+   - State-of-the-art data processings and training methods 
+   - We keep pushing it forward.
+
+2. Easy-to-use tools
+   - Easy configs for model vairants
+   - Modular design for utiliy functions and tools
+   - Low barrier for educators and practitioners
+   - Unified framework for all the models
+
+3. Easily customizable to your needs
+   - Examples for each model to reproduce the results
+   - Model implementations are exposed for you to customize
+   - Model files can be used independently for quick experiments
+
+4. High Performance
+   - DDP with a single GPU per process.
+   - Mixed-precision support (coming soon)
+
 
 ## Contributing ##
-We encourage and appreciate your contribution to **PPViT** project, please refer to our workflow and work styles by [CONTRIBUTING.md](https://github.com/xperzy/PPViT/blob/develop/CONTRIBUTING.md)
+* We encourage and appreciate your contribution to **PaddleViT** project, please refer to our workflow and work styles by [CONTRIBUTING.md](https://github.com/xperzy/PPViT/blob/develop/CONTRIBUTING.md)
 
 
 ## Licenses ##
-#### Code #####
-This repo is under the Apache-2.0 license. 
+* This repo is under the Apache-2.0 license. 
 
-#### Pretrained Weights #####
-
-
-## Citing #
->
+## Contact ##
+* Please raise an issue on GitHub.
