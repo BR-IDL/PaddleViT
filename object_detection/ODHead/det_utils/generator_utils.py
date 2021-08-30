@@ -1,4 +1,4 @@
-#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 
 import math
 
@@ -131,7 +132,15 @@ class AnchorGenerator(nn.Layer):
     def num_anchors(self):
         return [len(num_a) for num_a in self.base_anchors][0]
 
+# feats = []
+# h, w = 800., 800
+# for i in range(4):
+#     feats.append(paddle.rand([4, 256, h / (2 ** (i + 2)), w / (2 ** (i + 2))]))
 
+# anchorgenerator = AnchorGenerator()
+# res = anchorgenerator(feats)
+# print(anchorgenerator.num_anchors)
+# print(res)
 def generate_proposals(scores,
                        bbox_deltas,
                        im_shape,
@@ -442,11 +451,11 @@ class RoIAlign(object):
             where M is the total number of boxes aggregated over all N batch images
             and C is the number of channels in `x`.
         '''
+        if isinstance(rois_num, list):
+            rois_num = paddle.to_tensor(rois_num).astype("int32")
+        rois = paddle.concat(rois)
 
-        rois_num = paddle.to_tensor(rois_num).astype("int32")
-
-        if len(rois_num) == 1:
-            rois = rois[0]
+        if len(feats) == 1:
             roi_features = roi_align(
                 feats[self.min_level],
                 rois,
@@ -458,7 +467,6 @@ class RoIAlign(object):
             )
 
         else:
-            rois = paddle.concat(rois)
             rois_per_level, original_ind, rois_num_per_level = distribute_fpn_proposals(
                 rois,
                 self.min_level + 2,

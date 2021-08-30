@@ -1,4 +1,4 @@
-#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
+import numpy as np
 
 import paddle
 import paddle.nn as nn
@@ -95,7 +98,7 @@ class BoxHead(nn.Layer):
         pred_scores = self.cls_fc(feats)
         pred_deltas = self.reg_fc(feats)
 
-        return pred_scores, pred_deltas
+        return [pred_scores, pred_deltas]
 
 
 class RoIHead(nn.Layer):
@@ -107,6 +110,7 @@ class RoIHead(nn.Layer):
     def __init__(self, config):
         super(RoIHead, self).__init__()
         self.config = config
+
         self.pooler = RoIAlign(
             output_size=config.ROI.ALIGN_OUTPUT_SIZE,
             scales=config.ROI.SCALES,
@@ -129,10 +133,9 @@ class RoIHead(nn.Layer):
         )
     
     def _det_forward(self, feats, proposals_info):
-        roi_feats = self.pooler(feats, 
-                                proposals_info["proposals"], 
-                                proposals_info["num_proposals"])
-
+        roi = proposals_info["proposals"]
+        rois_num = paddle.to_tensor(proposals_info["num_proposals"]).astype("int32")
+        roi_feats = self.pooler(feats, roi, rois_num)
         predictions = self.predictor(roi_feats)
 
         return predictions
@@ -204,14 +207,18 @@ class RoIHead(nn.Layer):
             return None
         
         pred_scores, pred_deltas = preds
+
         # pred_bbox shape [num_proposals_all, num_classes, 4]
-        pred_bbox = delta2bbox(pred_deltas, proposals).reshape([-1, self.config.ROI.NUM_ClASSES, 4])
+        pred_bbox = delta2bbox(pred_deltas, 
+                               proposals, 
+                               self.config.ROI.BOX_HEAD.REG_WEIGHTS)
+
         pred_bbox_list = paddle.split(pred_bbox, num_proposals)
-        pred_scores = F.softmax(pred_scores, axis=-1)
+        pred_bbox_list = paddle.split(pred_bbox, num_proposals)
+        pred_scores = F.softmax(pred_scores)
         pred_scores_list = paddle.split(pred_scores, num_proposals)
 
         post_pred = []
-
         for i in range(len(pred_bbox_list)):
             num_p = num_proposals[i]
             img_pred_boxes = pred_bbox_list[i]
@@ -219,12 +226,21 @@ class RoIHead(nn.Layer):
             img_hw = inputs["imgs_shape"][i]
             img_scale_factor = inputs["scale_factor_wh"][i]
 
+            img_pred_boxes[:, :, 0::2] = paddle.clip(
+                img_pred_boxes[:, :, 0::2], min=0, max=img_hw[1]
+            ) / img_scale_factor[0]
+
+            img_pred_boxes[:, :, 1::2] = paddle.clip(
+                img_pred_boxes[:, :, 1::2], min=0, max=img_hw[0]
+            ) / img_scale_factor[1]
+
+
             output = multiclass_nms(bboxes=img_pred_boxes,
                                     scores=img_pred_scores[:, :-1],
                                     score_threshold=self.config.ROI.SCORE_THRESH_INFER,
                                     keep_top_k=self.config.ROI.NMS_KEEP_TOPK_INFER,
                                     nms_threshold=self.config.ROI.NMS_THRESH_INFER,
-                                    background_label=-1,
+                                    background_label=self.config.ROI.NUM_ClASSES,
                                     rois_num=paddle.to_tensor([num_p]).astype("int32"))
 
             if output[1][0] == 0:
@@ -234,14 +250,6 @@ class RoIHead(nn.Layer):
             post_label = output[0][:, 0:1]
             post_score = output[0][:, 1:2]
             post_boxes = output[0][:, 2:]
-
-            post_boxes[:, 0::2] = paddle.clip(
-                post_boxes[:, 0::2], min=0, max=img_hw[1]
-            ) / img_scale_factor[0]
-
-            post_boxes[:, 1::2] = paddle.clip(
-                post_boxes[:, 1::2], min=0, max=img_hw[0]
-            ) / img_scale_factor[1]
 
             boxes_w = post_boxes[:, 2] - post_boxes[:, 0]
             boxes_h = post_boxes[:, 3] - post_boxes[:, 1]
@@ -272,26 +280,29 @@ class RoIHead(nn.Layer):
                 Each row has 6 values: [label, score, xmin, ymin, xmax, ymax]
         '''
 
-        proposals_info = roi_target_assign(
-            proposals,
-            inputs["gt_boxes"],
-            inputs["gt_classes"],
-            self.config.ROI.NUM_ClASSES,
-            self.config.ROI.POSITIVE_THRESH,
-            self.config.ROI.NEGATIVE_THRESH,
-            self.config.ROI.BATCH_SIZE_PER_IMG,
-            self.config.ROI.POSITIVE_FRACTION,
-            self.config.ROI.LOW_QUALITY_MATCHES
-        )
-
-        predictions = self._det_forward(feats, proposals_info)
-
         if self.training:
+            proposals_info = roi_target_assign(
+                proposals,
+                inputs["gt_boxes"],
+                inputs["gt_classes"],
+                self.config.ROI.NUM_ClASSES,
+                self.config.ROI.POSITIVE_THRESH,
+                self.config.ROI.NEGATIVE_THRESH,
+                self.config.ROI.BATCH_SIZE_PER_IMG,
+                self.config.ROI.POSITIVE_FRACTION,
+                self.config.ROI.LOW_QUALITY_MATCHES
+            )
+
+            predictions = self._det_forward(feats, proposals_info)
             losses = self._get_loss(predictions, proposals_info)
 
             return losses
         
         else:
+            proposals_info = {"num_proposals": [len(proposal) for proposal in proposals]}
+            proposals_info["proposals"] = proposals
+
+            predictions = self._det_forward(feats, proposals_info)
             outputs = self._inference(predictions, proposals_info, inputs)
 
             return outputs

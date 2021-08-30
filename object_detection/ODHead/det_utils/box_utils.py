@@ -1,4 +1,4 @@
-#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 
 import math
 
@@ -83,7 +84,7 @@ def delta2bbox(deltas, boxes, weights=[1.0, 1.0, 1.0, 1.0]):
     pred_boxes.append(pred_ctr_y + 0.5 * pred_h)
     pred_boxes = paddle.stack(pred_boxes, axis=-1)
 
-    return pred_boxes.reshape(deltas.shape)
+    return pred_boxes
 
 
 def boxes_area(boxes):

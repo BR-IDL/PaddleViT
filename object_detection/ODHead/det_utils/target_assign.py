@@ -1,4 +1,4 @@
-#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ def anchor_target_matcher(match_quality_matrix,
     match_labels = paddle.full(matches.shape, -1, dtype = "int32")
     neg_idx = paddle.logical_and(matched_vals > low_thresh,
                                  matched_vals < negative_thresh)
+
     match_labels = paddle.where(matched_vals >= positive_thresh,
                                 paddle.ones_like(match_labels), 
                                 match_labels)
@@ -58,7 +59,7 @@ def anchor_target_matcher(match_quality_matrix,
     if allow_low_quality_matches:
         highest_quality_foreach_gt = match_quality_matrix.max(axis=1, keepdim=True)
         pred_inds_with_highest_quality = paddle.logical_and(
-        match_quality_matrix >= 0, match_quality_matrix == highest_quality_foreach_gt).cast('int32').sum(
+        match_quality_matrix > 0, match_quality_matrix == highest_quality_foreach_gt).cast('int32').sum(
             0, keepdim=True)
         match_labels = paddle.where(pred_inds_with_highest_quality > 0,
                                     paddle.ones_like(match_labels),
