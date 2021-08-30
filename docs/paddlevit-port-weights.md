@@ -1,5 +1,5 @@
-## PPViT: How to port model from Pytorch to Paddle?
-> Sample code: [here](https://github.com/xperzy/PPViT/blob/develop/image_classification/ViT/load_pytorch_weights.py)
+## PaddleViT: How to port model from Pytorch to Paddle?
+> Sample code: [here](../image_classification/ViT/load_pytorch_weights.py)
 
 ### Step 0:
 We assume you are trying to implement your Paddle version of some ViT model, from some PyTorch implementations. You want to port the pretrained weights from pytorch `.pth` file to paddle `.pdparams` file.
