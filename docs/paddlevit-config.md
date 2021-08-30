@@ -1,7 +1,7 @@
-## PPViT: How to use config?
-> sample code: [here](https://github.com/xperzy/PPViT/blob/develop/image_classification/ViT/config.py)
+## PaddleViT: How to use config?
+> sample code: [here](../image_classification/ViT/config.py)
 
-This document presents the basics of `config` that used in **PPViT** project. 
+This document presents the basics of `config` that used in **PaddleViT** project. 
 
 The core module used in PPViT `config` is [yacs](https://github.com/rbgirshick/yacs) (0.1.8+). Similar as other projects, PPViT `config` supports loading from [yaml](https://yaml.org/) file, and configarable using python [ArgumentParser](https://docs.python.org/3/library/argparse.html).
 
