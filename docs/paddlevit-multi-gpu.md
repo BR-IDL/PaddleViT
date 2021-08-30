@@ -1,12 +1,12 @@
-## PPViT: How to use multi-gpu?
-This document presents **how to use** and **how to implement** multi-gpu (single node) for training and validation in `PPViT` for training and validating your model. 
+## PaddleViT: How to use multi-gpu?
+This document presents **how to use** and **how to implement** multi-gpu (single node) for training and validation in `PaddleViT` for training and validating your model. 
 
-`PPViT` implements multi-gpu schemes based on `paddle.distributed` package and we also hack some useful functions for inter-gpu communication and data transfer.
+`PaddleViT` implements multi-gpu schemes based on `paddle.distributed` package and we also hack some useful functions for inter-gpu communication and data transfer.
 
 > Detailed official `paddle.distribued` docs can be found: [here](https://www.paddlepaddle.org.cn/documentation/docs/zh/api/paddle/distributed/Overview_cn.html)
 
 ### 1. How to use multi-gpu for training/validation?
-In `PPViT`, multi-gpu is easy and straightforward to use. Typically, you will have a script file (e.g., `run_train_multi.sh`) to start your experiment. This `.sh` script runs the python file (e.g., `main_multi_gpu.py`) with commandline options. For example, a validation script `run_eval_multi.sh` calls the `main_multi_gpu.py` with a number of arguments:
+In `PaddleViT`, multi-gpu is easy and straightforward to use. Typically, you will have a script file (e.g., `run_train_multi.sh`) to start your experiment. This `.sh` script runs the python file (e.g., `main_multi_gpu.py`) with commandline options. For example, a validation script `run_eval_multi.sh` calls the `main_multi_gpu.py` with a number of arguments:
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
@@ -26,9 +26,9 @@ You can run this shell script to start your experiment, e.g.:
 $ sh run_train_multi.sh
 ```
 
-### 2. How does the multi-gpu schemes implement in PPViT?
+### 2. How does the multi-gpu schemes implement in PaddleViT?
 #### STEP 0: Preparation
-We use `paddle.distributed` package in `PPViT`:
+We use `paddle.distributed` package in `PaddleViT`:
 ```python
 import paddle.distributed as distt
 ```
@@ -129,7 +129,7 @@ val_acc1_meter.update(acc1.numpy()[0], batch_size.numpy()[0])
 ```
 
 ### 3. Advanced functions
-For developers who needs advanced communication/data transfer between GPUs in `PPViT`, we hacked two methods for `reduce` dict objects, and `gather` any (picklable) object rather than only `paddle.Tensor`.
+For developers who needs advanced communication/data transfer between GPUs in `PaddleViT`, we hacked two methods for `reduce` dict objects, and `gather` any (picklable) object rather than only `paddle.Tensor`.
 
 Specifically:
 
@@ -137,4 +137,4 @@ Specifically:
 
 - `all_gather(data)` is defined to `all_gather` any pickable data, rather than only `paddle.Tensor`. The input is a data object, the output is a list of gathered data from each rank.
 
-> Detailed implementations can be found in PPVIT `object_detection/DETR/utils.py`
+> Detailed implementations can be found in PaddleVIT `object_detection/DETR/utils.py`
