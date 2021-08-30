@@ -59,11 +59,6 @@ class SwinTransformerDet(nn.Layer):
         return final_out
 
 
-detector = SwinTransformerDet(cfg)
-weights = paddle.load(cfg.DATA.WEIGHT_PATH)
-detector.load_dict(weights)
-
-
 def eval(model, cfg):
     dataset = build_coco("val", cfg.DATA.VAL_DATA_PATH)
     dataloader = get_dataloader(dataset, cfg.DATA.BATCH_SIZE_EVAL, mode='val', multi_gpu=False)
@@ -83,6 +78,9 @@ def eval(model, cfg):
     print(eval_res)
 
 
+detector = SwinTransformerDet(cfg)
+weights = paddle.load(cfg.DATA.WEIGHT_PATH)
+detector.load_dict(weights)
 eval(detector, cfg)
 
 

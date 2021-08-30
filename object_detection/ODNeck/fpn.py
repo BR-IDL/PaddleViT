@@ -181,4 +181,3 @@ class TopFeatP6P7(nn.Layer):
         p7 = self.p7(F.relu(p6))
 
         return [p6, p7]
-
