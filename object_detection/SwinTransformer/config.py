@@ -31,7 +31,7 @@ _C.BASE = ['']
 _C.DATA = CN()
 _C.DATA.BATCH_SIZE = 8 #1024 batch_size for single GPU
 _C.DATA.BATCH_SIZE_EVAL = 1 #1024 batch_size for single GPU
-_C.DATA.WEIGHT_PATH = "/home/aistudio/data/data105641/mask_rcnn_swin_tiny_patch4_window7_1x.pdparams"
+_C.DATA.WEIGHT_PATH = "/home/aistudio/data/data105641/mask_rcnn_swin_small_patch4_window7.pdparams"
 _C.DATA.VAL_DATA_PATH = "data/val" # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 640 # input image size
@@ -47,26 +47,30 @@ _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.0
 _C.MODEL.ATTENTION_DROPOUT = 0.0
-_C.MODEL.DROP_PATH = 0.1
+_C.MODEL.DROP_PATH = 0.2
 
 # transformer settings
 _C.MODEL.TRANS = CN()
+_C.MODEL.TRANS.PRETRAIN_IMAGE_SIZE = 224
 _C.MODEL.TRANS.PATCH_SIZE = 4 # image_size = patch_size x window_size x num_windows
 _C.MODEL.TRANS.WINDOW_SIZE = 7
 _C.MODEL.TRANS.IN_CHANNELS = 3
 _C.MODEL.TRANS.EMBED_DIM = 96 # same as HIDDEN_SIZE in ViT
-_C.MODEL.TRANS.STAGE_DEPTHS = [2, 2, 6, 2]
+_C.MODEL.TRANS.STAGE_DEPTHS = [2, 2, 18, 2]   # tiny [2, 2, 6, 2] small [2, 2, 18, 2]
 _C.MODEL.TRANS.NUM_HEADS = [3, 6, 12, 24]
 _C.MODEL.TRANS.MLP_RATIO = 4.
 _C.MODEL.TRANS.QKV_BIAS = True
 _C.MODEL.TRANS.QK_SCALE = None
 _C.MODEL.TRANS.APE = False # absolute positional embeddings
 _C.MODEL.TRANS.PATCH_NORM = True
+_C.MODEL.TRANS.OUT_INDICES = (0, 1, 2, 3)
+_C.MODEL.TRANS.FROZEN_STAGES = -1
+
 
 # fpn settings
 _C.FPN = CN()
 _C.FPN.OUT_CHANNELS = 256
-_C.FPN.IN_CHANNELS = [96, 192, 384, 768] # [256, 512, 1024, 2048]
+_C.FPN.IN_CHANNELS = [96, 192, 384, 768]  # [256, 512, 1024, 2048]
 _C.FPN.USE_C5 = False
 _C.FPN.STRIDES = [4, 8, 16, 32]
 

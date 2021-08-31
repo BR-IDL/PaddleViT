@@ -20,7 +20,9 @@ import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-from model_utils import DropPath
+from model_utils import DropPath, _ntuple
+
+to_2tuple = _ntuple(2)
 
 
 class Identity(nn.Layer):
@@ -552,39 +554,30 @@ class SwinTransformer(nn.Layer):
         avgpool: nn.AveragePool2D, pooling layer before classifer
         fc: nn.Linear, classifier op.
     """
-    def __init__(self,
-                 pretrain_image_size=224,
-                 patch_size=4,
-                 in_channels=3,
-                 num_classes=1000,
-                 embed_dim=96,
-                 depths=[2, 2, 6, 2],
-                 num_heads=[3, 6, 12, 24],
-                 window_size=7,
-                 mlp_ratio=4.,
-                 qkv_bias=True,
-                 qk_scale=None,
-                 dropout=0.,
-                 attention_dropout=0.,
-                 droppath=0.,
-                 ape=False,
-                 out_indices=(0, 1, 2, 3),
-                 frozen_stages=-1):
+    def __init__(self, config):
         super(SwinTransformer, self).__init__()
+        pretrain_image_size = config.MODEL.TRANS.PRETRAIN_IMAGE_SIZE
+        patch_size = config.MODEL.TRANS.PATCH_SIZE
+        in_channels = config.MODEL.TRANS.IN_CHANNELS
+        embed_dim = config.MODEL.TRANS.EMBED_DIM
+        depths = config.MODEL.TRANS.STAGE_DEPTHS
+        num_heads = config.MODEL.TRANS.NUM_HEADS
+        window_size = config.MODEL.TRANS.WINDOW_SIZE
+        mlp_ratio = config.MODEL.TRANS.MLP_RATIO
+        qkv_bias = config.MODEL.TRANS.QKV_BIAS
+        qk_scale = config.MODEL.TRANS.QK_SCALE
+        dropout = config.MODEL.DROPOUT
+        attention_dropout = config.MODEL.ATTENTION_DROPOUT
+        droppath = config.MODEL.DROP_PATH
+        out_indices = config.MODEL.TRANS.OUT_INDICES
 
-        self.pretrain_image_size = pretrain_image_size 
-        self.num_stages = len(depths)
-        self.embed_dim = embed_dim 
+        self.ape = config.MODEL.TRANS.APE
         self.out_indices = out_indices
-        self.frozen_stages = frozen_stages
-        self.ape = ape
-
+        self.num_stages = len(depths)
+        self.frozen_stages = config.MODEL.TRANS.FROZEN_STAGES
         self.patch_embedding = PatchEmbedding(patch_size=patch_size,
                                               in_channels=in_channels,
                                               embed_dim=embed_dim)
-        #num_patches = self.patch_embedding.num_patches
-        #self.patches_resolution = self.patch_embedding.patches_resolution
-
 
         if self.ape:
             pretrain_image_size = to_2tuple(pretrain_image_size)
@@ -602,7 +595,7 @@ class SwinTransformer(nn.Layer):
         self.stages = nn.LayerList()
         for stage_idx in range(self.num_stages):
             stage = SwinTransformerStage(
-                dim=int(self.embed_dim * 2 ** stage_idx),
+                dim=int(embed_dim * 2 ** stage_idx),
                 depth=depths[stage_idx],
                 num_heads=num_heads[stage_idx],
                 window_size=window_size,
