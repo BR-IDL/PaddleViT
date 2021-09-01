@@ -101,16 +101,13 @@ def convert_coco_poly_to_mask(segmentations, height, width):
         mask = coco_mask.decode(rles)
         if len(mask.shape) < 3:
             mask = mask[..., None]
-        # paddle any only support bool type
-        mask = paddle.to_tensor(mask, dtype='bool') # w x h x 1
-        mask = mask.any(axis=2).squeeze(-1) # w x h
-        # paddle stack does not support bool type
-        mask = mask.astype('int32')
+
+        mask = mask.any(axis=2).squeeze(-1)
         masks.append(mask)
     if masks:
-        masks = paddle.stack(masks, axis=0)
+        masks = np.stack(masks, axis=0)
     else:
-        mask = paddle.zeros((0, height, width), dtype='int32')
+        mask = np.zeros((0, height, width), dtype='int32')
     return masks
 
 
@@ -122,27 +119,24 @@ class ConvertCocoPolysToMasks():
     def __call__(self, image, target):
         w, h = image.size
         image_id = target['image_id']
-        image_id = paddle.to_tensor([image_id])
+        # Cuda may raise error, use cpu tensor instead
+        #image_id = paddle.to_tensor([image_id]).cpu()
 
         anno = target['annotations']
         anno = [obj for obj in anno if 'iscrowd' not in obj or obj['iscrowd'] == 0]
 
         boxes = [obj['bbox'] for obj in anno]
-        # Temp Fix: do it in numpy to skip paddl cuda error
-        boxes = np.array(boxes)
+
+        ## Temp Fix: do it in numpy to skip paddle cuda error
+        boxes = np.array(boxes, dtype='float32')
         boxes = boxes.reshape([-1, 4])
         boxes[:, 2:] += boxes[:, :2] # (n, (x1, y1, x2, y2))
 
-        boxes = paddle.to_tensor(boxes, dtype='float32')
-        # paddle indexing may cause cuda errors
-        #boxes = boxes.reshape([-1, 4]) # (n, (x1, y1, box_w, box_h))
-        #boxes[:, 2:] += boxes[:, :2] # (n, (x1, y1, x2, y2))
-
-        boxes[:, 0::2].clip_(min=0, max=w) # clip bbox inside image
-        boxes[:, 1::2].clip_(min=0, max=h) # clip bbox inside image
+        boxes[:, 0::2].clip(0, w) # clip bbox inside image
+        boxes[:, 1::2].clip(0, h) # clip bbox inside image
 
         classes = [obj['category_id'] for obj in anno]
-        classes = paddle.to_tensor(classes, dtype='float32')
+        classes = np.array(classes, dtype='float32')
 
         if self.return_masks:
             segmentations = [obj['segmentation'] for obj in anno]
@@ -151,23 +145,23 @@ class ConvertCocoPolysToMasks():
         keypoints = None
         if anno and 'keypoints' in anno[0]:
             keypoints = [obj['keypoints'] for obj in anno]
-            keypoints = paddle.to_tensor(keypoints, dtype='float32')
+            keypoints = np.array(keypoints, dtype='float32')
             num_keypoints = keypoints.shape[0]
             if num_keypoints:
-                keypoints = keypoints.reshape_((num_keypoints, -1, 3))
+                keypoints = keypoints.reshape((num_keypoints, -1, 3))
 
         #TODO: should be replaced with paddle buildin logical ops in the future
-        boxes_tmp = boxes.cpu().numpy()
+        boxes_tmp = boxes
         keep = (boxes_tmp[:, 3] > boxes_tmp[:, 1]) & (boxes_tmp[:, 2] > boxes_tmp[:, 0])
         keep_idx = np.where(keep)[0].astype('int32')
-        keep = paddle.to_tensor(keep_idx)
 
-        boxes = boxes.index_select(keep, axis=0)
-        classes = classes.index_select(keep, axis=0)
+        boxes = boxes[keep]
+        classes = classes[keep]
+
         if self.return_masks:
-            masks = masks.index_select(keep, axis=0)
+            masks = masks[keep]
         if keypoints is not None:
-            keypoints = keypoints.index_select(keep, axis=0)
+            keypoints = keypoints[keep]
 
         target = {}
         target['boxes'] = boxes
@@ -178,13 +172,13 @@ class ConvertCocoPolysToMasks():
             target['keypoints'] = keypoints
         target['image_id'] = image_id
 
-        area = paddle.to_tensor([obj['area'] for obj in anno])
-        iscrowd = paddle.to_tensor([obj['iscrowd'] if 'iscrowd' in obj else 0 for obj in anno])
+        area = np.array([obj['area'] for obj in anno], dtype='float32')
+        iscrowd = np.array([obj['iscrowd'] if 'iscrowd' in obj else 0 for obj in anno], dtype='float32')
         target['area'] = area
-        target['iscrowd'] = iscrowd.index_select(keep, axis=0)
+        target['iscrowd'] = iscrowd[keep]
 
-        target['orig_size'] = paddle.to_tensor([int(h), int(w)])
-        target['size'] = paddle.to_tensor([int(h), int(w)])
+        target['orig_size'] = np.array([int(h), int(w)], dtype='float32')
+        target['size'] = np.array([int(h), int(w)], dtype='float32')
 
         return image, target
 
