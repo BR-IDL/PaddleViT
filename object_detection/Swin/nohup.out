@@ -1,0 +1,859 @@
+merging config from ./configs/swin_t_maskrcnn.yaml
+0906 06:42:32 PM config= AUG:
+  AUTO_AUGMENT: rand-m9-mstd0.5-inc1
+  COLOR_JITTER: 0.4
+  CUTMIX: 1.0
+  CUTMIX_MINMAX: None
+  MIXUP: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  RE_COUNT: 1
+  RE_MODE: pixel
+  RE_PROB: 0.25
+BASE: ['']
+DATA:
+  BATCH_SIZE: 8
+  BATCH_SIZE_EVAL: 8
+  CROP_PCT: 0.9
+  DATASET: coco
+  DATA_PATH: /dataset/coco
+  IMAGE_SIZE: 640
+  NUM_WORKERS: 2
+  VAL_DATA_PATH: /dataset/coco/
+  WEIGHT_PATH: ./weights/mask_rcnn_swin_small_patch4_window7.pdparams
+EVAL: True
+FPN:
+  IN_CHANNELS: [96, 192, 384, 768]
+  OUT_CHANNELS: 256
+  STRIDES: [4, 8, 16, 32]
+  USE_C5: False
+LOCAL_RANK: 0
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DROPOUT: 0.1
+  DROP_PATH: 0.2
+  NAME: Swin
+  NUM_CLASSES: 1000
+  PRETRAINED: ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+  RESUME: None
+  TRANS:
+    APE: False
+    EMBED_DIM: 96
+    FROZEN_STAGES: -1
+    IN_CHANNELS: 3
+    MLP_RATIO: 4.0
+    NUM_HEADS: [3, 6, 12, 24]
+    OUT_INDICES: (0, 1, 2, 3)
+    PATCH_NORM: True
+    PATCH_SIZE: 4
+    PRETRAIN_IMAGE_SIZE: 224
+    QKV_BIAS: True
+    QK_SCALE: None
+    STAGE_DEPTHS: [2, 2, 6, 2]
+    WINDOW_SIZE: 7
+  TYPE: Swin
+NGPUS: -1
+REPORT_FREQ: 50
+ROI:
+  ALIGNED: True
+  ALIGN_OUTPUT_SIZE: 7
+  BATCH_SIZE_PER_IMG: 512
+  BOX_HEAD:
+    CONV_DIM: 256
+    FC_DIM: 1024
+    NUM_CONV: 0
+    NUM_FC: 2
+    REG_WEIGHTS: [10.0, 10.0, 5.0, 5.0]
+  CANONICAL_BOX_SIZE: 224
+  CANONICAL_LEVEL: 4
+  LOW_QUALITY_MATCHES: False
+  MAX_LEVEL: 3
+  MIN_LEVEL: 0
+  NEGATIVE_THRESH: 0.5
+  NMS_KEEP_TOPK_INFER: 100
+  NMS_THRESH_INFER: 0.5
+  NUM_ClASSES: 80
+  PAT_GT: False
+  POSITIVE_FRACTION: 0.25
+  POSITIVE_THRESH: 0.5
+  SAMPLING_RATIO: 0
+  SCALES: [0.25, 0.125, 0.0625, 0.03125, 0.015625]
+  SCORE_THRESH_INFER: 0.05
+RPN:
+  ANCHOR_SIZE: [[32], [64], [128], [256], [512]]
+  ASPECT_RATIOS: [0.5, 1.0, 2.0]
+  BATCH_SIZE_PER_IMG: 256
+  LOW_QUALITY_MATCHES: True
+  MIN_SIZE: 0.0
+  NEGATIVE_THRESH: 0.3
+  NMS_THRESH: 0.7
+  OFFSET: 0.0
+  POSITIVE_FRACTION: 0.5
+  POSITIVE_THRESH: 0.7
+  POST_NMS_TOP_N_TEST: 1000
+  POST_NMS_TOP_N_TRAIN: 1000
+  PRE_NMS_TOP_N_TEST: 1000
+  PRE_NMS_TOP_N_TRAIN: 2000
+  STRIDES: [4, 8, 16, 32, 64]
+  TOPK_AFTER_COLLECT: True
+SAVE: ./output/eval-20210906-18-42-32
+SAVE_FREQ: 20
+SEED: 0
+TAG: default
+TRAIN:
+  ACCUM_ITER: 2
+  BASE_LR: 0.0001
+  END_LR: 0.0
+  GRAD_CLIP: 0.1
+  LAST_EPOCH: 0
+  LR_SCHEDULER:
+    DECAY_EPOCHS: 30
+    DECAY_RATE: 0.1
+    MILESTONES: 30, 60, 90
+    NAME: warmupcosine
+  NUM_EPOCHS: 300
+  OPTIMIZER:
+    BETAS: (0.9, 0.999)
+    EPS: 1e-08
+    MOMENTUM: 0.9
+    NAME: SGD
+  WARMUP_EPOCHS: 20
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.0001
+VALIDATE_FREQ: 20
+W0906 18:42:32.705507 24069 device_context.cc:404] Please NOTE: device: 0, GPU Compute Capability: 7.0, Driver API Version: 10.2, Runtime API Version: 10.2
+W0906 18:42:32.712786 24069 device_context.cc:422] device: 0, cuDNN Version: 7.6.
+loading annotations into memory...
+Done (t=0.59s)
+creating index...
+index created!
+loading coco data, 48 imgs without annos are removed
+0906 06:42:44 PM ----- Pretrained: Load model state from ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+0906 06:42:44 PM ----- Start Validating
+merging config from ./configs/swin_t_maskrcnn.yaml
+0906 06:42:46 PM config= AUG:
+  AUTO_AUGMENT: rand-m9-mstd0.5-inc1
+  COLOR_JITTER: 0.4
+  CUTMIX: 1.0
+  CUTMIX_MINMAX: None
+  MIXUP: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  RE_COUNT: 1
+  RE_MODE: pixel
+  RE_PROB: 0.25
+BASE: ['']
+DATA:
+  BATCH_SIZE: 8
+  BATCH_SIZE_EVAL: 8
+  CROP_PCT: 0.9
+  DATASET: coco
+  DATA_PATH: /dataset/coco
+  IMAGE_SIZE: 640
+  NUM_WORKERS: 2
+  VAL_DATA_PATH: /dataset/coco/
+  WEIGHT_PATH: ./weights/mask_rcnn_swin_small_patch4_window7.pdparams
+EVAL: True
+FPN:
+  IN_CHANNELS: [96, 192, 384, 768]
+  OUT_CHANNELS: 256
+  STRIDES: [4, 8, 16, 32]
+  USE_C5: False
+LOCAL_RANK: 0
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DROPOUT: 0.1
+  DROP_PATH: 0.2
+  NAME: Swin
+  NUM_CLASSES: 1000
+  PRETRAINED: ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+  RESUME: None
+  TRANS:
+    APE: False
+    EMBED_DIM: 96
+    FROZEN_STAGES: -1
+    IN_CHANNELS: 3
+    MLP_RATIO: 4.0
+    NUM_HEADS: [3, 6, 12, 24]
+    OUT_INDICES: (0, 1, 2, 3)
+    PATCH_NORM: True
+    PATCH_SIZE: 4
+    PRETRAIN_IMAGE_SIZE: 224
+    QKV_BIAS: True
+    QK_SCALE: None
+    STAGE_DEPTHS: [2, 2, 6, 2]
+    WINDOW_SIZE: 7
+  TYPE: Swin
+NGPUS: -1
+REPORT_FREQ: 50
+ROI:
+  ALIGNED: True
+  ALIGN_OUTPUT_SIZE: 7
+  BATCH_SIZE_PER_IMG: 512
+  BOX_HEAD:
+    CONV_DIM: 256
+    FC_DIM: 1024
+    NUM_CONV: 0
+    NUM_FC: 2
+    REG_WEIGHTS: [10.0, 10.0, 5.0, 5.0]
+  CANONICAL_BOX_SIZE: 224
+  CANONICAL_LEVEL: 4
+  LOW_QUALITY_MATCHES: False
+  MAX_LEVEL: 3
+  MIN_LEVEL: 0
+  NEGATIVE_THRESH: 0.5
+  NMS_KEEP_TOPK_INFER: 100
+  NMS_THRESH_INFER: 0.5
+  NUM_ClASSES: 80
+  PAT_GT: False
+  POSITIVE_FRACTION: 0.25
+  POSITIVE_THRESH: 0.5
+  SAMPLING_RATIO: 0
+  SCALES: [0.25, 0.125, 0.0625, 0.03125, 0.015625]
+  SCORE_THRESH_INFER: 0.05
+RPN:
+  ANCHOR_SIZE: [[32], [64], [128], [256], [512]]
+  ASPECT_RATIOS: [0.5, 1.0, 2.0]
+  BATCH_SIZE_PER_IMG: 256
+  LOW_QUALITY_MATCHES: True
+  MIN_SIZE: 0.0
+  NEGATIVE_THRESH: 0.3
+  NMS_THRESH: 0.7
+  OFFSET: 0.0
+  POSITIVE_FRACTION: 0.5
+  POSITIVE_THRESH: 0.7
+  POST_NMS_TOP_N_TEST: 1000
+  POST_NMS_TOP_N_TRAIN: 1000
+  PRE_NMS_TOP_N_TEST: 1000
+  PRE_NMS_TOP_N_TRAIN: 2000
+  STRIDES: [4, 8, 16, 32, 64]
+  TOPK_AFTER_COLLECT: True
+SAVE: ./output/eval-20210906-18-42-46
+SAVE_FREQ: 20
+SEED: 0
+TAG: default
+TRAIN:
+  ACCUM_ITER: 2
+  BASE_LR: 0.0001
+  END_LR: 0.0
+  GRAD_CLIP: 0.1
+  LAST_EPOCH: 0
+  LR_SCHEDULER:
+    DECAY_EPOCHS: 30
+    DECAY_RATE: 0.1
+    MILESTONES: 30, 60, 90
+    NAME: warmupcosine
+  NUM_EPOCHS: 300
+  OPTIMIZER:
+    BETAS: (0.9, 0.999)
+    EPS: 1e-08
+    MOMENTUM: 0.9
+    NAME: SGD
+  WARMUP_EPOCHS: 20
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.0001
+VALIDATE_FREQ: 20
+loading annotations into memory...
+Done (t=0.57s)
+creating index...
+index created!
+loading coco data, 48 imgs without annos are removed
+merging config from ./configs/swin_t_maskrcnn.yaml
+0906 06:42:49 PM config= AUG:
+  AUTO_AUGMENT: rand-m9-mstd0.5-inc1
+  COLOR_JITTER: 0.4
+  CUTMIX: 1.0
+  CUTMIX_MINMAX: None
+  MIXUP: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  RE_COUNT: 1
+  RE_MODE: pixel
+  RE_PROB: 0.25
+BASE: ['']
+DATA:
+  BATCH_SIZE: 8
+  BATCH_SIZE_EVAL: 8
+  CROP_PCT: 0.9
+  DATASET: coco
+  DATA_PATH: /dataset/coco
+  IMAGE_SIZE: 640
+  NUM_WORKERS: 2
+  VAL_DATA_PATH: /dataset/coco/
+  WEIGHT_PATH: ./weights/mask_rcnn_swin_small_patch4_window7.pdparams
+EVAL: True
+FPN:
+  IN_CHANNELS: [96, 192, 384, 768]
+  OUT_CHANNELS: 256
+  STRIDES: [4, 8, 16, 32]
+  USE_C5: False
+LOCAL_RANK: 0
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DROPOUT: 0.1
+  DROP_PATH: 0.2
+  NAME: Swin
+  NUM_CLASSES: 1000
+  PRETRAINED: ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+  RESUME: None
+  TRANS:
+    APE: False
+    EMBED_DIM: 96
+    FROZEN_STAGES: -1
+    IN_CHANNELS: 3
+    MLP_RATIO: 4.0
+    NUM_HEADS: [3, 6, 12, 24]
+    OUT_INDICES: (0, 1, 2, 3)
+    PATCH_NORM: True
+    PATCH_SIZE: 4
+    PRETRAIN_IMAGE_SIZE: 224
+    QKV_BIAS: True
+    QK_SCALE: None
+    STAGE_DEPTHS: [2, 2, 6, 2]
+    WINDOW_SIZE: 7
+  TYPE: Swin
+NGPUS: -1
+REPORT_FREQ: 50
+ROI:
+  ALIGNED: True
+  ALIGN_OUTPUT_SIZE: 7
+  BATCH_SIZE_PER_IMG: 512
+  BOX_HEAD:
+    CONV_DIM: 256
+    FC_DIM: 1024
+    NUM_CONV: 0
+    NUM_FC: 2
+    REG_WEIGHTS: [10.0, 10.0, 5.0, 5.0]
+  CANONICAL_BOX_SIZE: 224
+  CANONICAL_LEVEL: 4
+  LOW_QUALITY_MATCHES: False
+  MAX_LEVEL: 3
+  MIN_LEVEL: 0
+  NEGATIVE_THRESH: 0.5
+  NMS_KEEP_TOPK_INFER: 100
+  NMS_THRESH_INFER: 0.5
+  NUM_ClASSES: 80
+  PAT_GT: False
+  POSITIVE_FRACTION: 0.25
+  POSITIVE_THRESH: 0.5
+  SAMPLING_RATIO: 0
+  SCALES: [0.25, 0.125, 0.0625, 0.03125, 0.015625]
+  SCORE_THRESH_INFER: 0.05
+RPN:
+  ANCHOR_SIZE: [[32], [64], [128], [256], [512]]
+  ASPECT_RATIOS: [0.5, 1.0, 2.0]
+  BATCH_SIZE_PER_IMG: 256
+  LOW_QUALITY_MATCHES: True
+  MIN_SIZE: 0.0
+  NEGATIVE_THRESH: 0.3
+  NMS_THRESH: 0.7
+  OFFSET: 0.0
+  POSITIVE_FRACTION: 0.5
+  POSITIVE_THRESH: 0.7
+  POST_NMS_TOP_N_TEST: 1000
+  POST_NMS_TOP_N_TRAIN: 1000
+  PRE_NMS_TOP_N_TEST: 1000
+  PRE_NMS_TOP_N_TRAIN: 2000
+  STRIDES: [4, 8, 16, 32, 64]
+  TOPK_AFTER_COLLECT: True
+SAVE: ./output/eval-20210906-18-42-49
+SAVE_FREQ: 20
+SEED: 0
+TAG: default
+TRAIN:
+  ACCUM_ITER: 2
+  BASE_LR: 0.0001
+  END_LR: 0.0
+  GRAD_CLIP: 0.1
+  LAST_EPOCH: 0
+  LR_SCHEDULER:
+    DECAY_EPOCHS: 30
+    DECAY_RATE: 0.1
+    MILESTONES: 30, 60, 90
+    NAME: warmupcosine
+  NUM_EPOCHS: 300
+  OPTIMIZER:
+    BETAS: (0.9, 0.999)
+    EPS: 1e-08
+    MOMENTUM: 0.9
+    NAME: SGD
+  WARMUP_EPOCHS: 20
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.0001
+VALIDATE_FREQ: 20
+W0906 18:42:49.483649 24104 gen_comm_id_helper.cc:120] connect addr=127.0.0.1:43378 failed 1 times with reason: Connection refused retry after 0.5 seconds
+W0906 18:42:49.983848 24104 gen_comm_id_helper.cc:120] connect addr=127.0.0.1:43378 failed 2 times with reason: Connection refused retry after 1 seconds
+W0906 18:42:50.984026 24104 gen_comm_id_helper.cc:120] connect addr=127.0.0.1:43378 failed 3 times with reason: Connection refused retry after 1.5 seconds
+merging config from ./configs/swin_t_maskrcnn.yaml
+0906 06:42:51 PM config= AUG:
+  AUTO_AUGMENT: rand-m9-mstd0.5-inc1
+  COLOR_JITTER: 0.4
+  CUTMIX: 1.0
+  CUTMIX_MINMAX: None
+  MIXUP: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  RE_COUNT: 1
+  RE_MODE: pixel
+  RE_PROB: 0.25
+BASE: ['']
+DATA:
+  BATCH_SIZE: 8
+  BATCH_SIZE_EVAL: 8
+  CROP_PCT: 0.9
+  DATASET: coco
+  DATA_PATH: /dataset/coco
+  IMAGE_SIZE: 640
+  NUM_WORKERS: 2
+  VAL_DATA_PATH: /dataset/coco/
+  WEIGHT_PATH: ./weights/mask_rcnn_swin_small_patch4_window7.pdparams
+EVAL: True
+FPN:
+  IN_CHANNELS: [96, 192, 384, 768]
+  OUT_CHANNELS: 256
+  STRIDES: [4, 8, 16, 32]
+  USE_C5: False
+LOCAL_RANK: 0
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DROPOUT: 0.1
+  DROP_PATH: 0.2
+  NAME: Swin
+  NUM_CLASSES: 1000
+  PRETRAINED: ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+  RESUME: None
+  TRANS:
+    APE: False
+    EMBED_DIM: 96
+    FROZEN_STAGES: -1
+    IN_CHANNELS: 3
+    MLP_RATIO: 4.0
+    NUM_HEADS: [3, 6, 12, 24]
+    OUT_INDICES: (0, 1, 2, 3)
+    PATCH_NORM: True
+    PATCH_SIZE: 4
+    PRETRAIN_IMAGE_SIZE: 224
+    QKV_BIAS: True
+    QK_SCALE: None
+    STAGE_DEPTHS: [2, 2, 6, 2]
+    WINDOW_SIZE: 7
+  TYPE: Swin
+NGPUS: -1
+REPORT_FREQ: 50
+ROI:
+  ALIGNED: True
+  ALIGN_OUTPUT_SIZE: 7
+  BATCH_SIZE_PER_IMG: 512
+  BOX_HEAD:
+    CONV_DIM: 256
+    FC_DIM: 1024
+    NUM_CONV: 0
+    NUM_FC: 2
+    REG_WEIGHTS: [10.0, 10.0, 5.0, 5.0]
+  CANONICAL_BOX_SIZE: 224
+  CANONICAL_LEVEL: 4
+  LOW_QUALITY_MATCHES: False
+  MAX_LEVEL: 3
+  MIN_LEVEL: 0
+  NEGATIVE_THRESH: 0.5
+  NMS_KEEP_TOPK_INFER: 100
+  NMS_THRESH_INFER: 0.5
+  NUM_ClASSES: 80
+  PAT_GT: False
+  POSITIVE_FRACTION: 0.25
+  POSITIVE_THRESH: 0.5
+  SAMPLING_RATIO: 0
+  SCALES: [0.25, 0.125, 0.0625, 0.03125, 0.015625]
+  SCORE_THRESH_INFER: 0.05
+RPN:
+  ANCHOR_SIZE: [[32], [64], [128], [256], [512]]
+  ASPECT_RATIOS: [0.5, 1.0, 2.0]
+  BATCH_SIZE_PER_IMG: 256
+  LOW_QUALITY_MATCHES: True
+  MIN_SIZE: 0.0
+  NEGATIVE_THRESH: 0.3
+  NMS_THRESH: 0.7
+  OFFSET: 0.0
+  POSITIVE_FRACTION: 0.5
+  POSITIVE_THRESH: 0.7
+  POST_NMS_TOP_N_TEST: 1000
+  POST_NMS_TOP_N_TRAIN: 1000
+  PRE_NMS_TOP_N_TEST: 1000
+  PRE_NMS_TOP_N_TRAIN: 2000
+  STRIDES: [4, 8, 16, 32, 64]
+  TOPK_AFTER_COLLECT: True
+SAVE: ./output/eval-20210906-18-42-51
+SAVE_FREQ: 20
+SEED: 0
+TAG: default
+TRAIN:
+  ACCUM_ITER: 2
+  BASE_LR: 0.0001
+  END_LR: 0.0
+  GRAD_CLIP: 0.1
+  LAST_EPOCH: 0
+  LR_SCHEDULER:
+    DECAY_EPOCHS: 30
+    DECAY_RATE: 0.1
+    MILESTONES: 30, 60, 90
+    NAME: warmupcosine
+  NUM_EPOCHS: 300
+  OPTIMIZER:
+    BETAS: (0.9, 0.999)
+    EPS: 1e-08
+    MOMENTUM: 0.9
+    NAME: SGD
+  WARMUP_EPOCHS: 20
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.0001
+VALIDATE_FREQ: 20
+I0906 18:42:51.917227 24119 gen_comm_id_helper.cc:181] Server listening on: 127.0.0.1:43378 successful.
+W0906 18:42:52.484287 24104 gen_comm_id_helper.cc:120] connect addr=127.0.0.1:11180 failed 1 times with reason: Connection refused retry after 0.5 seconds
+W0906 18:42:52.984428 24104 gen_comm_id_helper.cc:120] connect addr=127.0.0.1:11180 failed 2 times with reason: Connection refused retry after 1 seconds
+W0906 18:42:53.984596 24104 gen_comm_id_helper.cc:120] connect addr=127.0.0.1:11180 failed 3 times with reason: Connection refused retry after 1.5 seconds
+merging config from ./configs/swin_t_maskrcnn.yaml
+0906 06:42:53 PM config= AUG:
+  AUTO_AUGMENT: rand-m9-mstd0.5-inc1
+  COLOR_JITTER: 0.4
+  CUTMIX: 1.0
+  CUTMIX_MINMAX: None
+  MIXUP: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  RE_COUNT: 1
+  RE_MODE: pixel
+  RE_PROB: 0.25
+BASE: ['']
+DATA:
+  BATCH_SIZE: 8
+  BATCH_SIZE_EVAL: 8
+  CROP_PCT: 0.9
+  DATASET: coco
+  DATA_PATH: /dataset/coco
+  IMAGE_SIZE: 640
+  NUM_WORKERS: 2
+  VAL_DATA_PATH: /dataset/coco/
+  WEIGHT_PATH: ./weights/mask_rcnn_swin_small_patch4_window7.pdparams
+EVAL: True
+FPN:
+  IN_CHANNELS: [96, 192, 384, 768]
+  OUT_CHANNELS: 256
+  STRIDES: [4, 8, 16, 32]
+  USE_C5: False
+LOCAL_RANK: 0
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DROPOUT: 0.1
+  DROP_PATH: 0.2
+  NAME: Swin
+  NUM_CLASSES: 1000
+  PRETRAINED: ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+  RESUME: None
+  TRANS:
+    APE: False
+    EMBED_DIM: 96
+    FROZEN_STAGES: -1
+    IN_CHANNELS: 3
+    MLP_RATIO: 4.0
+    NUM_HEADS: [3, 6, 12, 24]
+    OUT_INDICES: (0, 1, 2, 3)
+    PATCH_NORM: True
+    PATCH_SIZE: 4
+    PRETRAIN_IMAGE_SIZE: 224
+    QKV_BIAS: True
+    QK_SCALE: None
+    STAGE_DEPTHS: [2, 2, 6, 2]
+    WINDOW_SIZE: 7
+  TYPE: Swin
+NGPUS: -1
+REPORT_FREQ: 50
+ROI:
+  ALIGNED: True
+  ALIGN_OUTPUT_SIZE: 7
+  BATCH_SIZE_PER_IMG: 512
+  BOX_HEAD:
+    CONV_DIM: 256
+    FC_DIM: 1024
+    NUM_CONV: 0
+    NUM_FC: 2
+    REG_WEIGHTS: [10.0, 10.0, 5.0, 5.0]
+  CANONICAL_BOX_SIZE: 224
+  CANONICAL_LEVEL: 4
+  LOW_QUALITY_MATCHES: False
+  MAX_LEVEL: 3
+  MIN_LEVEL: 0
+  NEGATIVE_THRESH: 0.5
+  NMS_KEEP_TOPK_INFER: 100
+  NMS_THRESH_INFER: 0.5
+  NUM_ClASSES: 80
+  PAT_GT: False
+  POSITIVE_FRACTION: 0.25
+  POSITIVE_THRESH: 0.5
+  SAMPLING_RATIO: 0
+  SCALES: [0.25, 0.125, 0.0625, 0.03125, 0.015625]
+  SCORE_THRESH_INFER: 0.05
+RPN:
+  ANCHOR_SIZE: [[32], [64], [128], [256], [512]]
+  ASPECT_RATIOS: [0.5, 1.0, 2.0]
+  BATCH_SIZE_PER_IMG: 256
+  LOW_QUALITY_MATCHES: True
+  MIN_SIZE: 0.0
+  NEGATIVE_THRESH: 0.3
+  NMS_THRESH: 0.7
+  OFFSET: 0.0
+  POSITIVE_FRACTION: 0.5
+  POSITIVE_THRESH: 0.7
+  POST_NMS_TOP_N_TEST: 1000
+  POST_NMS_TOP_N_TRAIN: 1000
+  PRE_NMS_TOP_N_TEST: 1000
+  PRE_NMS_TOP_N_TRAIN: 2000
+  STRIDES: [4, 8, 16, 32, 64]
+  TOPK_AFTER_COLLECT: True
+SAVE: ./output/eval-20210906-18-42-53
+SAVE_FREQ: 20
+SEED: 0
+TAG: default
+TRAIN:
+  ACCUM_ITER: 2
+  BASE_LR: 0.0001
+  END_LR: 0.0
+  GRAD_CLIP: 0.1
+  LAST_EPOCH: 0
+  LR_SCHEDULER:
+    DECAY_EPOCHS: 30
+    DECAY_RATE: 0.1
+    MILESTONES: 30, 60, 90
+    NAME: warmupcosine
+  NUM_EPOCHS: 300
+  OPTIMIZER:
+    BETAS: (0.9, 0.999)
+    EPS: 1e-08
+    MOMENTUM: 0.9
+    NAME: SGD
+  WARMUP_EPOCHS: 20
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.0001
+VALIDATE_FREQ: 20
+I0906 18:42:54.355432 24133 gen_comm_id_helper.cc:181] Server listening on: 127.0.0.1:11180 successful.
+W0906 18:42:55.484872 24104 gen_comm_id_helper.cc:120] connect addr=127.0.0.1:24060 failed 1 times with reason: Connection refused retry after 0.5 seconds
+W0906 18:42:55.985054 24104 gen_comm_id_helper.cc:120] connect addr=127.0.0.1:24060 failed 2 times with reason: Connection refused retry after 1 seconds
+merging config from ./configs/swin_t_maskrcnn.yaml
+0906 06:42:56 PM config= AUG:
+  AUTO_AUGMENT: rand-m9-mstd0.5-inc1
+  COLOR_JITTER: 0.4
+  CUTMIX: 1.0
+  CUTMIX_MINMAX: None
+  MIXUP: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  RE_COUNT: 1
+  RE_MODE: pixel
+  RE_PROB: 0.25
+BASE: ['']
+DATA:
+  BATCH_SIZE: 8
+  BATCH_SIZE_EVAL: 8
+  CROP_PCT: 0.9
+  DATASET: coco
+  DATA_PATH: /dataset/coco
+  IMAGE_SIZE: 640
+  NUM_WORKERS: 2
+  VAL_DATA_PATH: /dataset/coco/
+  WEIGHT_PATH: ./weights/mask_rcnn_swin_small_patch4_window7.pdparams
+EVAL: True
+FPN:
+  IN_CHANNELS: [96, 192, 384, 768]
+  OUT_CHANNELS: 256
+  STRIDES: [4, 8, 16, 32]
+  USE_C5: False
+LOCAL_RANK: 0
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DROPOUT: 0.1
+  DROP_PATH: 0.2
+  NAME: Swin
+  NUM_CLASSES: 1000
+  PRETRAINED: ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+  RESUME: None
+  TRANS:
+    APE: False
+    EMBED_DIM: 96
+    FROZEN_STAGES: -1
+    IN_CHANNELS: 3
+    MLP_RATIO: 4.0
+    NUM_HEADS: [3, 6, 12, 24]
+    OUT_INDICES: (0, 1, 2, 3)
+    PATCH_NORM: True
+    PATCH_SIZE: 4
+    PRETRAIN_IMAGE_SIZE: 224
+    QKV_BIAS: True
+    QK_SCALE: None
+    STAGE_DEPTHS: [2, 2, 6, 2]
+    WINDOW_SIZE: 7
+  TYPE: Swin
+NGPUS: -1
+REPORT_FREQ: 50
+ROI:
+  ALIGNED: True
+  ALIGN_OUTPUT_SIZE: 7
+  BATCH_SIZE_PER_IMG: 512
+  BOX_HEAD:
+    CONV_DIM: 256
+    FC_DIM: 1024
+    NUM_CONV: 0
+    NUM_FC: 2
+    REG_WEIGHTS: [10.0, 10.0, 5.0, 5.0]
+  CANONICAL_BOX_SIZE: 224
+  CANONICAL_LEVEL: 4
+  LOW_QUALITY_MATCHES: False
+  MAX_LEVEL: 3
+  MIN_LEVEL: 0
+  NEGATIVE_THRESH: 0.5
+  NMS_KEEP_TOPK_INFER: 100
+  NMS_THRESH_INFER: 0.5
+  NUM_ClASSES: 80
+  PAT_GT: False
+  POSITIVE_FRACTION: 0.25
+  POSITIVE_THRESH: 0.5
+  SAMPLING_RATIO: 0
+  SCALES: [0.25, 0.125, 0.0625, 0.03125, 0.015625]
+  SCORE_THRESH_INFER: 0.05
+RPN:
+  ANCHOR_SIZE: [[32], [64], [128], [256], [512]]
+  ASPECT_RATIOS: [0.5, 1.0, 2.0]
+  BATCH_SIZE_PER_IMG: 256
+  LOW_QUALITY_MATCHES: True
+  MIN_SIZE: 0.0
+  NEGATIVE_THRESH: 0.3
+  NMS_THRESH: 0.7
+  OFFSET: 0.0
+  POSITIVE_FRACTION: 0.5
+  POSITIVE_THRESH: 0.7
+  POST_NMS_TOP_N_TEST: 1000
+  POST_NMS_TOP_N_TRAIN: 1000
+  PRE_NMS_TOP_N_TEST: 1000
+  PRE_NMS_TOP_N_TRAIN: 2000
+  STRIDES: [4, 8, 16, 32, 64]
+  TOPK_AFTER_COLLECT: True
+SAVE: ./output/eval-20210906-18-42-56
+SAVE_FREQ: 20
+SEED: 0
+TAG: default
+TRAIN:
+  ACCUM_ITER: 2
+  BASE_LR: 0.0001
+  END_LR: 0.0
+  GRAD_CLIP: 0.1
+  LAST_EPOCH: 0
+  LR_SCHEDULER:
+    DECAY_EPOCHS: 30
+    DECAY_RATE: 0.1
+    MILESTONES: 30, 60, 90
+    NAME: warmupcosine
+  NUM_EPOCHS: 300
+  OPTIMIZER:
+    BETAS: (0.9, 0.999)
+    EPS: 1e-08
+    MOMENTUM: 0.9
+    NAME: SGD
+  WARMUP_EPOCHS: 20
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.0001
+VALIDATE_FREQ: 20
+I0906 18:42:56.622375 24147 gen_comm_id_helper.cc:181] Server listening on: 127.0.0.1:24060 successful.
+I0906 18:42:56.985328 24104 nccl_context.cc:74] init nccl context nranks: 4 local rank: 0 gpu id: 0 ring id: 0
+I0906 18:42:56.985343 24119 nccl_context.cc:74] init nccl context nranks: 4 local rank: 1 gpu id: 1 ring id: 0
+I0906 18:42:56.985344 24147 nccl_context.cc:74] init nccl context nranks: 4 local rank: 3 gpu id: 3 ring id: 0
+I0906 18:42:56.985340 24133 nccl_context.cc:74] init nccl context nranks: 4 local rank: 2 gpu id: 2 ring id: 0
+W0906 18:42:59.592660 24133 device_context.cc:404] Please NOTE: device: 2, GPU Compute Capability: 7.0, Driver API Version: 10.2, Runtime API Version: 10.2
+W0906 18:42:59.592682 24104 device_context.cc:404] Please NOTE: device: 0, GPU Compute Capability: 7.0, Driver API Version: 10.2, Runtime API Version: 10.2
+W0906 18:42:59.592675 24119 device_context.cc:404] Please NOTE: device: 1, GPU Compute Capability: 7.0, Driver API Version: 10.2, Runtime API Version: 10.2
+W0906 18:42:59.592749 24147 device_context.cc:404] Please NOTE: device: 3, GPU Compute Capability: 7.0, Driver API Version: 10.2, Runtime API Version: 10.2
+W0906 18:42:59.597329 24104 device_context.cc:422] device: 0, cuDNN Version: 7.6.
+W0906 18:42:59.597333 24133 device_context.cc:422] device: 2, cuDNN Version: 7.6.
+W0906 18:42:59.597333 24119 device_context.cc:422] device: 1, cuDNN Version: 7.6.
+W0906 18:42:59.597337 24147 device_context.cc:422] device: 3, cuDNN Version: 7.6.
+0906 06:43:05 PM ----- world_size = 4, local_rank = 0
+0906 06:43:05 PM ----- world_size = 4, local_rank = 1
+0906 06:43:05 PM ----- world_size = 4, local_rank = 2
+0906 06:43:05 PM ----- world_size = 4, local_rank = 3
+0906 06:43:06 PM ----- Total # of train batch (single gpu): 0
+0906 06:43:06 PM ----- Total # of val batch (single gpu): 154
+0906 06:43:06 PM ----- Total # of train batch (single gpu): 0
+0906 06:43:06 PM ----- Total # of val batch (single gpu): 154
+0906 06:43:06 PM ----- Total # of train batch (single gpu): 0
+0906 06:43:06 PM ----- Total # of val batch (single gpu): 154
+0906 06:43:06 PM ----- Total # of train batch (single gpu): 0
+0906 06:43:06 PM ----- Total # of val batch (single gpu): 154
+0906 06:43:08 PM ----- Pretrained: Load model state from ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+0906 06:43:08 PM ----- Start Validating
+0906 06:43:08 PM ----- Pretrained: Load model state from ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+0906 06:43:08 PM ----- Start Validating
+0906 06:43:08 PM ----- Pretrained: Load model state from ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+0906 06:43:08 PM ----- Start Validating
+0906 06:43:08 PM ----- Pretrained: Load model state from ./weights/mask_rcnn_swin_tiny_patch4_window7_1x
+0906 06:43:08 PM ----- Start Validating
+0906 06:43:43 PM Val Step[0050/0619], done
+0906 06:44:08 PM Val Step[0050/0154], done
+0906 06:44:08 PM Val Step[0050/0154], done
+0906 06:44:08 PM Val Step[0050/0154], done
+0906 06:44:09 PM Val Step[0050/0154], done
+0906 06:44:37 PM Val Step[0100/0619], done
+0906 06:45:01 PM Val Step[0100/0154], done
+0906 06:45:02 PM Val Step[0100/0154], done
+0906 06:45:03 PM Val Step[0100/0154], done
+0906 06:45:03 PM Val Step[0100/0154], done
+0906 06:45:31 PM Val Step[0150/0619], done
+0906 06:45:53 PM Val Step[0150/0154], done
+0906 06:45:54 PM Val Step[0150/0154], done
+0906 06:45:54 PM Val Step[0150/0154], done
+0906 06:45:56 PM Val Step[0150/0154], done
+Traceback (most recent call last):
+  File "main_multi_gpu.py", line 383, in <module>
+    main()
+  File "main_multi_gpu.py", line 379, in main
+    dist.spawn(main_worker, args=(dataset_train, dataset_val, ), nprocs=config.NGPUS)
+  File "/opt/conda/envs/py36/lib/python3.6/site-packages/paddle/distributed/spawn.py", line 496, in spawn
+    while not context.join():
+  File "/opt/conda/envs/py36/lib/python3.6/site-packages/paddle/distributed/spawn.py", line 296, in join
+    self._throw_exception(error_index)
+  File "/opt/conda/envs/py36/lib/python3.6/site-packages/paddle/distributed/spawn.py", line 314, in _throw_exception
+    raise Exception(msg)
+Exception: 
+
+----------------------------------------------
+Process 0 terminated with the following error:
+----------------------------------------------
+
+Traceback (most recent call last):
+  File "/opt/conda/envs/py36/lib/python3.6/site-packages/paddle/distributed/spawn.py", line 245, in _func_wrapper
+    result = func(*args)
+  File "/workspace/ppvit_github/PaddleViT/object_detection/Swin/main_multi_gpu.py", line 317, in main_worker
+    debug_steps=config.REPORT_FREQ)
+  File "/workspace/ppvit_github/PaddleViT/object_detection/Swin/main_multi_gpu.py", line 184, in validate
+    output = output.cpu().numpy()
+AttributeError: 'list' object has no attribute 'cpu'
+
+0906 06:46:25 PM Val Step[0200/0619], done
+0906 06:47:17 PM Val Step[0250/0619], done
+0906 06:48:11 PM Val Step[0300/0619], done
+0906 06:49:04 PM Val Step[0350/0619], done
+0906 06:49:57 PM Val Step[0400/0619], done
+0906 06:50:50 PM Val Step[0450/0619], done
+0906 06:51:41 PM Val Step[0500/0619], done
+0906 06:52:35 PM Val Step[0550/0619], done
+0906 06:53:26 PM Val Step[0600/0619], done
+Traceback (most recent call last):
+  File "main_single_gpu.py", line 310, in <module>
+    main()
+  File "main_single_gpu.py", line 256, in main
+    debug_steps=config.REPORT_FREQ)
+  File "main_single_gpu.py", line 144, in validate
+    output = output.cpu().numpy()
+AttributeError: 'list' object has no attribute 'cpu'
