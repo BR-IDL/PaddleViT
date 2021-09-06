@@ -321,14 +321,19 @@ class Normalize():
     [0, 1] according to image size
     """
 
-    def __init__(self, mean, std):
+    def __init__(self, mean, std, norm_gt=False):
         self.mean = mean
         self.std = std
+        self.norm_gt = norm_gt
 
     def __call__(self, image, target=None):
         image = T.functional.normalize(image, mean=self.mean, std=self.std)
         if target is None:
             return image, None
+
+        if not self.norm_gt:
+            return image, target
+
         target = target.copy()
         h, w = image.shape[-2:]
         if 'boxes' in target and target['boxes'].shape[0] != 0:

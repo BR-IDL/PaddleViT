@@ -22,6 +22,9 @@ class CocoEvaluator():
         self.img_ids = []
         self.eval_imgs = {k: [] for k in iou_types}
 
+        self.ids2cats = {id:cat for id, cat in enumerate(self.coco_gt.getCatIds())}
+        self.cats2ids = {cat:id for id, cat in enumerate(self.coco_gt.getCatIds())}
+
     def update(self, predictions):
         img_ids = list(np.unique(list(predictions.keys())))
         self.img_ids.extend(img_ids)
@@ -74,6 +77,7 @@ class CocoEvaluator():
             boxes = convert_to_xywh(boxes).tolist()
             scores = prediction['scores'].tolist()
             labels = prediction['labels'].tolist()
+            labels = [self.ids2cats[i] for i in labels]
 
             coco_results.extend(
                 [
