@@ -5,7 +5,7 @@ import collections.abc
 import paddle
 import paddle.nn.functional as F
 
-def slide_inference(model, img, crop_size, stride_size, num_classes):
+def slide_inference(model, imgs, crop_size, stride_size, num_classes):
     """
     Inference by sliding-window with overlap, the overlap is equal to stride.
 
@@ -20,31 +20,47 @@ def slide_inference(model, img, crop_size, stride_size, num_classes):
         final_logit (Tensor): The logit of input image, whose size is equal to 
         the size of img (not the orginal size).
     """
-    h_img, w_img = img.shape[-2:]
+    batch_size = len(imgs)
+    h_img = [img.shape[-2] for img in imgs]
+    w_img = [img.shape[-1] for img in imgs]
+    max_h, max_w = max(h_img), max(w_img)
     w_crop, h_crop = crop_size
     w_stride, h_stride = stride_size
-    # calculate the crop nums
-    rows = max(h_img - h_crop + h_stride -1, 0) // h_stride + 1
-    cols = max(w_img - w_crop + w_stride -1, 0) // w_stride + 1
-    count = np.zeros([1, 1, h_img, w_img])
-    final_logit = paddle.zeros([1, num_classes, h_img, w_img], dtype='float32')
+    rows = max(max_h - h_crop + h_stride -1, 0) // h_stride + 1
+    cols = max(max_w - w_crop + w_stride -1, 0) // w_stride + 1
+    count = paddle.zeros([batch_size, 1, max_h, max_w])
+    final_logit = paddle.zeros([batch_size, num_classes, max_h, max_w])
     for r in range(rows):
         for c in range(cols):
-            h1 = r * h_stride
-            w1 = c * w_stride
-            h2 = min(h1 + h_crop, h_img)
-            w2 = min(w1 + w_crop, w_img)
-            h1 = max(h2 - h_crop, 0)
-            w1 = max(w2 - w_crop, 0)
-            img_crop = img[:, :, h1:h2, w1:w2]
-            logits = model(img_crop)
-            logit = logits[0]
-            final_logit += F.pad(logit, [w1, w_img - w2, h1, h_img - h2])
-            count[:, :, h1:h2, w1:w2] += 1
-    final_logit = final_logit.numpy() / count
-    final_logit = paddle.to_tensor(final_logit)
-    return final_logit
-
+            batch_list = []
+            loc_list = []
+            for i, img in enumerate(imgs):
+                h1 = r * h_stride
+                w1 = c * w_stride
+                if h1 >= img.shape[-2] or w1 >= img.shape[-1]:
+                    continue
+                h2 = min(h1 + h_crop, img.shape[-2])
+                w2 = min(w1 + w_crop, img.shape[-1])
+                h1 = max(h2 - h_crop, 0)
+                w1 = max(w2 - w_crop, 0)
+                loc_list.append((i, h1, w1, h2, w2))
+                batch_list.append(img[:, h1:h2, w1:w2].unsqueeze(0))
+            if not batch_list:
+                continue
+            batch_data = paddle.concat(batch_list, 0)
+            logits = model(batch_data)[0]
+            for i in range(batch_data.shape[0]):
+                idx, h1, w1, h2, w2 = loc_list[i]
+                logit = logits[i]
+                final_logit[idx, :, h1:h2, w1:w2] += logit[:,:,:]
+                count[idx, :, h1:h2, w1:w2] += 1
+    final_logit_list = []
+    for i in range(batch_size):
+        h, w = imgs[i].shape[-2:]
+        logit = final_logit[i:i+1, :, :h, :w]
+        count_single = count[i:i+1, :, :h, :w]
+        final_logit_list.append(logit / count_single)
+    return final_logit_list
 
 def ss_inference(model,
                  img, 
@@ -79,6 +95,15 @@ def ss_inference(model,
         h, w) is returned.
     """
     if not is_slide:
+        if not isinstance(img, collections.abc.Sequence):
+            raise TypeError("The type of img must be one of "
+                "collections.abc.Sequence, e.g. list, tuple. But received {}"
+                .format(type(img)))
+        if len(img) == 1:
+            img = img[0]
+        else:
+            raise ValueError("Considering the different shapes of inputs,"
+                "batch_size should be set to 1 while is_slide is False")
         logits = model(img)
         if not isinstance(logits, collections.abc.Sequence):
             raise TypeError("The type of logits must be one of "
@@ -99,14 +124,18 @@ def ss_inference(model,
                 h, w = new_h, new_w
                 img = F.interpolate(img, (h, w), mode='bilinear')
                 #print("rescale, img.shape: ({}, {})".format(h,w))
-        logit = slide_inference(model, img, crop_size, stride_size, num_classes)
+        logit_list = slide_inference(model, img, crop_size, stride_size, num_classes)
 
     if ori_shape is not None:
         # resize to original shape
-        logit = F.interpolate(logit, ori_shape, mode='bilinear', align_corners=False)  
-        logit = F.softmax(logit, axis=1)
-        pred = paddle.argmax(logit, axis=1, keepdim=True, dtype='int32')
-        return pred
+        pred_list = []
+        for i, logit in enumerate(logit_list):
+            shape = ori_shape[i]
+            logit = F.interpolate(logit, shape, mode='bilinear', align_corners=False)  
+            logit = F.softmax(logit, axis=1)
+            pred = paddle.argmax(logit, axis=1, keepdim=True, dtype='int32')
+            pred_list.append(pred)
+        return pred_list
     else:
         return logit
 
