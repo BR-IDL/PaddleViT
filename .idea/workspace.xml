@@ -21,21 +21,29 @@
   <component name="ChangeListManager">
     <list default="true" id="be1cb1aa-23da-4a02-a9f9-fd304f150445" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/config/pd_crossvit_base_224.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/datasets.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/main_multi_gpu.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/main_single_gpu.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_config.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_config.yaml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_datasets.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_transformer.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/paddle_crossvit/load_pytorch_weights.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/paddle_crossvit/paddle_crossvit.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/paddle_crossvit/paddle_crossvit.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -195,22 +203,22 @@
       <screen x="57" y="24" width="2503" height="1416" />
     </state>
     <state x="1096" y="477" key="FileChooserDialogImpl/57.24.2503.1416@57.24.2503.1416" timestamp="1630982987126" />
-    <state width="2480" height="509" key="GridCell.Tab.0.bottom" timestamp="1630986560516">
+    <state width="2480" height="358" key="GridCell.Tab.0.bottom" timestamp="1630986671310">
       <screen x="57" y="24" width="2503" height="1416" />
     </state>
-    <state width="2480" height="509" key="GridCell.Tab.0.bottom/57.24.2503.1416@57.24.2503.1416" timestamp="1630986560516" />
-    <state width="2480" height="509" key="GridCell.Tab.0.center" timestamp="1630986560513">
+    <state width="2480" height="358" key="GridCell.Tab.0.bottom/57.24.2503.1416@57.24.2503.1416" timestamp="1630986671310" />
+    <state width="2480" height="358" key="GridCell.Tab.0.center" timestamp="1630986671310">
       <screen x="57" y="24" width="2503" height="1416" />
     </state>
-    <state width="2480" height="509" key="GridCell.Tab.0.center/57.24.2503.1416@57.24.2503.1416" timestamp="1630986560513" />
-    <state width="2480" height="509" key="GridCell.Tab.0.left" timestamp="1630986560512">
+    <state width="2480" height="358" key="GridCell.Tab.0.center/57.24.2503.1416@57.24.2503.1416" timestamp="1630986671310" />
+    <state width="2480" height="358" key="GridCell.Tab.0.left" timestamp="1630986671309">
       <screen x="57" y="24" width="2503" height="1416" />
     </state>
-    <state width="2480" height="509" key="GridCell.Tab.0.left/57.24.2503.1416@57.24.2503.1416" timestamp="1630986560512" />
-    <state width="2480" height="509" key="GridCell.Tab.0.right" timestamp="1630986560515">
+    <state width="2480" height="358" key="GridCell.Tab.0.left/57.24.2503.1416@57.24.2503.1416" timestamp="1630986671309" />
+    <state width="2480" height="358" key="GridCell.Tab.0.right" timestamp="1630986671310">
       <screen x="57" y="24" width="2503" height="1416" />
     </state>
-    <state width="2480" height="509" key="GridCell.Tab.0.right/57.24.2503.1416@57.24.2503.1416" timestamp="1630986560515" />
+    <state width="2480" height="358" key="GridCell.Tab.0.right/57.24.2503.1416@57.24.2503.1416" timestamp="1630986671310" />
     <state width="2480" height="509" key="GridCell.Tab.1.bottom" timestamp="1630986560521">
       <screen x="57" y="24" width="2503" height="1416" />
     </state>
@@ -235,16 +243,5 @@
       <screen x="57" y="24" width="2503" height="1416" />
     </state>
     <state x="908" y="455" key="Vcs.Push.Dialog.v2/57.24.2503.1416@57.24.2503.1416" timestamp="1630980985999" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image_classification/CrossViT/tests/test_config.py</url>
-          <line>53</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
