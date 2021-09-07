@@ -58,7 +58,7 @@
       <recent name="$PROJECT_DIR$/image_classification/CrossViT/port_weights" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config_from_file">
+  <component name="RunManager" selected="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config">
     <configuration name="load_pytorch_weights" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PaddleViT" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -124,9 +124,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config" />
         <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config_from_file" />
         <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_get_config" />
-        <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config" />
         <item itemvalue="Python.load_pytorch_weights" />
       </list>
     </recent_temporary>
