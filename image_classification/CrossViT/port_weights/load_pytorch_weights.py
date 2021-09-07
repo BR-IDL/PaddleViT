@@ -13,13 +13,11 @@
 # limitations under the License.
 
 
-from models.crossvit import *
+from image_classification.CrossViT.models.crossvit import *
 import os
 import torch
 import numpy as np
-from paddle_crossvit import *
-
-
+from image_classification.CrossViT.paddle_crossvit.paddle_crossvit import *
 
 def print_model_named_params(model):
     print('----------------------------------')
@@ -43,9 +41,6 @@ def perpare_mapping(paddle_model,torch_model):
         ]
         mapping.extend(layer_mapping)
     return mapping
-
-
-
 
 def convert(torch_model, paddle_model):
     def _set_value(th_name, pd_name, transpose=True):

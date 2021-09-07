@@ -17,7 +17,7 @@ Modifed from Timm. https://github.com/rwightman/pytorch-image-models/blob/master
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from paddle_crossvit_utils import *
+from .paddle_crossvit_utils import *
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
@@ -310,6 +310,13 @@ def pd_crossvit_base_224(pretrained=False, **kwargs):
                               patch_size=[12, 16], embed_dim=[384, 768], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
                               num_heads=[12, 12], mlp_ratio=[4, 4, 1], qkv_bias=True,**kwargs)
     return model
+
+def build_crossvit(cfg, **kwargs):
+    model = VisionTransformer(img_size=[240, 224],
+                              patch_size=[12, 16], embed_dim=[384, 768], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
+                              num_heads=[12, 12], mlp_ratio=[4, 4, 1], qkv_bias=True,**kwargs)
+    return model
+
 
 #print func
 def print_model_named_params(model):

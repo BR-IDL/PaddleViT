@@ -4,3 +4,4 @@ timm==0.4.12
 fvcore
 einops
 submitit
+paddlenlp==2.0.8
