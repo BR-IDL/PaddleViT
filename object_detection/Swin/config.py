@@ -47,7 +47,7 @@ _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.0
 _C.MODEL.ATTENTION_DROPOUT = 0.0
-_C.MODEL.DROP_PATH = 0.2
+_C.MODEL.DROP_PATH = 0.0 # TODO: droppath may raise cuda error on paddle.rand method
 
 # transformer settings
 _C.MODEL.TRANS = CN()

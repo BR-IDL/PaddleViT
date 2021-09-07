@@ -51,7 +51,14 @@ class SwinTransformerDet(nn.Layer):
         else:
             proposals = rpn_out[0]
 
+
         final_out = self.roihead(feats, proposals, gt)
+
+        if self.training:
+            rpn_losses = rpn_out[2]
+            # if training, final_out returns losses, now we combine the losses dicts
+            final_out.update(rpn_losses)
+
         return final_out
 
 

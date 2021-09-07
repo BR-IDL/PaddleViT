@@ -171,9 +171,11 @@ class RoIHead(nn.Layer):
             paddle.logical_and(gt_classes >= 0, gt_classes < self.config.ROI.NUM_ClASSES)
         ).flatten()
 
-        fg_cls_base = paddle.gather(gt_classes, fg_idx)
+        #TODO: errors raised when fg_idx is [] tensor, when train from scratch
+        fg_cls_base = paddle.gather(x=gt_classes, index=fg_idx)
         fg_cls_start = paddle.arange(0, self.config.ROI.NUM_ClASSES * fg_idx.shape[0], self.config.ROI.NUM_ClASSES)
         fg_cls_idx = fg_cls_base + fg_cls_start
+        fg_cls_idx = fg_cls_idx.astype('int64')
 
         fg_idx.stop_gradient = True
         tgt_boxes.stop_gradient = True

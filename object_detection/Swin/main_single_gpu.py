@@ -69,49 +69,52 @@ logger.addHandler(fh)
 logger.info(f'config= {config}')
 
 
-def train(dataloader, model, criterion, postprocessors, base_ds, optimizer, epoch, total_batch, debug_steps=100, accum_iter=1):
+def train(dataloader, model, base_ds, optimizer, epoch, total_batch, debug_steps=100, accum_iter=1):
     model.train()
-    criterion.train()
 
-    train_loss_ce_meter = AverageMeter()
-    train_loss_bbox_meter = AverageMeter()
-    train_loss_giou_meter = AverageMeter()
+    train_loss_cls_meter = AverageMeter()
+    train_loss_reg_meter = AverageMeter()
+    train_loss_rpn_cls_meter = AverageMeter()
+    train_loss_rpn_reg_meter = AverageMeter()
 
     time_st = time.time()
 
-    iou_types = ('bbox', )
-    coco_evaluator = CocoEvaluator(base_ds, iou_types)
+    #iou_types = ('bbox', )
+    #coco_evaluator = CocoEvaluator(base_ds, iou_types)
 
     for batch_id, data in enumerate(dataloader):
         samples = data[0]
         targets = data[1]
-        #targets = [{k:v for k,v in t.items()} for t in targets]
             
-        outputs = model(samples)
-        loss_dict = criterion(outputs, targets)
-        weight_dict = criterion.weight_dict
-        losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
-
+        loss_dict = model(samples, targets)
+        losses = sum(loss for loss in loss_dict.values())
         losses.backward()
+
         if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
             optimizer.step()
             optimizer.clear_grad()
 
         # logging losses
         batch_size = samples.tensors.shape[0]
-        train_loss_ce_meter.update(loss_dict['loss_ce'].numpy()[0], batch_size)
-        train_loss_bbox_meter.update(loss_dict['loss_bbox'].numpy()[0], batch_size)
-        train_loss_giou_meter.update(loss_dict['loss_giou'].numpy()[0], batch_size)
+        train_loss_cls_meter.update(loss_dict['loss_cls'].numpy()[0], batch_size)
+        train_loss_reg_meter.update(loss_dict['loss_reg'].numpy()[0], batch_size)
+        train_loss_rpn_cls_meter.update(loss_dict['loss_rpn_cls'].numpy()[0], batch_size)
+        train_loss_rpn_reg_meter.update(loss_dict['loss_rpn_reg'].numpy()[0], batch_size)
     
         if batch_id > 0 and batch_id % debug_steps == 0:
             logger.info(
                 f"Train Step[{batch_id:04d}/{total_batch:04d}], " + 
-                f"Avg loss_ce: {train_loss_ce_meter.avg:.4f}, " + 
-                f"Avg loss_bbox: {train_loss_bbox_meter.avg:.4f}, " + 
-                f"Avg loss_giou: {train_loss_giou_meter.avg:.4f}, ") 
+                f"Avg loss_cls: {train_loss_cls_meter.avg:.4f}, " + 
+                f"Avg loss_reg: {train_loss_reg_meter.avg:.4f}, " + 
+                f"Avg loss_rpn_cls: {train_loss_rpn_cls_meter.avg:.4f}, " + 
+                f"Avg loss_rpn_reg: {train_loss_rpn_reg_meter.avg:.4f}") 
 
     train_time = time.time() - time_st
-    return train_loss_ce_meter.avg, train_loss_bbox_meter.avg, train_loss_giou_meter.avg, train_time
+    return (train_loss_cls_meter.avg,
+            train_loss_reg_meter.avg,
+            train_loss_rpn_cls_meter.avg,
+            train_loss_rpn_reg_meter.avg,
+            train_time)
 
 
 def validate(dataloader, model, base_ds, total_batch, debug_steps=100):
@@ -262,11 +265,9 @@ def main():
     for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
         # train
         logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        train_loss_ce, train_loss_bbox, train_loss_giou, train_time = train(
+        train_loss_cls, train_loss_reg, train_loss_rpn_cls, train_loss_rpn_reg, train_time = train(
             dataloader=dataloader_train,
             model=model, 
-            criterion=criterion, 
-            postprocessors=postprocessors,
             base_ds=base_ds,
             optimizer=optimizer, 
             epoch=epoch,
@@ -275,30 +276,30 @@ def main():
             accum_iter=config.TRAIN.ACCUM_ITER)
         scheduler.step()
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                    f"Train Loss ce: {train_loss_ce:.4f}, " +
-                    f"Train Loss bbox: {train_loss_bbox:.4f}, " +
-                    f"Train Loss giou: {train_loss_giou:.4f}, " +
+                    f"Train Loss cls: {train_loss_cls:.4f}, " +
+                    f"Train Loss reg: {train_loss_reg:.4f}, " +
+                    f"Train Loss rpn cls: {train_loss_rpn_cls:.4f}, " +
+                    f"Train Loss rpn reg: {train_loss_rpn_reg:.4f}, " +
                     f"time: {train_time:.2f}")
         # validation
         if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             logger.info(f'----- Validation after Epoch: {epoch}')
-            val_loss_ce, val_loss_bbox, val_loss_giou, val_time = validate(
+            val_time = validate(
                 dataloader=dataloader_val,
                 model=model,
-                criterion=criterion,
-                postprocessors=postprocessors,
                 base_ds=base_ds,
                 total_batch=len(dataloader_val),
                 debug_steps=config.REPORT_FREQ)
-            logger.info(f"Validation Loss ce: {val_loss_ce:.4f}, " +
-                        f"Validation Loss bbox: {val_loss_bbox:.4f}, " +
-                        f"Validation Loss giou: {val_loss_giou:.4f}, " +
-                        f"time: {val_time:.2f}")
+
+            #logger.info(f"Validation Loss ce: {val_loss_ce:.4f}, " +
+            #            f"Validation Loss bbox: {val_loss_bbox:.4f}, " +
+            #            f"Validation Loss giou: {val_loss_giou:.4f}, " +
+            #            f"time: {val_time:.2f}")
         # model save
         if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             model_path = os.path.join(config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
-            paddle.save(model.state_dict(), model_path)
-            paddle.save(optimizer.state_dict(), model_path)
+            paddle.save(model.state_dict(), model_path + '.pdparams')
+            paddle.save(optimizer.state_dict(), model_path + '.pdopt')
             logger.info(f"----- Save model: {model_path}.pdparams")
             logger.info(f"----- Save optim: {model_path}.pdopt")
 

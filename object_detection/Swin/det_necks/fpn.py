@@ -51,6 +51,9 @@ class ConvNorm(nn.Layer):
                  use_bias=False):
         super(ConvNorm, self).__init__()
 
+        if norm is None:
+            use_bias = None
+
         self.conv = nn.Conv2D(
             in_channels=in_channels, 
             out_channels=out_channels, 
