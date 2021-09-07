@@ -26,14 +26,14 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 from datasets import get_dataloader
 from datasets import get_dataset
-from transformer import build_vit as build_model
+from image_classification.CrossViT.paddle_crossvit.paddle_crossvit import *
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
 from config import update_config
 
 
-parser = argparse.ArgumentParser('ViT')
+parser = argparse.ArgumentParser('CrossViT')
 parser.add_argument('-cfg', type=str, default=None)
 parser.add_argument('-dataset', type=str, default=None)
 parser.add_argument('-batch_size', type=int, default=None)
@@ -195,7 +195,10 @@ def main():
     random.seed(seed)
     #paddle.set_device('gpu:0')
     # 1. Create model
-    model = build_model(config)
+    model = pd_crossvit_base_224()
+    # state_dict = paddle.load('port_weights/pd_crossvit_base_224.pdparams')
+    # model.load_dict(state_dict)
+
     #model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train = get_dataset(config, mode='train')

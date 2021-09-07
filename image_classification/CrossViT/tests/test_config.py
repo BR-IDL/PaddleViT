@@ -14,7 +14,7 @@
 
 import unittest
 import argparse
-from config import update_config, get_config
+from image_classification.CrossViT.config import update_config, get_config
 
 class ConfigTest(unittest.TestCase):
     def setUp(self):
@@ -63,7 +63,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(config.MODEL.TRANS.NUM_HEADS, 12)
         self.assertEqual(config.MODEL.TRANS.QKV_BIAS, True)
 
-        self.assertEqual(config.MODEL.NAME, 'vit_base_patch16_224')
+        self.assertEqual(config.MODEL.NAME, 'crossvit_base_224')
         self.assertEqual(config.MODEL.TYPE, 'ViT')
 
     def test_get_config(self):

@@ -26,7 +26,7 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader, get_dataset
-from transformer import build_vit as build_model
+from image_classification.CrossViT.paddle_crossvit.paddle_crossvit import *
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
@@ -206,7 +206,7 @@ def main_worker(*args):
     np.random.seed(seed)
     random.seed(seed)
     # 1. Create model
-    model = build_model(config)
+    model = pd_crossvit_base_224()
     model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train, dataset_val = args[0], args[1]

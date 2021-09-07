@@ -20,18 +20,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="be1cb1aa-23da-4a02-a9f9-fd304f150445" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/datasets.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/main_multi_gpu.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/main_single_gpu.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_config.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_datasets.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_transformer.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/demo_imgs/zerbra.jpeg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/PaddleViT.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/PaddleViT.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/Demo.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/Demo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/main_single_gpu.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/main_single_gpu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,16 +52,38 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/image_classification/CrossViT" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/image_classification/CrossViT/demo_imgs" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/image_classification/CrossViT/demo_imgs" />
       <recent name="$PROJECT_DIR$/image_classification/CrossViT" />
       <recent name="$PROJECT_DIR$/image_classification/CrossViT/port_weights" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config">
+  <component name="RunManager" selected="Python tests.Unittests for test_config.ConfigTest.test_update_config_from_file">
+    <configuration name="Demo" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="PaddleViT" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification/CrossViT" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/Demo.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="load_pytorch_weights" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PaddleViT" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -86,20 +103,6 @@
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Unittests for CrossViT.tests.test_config.ConfigTest.test_get_config" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <module name="PaddleViT" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;CrossViT.tests.test_config.ConfigTest.test_get_config&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <configuration name="Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
@@ -130,15 +133,31 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
+    <configuration name="Unittests for test_config.ConfigTest.test_update_config_from_file" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="PaddleViT" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification/CrossViT/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_config.ConfigTest.test_update_config_from_file&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Unittests for test_config.ConfigTest.test_update_config_from_file" />
+        <item itemvalue="Python.Demo" />
+        <item itemvalue="Python.load_pytorch_weights" />
         <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config" />
         <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config_from_file" />
-        <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_get_config" />
-        <item itemvalue="Python.load_pytorch_weights" />
       </list>
     </recent_temporary>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -193,55 +212,5 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="773" y="377" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1630985159458">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state x="773" y="377" key="#com.intellij.execution.impl.EditConfigurationsDialog/57.24.2503.1416@57.24.2503.1416" timestamp="1630985159458" />
-    <state x="1096" y="477" key="FileChooserDialogImpl" timestamp="1630982987126">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state x="1096" y="477" key="FileChooserDialogImpl/57.24.2503.1416@57.24.2503.1416" timestamp="1630982987126" />
-    <state width="2480" height="358" key="GridCell.Tab.0.bottom" timestamp="1630986671310">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state width="2480" height="358" key="GridCell.Tab.0.bottom/57.24.2503.1416@57.24.2503.1416" timestamp="1630986671310" />
-    <state width="2480" height="358" key="GridCell.Tab.0.center" timestamp="1630986671310">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state width="2480" height="358" key="GridCell.Tab.0.center/57.24.2503.1416@57.24.2503.1416" timestamp="1630986671310" />
-    <state width="2480" height="358" key="GridCell.Tab.0.left" timestamp="1630986671309">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state width="2480" height="358" key="GridCell.Tab.0.left/57.24.2503.1416@57.24.2503.1416" timestamp="1630986671309" />
-    <state width="2480" height="358" key="GridCell.Tab.0.right" timestamp="1630986671310">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state width="2480" height="358" key="GridCell.Tab.0.right/57.24.2503.1416@57.24.2503.1416" timestamp="1630986671310" />
-    <state width="2480" height="509" key="GridCell.Tab.1.bottom" timestamp="1630986560521">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state width="2480" height="509" key="GridCell.Tab.1.bottom/57.24.2503.1416@57.24.2503.1416" timestamp="1630986560521" />
-    <state width="2480" height="509" key="GridCell.Tab.1.center" timestamp="1630986560519">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state width="2480" height="509" key="GridCell.Tab.1.center/57.24.2503.1416@57.24.2503.1416" timestamp="1630986560519" />
-    <state width="2480" height="509" key="GridCell.Tab.1.left" timestamp="1630986560518">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state width="2480" height="509" key="GridCell.Tab.1.left/57.24.2503.1416@57.24.2503.1416" timestamp="1630986560518" />
-    <state width="2480" height="509" key="GridCell.Tab.1.right" timestamp="1630986560520">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state width="2480" height="509" key="GridCell.Tab.1.right/57.24.2503.1416@57.24.2503.1416" timestamp="1630986560520" />
-    <state x="802" y="354" key="SettingsEditor" timestamp="1630984126425">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state x="802" y="354" key="SettingsEditor/57.24.2503.1416@57.24.2503.1416" timestamp="1630984126425" />
-    <state x="908" y="455" key="Vcs.Push.Dialog.v2" timestamp="1630980985999">
-      <screen x="57" y="24" width="2503" height="1416" />
-    </state>
-    <state x="908" y="455" key="Vcs.Push.Dialog.v2/57.24.2503.1416@57.24.2503.1416" timestamp="1630980985999" />
   </component>
 </project>
