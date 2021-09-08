@@ -137,7 +137,6 @@ def validate(dataloader, model, base_ds, total_batch, debug_steps=100):
 
             #res = {target_id: output for target_id, output in zip(targets['image_id'], prediction)}
             res = {}
-
             for target_id, output in zip(targets['image_id'], prediction):
                 target_id = target_id.cpu().numpy()[0]
                 output = output.cpu().numpy()
@@ -146,6 +145,8 @@ def validate(dataloader, model, base_ds, total_batch, debug_steps=100):
                                  'scores': output[:, 1],
                                  'labels': output[:, 0]}
                     res[int(target_id)] = pred_dict
+                else:
+                    res[int(target_id)] = {}
 
             if coco_evaluator is not None:
                 coco_evaluator.update(res)
@@ -153,10 +154,12 @@ def validate(dataloader, model, base_ds, total_batch, debug_steps=100):
     if coco_evaluator is not None:
         coco_evaluator.synchronize_between_processes()
         coco_evaluator.accumulate()
-        coco_evaluator.summarize() #TODO: get stats[0] and return mAP
+        stats_dict = coco_evaluator.summarize()
+        # for det only
+        all_eval_result = stats_dict['bbox']
 
     val_time = time.time() - time_st
-    return val_time
+    return val_time, all_eval_result
 
 
 def main():
@@ -248,16 +251,27 @@ def main():
     # 7. Validation
     if config.EVAL:
         logger.info(f'----- Start Validating')
-        val_time = validate(
+        val_time, all_eval_result = validate(
             dataloader=dataloader_val,
             model=model,
             base_ds=base_ds,
             total_batch=len(dataloader_val),
             debug_steps=config.REPORT_FREQ)
-        #logger.info(f"Validation Loss ce: {val_loss_ce:.4f}, " +
-        #            f"Validation Loss bbox: {val_loss_bbox:.4f}, " +
-        #            f"Validation Loss giou: {val_loss_giou:.4f}, " +
-        #            f"time: {val_time:.2f}")
+ 
+        logger.info('IoU metric: bbox')
+        logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50:0.95":<9} | area={"all":>6s} | maxDets={100:>3d} ] = {all_eval_result[0]:0.3f}')
+        logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50":<9} | area={"all":>6s} | maxDets={100:>3d} ] = {all_eval_result[1]:0.3f}')
+        logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.75":<9} | area={"all":>6s} | maxDets={100:>3d} ] = {all_eval_result[2]:0.3f}')
+        logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50:0.95":<9} | area={" small":>6s} | maxDets={100:>3d} ] = {all_eval_result[3]:0.3f}')
+        logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50:0.95":<9} | area={"medium":>6s} | maxDets={100:>3d} ] = {all_eval_result[4]:0.3f}')
+        logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50:0.95":<9} | area={" large":>6s} | maxDets={100:>3d} ] = {all_eval_result[5]:0.3f}')
+        logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"all":>6s} | maxDets={1:>3d} ] = {all_eval_result[6]:0.3f}')
+        logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"all":>6s} | maxDets={10:>3d} ] = {all_eval_result[7]:0.3f}')
+        logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"all":>6s} | maxDets={100:>3d} ] = {all_eval_result[8]:0.3f}')
+        logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"small":>6s} | maxDets={100:>3d} ] = {all_eval_result[9]:0.3f}')
+        logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"medium":>6s} | maxDets={100:>3d} ] = {all_eval_result[10]:0.3f}')
+        logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"large":>6s} | maxDets={100:>3d} ] = {all_eval_result[11]:0.3f}')
+        logger.info(f"Val time: {val_time:.2f}")
         return
 
     # 8. Start training and validation
@@ -284,17 +298,28 @@ def main():
         # validation
         if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             logger.info(f'----- Validation after Epoch: {epoch}')
-            val_time = validate(
-                dataloader=dataloader_val,
-                model=model,
-                base_ds=base_ds,
-                total_batch=len(dataloader_val),
-                debug_steps=config.REPORT_FREQ)
+            val_time, all_eval_result = validate(
+        	    dataloader=dataloader_val,
+        	    model=model,
+        	    base_ds=base_ds,
+        	    total_batch=len(dataloader_val),
+        	    debug_steps=config.REPORT_FREQ)
+ 
+            logger.info('IoU metric: bbox')
+            logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50:0.95":<9} | area={"all":>6s} | maxDets={100:>3d} ] = {all_eval_result[0]:0.3f}')
+            logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50":<9} | area={"all":>6s} | maxDets={100:>3d} ] = {all_eval_result[1]:0.3f}')
+            logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.75":<9} | area={"all":>6s} | maxDets={100:>3d} ] = {all_eval_result[2]:0.3f}')
+            logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50:0.95":<9} | area={" small":>6s} | maxDets={100:>3d} ] = {all_eval_result[3]:0.3f}')
+            logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50:0.95":<9} | area={"medium":>6s} | maxDets={100:>3d} ] = {all_eval_result[4]:0.3f}')
+            logger.info(f'{"Average Precision":<18} (AP) @[ IoU={"0.50:0.95":<9} | area={" large":>6s} | maxDets={100:>3d} ] = {all_eval_result[5]:0.3f}')
+            logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"all":>6s} | maxDets={1:>3d} ] = {all_eval_result[6]:0.3f}')
+            logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"all":>6s} | maxDets={10:>3d} ] = {all_eval_result[7]:0.3f}')
+            logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"all":>6s} | maxDets={100:>3d} ] = {all_eval_result[8]:0.3f}')
+            logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"small":>6s} | maxDets={100:>3d} ] = {all_eval_result[9]:0.3f}')
+            logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"medium":>6s} | maxDets={100:>3d} ] = {all_eval_result[10]:0.3f}')
+            logger.info(f'{"Average Recall":<18} (AR) @[ IoU={"0.50:0.95":<9} | area={"large":>6s} | maxDets={100:>3d} ] = {all_eval_result[11]:0.3f}')
+            logger.info(f"Val time: {val_time:.2f}")
 
-            #logger.info(f"Validation Loss ce: {val_loss_ce:.4f}, " +
-            #            f"Validation Loss bbox: {val_loss_bbox:.4f}, " +
-            #            f"Validation Loss giou: {val_loss_giou:.4f}, " +
-            #            f"time: {val_time:.2f}")
         # model save
         if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             model_path = os.path.join(config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")

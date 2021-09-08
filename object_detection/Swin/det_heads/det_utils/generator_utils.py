@@ -216,11 +216,11 @@ def generate_proposals(scores,
     attrs = ('pre_nms_topN', pre_nms_top_n, 'post_nms_topN', post_nms_top_n,
                 'nms_thresh', nms_thresh, 'min_size', min_size, 'eta', eta,
                 'pixel_offset', pixel_offset)
-    print('scores:', scores)
-    print('bbox_deltas:', bbox_deltas)
-    print('im_shape:', im_shape)
-    print('anchors:', anchors)
-    print('variances:', variances)
+    # print('scores:', scores)
+    #print('bbox_deltas:', bbox_deltas)
+    #print('im_shape:', im_shape)
+    #print('anchors:', anchors)
+    #print('variances:', variances)
     rpn_rois, rpn_roi_probs, rpn_rois_num = core.ops.generate_proposals_v2(
         scores, bbox_deltas, im_shape, anchors, variances, *attrs)
 
