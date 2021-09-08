@@ -20,13 +20,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="be1cb1aa-23da-4a02-a9f9-fd304f150445" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/demo_imgs/zerbra.jpeg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/PaddleViT.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/PaddleViT.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/CrossViT.JPG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/graph.JPG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_multi_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/Demo.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/Demo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/main_single_gpu.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/main_single_gpu.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/tests/test_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/paddle_crossvit/paddle_crossvit.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/paddle_crossvit/paddle_crossvit.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,17 +51,17 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/image_classification/CrossViT/demo_imgs" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/image_classification/CrossViT/port_weights" />
       <recent name="$PROJECT_DIR$/image_classification/CrossViT/demo_imgs" />
       <recent name="$PROJECT_DIR$/image_classification/CrossViT" />
-      <recent name="$PROJECT_DIR$/image_classification/CrossViT/port_weights" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for test_config.ConfigTest.test_update_config_from_file">
+  <component name="RunManager" selected="Python.load_pytorch_weights_multi_test">
     <configuration name="Demo" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PaddleViT" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -105,6 +104,27 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="load_pytorch_weights_multi_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="PaddleViT" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_multi_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="PaddleViT" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -116,20 +136,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;CrossViT.tests.test_config.ConfigTest.test_update_config&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config_from_file" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <module name="PaddleViT" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;CrossViT.tests.test_config.ConfigTest.test_update_config_from_file&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -149,11 +155,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.load_pytorch_weights_multi_test" />
         <item itemvalue="Python tests.Unittests for test_config.ConfigTest.test_update_config_from_file" />
         <item itemvalue="Python.Demo" />
         <item itemvalue="Python.load_pytorch_weights" />
         <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config" />
-        <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config_from_file" />
       </list>
     </recent_temporary>
   </component>

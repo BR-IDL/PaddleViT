@@ -16,6 +16,7 @@ Modifed from Timm. https://github.com/rwightman/pytorch-image-models/blob/master
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from functools import partial
 
 from .paddle_crossvit_utils import *
 import paddle
@@ -310,6 +311,75 @@ def pd_crossvit_base_224(pretrained=False, **kwargs):
                               patch_size=[12, 16], embed_dim=[384, 768], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
                               num_heads=[12, 12], mlp_ratio=[4, 4, 1], qkv_bias=True,**kwargs)
     return model
+
+
+def pd_crossvit_tiny_224(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[240, 224],
+                              patch_size=[12, 16], embed_dim=[96, 192], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
+                              num_heads=[3, 3], mlp_ratio=[4, 4, 1], qkv_bias=True, **kwargs)
+
+    return model
+
+
+def pd_crossvit_small_224(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[240, 224],
+                              patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
+                              num_heads=[6, 6], mlp_ratio=[4, 4, 1], qkv_bias=True,**kwargs)
+    return model
+
+def pd_crossvit_9_224(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[240, 224],
+                              patch_size=[12, 16], embed_dim=[128, 256], depth=[[1, 3, 0], [1, 3, 0], [1, 3, 0]],
+                              num_heads=[4, 4], mlp_ratio=[3, 3, 1], qkv_bias=True,**kwargs)
+
+    return model
+
+def pd_crossvit_15_224(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[240, 224],
+                              patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
+                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True,**kwargs)
+    return model
+
+
+def pd_crossvit_18_224(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[240, 224],
+                              patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
+                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True,**kwargs)
+    return model
+
+def pd_crossvit_9_dagger_224(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[240, 224],
+                              patch_size=[12, 16], embed_dim=[128, 256], depth=[[1, 3, 0], [1, 3, 0], [1, 3, 0]],
+                              num_heads=[4, 4], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
+
+    return model
+
+
+def pd_crossvit_15_dagger_224(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[240, 224],
+                              patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
+                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True,multi_conv=True, **kwargs)
+    return model
+
+def pd_crossvit_15_dagger_384(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[408, 384],
+                              patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
+                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True,multi_conv=True, **kwargs)
+    return model
+
+
+def pd_crossvit_18_dagger_224(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[240, 224],
+                              patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
+                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True,multi_conv=True, **kwargs)
+    return model
+
+def pd_crossvit_18_dagger_384(pretrained=False, **kwargs):
+    model = VisionTransformer(img_size=[408, 384],
+                              patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
+                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
+    return model
+
 
 def build_crossvit(cfg, **kwargs):
     model = VisionTransformer(img_size=[240, 224],
