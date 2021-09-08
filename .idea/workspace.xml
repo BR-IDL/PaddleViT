@@ -20,11 +20,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="be1cb1aa-23da-4a02-a9f9-fd304f150445" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/CrossViT.JPG" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/graph.JPG" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_multi_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/config/pd_crossvit_base_224.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/config/pd_crossvit_base_224.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/paddle_crossvit/paddle_crossvit.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/paddle_crossvit/paddle_crossvit.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

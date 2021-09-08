@@ -38,8 +38,8 @@ _C.DATA.NUM_WORKERS = 2 # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
-_C.MODEL.TYPE = 'ViT'
-_C.MODEL.NAME = 'ViT'
+_C.MODEL.TYPE = 'CrossViT'
+_C.MODEL.NAME = 'CrossViT'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000

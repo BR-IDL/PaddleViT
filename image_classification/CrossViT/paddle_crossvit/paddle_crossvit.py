@@ -16,17 +16,20 @@ Modifed from Timm. https://github.com/rwightman/pytorch-image-models/blob/master
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
 
-from .paddle_crossvit_utils import *
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
+
+from .paddle_crossvit_utils import *
+
 paddle.set_device('cpu')
+
 
 class PatchEmbed(nn.Layer):
     """ Image to Patch Embedding
     """
+
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768, multi_conv=False):
         super().__init__()
         img_size = to_2tuple(img_size)
@@ -81,18 +84,20 @@ class CrossAttention(nn.Layer):
         self.proj_drop = nn.Dropout(proj_drop)
 
     def forward(self, x):
-
         B, N, C = x.shape
-        q = self.wq(x[:, 0:1, :]).reshape([B, 1, self.num_heads, C // self.num_heads]).transpose((0, 2, 1, 3))  # B1C -> B1H(C/H) -> BH1(C/H)
-        k = self.wk(x).reshape([B, N, self.num_heads, C // self.num_heads]).transpose((0, 2, 1, 3))  # BNC -> BNH(C/H) -> BHN(C/H)
-        v = self.wv(x).reshape([B, N, self.num_heads, C // self.num_heads]).transpose((0, 2, 1, 3))  # BNC -> BNH(C/H) -> BHN(C/H)
+        q = self.wq(x[:, 0:1, :]).reshape([B, 1, self.num_heads, C // self.num_heads]).transpose(
+            (0, 2, 1, 3))  # B1C -> B1H(C/H) -> BH1(C/H)
+        k = self.wk(x).reshape([B, N, self.num_heads, C // self.num_heads]).transpose(
+            (0, 2, 1, 3))  # BNC -> BNH(C/H) -> BHN(C/H)
+        v = self.wv(x).reshape([B, N, self.num_heads, C // self.num_heads]).transpose(
+            (0, 2, 1, 3))  # BNC -> BNH(C/H) -> BHN(C/H)
 
         attn = (q @ k.transpose((0, 1, 3, 2))) * self.scale  # BH1(C/H) @ BH(C/H)N -> BH1N
         # attn = attn.softmax(dim=-1)
-        attn = F.softmax(attn,axis=-1)
+        attn = F.softmax(attn, axis=-1)
         attn = self.attn_drop(attn)
 
-        x = (attn @ v).transpose((0, 2, 1, 3)).reshape([B, 1, C])   # (BH1N @ BHN(C/H)) -> BH1(C/H) -> B1H(C/H) -> B1C
+        x = (attn @ v).transpose((0, 2, 1, 3)).reshape([B, 1, C])  # (BH1N @ BHN(C/H)) -> BH1(C/H) -> B1H(C/H) -> B1C
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
@@ -137,7 +142,8 @@ class MultiScaleBlock(nn.Layer):
             tmp = []
             for i in range(depth[d]):
                 tmp.append(
-                    Block(dim=dim[d], num_heads=num_heads[d], mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias,qk_scale=qk_scale,
+                    Block(dim=dim[d], num_heads=num_heads[d], mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias,
+                          qk_scale=qk_scale,
                           dropout=drop, attention_dropout=attn_drop, droppath=drop_path[i]))
             if len(tmp) != 0:
                 self.blocks.append(nn.Sequential(*tmp))
@@ -147,34 +153,39 @@ class MultiScaleBlock(nn.Layer):
 
         self.projs = nn.LayerList()
         for d in range(num_branches):
-            if dim[d] == dim[(d+1) % num_branches] and False:
+            if dim[d] == dim[(d + 1) % num_branches] and False:
                 tmp = [Identity()]
             else:
-                tmp = [norm_layer(dim[d]), act_layer(), nn.Linear(dim[d], dim[(d+1) % num_branches])]
+                tmp = [norm_layer(dim[d]), act_layer(), nn.Linear(dim[d], dim[(d + 1) % num_branches])]
             self.projs.append(nn.Sequential(*tmp))
 
         self.fusion = nn.LayerList()
         for d in range(num_branches):
-            d_ = (d+1) % num_branches
+            d_ = (d + 1) % num_branches
             nh = num_heads[d_]
             if depth[-1] == 0:  # backward capability:
-                self.fusion.append(CrossAttentionBlock(dim=dim[d_], num_heads=nh, mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias, qk_scale=qk_scale,
-                                                       drop=drop, attn_drop=attn_drop, drop_path=drop_path[-1], norm_layer=norm_layer,
-                                                       has_mlp=False))
+                self.fusion.append(
+                    CrossAttentionBlock(dim=dim[d_], num_heads=nh, mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias,
+                                        qk_scale=qk_scale,
+                                        drop=drop, attn_drop=attn_drop, drop_path=drop_path[-1], norm_layer=norm_layer,
+                                        has_mlp=False))
             else:
                 tmp = []
                 for _ in range(depth[-1]):
-                    tmp.append(CrossAttentionBlock(dim=dim[d_], num_heads=nh, mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias, qk_scale=qk_scale,
-                                                   drop=drop, attn_drop=attn_drop, drop_path=drop_path[-1], norm_layer=norm_layer,
+                    tmp.append(CrossAttentionBlock(dim=dim[d_], num_heads=nh, mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias,
+                                                   qk_scale=qk_scale,
+                                                   drop=drop, attn_drop=attn_drop, drop_path=drop_path[-1],
+                                                   norm_layer=norm_layer,
                                                    has_mlp=False))
                 self.fusion.append(nn.Sequential(*tmp))
 
         self.revert_projs = nn.LayerList()
         for d in range(num_branches):
-            if dim[(d+1) % num_branches] == dim[d] and False:
+            if dim[(d + 1) % num_branches] == dim[d] and False:
                 tmp = [Identity()]
             else:
-                tmp = [norm_layer(dim[(d+1) % num_branches]), act_layer(), nn.Linear(dim[(d+1) % num_branches], dim[d])]
+                tmp = [norm_layer(dim[(d + 1) % num_branches]), act_layer(),
+                       nn.Linear(dim[(d + 1) % num_branches], dim[d])]
             self.revert_projs.append(nn.Sequential(*tmp))
 
     def forward(self, x):
@@ -194,14 +205,17 @@ class MultiScaleBlock(nn.Layer):
 
 
 def _compute_num_patches(img_size, patches):
-    return [i // p * i // p for i, p in zip(img_size,patches)]
+    return [i // p * i // p for i, p in zip(img_size, patches)]
 
 
 class VisionTransformer(nn.Layer):
     """ Vision Transformer with support for patch or hybrid CNN input stage
     """
-    def __init__(self, img_size=(224, 224), patch_size=(8, 16), in_chans=3, num_classes=1000, embed_dim=(192, 384), depth=([1, 3, 1], [1, 3, 1], [1, 3, 1]),
-                 num_heads=(6, 12), mlp_ratio=(2., 2., 4.), qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
+
+    def __init__(self, img_size=(224, 224), patch_size=(8, 16), in_chans=3, num_classes=1000, embed_dim=(192, 384),
+                 depth=([1, 3, 1], [1, 3, 1], [1, 3, 1]),
+                 num_heads=(6, 12), mlp_ratio=(2., 2., 4.), qkv_bias=False, qk_scale=None, drop_rate=0.,
+                 attn_drop_rate=0.,
                  drop_path_rate=0., hybrid_backbone=None, norm_layer=nn.LayerNorm, multi_conv=False):
         super().__init__()
 
@@ -216,21 +230,29 @@ class VisionTransformer(nn.Layer):
         self.patch_embed = nn.LayerList()
         if hybrid_backbone is None:
             # paddle.create_parameter(default_initializer=)
-            self.pos_embed = nn.ParameterList([paddle.create_parameter(shape=(1, 1 + num_patches[i], embed_dim[i]),dtype='float32') for i in range(self.num_branches)])
+            self.pos_embed = nn.ParameterList(
+                [paddle.create_parameter(shape=(1, 1 + num_patches[i], embed_dim[i]), dtype='float32') for i in
+                 range(self.num_branches)])
             for im_s, p, d in zip(img_size, patch_size, embed_dim):
-                self.patch_embed.append(PatchEmbed(img_size=im_s, patch_size=p, in_chans=in_chans, embed_dim=d, multi_conv=multi_conv))
+                self.patch_embed.append(
+                    PatchEmbed(img_size=im_s, patch_size=p, in_chans=in_chans, embed_dim=d, multi_conv=multi_conv))
         else:
             self.pos_embed = nn.ParameterList()
             from .paddle_t2t import T2T, get_sinusoid_encoding
             tokens_type = 'transformer' if hybrid_backbone == 't2t' else 'performer'
             for idx, (im_s, p, d) in enumerate(zip(img_size, patch_size, embed_dim)):
                 self.patch_embed.append(T2T(im_s, tokens_type=tokens_type, patch_size=p, embed_dim=d))
-                self.pos_embed.append(paddle.to_tensor(data=get_sinusoid_encoding(n_position=1 + num_patches[idx], d_hid=embed_dim[idx]),dtype='flaot32',stop_gradient=False))
+                self.pos_embed.append(
+                    paddle.to_tensor(data=get_sinusoid_encoding(n_position=1 + num_patches[idx], d_hid=embed_dim[idx]),
+                                     dtype='flaot32', stop_gradient=False))
 
             del self.pos_embed
-            self.pos_embed = nn.ParameterList([paddle.to_tensor(paddle.zeros(1, 1 + num_patches[i], embed_dim[i]),dtype='float32',stop_gradient=False) for i in range(self.num_branches)])
+            self.pos_embed = nn.ParameterList([paddle.to_tensor(paddle.zeros(1, 1 + num_patches[i], embed_dim[i]),
+                                                                dtype='float32', stop_gradient=False) for i in
+                                               range(self.num_branches)])
 
-        self.cls_token = nn.ParameterList([paddle.create_parameter(shape=(1, 1, embed_dim[i]),dtype='float32') for i in range(self.num_branches)])
+        self.cls_token = nn.ParameterList(
+            [paddle.create_parameter(shape=(1, 1, embed_dim[i]), dtype='float32') for i in range(self.num_branches)])
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         total_depth = sum([sum(x[-2:]) for x in depth])
@@ -241,12 +263,14 @@ class VisionTransformer(nn.Layer):
             curr_depth = max(block_cfg[:-1]) + block_cfg[-1]
             dpr_ = dpr[dpr_ptr:dpr_ptr + curr_depth]
             blk = MultiScaleBlock(embed_dim, num_patches, block_cfg, num_heads=num_heads, mlp_ratio=mlp_ratio,
-                                  qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr_,norm_layer=norm_layer)
+                                  qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate,
+                                  drop_path=dpr_, norm_layer=norm_layer)
             dpr_ptr += curr_depth
             self.blocks.append(blk)
 
         self.norm = nn.LayerList([norm_layer(embed_dim[i]) for i in range(self.num_branches)])
-        self.head = nn.LayerList([nn.Linear(embed_dim[i], num_classes) if num_classes > 0 else Identity() for i in range(self.num_branches)])
+        self.head = nn.LayerList(
+            [nn.Linear(embed_dim[i], num_classes) if num_classes > 0 else Identity() for i in range(self.num_branches)])
 
         # for i in range(self.num_branches):
         #     if self.pos_embed[i].requires_grad:
@@ -263,7 +287,6 @@ class VisionTransformer(nn.Layer):
     #     elif isinstance(m, nn.LayerNorm):
     #         nn.init.constant_(m.bias, 0)
     #         nn.init.constant_(m.weight, 1.0)
-
 
     def no_weight_decay(self):
         out = {'cls_token'}
@@ -282,7 +305,9 @@ class VisionTransformer(nn.Layer):
         B, C, H, W = x.shape
         xs = []
         for i in range(self.num_branches):
-            x_ = paddle.nn.functional.interpolate(x, size=(self.img_size[i], self.img_size[i]), mode='bicubic') if H != self.img_size[i] else x
+            x_ = paddle.nn.functional.interpolate(x, size=(self.img_size[i], self.img_size[i]), mode='bicubic') if H != \
+                                                                                                                   self.img_size[
+                                                                                                                       i] else x
             tmp = self.patch_embed[i](x_)
             cls_tokens = self.cls_token[i].expand([B, -1, -1])  # stole cls_tokens impl from Phil Wang, thanks
             tmp = paddle.concat((cls_tokens, tmp), axis=1)
@@ -306,10 +331,11 @@ class VisionTransformer(nn.Layer):
         ce_logits = paddle.mean(paddle.stack(ce_logits, axis=0), axis=0)
         return ce_logits
 
+
 def pd_crossvit_base_224(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[240, 224],
                               patch_size=[12, 16], embed_dim=[384, 768], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
-                              num_heads=[12, 12], mlp_ratio=[4, 4, 1], qkv_bias=True,**kwargs)
+                              num_heads=[12, 12], mlp_ratio=[4, 4, 1], qkv_bias=True, **kwargs)
     return model
 
 
@@ -324,28 +350,31 @@ def pd_crossvit_tiny_224(pretrained=False, **kwargs):
 def pd_crossvit_small_224(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[240, 224],
                               patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
-                              num_heads=[6, 6], mlp_ratio=[4, 4, 1], qkv_bias=True,**kwargs)
+                              num_heads=[6, 6], mlp_ratio=[4, 4, 1], qkv_bias=True, **kwargs)
     return model
+
 
 def pd_crossvit_9_224(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[240, 224],
                               patch_size=[12, 16], embed_dim=[128, 256], depth=[[1, 3, 0], [1, 3, 0], [1, 3, 0]],
-                              num_heads=[4, 4], mlp_ratio=[3, 3, 1], qkv_bias=True,**kwargs)
+                              num_heads=[4, 4], mlp_ratio=[3, 3, 1], qkv_bias=True, **kwargs)
 
     return model
+
 
 def pd_crossvit_15_224(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[240, 224],
                               patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
-                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True,**kwargs)
+                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True, **kwargs)
     return model
 
 
 def pd_crossvit_18_224(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[240, 224],
                               patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
-                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True,**kwargs)
+                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True, **kwargs)
     return model
+
 
 def pd_crossvit_9_dagger_224(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[240, 224],
@@ -358,21 +387,23 @@ def pd_crossvit_9_dagger_224(pretrained=False, **kwargs):
 def pd_crossvit_15_dagger_224(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[240, 224],
                               patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
-                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True,multi_conv=True, **kwargs)
+                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
     return model
+
 
 def pd_crossvit_15_dagger_384(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[408, 384],
                               patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
-                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True,multi_conv=True, **kwargs)
+                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
     return model
 
 
 def pd_crossvit_18_dagger_224(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[240, 224],
                               patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
-                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True,multi_conv=True, **kwargs)
+                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
     return model
+
 
 def pd_crossvit_18_dagger_384(pretrained=False, **kwargs):
     model = VisionTransformer(img_size=[408, 384],
@@ -381,14 +412,18 @@ def pd_crossvit_18_dagger_384(pretrained=False, **kwargs):
     return model
 
 
-def build_crossvit(cfg, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[384, 768], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
-                              num_heads=[12, 12], mlp_ratio=[4, 4, 1], qkv_bias=True,**kwargs)
+def build_crossvit(config, **kwargs):
+    model = VisionTransformer(img_size=config.DATA.IMAGE_SIZE,
+                              patch_size=config.MODEL.TRANS.PATCH_SIZE,
+                              embed_dim=config.MODEL.TRANS.EMBED_DIM,
+                              depth=config.MODEL.TRANS.DEPTH,
+                              num_heads=config.MODEL.TRANS.NUM_HEADS,
+                              mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+                              qkv_bias=config.MODEL.TRANS.QKV_BIAS, **kwargs)
     return model
 
 
-#print func
+# print func
 def print_model_named_params(model):
     print('----------------------------------')
     for name, param in model.named_parameters():
@@ -402,19 +437,21 @@ def print_model_named_buffers(model):
         print(name, param.shape)
     print('----------------------------------')
 
+
 if __name__ == '__main__':
     import pickle
-    pd_crossvit=pd_crossvit_base_224()
+
+    pd_crossvit = pd_crossvit_base_224()
 
     with open('../crossvit_base_224.pickle', 'rb') as f:
         st = pickle.load(f)
 
     # print(st)
-    new_st={}
-    for key,param in st.items():
+    new_st = {}
+    for key, param in st.items():
         if len(param.shape) == 2:
             param = param.transpose((1, 0))
-            new_st[key]=param
+            new_st[key] = param
         else:
             new_st[key] = param
 
