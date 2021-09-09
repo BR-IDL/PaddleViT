@@ -1,4 +1,3 @@
-
 #   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""PVTv2 training/validation using single GPU """
+"""RepMLP training/validation using single GPU """
 
 import sys
 import os
@@ -27,14 +26,14 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 from datasets import get_dataloader
 from datasets import get_dataset
-from pvtv2 import build_pvtv2 as build_model
+from repmlp import build_repmlp as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
 from config import update_config
 
 
-parser = argparse.ArgumentParser('PVTv2')
+parser = argparse.ArgumentParser('RepMLP')
 parser.add_argument('-cfg', type=str, default=None)
 parser.add_argument('-dataset', type=str, default=None)
 parser.add_argument('-batch_size', type=int, default=None)
@@ -149,7 +148,8 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
         debug_steps: int, num of iters to log info
     Returns:
         val_loss_meter.avg
-        val_acc_meter.avg
+        val_acc1_meter.avg
+        val_acc5_meter.avg
         val_time
     """
     model.eval()
@@ -179,32 +179,36 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
                 logger.info(
                     f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
                     f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
-                    f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
+                    f"Avg Acc@1: {val_acc1_meter.val:.4f} ({val_acc1_meter.avg:.4f}), " +
+                    f"Avg Acc@1: {val_acc5_meter.val:.4f} ({val_acc5_meter.avg:.4f})")
 
     val_time = time.time() - time_st
     return val_loss_meter.avg, val_acc1_meter.avg, val_acc5_meter.avg, val_time
 
 
 def main():
-    # 0. Preparation
+    # STEP 0. Preparation
     last_epoch = config.TRAIN.LAST_EPOCH
     seed = config.SEED
     paddle.seed(seed)
     np.random.seed(seed)
     random.seed(seed)
+    #paddle.set_device('cpu')
     #paddle.set_device('gpu:0')
-    # 1. Create model
+
+    # STEP 1. Create model
     model = build_model(config)
-    #model = paddle.DataParallel(model)
-    # 2. Create train and val dataloader
+
+    # STEP 2. Create train and val dataloader
     dataset_train = get_dataset(config, mode='train')
     dataset_val = get_dataset(config, mode='val')
     dataloader_train = get_dataloader(config, dataset_train, 'train', False)
     dataloader_val = get_dataloader(config, dataset_val, 'val', False)
-    # 3. Define criterion
+
+    # STEP 3. Define criterion
     criterion = nn.CrossEntropyLoss()
-    # 4. Define lr_scheduler
+
+    # STEP 4. Define lr_scheduler
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
         scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
@@ -228,7 +232,8 @@ def main():
     else:
         logging.fatal(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
-    # 5. Define optimizer
+
+    # STEP 5. Define optimizer
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
@@ -252,17 +257,14 @@ def main():
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             epsilon=config.TRAIN.OPTIMIZER.EPS,
-            grad_clip=clip,
-            apply_decay_param_fun=get_exclude_from_weight_decay_fn([
-                'absolute_pos_embed', 'relative_position_bias_table']),
-            )
+            grad_clip=clip)
     else:
         logging.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
 
-    # 6. Load pretrained model or load resume model and optimizer states
+    # STEP 6. Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
-        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams')
+        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams'), "Wrong PRETRAINED model name, note that file ext '.pdparams' is NOT needed!"
         model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
         model.set_dict(model_state)
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
@@ -273,10 +275,11 @@ def main():
         model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
-        optimizer.set_dict(opt_state)
+        optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
-    # 7. Validation
+
+    # STEP 7. Start validation
     if config.EVAL:
         logger.info('----- Start Validating')
         val_loss, val_acc1, val_acc5, val_time = validate(
@@ -290,8 +293,9 @@ def main():
                     f"Validation Acc@5: {val_acc5:.4f}, " +
                     f"time: {val_time:.2f}")
         return
-    # 8. Start training and validation
-    logging.info(f"Start training from epoch {last_epoch+1}.")
+
+    # STEP 8. Start training and validation
+    logging.info(f"----- Start training from epoch {last_epoch+1}.")
     for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
         # train
         logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")

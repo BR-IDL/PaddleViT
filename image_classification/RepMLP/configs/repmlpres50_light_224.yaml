@@ -1,0 +1,11 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: RepMLP
+    NAME: repmlpres50_light_224
+    MIXER:
+        NUM_BLOCKS: [3,4,6,3]
+        BLOCK_TYPE: 'light'
+        
+
