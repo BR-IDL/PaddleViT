@@ -118,7 +118,7 @@ _C.ROI.CANONICAL_LEVEL = 4
 _C.ROI.MIN_LEVEL = 0
 _C.ROI.MAX_LEVEL = 3
 _C.ROI.ALIGNED = True
-_C.ROI.PAT_GT = False
+_C.ROI.PAT_GT_AS_PRO = False
 
 # training settings
 _C.TRAIN = CN()

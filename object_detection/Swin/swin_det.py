@@ -44,7 +44,7 @@ class SwinTransformerDet(nn.Layer):
         feats = self.neck(self.backbone(x.tensors))
         rpn_out = self.rpnhead(feats, gt)
 
-        if self.config.ROI.PAT_GT:
+        if self.config.ROI.PAT_GT_AS_PRO:
             proposals = []
             for proposal, gt_box in zip(rpn_out[0], gt["gt_boxes"]):
                 proposals.append(paddle.concat([proposal, gt_box]))
