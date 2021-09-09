@@ -419,7 +419,9 @@ def build_crossvit(config, **kwargs):
                               depth=config.MODEL.TRANS.DEPTH,
                               num_heads=config.MODEL.TRANS.NUM_HEADS,
                               mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                              qkv_bias=config.MODEL.TRANS.QKV_BIAS, **kwargs)
+                              qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                              multi_conv=config.MODEL.TRANS.MULTI_CONV,
+                              **kwargs)
     return model
 
 

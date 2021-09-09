@@ -12,3 +12,4 @@ MODEL:
         NUM_HEADS: [12, 12]
         MLP_RATIO: [4, 4, 1]
         QKV_BIAS: True
+        MULTI_CONV: False

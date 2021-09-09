@@ -20,8 +20,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="be1cb1aa-23da-4a02-a9f9-fd304f150445" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_15_224.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_15_dagger_224.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_15_dagger_384.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_18_224.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_18_dagger_224.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_9_224.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_9_dagger_224.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_small_224.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_tiny_224.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/config/pd_crossvit_base_224.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/config/pd_crossvit_base_224.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/paddle_crossvit/paddle_crossvit.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/paddle_crossvit/paddle_crossvit.py" afterDir="false" />
     </list>
@@ -59,29 +67,8 @@
       <recent name="$PROJECT_DIR$/image_classification/CrossViT" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.load_pytorch_weights_multi_test">
-    <configuration name="Demo" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="PaddleViT" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification/CrossViT" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/Demo.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="load_pytorch_weights" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.load_pytorch_weights_15_dagger_384">
+    <configuration name="load_pytorch_weights_15_dagger_224" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PaddleViT" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -93,7 +80,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_15_dagger_224.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -102,7 +89,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="load_pytorch_weights_multi_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="load_pytorch_weights_15_dagger_384" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PaddleViT" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -114,7 +101,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_multi_test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_15_dagger_384.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -123,41 +110,76 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="load_pytorch_weights_18_224" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PaddleViT" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;CrossViT.tests.test_config.ConfigTest.test_update_config&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_18_224.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for test_config.ConfigTest.test_update_config_from_file" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="load_pytorch_weights_18_dagger_224" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PaddleViT" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification/CrossViT/tests" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;test_config.ConfigTest.test_update_config_from_file&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_18_dagger_224.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="load_pytorch_weights_9_dagger_224" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="PaddleViT" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/image_classification/CrossViT/port_weights/load_pytorch_weights_9_dagger_224.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.load_pytorch_weights_multi_test" />
-        <item itemvalue="Python tests.Unittests for test_config.ConfigTest.test_update_config_from_file" />
-        <item itemvalue="Python.Demo" />
-        <item itemvalue="Python.load_pytorch_weights" />
-        <item itemvalue="Python tests.Unittests for CrossViT.tests.test_config.ConfigTest.test_update_config" />
+        <item itemvalue="Python.load_pytorch_weights_15_dagger_384" />
+        <item itemvalue="Python.load_pytorch_weights_18_dagger_224" />
+        <item itemvalue="Python.load_pytorch_weights_15_dagger_224" />
+        <item itemvalue="Python.load_pytorch_weights_9_dagger_224" />
+        <item itemvalue="Python.load_pytorch_weights_18_224" />
       </list>
     </recent_temporary>
   </component>
