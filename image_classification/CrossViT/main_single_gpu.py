@@ -26,7 +26,7 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 from datasets import get_dataloader
 from datasets import get_dataset
-from image_classification.CrossViT.paddle_crossvit.paddle_crossvit import *
+from paddle_crossvit.paddle_crossvit import *
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
@@ -195,9 +195,9 @@ def main():
     random.seed(seed)
     #paddle.set_device('gpu:0')
     # 1. Create model
-    model = pd_crossvit_base_224()
-    # state_dict = paddle.load('port_weights/pd_crossvit_base_224.pdparams')
-    # model.load_dict(state_dict)
+    model = build_crossvit(config=config)
+    state_dict = paddle.load(args.pretrained)
+    model.load_dict(state_dict)
 
     #model = paddle.DataParallel(model)
     # 2. Create train and val dataloader

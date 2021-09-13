@@ -38,7 +38,14 @@ Demo result show as below
 # 340
 # done!
 ```
+# ImageNet acc
+```buildoutcfg
+base_224
+ImageNet val acc: 0.66896
 
+sub mean by std
+ImageNet val acc: 0.70484 
+```
 ##paddle implement detials
 
 ## CrossViT

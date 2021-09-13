@@ -291,6 +291,7 @@ class VisionTransformer(nn.Module):
             tmp = self.patch_embed[i](x_)
             cls_tokens = self.cls_token[i].expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
             tmp = torch.cat((cls_tokens, tmp), dim=1)
+            print(tmp.shape,self.pos_embed[i].shape)
             tmp = tmp + self.pos_embed[i]
             tmp = self.pos_drop(tmp)
             xs.append(tmp)

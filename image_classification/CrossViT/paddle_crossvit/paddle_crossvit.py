@@ -226,13 +226,16 @@ class VisionTransformer(nn.Layer):
 
         num_patches = _compute_num_patches(img_size, patch_size)
         self.num_branches = len(patch_size)
-
+        # print(num_patches)
         self.patch_embed = nn.LayerList()
         if hybrid_backbone is None:
             # paddle.create_parameter(default_initializer=)
             self.pos_embed = nn.ParameterList(
-                [paddle.create_parameter(shape=(1, 1 + num_patches[i], embed_dim[i]), dtype='float32') for i in
+                [paddle.create_parameter(shape=[1, 1 + num_patches[i], embed_dim[i]], dtype='float32',default_initializer=nn.initializer.Constant(0.0)) for i in
                  range(self.num_branches)])
+            # self.pos_embed = nn.ParameterList([paddle.to_tensor(paddle.zeros(1, 1 + num_patches[i], embed_dim[i]),
+            #                                                     dtype='float32') for i in
+            #                                    range(self.num_branches)])
             for im_s, p, d in zip(img_size, patch_size, embed_dim):
                 self.patch_embed.append(
                     PatchEmbed(img_size=im_s, patch_size=p, in_chans=in_chans, embed_dim=d, multi_conv=multi_conv))
@@ -252,7 +255,7 @@ class VisionTransformer(nn.Layer):
                                                range(self.num_branches)])
 
         self.cls_token = nn.ParameterList(
-            [paddle.create_parameter(shape=(1, 1, embed_dim[i]), dtype='float32') for i in range(self.num_branches)])
+            [paddle.create_parameter(shape=[1, 1, embed_dim[i]], dtype='float32') for i in range(self.num_branches)])
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         total_depth = sum([sum(x[-2:]) for x in depth])
@@ -273,8 +276,8 @@ class VisionTransformer(nn.Layer):
             [nn.Linear(embed_dim[i], num_classes) if num_classes > 0 else Identity() for i in range(self.num_branches)])
 
         # for i in range(self.num_branches):
-        #     if self.pos_embed[i].requires_grad:
-        #         trunc_normal_(self.pos_embed[i], std=.02)
+        #     # if self.pos_embed[i].requires_grad:
+        #     trunc_normal_(self.pos_embed[i], std=.02)
         #     trunc_normal_(self.cls_token[i], std=.02)
 
     #     self.apply(self._init_weights)
@@ -305,13 +308,13 @@ class VisionTransformer(nn.Layer):
         B, C, H, W = x.shape
         xs = []
         for i in range(self.num_branches):
-            x_ = paddle.nn.functional.interpolate(x, size=(self.img_size[i], self.img_size[i]), mode='bicubic') if H != \
-                                                                                                                   self.img_size[
-                                                                                                                       i] else x
+            x_ = paddle.nn.functional.interpolate(x, size=(self.img_size[i], self.img_size[i]), mode='bicubic') if H != self.img_size[i] else x
             tmp = self.patch_embed[i](x_)
             cls_tokens = self.cls_token[i].expand([B, -1, -1])  # stole cls_tokens impl from Phil Wang, thanks
+            # print(cls_tokens.shape,tmp.shape)
             tmp = paddle.concat((cls_tokens, tmp), axis=1)
-            tmp = tmp + self.pos_embed[i]
+            # print(tmp.shape,self.pos_embed[i].shape)
+            tmp = tmp+self.pos_embed[i]
             tmp = self.pos_drop(tmp)
             xs.append(tmp)
 

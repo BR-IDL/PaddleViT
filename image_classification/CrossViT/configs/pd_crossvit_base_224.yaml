@@ -4,7 +4,7 @@ DATA:
 MODEL:
     TYPE: CrossViT
     NAME: crossvit_vit_base_224
-    PARAMS:
+    TRANS:
         IMG_SIZE: [240, 224]
         PATCH_SIZE: [12, 16]
         EMBED_DIM: [384, 768]

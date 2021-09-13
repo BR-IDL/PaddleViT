@@ -1,0 +1,57 @@
+2021-09-11 21:54:14,623 config= BASE: ['']
+DATA:
+  BATCH_SIZE: 128
+  BATCH_SIZE_EVAL: 128
+  CROP_PCT: 0.875
+  DATASET: imagenet2012
+  DATA_PATH: /media/misa/软件/CrossViT复现日记/ImageNetDataset/ILSVRC2012_img_val
+  IMAGE_SIZE: 224
+  NUM_WORKERS: 2
+EVAL: True
+LOCAL_RANK: 0
+MODEL:
+  ATTENTION_DROPOUT: 0.1
+  DROPOUT: 0.1
+  DROPPATH: 0.1
+  NAME: crossvit_vit_base_224
+  NUM_CLASSES: 1000
+  PRETRAINED: ./port_weights/pd_crossvit_base_224.pdparams
+  RESUME: None
+  TRANS:
+    DEPTH: [[1, 4, 0], [1, 4, 0], [1, 4, 0]]
+    EMBED_DIM: [384, 768]
+    IMG_SIZE: [240, 224]
+    MLP_RATIO: [4, 4, 1]
+    MULTI_CONV: False
+    NUM_HEADS: [12, 12]
+    PATCH_SIZE: [12, 16]
+    QKV_BIAS: True
+  TYPE: CrossViT
+NGPUS: -1
+REPORT_FREQ: 100
+SAVE: ./output/eval-20210911-21-54-14
+SAVE_FREQ: 10
+SEED: 0
+TAG: default
+TRAIN:
+  ACCUM_ITER: 2
+  BASE_LR: 0.001
+  END_LR: 0.0005
+  GRAD_CLIP: 1.0
+  LAST_EPOCH: 0
+  LR_SCHEDULER:
+    DECAY_EPOCHS: 30
+    DECAY_RATE: 0.1
+    MILESTONES: 30, 60, 90
+    NAME: warmupcosine
+  NUM_EPOCHS: 300
+  OPTIMIZER:
+    BETAS: (0.9, 0.999)
+    EPS: 1e-08
+    MOMENTUM: 0.9
+    NAME: AdamW
+  WARMUP_EPOCHS: 3
+  WARMUP_START_LR: 1e-06
+  WEIGHT_DECAY: 0.05
+VALIDATE_FREQ: 100
+2021-09-11 21:54:16,332 ----- Start Validating
