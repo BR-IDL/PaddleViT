@@ -299,8 +299,17 @@ def main_worker(*args):
             raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
         assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams') is True
         model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
-        model.set_dict(model_state)
-        logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
+
+        # if from classification weights, add prefix 'backbone' and set state dict
+        if sum(['backbone' in key for key in model_state.keys()]) == 0:
+            logger.info(f"----- Pretrained: Load backbone from {config.MODEL.PRETRAINED}")
+            new_model_state = dict()
+            for key, val in model_state.items():
+                new_model_state['backbone.' + key] = val
+            model.set_state_dict(new_model_state)
+        else:
+            logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
+            model.set_state_dict(model_state)
 
     if config.MODEL.RESUME:
         assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
