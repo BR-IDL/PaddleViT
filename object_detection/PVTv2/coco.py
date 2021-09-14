@@ -17,6 +17,7 @@ Dataset(COCO2017) related classes and methods for DETR training and validation
 """
 
 import os
+import copy
 import numpy as np
 from PIL import Image
 import paddle
@@ -210,7 +211,14 @@ def make_coco_transforms(image_set):
     if image_set == 'train':
         return T.Compose([
             T.RandomHorizontalFlip(),
-            T.RandomResize(scales, max_size=1333),
+            T.RandomSelect(
+                T.RandomResize(scales, max_size=1333),
+                T.Compose([
+                    T.RandomResize([400, 500, 600]),
+                    T.RandomSizeCrop(384, 600),
+                    T.RandomResize(scales, max_size=1333),
+                ])
+         ),
             normalize,
         ])
 
@@ -288,7 +296,8 @@ def collate_fn(batch):
 
     batch = list(zip(*batch)) # batch[0]: data tensor, batch[1]: targets dict
 
-    batch[0] = nested_tensor_from_tensor_list(batch[0], 32)
+    # size divisibility pad the image size which is divisible to i.e. 32
+    batch[0] = nested_tensor_from_tensor_list(batch[0], size_divisibility=32)
 
     val_batch = [list(x.values()) for x in batch[1]]
     key_batch = list(batch[1][0].keys())
