@@ -1,23 +1,49 @@
-import paddle
-import paddle.nn as nn
-import paddle.nn.functional as F
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+Implement MLP Class for RepMLP
+"""
+
 import copy
-import numpy as np
+
+import paddle
+import paddle.nn.functional as F
+from paddle import nn
 
 
 def repeat_interleave(x, arg):
+    """Use numpy to implement repeat operations"""
     return paddle.to_tensor(x.numpy().repeat(arg))
 
 
 class Identity(nn.Layer):
-    def __init__(self, *args, **kwargs):
-        super(Identity, self).__init__()
+    """Identity layer
 
-    def forward(self, input):
-        return input
+    The output of this layer is the input without any change.
+    Use this layer to avoid if condition in some forward methods.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        return x
 
 
 def fuse_bn(conv_or_fc, bn):
+    """Fusion of BN weights"""
     std = (bn._variance + bn._epsilon).sqrt()
     t = bn.weight / std
     if conv_or_fc.weight.ndim == 4:
@@ -28,6 +54,13 @@ def fuse_bn(conv_or_fc, bn):
 
 
 class RepMLP(nn.Layer):
+    """RepMLP Layer
+
+    The RepMLP consists of three parts: Global Perceptron, Partition Perceptron, Local Perceptron.
+    When deploy is True, the training weight of Local Perceptron is integrated into the full connection
+    layer of part of Partition Perceptron, In order to improve the ability of representation.
+    """
+
     def __init__(
         self,
         in_channels,
@@ -251,6 +284,16 @@ class RepMLP(nn.Layer):
 
 
 def repmlp_model_convert(model, save_path=None, do_copy=True):
+    """reparameterizing model
+
+    Args:
+        model (nn.Layer): origin model
+        save_path (str): save the model . Defaults to None.
+        do_copy (bool): copy origin model. Defaults to True.
+
+    Returns:
+        nn.Layer: The reparameterized model
+    """
     if do_copy:
         model = copy.deepcopy(model)
     for module in model.sublayers():
@@ -262,6 +305,8 @@ def repmlp_model_convert(model, save_path=None, do_copy=True):
 
 
 class ConvBN(nn.Layer):
+    """Conv + BN"""
+
     def __init__(
         self,
         in_channels,
@@ -332,6 +377,8 @@ class ConvBN(nn.Layer):
 
 
 class ConvBNReLU(ConvBN):
+    """Conv + BN + ReLU"""
+
     def __init__(
         self,
         in_channels,
@@ -355,6 +402,11 @@ class ConvBNReLU(ConvBN):
 
 
 class RepMLPLightBlock(nn.Layer):
+    """RepMLPLightBlock Layer
+
+    The base module of the Light structure RepMLPResNet network
+    """
+
     def __init__(
         self,
         in_channels,
@@ -369,7 +421,7 @@ class RepMLPLightBlock(nn.Layer):
         fc3_groups,
         deploy=False,
     ):
-        super(RepMLPLightBlock, self).__init__()
+        super().__init__()
         if in_channels != out_channels:
             self.shortcut = ConvBN(
                 in_channels, out_channels, kernel_size=1, deploy=deploy
@@ -409,6 +461,11 @@ class RepMLPLightBlock(nn.Layer):
 
 #   The input_ and output_channels of RepMLP are both mid_channels // r
 class RepMLPBottleneckBlock(nn.Layer):
+    """RepMLPBottleneckBlock Layer
+
+    The base module of the bottleneck structure RepMLPResNet network
+    """
+
     def __init__(
         self,
         in_channels,
@@ -424,7 +481,7 @@ class RepMLPBottleneckBlock(nn.Layer):
         fc3_groups,
         deploy=False,
     ):
-        super(RepMLPBottleneckBlock, self).__init__()
+        super().__init__()
         if in_channels != out_channels:
             self.shortcut = ConvBN(
                 in_channels, out_channels, kernel_size=1, deploy=deploy
@@ -475,8 +532,13 @@ class RepMLPBottleneckBlock(nn.Layer):
 
 
 class BaseBlock(nn.Layer):
+    """BaseBlock Layer
+
+    Constitute the basic building blocks of a RepMLPResNet network
+    """
+
     def __init__(self, in_channels, mid_channels, out_channels, stride=1, deploy=False):
-        super(BaseBlock, self).__init__()
+        super().__init__()
         if stride != 1 or in_channels != out_channels:
             self.shortcut = ConvBN(
                 in_channels, out_channels, kernel_size=1, stride=stride, deploy=deploy
@@ -504,6 +566,17 @@ class BaseBlock(nn.Layer):
 
 
 class RepMLPResNet(nn.Layer):
+    """RepMLPResNet-50 Layer
+
+    RepMLPResNet-50 has three structures:
+    base: original ResNet-50
+    light: RepMLP Light Block (55% faster, comparable accuracy)
+    bottleneck: RepMLP Bottleneck Block (much higher accuracy, comparable speed)
+
+    Args:
+        block_type(str): "base", "light", "bottleneck"
+    """
+
     def __init__(
         self,
         num_blocks,
@@ -520,12 +593,7 @@ class RepMLPResNet(nn.Layer):
         # r=2 for stage2 and r=4 for stage3
         bottleneck_r=(2, 4),
     ):
-        super(RepMLPResNet, self).__init__()
-
-        #   base:   original ResNet-50
-        #   light:  RepMLP Light Block (55% faster, comparable accuracy)
-        # bottleneck:     RepMLP Bottleneck Block (much higher accuracy,
-        # comparable speed)
+        super().__init__()
         assert block_type in ["base", "light", "bottleneck"]
         self.block_type = block_type
         self.deploy = deploy
@@ -582,7 +650,7 @@ class RepMLPResNet(nn.Layer):
     def _make_stage(self, channels, num_blocks, stride, total_downsample_ratio):
         strides = [stride] + [1] * (num_blocks - 1)
         blocks = []
-        for i, stride in enumerate(strides):
+        for _, stride in enumerate(strides):
             # Only use RepMLP in stage2 and stage3, as described in the paper
             if (
                 self.block_type == "base"
