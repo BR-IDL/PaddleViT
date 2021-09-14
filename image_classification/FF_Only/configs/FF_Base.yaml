@@ -5,7 +5,6 @@ MODEL:
     TYPE: FF_Only
     NAME: ff_base
     MIXER:
-        PATCH_SIZE: 16
         EMBED_DIM: 768
-        NUM_HEADS: 12
+
 

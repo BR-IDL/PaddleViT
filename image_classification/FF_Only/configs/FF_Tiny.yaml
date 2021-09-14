@@ -5,7 +5,5 @@ MODEL:
     TYPE: FF_Only
     NAME: ff_tiny
     MIXER:
-        PATCH_SIZE: 16
         EMBED_DIM: 192
-        NUM_HEADS: 3
 
