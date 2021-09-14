@@ -34,12 +34,12 @@ _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
 _C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 1 # number of data loading threads
+_C.DATA.NUM_WORKERS = 0 # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
 _C.MODEL.TYPE = 'RepMLP'
-_C.MODEL.NAME = 'repmlpres50_light_224'
+_C.MODEL.NAME = 'repmlpres50_light_224_train'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000

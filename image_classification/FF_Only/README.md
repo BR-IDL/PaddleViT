@@ -64,7 +64,7 @@ ImageNet2012 dataset is used in the following folder structure:
 ## Usage
 To use the model with pretrained weights, download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
 
-For example, assume the downloaded weight file is stored in `./resmlp_24_224.pdparams`, to use the `resmlp_24_224` model in python:
+For example, assume the downloaded weight file is stored in `./linear_base.pdparams`, to use the `linear_base` model in python:
 ```python
 from config import get_config
 from resmlp import build_res_mlp as build_model
@@ -80,7 +80,7 @@ model.set_dict(model_state_dict)
 ## Evaluation
 To evaluate ResMLP model performance on ImageNet2012 with a single GPU, run the following script using command line:
 ```shell
-sh run_eval_base.sh
+sh run_eval.sh
 ```
 or
 ```shell
@@ -102,7 +102,7 @@ Run evaluation using multi-GPUs:
 
 
 ```shell
-sh run_eval_multi_base.sh
+sh run_eval_multi.sh
 ```
 or
 ```shell
