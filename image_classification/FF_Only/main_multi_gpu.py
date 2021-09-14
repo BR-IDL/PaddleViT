@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""FF only training/validation using multiple GPU """
+"""FF_only training/validation using multiple GPU """
 
 import sys
 import os

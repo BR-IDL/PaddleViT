@@ -34,7 +34,7 @@ _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
 _C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 1 # number of data loading threads 
+_C.DATA.NUM_WORKERS = 0 # number of data loading threads 
 
 # model settings
 _C.MODEL = CN()
@@ -46,13 +46,7 @@ _C.MODEL.NUM_CLASSES = 1000
 
 # transformer settings
 _C.MODEL.MIXER = CN()
-_C.MODEL.MIXER.PATCH_SIZE = 16
 _C.MODEL.MIXER.EMBED_DIM = 768
-_C.MODEL.MIXER.DEPTH = 12
-_C.MODEL.MIXER.NUM_HEADS = 12
-_C.MODEL.MIXER.MLP_RATIO = 4
-_C.MODEL.MIXER.QKV_BIAS = True
-
 
 # training settings
 _C.TRAIN = CN()
