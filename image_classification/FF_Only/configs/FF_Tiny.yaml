@@ -1,9 +1,0 @@
-DATA:
-    IMAGE_SIZE: 224
-    CROP_PCT: 0.875
-MODEL:
-    TYPE: FF_Only
-    NAME: ff_tiny
-    MIXER:
-        EMBED_DIM: 192
-
