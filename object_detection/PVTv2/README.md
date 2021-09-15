@@ -27,6 +27,8 @@ Update (2021-09-15): Code is released and Mask R-CNN ported weights are uploaded
 
 > *The results are evaluated on COCO validation set.
 
+- Backbone model weights can be found in PVTv2 classification [here](../../image_classification/PVTv2).
+
 ## Notebooks
 We provide a few notebooks in aistudio to help you get started:
 
@@ -83,7 +85,7 @@ model.set_dict(model_state_dict)
 ```
 
 ## Evaluation
-To evaluate DETR model performance on COCO2017 with a single GPU, run the following script using command line:
+To evaluate PVTv2 model performance on COCO2017 with a single GPU, run the following script using command line:
 ```shell
 sh run_eval.sh
 ```
@@ -125,7 +127,7 @@ python main_multi_gpu.py \
 
 
 ## Training
-To train the DETR model on COCO2017 with single GPU, run the following script using command line:
+To train the PVTv2 model on COCO2017 with single GPU, run the following script using command line:
 ```shell
 sh run_train.sh
 ```
