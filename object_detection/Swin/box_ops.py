@@ -1,3 +1,17 @@
+#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import numpy as np
 import paddle
 
@@ -81,7 +95,7 @@ def box_area(boxes):
 def box_iou(boxes1, boxes2):
     """compute iou of 2 sets of boxes in (x1, y1, x2, y2) format
 
-    This method returns the iou between every pair of boxes 
+    This method returns the iou between every pair of boxes
     in two sets of boxes.
 
     Args:
@@ -109,7 +123,7 @@ def box_iou(boxes1, boxes2):
 
 
 def generalized_box_iou(boxes1, boxes2):
-    """Compute GIoU of each pais in boxes1 and boxes2 
+    """Compute GIoU of each pais in boxes1 and boxes2
 
     GIoU = IoU - |A_c - U| / |A_c|
     where A_c is the smallest convex hull that encloses both boxes, U is the union of boxes
@@ -164,5 +178,3 @@ def masks_to_boxes(masks):
     y_min = y_min.flatten(1).min(-1)[0]
 
     return paddle.stack([x_min, y_min, x_max, y_max], 1)
-
-

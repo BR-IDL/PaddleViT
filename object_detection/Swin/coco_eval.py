@@ -2,7 +2,6 @@ import os
 import contextlib
 import copy
 import numpy as np
-import paddle
 
 from pycocotools.cocoeval import COCOeval
 from pycocotools.coco import COCO
@@ -47,7 +46,9 @@ class CocoEvaluator():
     def synchronize_between_processes(self):
         for iou_type in self.iou_types:
             self.eval_imgs[iou_type] = np.concatenate(self.eval_imgs[iou_type], 2)
-            create_common_coco_eval(self.coco_eval[iou_type], self.img_ids, self.eval_imgs[iou_type])
+            create_common_coco_eval(self.coco_eval[iou_type],
+                                    self.img_ids,
+                                    self.eval_imgs[iou_type])
 
     def accumulate(self):
         for coco_eval in self.coco_eval.values():
@@ -90,7 +91,7 @@ class CocoEvaluator():
                         'bbox': box,
                         'score': scores[k],
                     }
-                    for k , box in enumerate(boxes)
+                    for k, box in enumerate(boxes)
                 ]
             )
         return coco_results
@@ -101,7 +102,7 @@ class CocoEvaluator():
             if len(prediction) == 0:
                 continue
             scores = prediction['scores'].tolist()
-            labels = prediciton['labels'].tolist()
+            labels = prediction['labels'].tolist()
             masks = prediction['masks']
             masks = masks > 0.5
 
@@ -120,11 +121,11 @@ class CocoEvaluator():
                         'segmentation': rle,
                         'score': scores[k],
                     }
-                    for k , rle in enumerate(rles)
+                    for k, rle in enumerate(rles)
                 ]
             )
         return coco_results
-        
+
 
     def prepare_for_coco_keypoint(self, predictions):
         coco_results = []
@@ -134,7 +135,7 @@ class CocoEvaluator():
             boxes = prediction['boxes']
             boxes = convert_to_xywh(boxes).tolist()
             scores = prediction['scores'].tolist()
-            labels = prediciton['labels'].tolist()
+            labels = prediction['labels'].tolist()
             keypoints = prediction['keypoints']
             keypoints = keypoints.flatten(start_dim=1).tolist()
 
@@ -146,7 +147,7 @@ class CocoEvaluator():
                         'keypoints': keypoint,
                         'score': scores[k],
                     }
-                    for k , keypoint in enumerate(keypoints)
+                    for k, keypoint in enumerate(keypoints)
                 ]
             )
         return coco_results

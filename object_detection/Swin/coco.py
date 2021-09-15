@@ -17,6 +17,7 @@ Dataset(COCO2017) related classes and methods for DETR training and validation
 """
 
 import os
+import copy
 import numpy as np
 from PIL import Image
 import paddle
@@ -50,7 +51,7 @@ class CocoDetection(paddle.io.Dataset):
         # prepare filters labels and put image and label to paddle tensors
         self.prepare = ConvertCocoPolysToMasks(return_masks)
         self.root = img_folder
-        self.ids2cats = {id:cat for id, cat in enumerate(self.coco.getCatIds())}     
+        self.ids2cats = {id:cat for id, cat in enumerate(self.coco.getCatIds())}
         self.cats2ids = {cat:id for id, cat in enumerate(self.coco.getCatIds())}
 
     def _remove_images_without_annotations(self, ids):
@@ -77,7 +78,7 @@ class CocoDetection(paddle.io.Dataset):
     def _load_target(self, idx):
         """ Return image annos according to COCO image id"""
         return self.coco.loadAnns(self.coco.getAnnIds(idx))
-    
+
     def _tgt2rcnn(self, target):
         target['gt_boxes'] = target['boxes']
         # target['gt_classes'] = target['labels']
@@ -87,7 +88,7 @@ class CocoDetection(paddle.io.Dataset):
 
         target['imgs_shape'] = target['size'].astype("float32")
         target['scale_factor_wh'] = np.array(
-            [float(target['size'][1]) / float(target['orig_size'][1]), 
+            [float(target['size'][1]) / float(target['orig_size'][1]),
              float(target['size'][0]) / float(target['orig_size'][0])], dtype='float32')
 
         target.pop("boxes")
@@ -109,7 +110,7 @@ class CocoDetection(paddle.io.Dataset):
         image, target = self.prepare(image, target)
         if self._transforms is not None:
             image, target = self._transforms(image, target)
-        
+
         target = self._tgt2rcnn(target)
 
         return image, target
@@ -128,7 +129,7 @@ def convert_coco_poly_to_mask(segmentations, height, width):
     if masks:
         masks = np.stack(masks, axis=0)
     else:
-        mask = no.zeros((0, height, width), dtype='int32')
+        mask = np.zeros((0, height, width), dtype='int32')
     return masks
 
 
@@ -156,7 +157,7 @@ class ConvertCocoPolysToMasks():
 
         if self.return_masks:
             segmentations = [obj['segmentation'] for obj in anno]
-            masks = convert_coco_poly_to_mask(segmentations, h, w)  # [N, H, W] int32 array 
+            masks = convert_coco_poly_to_mask(segmentations, h, w)  # [N, H, W] int32 array
 
         keypoints = None
         if anno and 'keypoints' in anno[0]:
@@ -168,7 +169,7 @@ class ConvertCocoPolysToMasks():
 
         boxes_tmp = boxes
         keep = (boxes_tmp[:, 3] > boxes_tmp[:, 1]) & (boxes_tmp[:, 2] > boxes_tmp[:, 0])
-        keep_idx = np.where(keep)[0].astype('int32')
+        #keep_idx = np.where(keep)[0].astype('int32')
 
         boxes = boxes[keep]
         classes = classes[keep]
@@ -272,7 +273,6 @@ def get_dataloader(dataset, batch_size, mode='train', multi_gpu=False):
 
 def collate_fn(batch):
     """Collate function for batching samples
-    
     Samples varies in sizes, here convert samples to NestedTensor which pads the tensor,
     and generate the corresponding mask, so that the whole batch is of the same size.
     """

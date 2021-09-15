@@ -36,7 +36,7 @@ _C.DATA.VAL_DATA_PATH = "/dataset/coco/" # path to dataset
 _C.DATA.DATASET = 'coco' # dataset name
 _C.DATA.IMAGE_SIZE = 640 # input image size
 _C.DATA.CROP_PCT = 0.9 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 2 # number of data loading threads
+_C.DATA.NUM_WORKERS = 1 # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
@@ -118,7 +118,7 @@ _C.ROI.CANONICAL_LEVEL = 4
 _C.ROI.MIN_LEVEL = 0
 _C.ROI.MAX_LEVEL = 3
 _C.ROI.ALIGNED = True
-_C.ROI.PAT_GT_AS_PRO = False
+_C.ROI.PAT_GT_AS_PRO = True # when training set True, val set to False
 
 # training settings
 _C.TRAIN = CN()

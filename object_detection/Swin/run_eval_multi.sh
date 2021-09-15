@@ -5,4 +5,4 @@ python main_multi_gpu.py \
 -batch_size=8 \
 -data_path='/dataset/coco' \
 -eval \
--pretrained='./weights/mask_rcnn_swin_tiny_patch4_window7_1x'
+-pretrained='./weights/mask_rcnn_swin_tiny_patch4_window7'

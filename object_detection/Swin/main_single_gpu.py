@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Swin Det training/validation using single GPU """
+
 import sys
 import os
 import time
@@ -20,48 +22,53 @@ import argparse
 import random
 import numpy as np
 import paddle
+import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
 from coco import build_coco
 from coco import get_dataloader
 from coco_eval import CocoEvaluator
 from swin_det import build_swin_det
+from utils import AverageMeter
+from utils import WarmupCosineScheduler
 from config import get_config
 from config import update_config
-from utils import WarmupCosineScheduler
-from utils import AverageMeter
 
 
 parser = argparse.ArgumentParser('Swin-Det')
-parser.add_argument('-cfg', type=str, default='./configs/swin_t_det_1x.yaml')
-parser.add_argument('-dataset', type=str, default="coco")
-parser.add_argument('-batch_size', type=int, default=4)
-parser.add_argument('-data_path', type=str, default='/dataset/coco/')
+parser.add_argument('-cfg', type=str, default=None)
+parser.add_argument('-dataset', type=str, default=None)
+parser.add_argument('-batch_size', type=int, default=None)
+parser.add_argument('-data_path', type=str, default=None)
 parser.add_argument('-backbone', type=str, default=None)
 parser.add_argument('-ngpus', type=int, default=None)
 parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-resume', type=str, default=None)
 parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
-args = parser.parse_args()
+arguments = parser.parse_args()
 
 log_format = "%(asctime)s %(message)s"
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format=log_format, datefmt="%m%d %I:%M:%S %p")
 
+# get default config
 config = get_config()
-config = update_config(config, args)
+# update config by arguments
+config = update_config(config, arguments)
 
+# set output folder
 if not config.EVAL:
     config.SAVE = '{}/train-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 
-config.freeze()
+#config.freeze()
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
 
+# set logging format
 logger = logging.getLogger()
 fh = logging.FileHandler(os.path.join(config.SAVE, 'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
@@ -69,9 +76,32 @@ logger.addHandler(fh)
 logger.info(f'config= {config}')
 
 
-def train(dataloader, model, base_ds, optimizer, epoch, total_batch, debug_steps=100, accum_iter=1):
+def train(dataloader,
+          model,
+          base_ds,
+          optimizer,
+          epoch,
+          total_batch,
+          debug_steps=100,
+          accum_iter=1):
+    """Training for one epoch
+    Args:
+        dataloader: paddle.io.DataLoader, dataloader instance
+        model: nn.Layer, det model
+        base_ds: coco api instance
+        optimizer: optimizer
+        epoch: int, current epoch
+        total_epoch: int, total num of epoch, for logging
+        debug_steps: int, num of iters to log info
+        accum_iter: int, num of iters for accumulating gradients
+    Returns:
+        train_loss_cls_meter.avg
+        train_loss_reg_meter.avg
+        train_loss_rpn_cls_meter.avg
+        train_loss_rpn_reg_meter.avg
+        train_time
+    """
     model.train()
-
     train_loss_cls_meter = AverageMeter()
     train_loss_reg_meter = AverageMeter()
     train_loss_rpn_cls_meter = AverageMeter()
@@ -118,6 +148,20 @@ def train(dataloader, model, base_ds, optimizer, epoch, total_batch, debug_steps
 
 
 def validate(dataloader, model, base_ds, total_batch, debug_steps=100):
+    """Validation for whole dataset
+    Args:
+        dataloader: paddle.io.DataLoader, dataloader instance
+        model: nn.Layer, a ViT model
+        criterion: criterion
+        postprocessors: postprocessor for generating bboxes
+        base_ds: COCO instance
+        total_epoch: int, total num of epoch, for logging
+        debug_steps: int, num of iters to log info
+    Returns:
+        val_loss_meter.avg
+        val_acc_meter.avg
+        val_time
+    """
     model.eval()
     time_st = time.time()
 
@@ -217,27 +261,37 @@ def main():
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
         else:
             clip = None
-        optimizer = paddle.optimizer.Momentum(parameters=model.parameters(),
-                                     learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-                                     weight_decay=config.TRAIN.WEIGHT_DECAY,
-                                     momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
-                                     grad_clip=clip,
-                                     )
+        optimizer = paddle.optimizer.Momentum(
+            parameters=model.parameters(),
+            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
+            momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
+            grad_clip=clip)
     elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
-        optimizer = paddle.optimizer.AdamW(parameters=model.parameters(),
-                                       beta1=config.TRAIN.OPTIMIZER.BETAS[0],
-                                       beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-                                       epsilon=config.TRAIN.OPTIMIZER.EPS,
-                                       )
+        if config.TRAIN.GRAD_CLIP:
+            clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
+        else:
+            clip = None
+        optimizer = paddle.optimizer.AdamW(
+            parameters=model.parameters(),
+            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            beta1=config.TRAIN.OPTIMIZER.BETAS[0],
+            beta2=config.TRAIN.OPTIMIZER.BETAS[1],
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
+            epsilon=config.TRAIN.OPTIMIZER.EPS,
+            grad_clip=clip,
+            #apply_decay_param_fun=get_exclude_from_weight_decay_fn(['pos_embed', 'cls_token']),
+            )
     else:
         logging.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
 
     # 6. Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
-    #if config.MODEL.PRETRAINED and os.path.isfile(config.MODEL.PRETRAINED + '.pdparams'):
-        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams')
-        model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams') 
+        if (config.MODEL.PRETRAINED).endswith('.pdparams'):
+            raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
+        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams') is True
+        model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
 
         # if from classification weights, add prefix 'backbone' and set state dict
         if sum(['backbone' in key for key in model_state.keys()]) == 0:
@@ -250,16 +304,19 @@ def main():
             logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
             model.set_state_dict(model_state)
 
-    if config.MODEL.RESUME and os.path.isfile(config.MODEL.RESUME+'.pdparams') and os.path.isfile(config.MODEL.RESUME+'.pdopt'):
-        model_state = paddle.load(config.MODEL.RESUME+'.pdparams') 
+    if config.MODEL.RESUME:
+        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
+        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
         model.set_dict(model_state)
-        opt_state = paddle.load(config.MODEL.RESUME+'.pdopt') 
+        opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
         optimizer.set_dict(opt_state)
-        logger.info(f"----- Resume Training: Load model and optmizer states from {config.MODEL.RESUME}")
-
-    # 7. Validation
+        logger.info(
+            f"----- Resume Training: Load model and optmizer states from {config.MODEL.RESUME}")
+    
+    # 6. Validation
     if config.EVAL:
-        logger.info(f'----- Start Validating')
+        logger.info('----- Start Validating')
         val_time, all_eval_result = validate(
             dataloader=dataloader_val,
             model=model,

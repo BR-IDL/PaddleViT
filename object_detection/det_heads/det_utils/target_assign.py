@@ -263,7 +263,7 @@ def roi_target_assign(proposals,
                                                              allow_low_quality_matches)
 
         if label_single_img.numel() > 0:
-            label_single_img = label_single_img.flatten() # squeeze may get scalar
+            label_single_img = label_single_img.squeeze()
             label_single_img = paddle.gather(label_single_img, matched_idxs)
             label_single_img = paddle.where(matched_labels == 0,
                                             paddle.full_like(label_single_img, num_classes),
