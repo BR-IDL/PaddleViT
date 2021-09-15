@@ -1,3 +1,17 @@
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 import contextlib
 import copy
@@ -47,7 +61,9 @@ class CocoEvaluator():
     def synchronize_between_processes(self):
         for iou_type in self.iou_types:
             self.eval_imgs[iou_type] = np.concatenate(self.eval_imgs[iou_type], 2)
-            create_common_coco_eval(self.coco_eval[iou_type], self.img_ids, self.eval_imgs[iou_type])
+            create_common_coco_eval(self.coco_eval[iou_type],
+                                    self.img_ids,
+                                    self.eval_imgs[iou_type])
 
     def accumulate(self):
         for coco_eval in self.coco_eval.values():
@@ -101,7 +117,7 @@ class CocoEvaluator():
             if len(prediction) == 0:
                 continue
             scores = prediction['scores'].tolist()
-            labels = prediciton['labels'].tolist()
+            labels = prediction['labels'].tolist()
             masks = prediction['masks']
             masks = masks > 0.5
 
@@ -124,7 +140,7 @@ class CocoEvaluator():
                 ]
             )
         return coco_results
-        
+
 
     def prepare_for_coco_keypoint(self, predictions):
         coco_results = []
@@ -134,7 +150,7 @@ class CocoEvaluator():
             boxes = prediction['boxes']
             boxes = convert_to_xywh(boxes).tolist()
             scores = prediction['scores'].tolist()
-            labels = prediciton['labels'].tolist()
+            labels = prediction['labels'].tolist()
             keypoints = prediction['keypoints']
             keypoints = keypoints.flatten(start_dim=1).tolist()
 

@@ -78,8 +78,6 @@ logger.info(f'config= {config}')
 
 def train(dataloader,
           model,
-          criterion,
-          postprocessors,
           base_ds,
           optimizer,
           epoch,
@@ -93,56 +91,63 @@ def train(dataloader,
         criterion: nn.Layer
         postprocessors: nn.Layer
         base_ds: coco api instance
+        train_loss_rpn_cls_meter.avg
         epoch: int, current epoch
         total_epoch: int, total num of epoch, for logging
         debug_steps: int, num of iters to log info
         accum_iter: int, num of iters for accumulating gradients
     Returns:
-        train_loss_ce_meter.avg
-        train_loss_bbox_meter.avg
-        train_loss_giou_meter.avg
+        train_loss_cls_meter.avg
+        train_loss_reg_meter.avg
+        train_loss_rpn_cls_meter.avg
+        train_loss_rpn_reg_meter.avg
         train_time
     """
-
     model.train()
-    criterion.train()
-    train_loss_ce_meter = AverageMeter()
-    train_loss_bbox_meter = AverageMeter()
-    train_loss_giou_meter = AverageMeter()
+
+    train_loss_cls_meter = AverageMeter()
+    train_loss_reg_meter = AverageMeter()
+    train_loss_rpn_cls_meter = AverageMeter()
+    train_loss_rpn_reg_meter = AverageMeter()
+
     time_st = time.time()
-    iou_types = ('bbox', )
-    coco_evaluator = CocoEvaluator(base_ds, iou_types)
+
+    #iou_types = ('bbox', )
+    #coco_evaluator = CocoEvaluator(base_ds, iou_types)
 
     for batch_id, data in enumerate(dataloader):
         samples = data[0]
         targets = data[1]
-        #targets = [{k:v for k,v in t.items()} for t in targets]
             
-        outputs = model(samples)
-        loss_dict = criterion(outputs, targets)
-        weight_dict = criterion.weight_dict
-        losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
-
+        loss_dict = model(samples, targets)
+        losses = sum(loss for loss in loss_dict.values())
         losses.backward()
+
         if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
             optimizer.step()
             optimizer.clear_grad()
 
         # logging losses
         batch_size = samples.tensors.shape[0]
-        train_loss_ce_meter.update(loss_dict['loss_ce'].numpy()[0], batch_size)
-        train_loss_bbox_meter.update(loss_dict['loss_bbox'].numpy()[0], batch_size)
-        train_loss_giou_meter.update(loss_dict['loss_giou'].numpy()[0], batch_size)
+        train_loss_cls_meter.update(loss_dict['loss_cls'].numpy()[0], batch_size)
+        train_loss_reg_meter.update(loss_dict['loss_reg'].numpy()[0], batch_size)
+        train_loss_rpn_cls_meter.update(loss_dict['loss_rpn_cls'].numpy()[0], batch_size)
+        train_loss_rpn_reg_meter.update(loss_dict['loss_rpn_reg'].numpy()[0], batch_size)
     
         if batch_id > 0 and batch_id % debug_steps == 0:
             logger.info(
                 f"Train Step[{batch_id:04d}/{total_batch:04d}], " + 
-                f"Avg loss_ce: {train_loss_ce_meter.avg:.4f}, " + 
-                f"Avg loss_bbox: {train_loss_bbox_meter.avg:.4f}, " + 
-                f"Avg loss_giou: {train_loss_giou_meter.avg:.4f}, ") 
+                f"Avg loss_cls: {train_loss_cls_meter.avg:.4f}, " + 
+                f"Avg loss_reg: {train_loss_reg_meter.avg:.4f}, " + 
+                f"Avg loss_rpn_cls: {train_loss_rpn_cls_meter.avg:.4f}, " + 
+                f"Avg loss_rpn_reg: {train_loss_rpn_reg_meter.avg:.4f}") 
 
     train_time = time.time() - time_st
-    return train_loss_ce_meter.avg, train_loss_bbox_meter.avg, train_loss_giou_meter.avg, train_time
+    return (train_loss_cls_meter.avg,
+            train_loss_reg_meter.avg,
+            train_loss_rpn_cls_meter.avg,
+            train_loss_rpn_reg_meter.avg,
+            train_time)
 
 
 def validate(dataloader, model, base_ds, total_batch, debug_steps=100):
@@ -170,13 +175,12 @@ def validate(dataloader, model, base_ds, total_batch, debug_steps=100):
         for batch_id, data in enumerate(dataloader):
             samples = data[0]
             targets = data[1]
-            #targets = [{k:v for k, v in t.items()} for t in targets]
 
             prediction = model(samples, targets)
 
             if batch_id > 0 and batch_id % debug_steps == 0:
                 logger.info(
-                    f"Val Step[{batch_id:04d}/{total_batch:04d}], done" )
+                    f"Val Step[{batch_id:04d}/{total_batch:04d}], done") 
 
             res = {}
             for target_id, output in zip(targets['image_id'], prediction):
@@ -190,7 +194,6 @@ def validate(dataloader, model, base_ds, total_batch, debug_steps=100):
                 else:
                     res[int(target_id)] = {}
 
-            
             if coco_evaluator is not None:
                 coco_evaluator.update(res)
 
@@ -352,21 +355,21 @@ def main_worker(*args):
     for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
         # train
         logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        train_loss, train_acc, train_time = train(dataloader=dataloader_train,
-                                                  model=model,
-                                                  criterion=criterion,
-                                                  postprocessors=postprocessors,
-                                                  base_ds=base_ds,
-                                                  optimizer=optimizer,
-                                                  epoch=epoch,
-                                                  total_batch=total_batch_train,
-                                                  debug_steps=config.REPORT_FREQ,
-                                                  accum_iter=config.TRAIN.ACCUM_ITER)
+        train_loss_cls, train_loss_reg, train_loss_rpn_cls, train_loss_rpn_reg, train_time = train(
+            dataloader=dataloader_train,
+            model=model, 
+            base_ds=base_ds,
+            optimizer=optimizer, 
+            epoch=epoch,
+            total_batch=total_batch_train,
+            debug_steps=config.REPORT_FREQ,
+            accum_iter=config.TRAIN.ACCUM_ITER)
         scheduler.step()
-
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                    f"Train Loss: {train_loss:.4f}, " +
-                    f"Train Acc: {train_acc:.4f}, " +
+                    f"Train Loss cls: {train_loss_cls:.4f}, " +
+                    f"Train Loss reg: {train_loss_reg:.4f}, " +
+                    f"Train Loss rpn cls: {train_loss_rpn_cls:.4f}, " +
+                    f"Train Loss rpn reg: {train_loss_rpn_reg:.4f}, " +
                     f"time: {train_time:.2f}")
         # validation
         if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
