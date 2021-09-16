@@ -1,5 +1,5 @@
 CUDA_VISIBLE_DEVICES=0 \
-python eval.py \
+python main_single_gpu.py \
 -cfg='./configs/crossvit_base_224.yaml' \
 -dataset='imagenet2012' \
 -batch_size=128 \

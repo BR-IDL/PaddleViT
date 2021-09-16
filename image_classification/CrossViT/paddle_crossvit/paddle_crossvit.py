@@ -301,7 +301,7 @@ class VisionTransformer(nn.Layer):
         return ce_logits
 
 def build_crossvit(config, **kwargs):
-    model = VisionTransformer(img_size=config.MODEL.TRANS.IMAGE_SIZE,
+    model = VisionTransformer(img_size=config.MODEL.TRANS.IMG_SIZE,
                               patch_size=config.MODEL.TRANS.PATCH_SIZE,
                               embed_dim=config.MODEL.TRANS.EMBED_DIM,
                               depth=config.MODEL.TRANS.DEPTH,
