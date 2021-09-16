@@ -17,7 +17,7 @@ import cv2
 import numpy as np
 from config import get_config
 from config import update_config
-from image_classification.CrossViT.crossvit import *
+from crossvit import *
 
 
 def print_model_named_params(model):

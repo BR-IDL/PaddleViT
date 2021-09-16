@@ -1,9 +1,3 @@
-# Copyright IBM All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
-
-"""
-Mostly copy-paste from https://github.com/yitu-opensource/T2T-ViT/blob/main/models/token_transformer.py
-"""
 #   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

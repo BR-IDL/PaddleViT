@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using single GPU """
+"""CrossViT training/validation using single GPU """
 
 import sys
 import os
@@ -26,7 +26,7 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 from datasets import get_dataloader
 from datasets import get_dataset
-from paddle_crossvit.paddle_crossvit import *
+from crossvit import build_crossvit as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
@@ -193,11 +193,9 @@ def main():
     paddle.seed(seed)
     np.random.seed(seed)
     random.seed(seed)
-    #paddle.set_device('gpu:0')
+    paddle.set_device('gpu:0')
     # 1. Create model
-    model = build_crossvit(config=config)
-    state_dict = paddle.load(args.pretrained)
-    model.load_dict(state_dict)
+    model = build_model(config=config)
 
     #model = paddle.DataParallel(model)
     # 2. Create train and val dataloader

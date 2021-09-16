@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using multiple GPU """
+"""CrossViT training/validation using multiple GPU """
 
 import sys
 import os
@@ -21,9 +21,12 @@ import logging
 import argparse
 import random
 import numpy as np
+import paddle
+import paddle.nn as nn
+import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader, get_dataset
-from image_classification.CrossViT.crossvit import *
+from crossvit import build_crossvit as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
@@ -203,7 +206,7 @@ def main_worker(*args):
     np.random.seed(seed)
     random.seed(seed)
     # 1. Create model
-    model = pd_crossvit_base_224()
+    model = build_model(config=config)
     model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train, dataset_val = args[0], args[1]

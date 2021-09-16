@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification, [arxiv](https://arxiv.org/abs/2103.14899) 
 
 PaddlePaddle training/validation code and pretrained models for **CrossViT**.
@@ -170,7 +169,6 @@ python main_multi_gpu.py \
   year={2021}
 }
 ```
-=======
 # CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification, [arxiv](https://arxiv.org/abs/2103.14899) 
 
 PaddlePaddle training/validation code and pretrained models for **CrossViT**.
