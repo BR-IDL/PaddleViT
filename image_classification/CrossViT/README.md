@@ -5,8 +5,8 @@ or local install
 cd your path/PaddleViT/image_classification/CrossViT/
 pip install -r requirement.txt
 ```
-![avatar](CrossViT.JPG)
-![avatar](graph.JPG)
+![avatar](demo_imgs/CrossViT.JPG)
+![avatar](demo_imgs/graph.JPG)
 ## Quick Start
 ```
 cd your path/PaddleViT

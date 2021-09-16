@@ -20,8 +20,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="be1cb1aa-23da-4a02-a9f9-fd304f150445" name="Default Changelist" comment="">
+<<<<<<< Updated upstream
       <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/eval.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/image_classification/CrossViT/run_eval_base_224.sh" afterDir="false" />
+=======
+>>>>>>> Stashed changes
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_classification/CrossViT/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_classification/CrossViT/config.py" afterDir="false" />
@@ -236,4 +239,57 @@
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
+<<<<<<< Updated upstream
+=======
+  <component name="WindowStateProjectService">
+    <state x="773" y="377" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1630985159458">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state x="773" y="377" key="#com.intellij.execution.impl.EditConfigurationsDialog/57.24.2503.1416@57.24.2503.1416" timestamp="1630985159458" />
+    <state x="1096" y="477" key="FileChooserDialogImpl" timestamp="1630982987126">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state x="1096" y="477" key="FileChooserDialogImpl/57.24.2503.1416@57.24.2503.1416" timestamp="1630982987126" />
+    <state width="2480" height="509" key="GridCell.Tab.0.bottom" timestamp="1631497050824">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state width="2480" height="509" key="GridCell.Tab.0.bottom/57.24.2503.1416@57.24.2503.1416" timestamp="1631497050824" />
+    <state width="2480" height="509" key="GridCell.Tab.0.center" timestamp="1631497050815">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state width="2480" height="509" key="GridCell.Tab.0.center/57.24.2503.1416@57.24.2503.1416" timestamp="1631497050815" />
+    <state width="2480" height="509" key="GridCell.Tab.0.left" timestamp="1631497050810">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state width="2480" height="509" key="GridCell.Tab.0.left/57.24.2503.1416@57.24.2503.1416" timestamp="1631497050810" />
+    <state width="2480" height="509" key="GridCell.Tab.0.right" timestamp="1631497050819">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state width="2480" height="509" key="GridCell.Tab.0.right/57.24.2503.1416@57.24.2503.1416" timestamp="1631497050819" />
+    <state width="2480" height="509" key="GridCell.Tab.1.bottom" timestamp="1631497050835">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state width="2480" height="509" key="GridCell.Tab.1.bottom/57.24.2503.1416@57.24.2503.1416" timestamp="1631497050835" />
+    <state width="2480" height="509" key="GridCell.Tab.1.center" timestamp="1631497050831">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state width="2480" height="509" key="GridCell.Tab.1.center/57.24.2503.1416@57.24.2503.1416" timestamp="1631497050831" />
+    <state width="2480" height="509" key="GridCell.Tab.1.left" timestamp="1631497050828">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state width="2480" height="509" key="GridCell.Tab.1.left/57.24.2503.1416@57.24.2503.1416" timestamp="1631497050828" />
+    <state width="2480" height="509" key="GridCell.Tab.1.right" timestamp="1631497050833">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state width="2480" height="509" key="GridCell.Tab.1.right/57.24.2503.1416@57.24.2503.1416" timestamp="1631497050833" />
+    <state x="802" y="354" key="SettingsEditor" timestamp="1630984126425">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state x="802" y="354" key="SettingsEditor/57.24.2503.1416@57.24.2503.1416" timestamp="1630984126425" />
+    <state x="908" y="455" key="Vcs.Push.Dialog.v2" timestamp="1630980985999">
+      <screen x="57" y="24" width="2503" height="1416" />
+    </state>
+    <state x="908" y="455" key="Vcs.Push.Dialog.v2/57.24.2503.1416@57.24.2503.1416" timestamp="1630980985999" />
+  </component>
+>>>>>>> Stashed changes
 </project>

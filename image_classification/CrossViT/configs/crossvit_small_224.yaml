@@ -3,13 +3,13 @@ DATA:
     CROP_PCT: 0.875
 MODEL:
     TYPE: CrossViT
-    NAME: crossvit_vit_base_224
-    PARAMS:
+    NAME: crossvit_vit_small_224
+    TRANS:
         IMG_SIZE: [240, 224]
         PATCH_SIZE: [12, 16]
-        EMBED_DIM: [384, 768]
+        EMBED_DIM: [192, 384]
         DEPTH: [[1, 4, 0], [1, 4, 0], [1, 4, 0]]
-        NUM_HEADS: [12, 12]
+        NUM_HEADS: [6, 6]
         MLP_RATIO: [4, 4, 1]
         QKV_BIAS: True
-
+        MULTI_CONV: False

@@ -1,10 +1,3 @@
-# Copyright IBM All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
-"""
-Modifed from Timm. https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
-
-"""
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -22,9 +15,6 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 
 from .paddle_crossvit_utils import *
-
-paddle.set_device('cpu')
-
 
 class PatchEmbed(nn.Layer):
     """ Image to Patch Embedding
@@ -93,7 +83,6 @@ class CrossAttention(nn.Layer):
             (0, 2, 1, 3))  # BNC -> BNH(C/H) -> BHN(C/H)
 
         attn = (q @ k.transpose((0, 1, 3, 2))) * self.scale  # BH1(C/H) @ BH(C/H)N -> BH1N
-        # attn = attn.softmax(dim=-1)
         attn = F.softmax(attn, axis=-1)
         attn = self.attn_drop(attn)
 
@@ -120,7 +109,6 @@ class CrossAttentionBlock(nn.Layer):
             self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, dropout=drop)
 
     def forward(self, x):
-        # print(self.drop_path(self.attn(self.norm1(x))).shape)
         x = x[:, 0:1, :] + self.drop_path(self.attn(self.norm1(x)))
         if self.has_mlp:
             x = x + self.drop_path(self.mlp(self.norm2(x)))
@@ -195,7 +183,6 @@ class MultiScaleBlock(nn.Layer):
         # cross attention
         outs = []
         for i in range(self.num_branches):
-            # print(proj_cls_token[i].shape, outs_b[(i + 1) % self.num_branches][:, 1:, ...].shape)
             tmp = paddle.concat((proj_cls_token[i], outs_b[(i + 1) % self.num_branches][:, 1:, :]), axis=1)
             tmp = self.fusion[i](tmp)
             reverted_proj_cls_token = self.revert_projs[i](tmp[:, 0:1, :])
@@ -226,16 +213,11 @@ class VisionTransformer(nn.Layer):
 
         num_patches = _compute_num_patches(img_size, patch_size)
         self.num_branches = len(patch_size)
-        # print(num_patches)
         self.patch_embed = nn.LayerList()
         if hybrid_backbone is None:
-            # paddle.create_parameter(default_initializer=)
             self.pos_embed = nn.ParameterList(
                 [paddle.create_parameter(shape=[1, 1 + num_patches[i], embed_dim[i]], dtype='float32',default_initializer=nn.initializer.Constant(0.0)) for i in
                  range(self.num_branches)])
-            # self.pos_embed = nn.ParameterList([paddle.to_tensor(paddle.zeros(1, 1 + num_patches[i], embed_dim[i]),
-            #                                                     dtype='float32') for i in
-            #                                    range(self.num_branches)])
             for im_s, p, d in zip(img_size, patch_size, embed_dim):
                 self.patch_embed.append(
                     PatchEmbed(img_size=im_s, patch_size=p, in_chans=in_chans, embed_dim=d, multi_conv=multi_conv))
@@ -274,22 +256,6 @@ class VisionTransformer(nn.Layer):
         self.norm = nn.LayerList([norm_layer(embed_dim[i]) for i in range(self.num_branches)])
         self.head = nn.LayerList(
             [nn.Linear(embed_dim[i], num_classes) if num_classes > 0 else Identity() for i in range(self.num_branches)])
-
-        # for i in range(self.num_branches):
-        #     # if self.pos_embed[i].requires_grad:
-        #     trunc_normal_(self.pos_embed[i], std=.02)
-        #     trunc_normal_(self.cls_token[i], std=.02)
-
-    #     self.apply(self._init_weights)
-    #
-    # def _init_weights(self, m):
-    #     if isinstance(m, nn.Linear):
-    #         trunc_normal_(m.weight, std=.02)
-    #         if isinstance(m, nn.Linear) and m.bias is not None:
-    #             nn.init.constant_(m.bias, 0)
-    #     elif isinstance(m, nn.LayerNorm):
-    #         nn.init.constant_(m.bias, 0)
-    #         nn.init.constant_(m.weight, 1.0)
 
     def no_weight_decay(self):
         out = {'cls_token'}
@@ -334,89 +300,8 @@ class VisionTransformer(nn.Layer):
         ce_logits = paddle.mean(paddle.stack(ce_logits, axis=0), axis=0)
         return ce_logits
 
-
-def pd_crossvit_base_224(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[384, 768], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
-                              num_heads=[12, 12], mlp_ratio=[4, 4, 1], qkv_bias=True, **kwargs)
-    return model
-
-
-def pd_crossvit_tiny_224(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[96, 192], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
-                              num_heads=[3, 3], mlp_ratio=[4, 4, 1], qkv_bias=True, **kwargs)
-
-    return model
-
-
-def pd_crossvit_small_224(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
-                              num_heads=[6, 6], mlp_ratio=[4, 4, 1], qkv_bias=True, **kwargs)
-    return model
-
-
-def pd_crossvit_9_224(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[128, 256], depth=[[1, 3, 0], [1, 3, 0], [1, 3, 0]],
-                              num_heads=[4, 4], mlp_ratio=[3, 3, 1], qkv_bias=True, **kwargs)
-
-    return model
-
-
-def pd_crossvit_15_224(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
-                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True, **kwargs)
-    return model
-
-
-def pd_crossvit_18_224(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
-                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True, **kwargs)
-    return model
-
-
-def pd_crossvit_9_dagger_224(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[128, 256], depth=[[1, 3, 0], [1, 3, 0], [1, 3, 0]],
-                              num_heads=[4, 4], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
-
-    return model
-
-
-def pd_crossvit_15_dagger_224(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
-                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
-    return model
-
-
-def pd_crossvit_15_dagger_384(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[408, 384],
-                              patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
-                              num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
-    return model
-
-
-def pd_crossvit_18_dagger_224(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[240, 224],
-                              patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
-                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
-    return model
-
-
-def pd_crossvit_18_dagger_384(pretrained=False, **kwargs):
-    model = VisionTransformer(img_size=[408, 384],
-                              patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
-                              num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True, multi_conv=True, **kwargs)
-    return model
-
-
 def build_crossvit(config, **kwargs):
-    model = VisionTransformer(img_size=config.DATA.IMAGE_SIZE,
+    model = VisionTransformer(img_size=config.MODEL.TRANS.IMAGE_SIZE,
                               patch_size=config.MODEL.TRANS.PATCH_SIZE,
                               embed_dim=config.MODEL.TRANS.EMBED_DIM,
                               depth=config.MODEL.TRANS.DEPTH,
@@ -427,38 +312,3 @@ def build_crossvit(config, **kwargs):
                               **kwargs)
     return model
 
-
-# print func
-def print_model_named_params(model):
-    print('----------------------------------')
-    for name, param in model.named_parameters():
-        print(name, param.shape)
-    print('----------------------------------')
-
-
-def print_model_named_buffers(model):
-    print('----------------------------------')
-    for name, param in model.named_buffers():
-        print(name, param.shape)
-    print('----------------------------------')
-
-
-if __name__ == '__main__':
-    import pickle
-
-    pd_crossvit = pd_crossvit_base_224()
-
-    with open('../crossvit_base_224.pickle', 'rb') as f:
-        st = pickle.load(f)
-
-    # print(st)
-    new_st = {}
-    for key, param in st.items():
-        if len(param.shape) == 2:
-            param = param.transpose((1, 0))
-            new_st[key] = param
-        else:
-            new_st[key] = param
-
-    pd_crossvit.load_dict(state_dict=new_st)
-    print("load done...")
