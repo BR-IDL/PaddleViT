@@ -58,7 +58,7 @@ class HungarianMatcher(nn.Layer):
 
             idx_list = []
             for v in targets:
-                if not v['labels'].is_empty():
+                if v['labels'].shape[0] != 0:
                     idx_list.append(v['labels'])
             if len(idx_list) > 0:
                 tgt_idx = paddle.concat(idx_list)
@@ -72,7 +72,7 @@ class HungarianMatcher(nn.Layer):
             #tgt_bbox = paddle.concat([v['boxes'] for v in targets])
             bbox_list = []
             for v in targets:
-                if not v['boxes'].is_empty():
+                if v['boxes'].shape[0] != 0:
                     bbox_list.append(v['boxes'])
             if len(bbox_list) > 0:
                 tgt_bbox = paddle.concat(bbox_list)
@@ -94,6 +94,9 @@ class HungarianMatcher(nn.Layer):
             # conver back to numpy for temp use
             out_bbox = out_bbox.cpu().numpy()
             tgt_bbox = tgt_bbox.cpu().numpy()
+            #print(out_bbox)
+            #print('----')
+            #print(tgt_bbox)
             cost_bbox = distance.cdist(out_bbox, tgt_bbox, 'minkowski', p=1).astype('float32')
             cost_bbox = paddle.to_tensor(cost_bbox)
 

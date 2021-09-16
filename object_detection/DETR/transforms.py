@@ -22,20 +22,25 @@ import paddle.vision.transforms as T
 from paddle.vision.transforms import functional as F
 from random_erasing import RandomErasing
 from box_ops import box_xyxy_to_cxcywh
+from box_ops import box_xyxy_to_cxcywh_numpy
 
 
 def crop(image, target, region):
     cropped_image = T.crop(image, *region)
     target = target.copy()
     i, j, h, w = region
-    target['size'] = paddle.to_tensor([h, w])
+    #target['size'] = paddle.to_tensor([h, w]).cpu()
+    target['size'] = np.array([h, w], dtype='float32')
     fields = ['labels', 'area', 'iscrowd']
 
     if 'boxes' in target:
         boxes = target['boxes']
-        max_size = paddle.to_tensor([h, w], dtype='float32')
-        cropped_boxes = boxes - paddle.to_tensor([j, i, j, i], dtype='float32') # box are (x1, y1, x2, y2)
-        cropped_boxes = paddle.minimum(cropped_boxes.reshape([-1, 2, 2]), max_size)
+        #max_size = paddle.to_tensor([h, w], dtype='float32').cpu()
+        max_size = np.array([h, w], dtype='float32')
+        #cropped_boxes = boxes - paddle.to_tensor([j, i, j, i], dtype='float32').cpu() # box are (x1, y1, x2, y2)
+        cropped_boxes = boxes - np.array([j, i, j, i], dtype='float32') # box are (x1, y1, x2, y2)
+        #cropped_boxes = paddle.minimum(cropped_boxes.reshape([-1, 2, 2]), max_size)
+        cropped_boxes = np.minimum(cropped_boxes.reshape([-1, 2, 2]), max_size)
         cropped_boxes = cropped_boxes.clip(min=0)
         area = (cropped_boxes[:, 1, :] - cropped_boxes[:, 0, :]).prod(axis=1)
         target['boxes'] = cropped_boxes.reshape([-1, 4])
@@ -55,33 +60,35 @@ def crop(image, target, region):
             # This paddle api will raise error in current env
             #keep = paddle.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], axis=1)
             # Instead we use numpy for temp fix
-            cropped_boxes = cropped_boxes.cpu().numpy()
+            #cropped_boxes = cropped_boxes.cpu().numpy()
             keep  = np.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], axis=1)
             #keep = keep.cpu().numpy()
         else:
             keep = target['masks'].flatten(1).any(1)
-            keep = keep.cpu().numpy()
+            #keep = keep.cpu().numpy()
 
         keep_idx = np.where(keep)[0].astype('int32')
-        keep = paddle.to_tensor(keep_idx)
+        #keep = paddle.to_tensor(keep_idx).cpu()
+        keep = keep_idx
 
         for field in fields:
-            target[field] = target[field].index_select(keep, axis=0)
+            #target[field] = target[field].index_select(keep, axis=0)
+            target[field] = target[field][keep]
 
     return cropped_image, target
 
 
 def hflip(image, target):
     flipped_image = T.hflip(image)
-
     w, h = image.size
-
     target = target.copy()
     if 'boxes' in target:
         boxes = target['boxes'] # n x 4
-        boxes = boxes.index_select(paddle.to_tensor([2, 1, 0, 3], dtype='int32'), axis=1)
-        boxes = boxes * paddle.to_tensor(
-                [-1, 1, -1, 1], dtype='float32') + paddle.to_tensor([w, 0, w, 0], dtype='float32')
+        #boxes = boxes.index_select(paddle.to_tensor([2, 1, 0, 3], dtype='int32').cpu(), axis=1)
+        boxes = boxes[:, [2, 1, 0, 3]]
+        #boxes = boxes * paddle.to_tensor(
+        #        [-1, 1, -1, 1], dtype='float32').cpu() + paddle.to_tensor([w, 0, w, 0], dtype='float32').cpu()
+        boxes = boxes * np.array([-1, 1, -1, 1], dtype='float32') + np.array([w, 0, w, 0], dtype='float32')
         target['boxes'] = boxes
 
     if 'masks' in target:
@@ -156,7 +163,8 @@ def resize(image, target, size, max_size=None):
         if boxes.shape[0] == 0: # empty boxes
             scaled_boxes = boxes
         else: # this line works well in pytorch, but not in paddle
-            scaled_boxes = boxes * paddle.to_tensor([ratio_width, ratio_height, ratio_width, ratio_height])
+            #scaled_boxes = boxes * paddle.to_tensor([ratio_width, ratio_height, ratio_width, ratio_height]).cpu()
+            scaled_boxes = boxes * np.array([ratio_width, ratio_height, ratio_width, ratio_height], dtype='float32')
         target['boxes'] = scaled_boxes
 
     if 'area' in target:
@@ -165,15 +173,18 @@ def resize(image, target, size, max_size=None):
         target['area'] = scaled_area
 
     h, w = size
-    target['size'] = paddle.to_tensor([h, w])
+    #target['size'] = paddle.to_tensor([h, w]).cpu()
+    target['size'] = np.array([h, w], dtype='float32')
 
     if 'masks' in target:
         masks = target['masks'] # [N, H, W]
         masks = masks.unsqueeze(-1).astype('float32') #[N, H, W, 1]
+        masks = paddle.to_tensor(masks).cpu()
         masks = paddle.nn.functional.interpolate(
                     masks, size, data_format='NHWC')  #[N, H', W', 1]
         masks = masks[:, :, :, 0] > 0.5
         masks = masks.astype('int32')
+        masks = masks.numpy()
         target['masks'] = masks
 
     return rescaled_image, target
@@ -184,7 +195,8 @@ def pad(image, target, padding):
     if target is None:
         return padded_image, None
     target = target.copy()
-    target['size'] = paddle.to_tensor(padded_image.size[::-1])
+    #target['size'] = paddle.to_tensor(padded_image.size[::-1]).cpu()
+    target['size'] = np.array(padded_image.size[::-1], dtype='float32')
     if 'masks' in target:
         target['masks'] = T.pad(target['masks'], (0, padding[0], 0, padding[1]))
     return padded_image, target
@@ -211,8 +223,8 @@ class RandomCrop():
         if w == tw and h == th:
             return 0, 0, h, w
 
-        i = random.randint(0, h - th)
-        j = random.randint(0, w - tw)
+        i = random.randint(0, h - th + 1)
+        j = random.randint(0, w - tw + 1)
         return i, j, th, tw
 
     def __call__(self, image, target):
@@ -321,9 +333,11 @@ class Normalize():
         h, w = image.shape[-2:]
         if 'boxes' in target and target['boxes'].shape[0] != 0:
             boxes = target['boxes']
-            boxes = box_xyxy_to_cxcywh(boxes)
-            boxes = boxes / paddle.to_tensor([w, h, w, h], dtype='float32')
+            boxes = box_xyxy_to_cxcywh_numpy(boxes)
+            #boxes = boxes / paddle.to_tensor([w, h, w, h], dtype='float32').cpu()
+            boxes = boxes / np.array([w, h, w, h], dtype='float32')
             target['boxes'] = boxes
+
         return image, target
 
 

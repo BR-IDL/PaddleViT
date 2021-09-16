@@ -32,7 +32,7 @@ _C.DATA.BATCH_SIZE = 256 #256 # train batch_size for single GPU
 _C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/coco/' # path to dataset
 _C.DATA.DATASET = 'coco' # dataset name
-_C.DATA.NUM_WORKERS = 1 # number of data loading threads
+_C.DATA.NUM_WORKERS = 2 # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
@@ -66,7 +66,7 @@ _C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
 _C.TRAIN.WARMUP_START_LR = 1e-6 #0.0
 _C.TRAIN.END_LR = 1e-5
 _C.TRAIN.GRAD_CLIP = 1.0
-_C.TRAIN.ACCUM_ITER = 2 #1
+_C.TRAIN.ACCUM_ITER = 1 #1
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -84,9 +84,9 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 _C.SAVE = "./output"
 _C.TAG = "default"
 _C.SAVE_FREQ = 20 # freq to save chpt
-_C.REPORT_FREQ = 50 # freq to logging info
+_C.REPORT_FREQ = 10 # freq to logging info
 _C.VALIDATE_FREQ = 20 # freq to do validation
-_C.SEED = 0
+_C.SEED = 42
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
 _C.NGPUS = -1
@@ -106,6 +106,12 @@ def _update_config_from_file(config, cfg_file):
     config.freeze()
 
 def update_config(config, args):
+    """Update config by ArgumentParser
+    Args:
+        args: ArgumentParser contains options
+    Return:
+        config: updated config
+    """
     if args.cfg:
         _update_config_from_file(config, args.cfg)
     config.defrost()
@@ -115,6 +121,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
+    if args.ngpus:
+        config.NGPUS = args.ngpus
     if args.eval:
         config.EVAL = True
         config.DATA.BATCH_SIZE_EVAL = args.batch_size
@@ -122,13 +130,20 @@ def update_config(config, args):
         config.MODEL.PRETRAINED = args.pretrained
     if args.backbone:
         config.MODEL.BACKBONE = args.backbone
+    if args.resume:
+        config.MODEL.RESUME = args.resume
+    if args.last_epoch:
+        config.MODEL.LAST_EPOCH = args.last_epoch
 
     #config.freeze()
     return config
 
 
-def get_config():
+def get_config(cfg_file=None):
+    """Return a clone of config or load from yaml file"""
     config = _C.clone()
+    if cfg_file:
+        _update_config_from_file(config, cfg_file)
     return config
 
 

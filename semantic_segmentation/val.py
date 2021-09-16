@@ -11,6 +11,7 @@ from src.api import infer
 from src.datasets import get_dataset
 from src.transforms import Resize, Normalize 
 from src.models import get_model
+from src.utils import multi_val_fn
 from src.utils import metrics, logger, progbar
 from src.utils import TimeAverager, calculate_eta
 from src.utils import load_entire_model, resume
@@ -72,8 +73,9 @@ if __name__ == '__main__':
     dataset_val = get_dataset(config, data_transform=transforms_val, mode='val')
     batch_sampler = paddle.io.DistributedBatchSampler(dataset_val, 
         batch_size=config.DATA.BATCH_SIZE_VAL, shuffle=True, drop_last=True)
+    collate_fn = multi_val_fn()
     loader_val = paddle.io.DataLoader(dataset_val, batch_sampler=batch_sampler,
-        num_workers=config.DATA.NUM_WORKERS, return_list=True)
+        num_workers=config.DATA.NUM_WORKERS, return_list=True, collate_fn=collate_fn)
     total_iters = len(loader_val)
     # build workspace for saving checkpoints
     if not os.path.isdir(config.SAVE_DIR):
@@ -92,9 +94,10 @@ if __name__ == '__main__':
     with paddle.no_grad():
         for iter, (img, label) in enumerate(loader_val):
             reader_cost_averager.record(time.time() - batch_start)
-            label = label.astype('int64')
+            batch_size = len(img)
+            #label = label.astype('int64')
             #print("img.shape: {}, label.shape: {}".format(img.shape, label.shape))
-            ori_shape = label.shape[-2:]
+            ori_shape = [l.shape[-2:] for l in label]
             if args.multi_scales == True:
                 pred = infer.ms_inference(
                     model=model,
@@ -120,34 +123,34 @@ if __name__ == '__main__':
                     crop_size=config.VAL.CROP_SIZE,
                     num_classes=config.DATA.NUM_CLASSES,
                     rescale_from_ori=config.VAL.RESCALE_FROM_ORI)
-
-            intersect_area, pred_area, label_area = metrics.calculate_area(
-                pred,
-                label,
-                dataset_val.num_classes,
-                ignore_index=dataset_val.ignore_index)
-            # Gather from all ranks
-            if nranks > 1:
-                intersect_area_list = []
-                pred_area_list = []
-                label_area_list = []
-                paddle.distributed.all_gather(intersect_area_list, intersect_area)
-                paddle.distributed.all_gather(pred_area_list, pred_area)
-                paddle.distributed.all_gather(label_area_list, label_area)
-                # Some image has been evaluated and should be eliminated in last iter
-                if (iter + 1) * nranks > len(dataset_val):
-                    valid = len(dataset_val) - iter * nranks
-                    intersect_area_list = intersect_area_list[:valid]
-                    pred_area_list = pred_area_list[:valid]
-                    label_area_list = label_area_list[:valid]
-                for i in range(len(intersect_area_list)):
-                    intersect_area_all = intersect_area_all + intersect_area_list[i]
-                    pred_area_all = pred_area_all + pred_area_list[i]
-                    label_area_all = label_area_all + label_area_list[i]
-            else:
-                intersect_area_all = intersect_area_all + intersect_area
-                pred_area_all = pred_area_all + pred_area
-                label_area_all = label_area_all + label_area
+            for i in range(batch_size):
+                intersect_area, pred_area, label_area = metrics.calculate_area(
+                    pred[i],
+                    label[i],
+                    dataset_val.num_classes,
+                    ignore_index=dataset_val.ignore_index)
+                # Gather from all ranks
+                if nranks > 1:
+                    intersect_area_list = []
+                    pred_area_list = []
+                    label_area_list = []
+                    paddle.distributed.all_gather(intersect_area_list, intersect_area)
+                    paddle.distributed.all_gather(pred_area_list, pred_area)
+                    paddle.distributed.all_gather(label_area_list, label_area)
+                    # Some image has been evaluated and should be eliminated in last iter
+                    if (iter + 1) * nranks > len(dataset_val):
+                        valid = len(dataset_val) - iter * nranks
+                        intersect_area_list = intersect_area_list[:valid]
+                        pred_area_list = pred_area_list[:valid]
+                        label_area_list = label_area_list[:valid]
+                    for i in range(len(intersect_area_list)):
+                        intersect_area_all = intersect_area_all + intersect_area_list[i]
+                        pred_area_all = pred_area_all + pred_area_list[i]
+                        label_area_all = label_area_all + label_area_list[i]
+                else:
+                    intersect_area_all = intersect_area_all + intersect_area
+                    pred_area_all = pred_area_all + pred_area
+                    label_area_all = label_area_all + label_area
             batch_cost_averager.record(time.time() - batch_start, num_samples=len(label))
             batch_cost = batch_cost_averager.get_average()
             reader_cost = reader_cost_averager.get_average()

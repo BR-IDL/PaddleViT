@@ -57,7 +57,7 @@ class FCNHead(nn.Layer):
         up_resolution = [ self.up_ratio*item for item in x.shape[2:]]
         output = self.convs(x)
         if self.concat_input:
-            output = slef.conv_cat(paddle.concat([x, output], axis=1))
+            output = self.conv_cat(paddle.concat([x, output], axis=1))
         if self.dropout is not None:
             output = self.dropout(output)
         output = self.conv_seg(output)

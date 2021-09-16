@@ -1,0 +1,20 @@
+DATA:
+    BATCH_SIZE: 2 
+MODEL:
+    DROPOUT: 0.1
+    TRANS:
+        PATCH_SIZE: 4
+        WINDOW_SIZE: 7
+        EMBED_DIM: 96
+        STAGE_DEPTHS: [2, 2, 6, 2]
+        NUM_HEADS: [3, 6, 12, 24]
+        MLP_RATIO: 4.
+
+TRAIN:
+    BASE_LR: 1e-4
+    GRAD_CLIP: 0.1
+    WEIGHT_DECAY: 1e-4
+    NUM_EPOCHS: 300
+    
+
+
