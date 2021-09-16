@@ -95,7 +95,7 @@ class CrossAttention(nn.Layer):
 class CrossAttentionBlock(nn.Layer):
 
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm, has_mlp=True):
+                 drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm(epsilon=1e-6), has_mlp=True):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = CrossAttention(
@@ -119,7 +119,7 @@ class CrossAttentionBlock(nn.Layer):
 class MultiScaleBlock(nn.Layer):
 
     def __init__(self, dim, patches, depth, num_heads, mlp_ratio, qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=[], act_layer=nn.GELU, norm_layer=nn.LayerNorm):
+                 drop_path=[], act_layer=nn.GELU, norm_layer=nn.LayerNorm(epsilon=1e-6)):
         super().__init__()
 
         num_branches = len(dim)
@@ -203,7 +203,7 @@ class VisionTransformer(nn.Layer):
                  depth=([1, 3, 1], [1, 3, 1], [1, 3, 1]),
                  num_heads=(6, 12), mlp_ratio=(2., 2., 4.), qkv_bias=False, qk_scale=None, drop_rate=0.,
                  attn_drop_rate=0.,
-                 drop_path_rate=0., hybrid_backbone=None, norm_layer=nn.LayerNorm, multi_conv=False):
+                 drop_path_rate=0., hybrid_backbone=None, norm_layer=nn.LayerNorm(1e-6), multi_conv=False):
         super().__init__()
 
         self.num_classes = num_classes
