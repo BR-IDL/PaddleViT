@@ -63,12 +63,12 @@ We also provide tutorials:
 
 ### Detection ###
 1. **[DETR](./object_detection/DETR)** (from Facebook), released with paper [End-to-End Object Detection with Transformers](https://arxiv.org/abs/2005.12872), by Nicolas Carion, Francisco Massa, Gabriel Synnaeve, Nicolas Usunier, Alexander Kirillov, Sergey Zagoruyko.
+2. **[Swin Transformer]()** (from Microsoft), released with paper [Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030), by Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, Baining Guo.
+3. **[PVTv2]()** (from NJU/HKU/NJUST/IIAI/SenseTime), released with paper [PVTv2: Improved Baselines with Pyramid Vision Transformer](https://arxiv.org/abs/2106.13797), by Wenhai Wang, Enze Xie, Xiang Li, Deng-Ping Fan, Kaitao Song, Ding Liang, Tong Lu, Ping Luo, Ling Shao.
 
 #### Coming Soon: ####
-1. **[Swin Transformer]()** (from Microsoft), released with paper [Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030), by Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, Baining Guo.
-2. **[PVTv2]()** (from NJU/HKU/NJUST/IIAI/SenseTime), released with paper [PVTv2: Improved Baselines with Pyramid Vision Transformer](https://arxiv.org/abs/2106.13797), by Wenhai Wang, Enze Xie, Xiang Li, Deng-Ping Fan, Kaitao Song, Ding Liang, Tong Lu, Ping Luo, Ling Shao.
-3. **[Focal Transformer]()** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
-4. **[UP-DETR]()** (from Tencent), released with paper [UP-DETR: Unsupervised Pre-training for Object Detection with Transformers](https://arxiv.org/abs/2011.09094), by Zhigang Dai, Bolun Cai, Yugeng Lin, Junying Chen.
+1. **[Focal Transformer]()** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
+2. **[UP-DETR]()** (from Tencent), released with paper [UP-DETR: Unsupervised Pre-training for Object Detection with Transformers](https://arxiv.org/abs/2011.09094), by Zhigang Dai, Bolun Cai, Yugeng Lin, Junying Chen.
 
 
 
@@ -209,6 +209,16 @@ We also provide tutorials:
 |-------|-----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | DETR  | ResNet50  | 42.0    | [google](https://drive.google.com/file/d/1ruIKCqfh_MMqzq_F4L2Bv-femDMjS_ix/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1J6lB1mezd6_eVW3jnmohZA)(n5gk) |
 | DETR  | ResNet101 | 43.5    | [google](https://drive.google.com/file/d/11HCyDJKZLX33_fRGp4bCg1I14vrIKYW5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1_msuuAwFMNbAlMpgUq89Og)(bxz2) |
+| Mask R-CNN | Swin-T 1x |  43.7   | [google](https://drive.google.com/file/d/1OpbCH5HuIlxwakNz4PzrAlJF3CxkLSYp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/18HALSo2RHMBsX-Gbsi-YOw)(qev7) |
+| Mask R-CNN | Swin-T 3x |  46.0   | [google](https://drive.google.com/file/d/1oREwIk1ORhSsJcs4Y-Cfd0XrSEfPFP3-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1tw607oogDWQ7Iz91ItfuGQ)(m8fg) |
+| Mask R-CNN | Swin-S 3x |  48.4   | [google](https://drive.google.com/file/d/1ZPWkz0zMzHJycHd6_s2hWDHIsW8SdZcK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ubC5_CKSq0ExQSINohukVg)(hdw5) |
+| Mask R-CNN | pvtv2_b0 		|  38.3   | [google](https://drive.google.com/file/d/1wA324LkFtGezHJovSZ4luVqSxVt9woFc/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1q67ZIDSHn9Y-HU_WoQr8OQ)(3kqb) |
+| Mask R-CNN | pvtv2_b1 		|  41.8   | [google](https://drive.google.com/file/d/1alNaSmR4TSXsPpGoUZr2QQf5phYQjIzN/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1aSkuDiNpxdnFWE1Wn1SWNw)(k5aq) |
+| Mask R-CNN | pvtv2_b2 		|  45.2   | [google](https://drive.google.com/file/d/1tg6B5OEV4OWLsDxTCjsWgxgaSgIh4cID/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1DLwxCZVZizb5HKih7RFw2w)(jh8b) |
+| Mask R-CNN | pvtv2_b2_linear 	|  44.1   | [google](https://drive.google.com/file/d/1b26vxK3QVGx5ovqKir77NyY6YPgAWAEj/view?usp=sharing)/[baidu](https://pan.baidu.com/s/16T-Nyo_Jm2yDq4aoXpdnbg)(8ipt) |
+| Mask R-CNN | pvtv2_b3 		|  46.9   | [google](https://drive.google.com/file/d/1H6ZUCixCaYe1AvlBkuqYoxzz4b-icJ3u/view?usp=sharing)/[baidu](https://pan.baidu.com/s/16QVsjUOXijo5d9cO3FZ39A)(je4y) |
+| Mask R-CNN | pvtv2_b4 		|  47.5   | [google](https://drive.google.com/file/d/1pXQNpn0BoKqiuVaGtJL18eWG6XmdlBOL/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1yhX7mpmb2wbRvWZFnUloBQ)(n3ay) |
+| Mask R-CNN | pvtv2_b5 		|  47.4   | [google](https://drive.google.com/file/d/12vOyw6pUfK1NdOWBF758aAZuaf-rZLvx/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1-gasQk9PqLMkrWXw4aX41g)(jzq1) |
 
 ### Semantic Segmentation ###
 #### Pascal Context ####
