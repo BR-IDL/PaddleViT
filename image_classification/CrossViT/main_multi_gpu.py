@@ -21,12 +21,9 @@ import logging
 import argparse
 import random
 import numpy as np
-import paddle
-import paddle.nn as nn
-import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader, get_dataset
-from image_classification.CrossViT.paddle_crossvit.paddle_crossvit import *
+from image_classification.CrossViT.crossvit import *
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config

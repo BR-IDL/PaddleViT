@@ -21,7 +21,7 @@ import math
 import numpy as np
 import paddle
 import paddle.nn as nn
-from .paddle_crossvit_utils import DropPath, Identity, to_2tuple
+from .crossvit_utils import DropPath, Identity, to_2tuple
 import paddlenlp
 
 def get_sinusoid_encoding(n_position, d_hid):

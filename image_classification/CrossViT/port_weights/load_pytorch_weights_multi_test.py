@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from image_classification.CrossViT.models.crossvit import *
-from image_classification.CrossViT.paddle_crossvit.paddle_crossvit import *
+from image_classification.CrossViT.crossvit import *
 
 
 def print_model_named_params(model):

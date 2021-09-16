@@ -14,7 +14,7 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 
-from .paddle_crossvit_utils import *
+from .crossvit_utils import *
 
 class PatchEmbed(nn.Layer):
     """ Image to Patch Embedding
@@ -223,7 +223,7 @@ class VisionTransformer(nn.Layer):
                     PatchEmbed(img_size=im_s, patch_size=p, in_chans=in_chans, embed_dim=d, multi_conv=multi_conv))
         else:
             self.pos_embed = nn.ParameterList()
-            from .paddle_t2t import T2T, get_sinusoid_encoding
+            from .t2t import T2T, get_sinusoid_encoding
             tokens_type = 'transformer' if hybrid_backbone == 't2t' else 'performer'
             for idx, (im_s, p, d) in enumerate(zip(img_size, patch_size, embed_dim)):
                 self.patch_embed.append(T2T(im_s, tokens_type=tokens_type, patch_size=p, embed_dim=d))

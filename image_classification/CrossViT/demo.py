@@ -17,7 +17,7 @@ import cv2
 import numpy as np
 from config import get_config
 from config import update_config
-from image_classification.CrossViT.paddle_crossvit.paddle_crossvit import *
+from image_classification.CrossViT.crossvit import *
 
 
 def print_model_named_params(model):
@@ -54,7 +54,7 @@ def main():
 
     print('+++++++++++++++++++++++++++++++++++')
 
-    x = cv2.imread('demo_imgs/zerbra.jpeg')
+    x = cv2.imread('zerbra.jpeg')
     x = cv2.resize(x, (224, 224)) / 255.
     x = x.transpose((2, 0, 1))
     x = np.expand_dims(x, axis=0).astype('float32')
