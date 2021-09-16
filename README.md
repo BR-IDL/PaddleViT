@@ -1,6 +1,7 @@
 # PaddlePaddle Vision Transformers #
 
 [![GitHub](https://img.shields.io/github/license/BR-IDL/PaddleViT?color=blue)](./LICENSE)
+[![CodeFactor](https://www.codefactor.io/repository/github/br-idl/paddlevit/badge)](https://www.codefactor.io/repository/github/br-idl/paddlevit)
 [![GitHub Repo stars](https://img.shields.io/github/stars/BR-IDL/PaddleViT?style=social)](https://github.com/BR-IDL/PaddleViT/stargazers)
 
 
