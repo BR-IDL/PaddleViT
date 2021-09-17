@@ -15,8 +15,9 @@ import math
 import numpy as np
 import paddle
 import paddle.nn as nn
-from .crossvit_utils import DropPath, Identity, to_2tuple
+from crossvit_utils import DropPath, Identity, to_2tuple
 import paddlenlp
+
 
 def get_sinusoid_encoding(n_position, d_hid):
     ''' Sinusoid position encoding table '''
@@ -53,18 +54,10 @@ class Token_performer(nn.Layer):
 
         self.m = int(self.emb * kernel_ratio)
         self.w = paddle.randn(self.m, self.emb)
-        #todo wait implement
+        # todo wait implement
         # self.w = nn.Parameter(nn.init.orthogonal_(self.w) * math.sqrt(self.m), requires_grad=False)
 
     def prm_exp(self, x):
-        # part of the function is borrow from https://github.com/lucidrains/performer-pytorch
-        # and Simo Ryu (https://github.com/cloneofsimo)
-        # ==== positive random features for gaussian kernels ====
-        # x = (B, T, hs)
-        # w = (m, hs)
-        # return : x : B, T, m
-        # SM(x, y) = E_w[exp(w^T x - |x|/2) exp(w^T y - |y|/2)]
-        # therefore return exp(w^Tx - |x|/2)/sqrt(m)
         xd = ((x * x).sum(dim=-1, keepdim=True)).repeat(1, 1, self.m) / 2
         wtx = paddlenlp.ops.einsum('bti,mi->btm', x.float(), self.w)
 
@@ -72,12 +65,12 @@ class Token_performer(nn.Layer):
 
     def single_attn(self, x):
         k, q, v = paddle.split(self.kqv(x), self.emb, axis=-1)
-        kp, qp = self.prm_exp(k), self.prm_exp(q)  # (B, T, m), (B, T, m)
-        D = paddlenlp.ops.einsum('bti,bi->bt', qp, kp.sum(dim=1)).unsqueeze(dim=2)  # (B, T, m) * (B, m) -> (B, T, 1)
+        kp, qp = self.prm_exp(k), self.prm_exp(q)
+        D = paddlenlp.ops.einsum('bti,bi->bt', qp, kp.sum(dim=1)).unsqueeze(dim=2)
         kptv = paddlenlp.ops.einsum('bin,bim->bnm', v.float(), kp)  # (B, emb, m)
-        y = paddlenlp.ops.einsum('bti,bni->btn', qp, kptv) / (D.repeat(1, 1, self.emb) + self.epsilon)  # (B, T, emb)/Diag
+        y = paddlenlp.ops.einsum('bti,bni->btn', qp, kptv) / (D.repeat(1, 1, self.emb) + self.epsilon)
         # skip connection
-        y = v + self.dp(self.proj(y))  # same as token_transformer in T2T layer, use v as skip connection
+        y = v + self.dp(self.proj(y))
 
         return y
 
@@ -134,7 +127,7 @@ class Attention(nn.Layer):
         x = self.proj_drop(x)
 
         # skip connection
-        x = v.squeeze(1) + x  # because the original x has different size with current x, use v to do skip connection
+        x = v.squeeze(1) + x
 
         return x
 
@@ -145,9 +138,8 @@ class Token_transformer(nn.Layer):
                  drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm):
         super().__init__()
         self.norm1 = norm_layer(dim)
-        self.attn = Attention(
-            dim, in_dim=in_dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop,
-            proj_drop=drop)
+        self.attn = Attention(dim, in_dim=in_dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                              attn_drop=attn_drop, proj_drop=drop)
         self.drop_path = DropPath(drop_path) if drop_path > 0. else Identity()
         self.norm2 = norm_layer(in_dim)
         self.mlp = Mlp(in_features=in_dim, hidden_features=int(in_dim * mlp_ratio), out_features=in_dim,
@@ -182,7 +174,6 @@ class T2T(nn.Layer):
                                      paddings=to_2tuple(kernel_size[2][2]))
 
         if tokens_type == 'transformer':
-            # print('adopt transformer encoder for tokens-to-token')
 
             self.attention1 = Token_transformer(dim=in_chans * (kernel_size[0][0] ** 2), in_dim=token_dim, num_heads=1,
                                                 mlp_ratio=1.0)
@@ -191,25 +182,11 @@ class T2T(nn.Layer):
             self.project = nn.Linear(token_dim * (kernel_size[2][0] ** 2), embed_dim)
 
         elif tokens_type == 'performer':
-            # print('adopt performer encoder for tokens-to-token')
-            # self.soft_split0 = nn.Unfold(kernel_size=(7, 7), stride=(4, 4), padding=(2, 2))
-            # self.soft_split1 = nn.Unfold(kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-            # self.soft_split2 = nn.Unfold(kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-
-            # self.attention1 = Token_performer(dim=token_dim, in_dim=in_chans*7*7, kernel_ratio=0.5)
-            # self.attention2 = Token_performer(dim=token_dim, in_dim=token_dim*3*3, kernel_ratio=0.5)
             self.attention1 = Token_performer(dim=in_chans * (kernel_size[0][0] ** 2), in_dim=token_dim,
                                               kernel_ratio=0.5)
             self.attention2 = Token_performer(dim=token_dim * (kernel_size[1][0] ** 2), in_dim=token_dim,
                                               kernel_ratio=0.5)
             self.project = nn.Linear(token_dim * (kernel_size[2][0] ** 2), embed_dim)
-        #
-        # elif tokens_type == 'convolution':  # just for comparison with conolution, not our model
-        #     # for this tokens type, you need change forward as three convolution operation
-        #     print('adopt convolution layers for tokens-to-token')
-        #     self.soft_split0 = nn.Conv2d(3, token_dim, kernel_size=(7, 7), stride=(4, 4), padding=(2, 2))  # the 1st convolution
-        #     self.soft_split1 = nn.Conv2d(token_dim, token_dim, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)) # the 2nd convolution
-        #     self.project = nn.Conv2d(token_dim, embed_dim, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)) # the 3rd convolution
 
         self.num_patches = (img_size // (kernel_size[0][1] * kernel_size[1][1] * kernel_size[2][1])) * (img_size // (
                 kernel_size[0][1] * kernel_size[1][1] * kernel_size[2][
@@ -269,28 +246,8 @@ class SharedT2T(nn.Layer):
                                                 mlp_ratio=1.0)
             self.project = nn.Linear(token_dim * (kernel_size[2][0] ** 2), embed_dim)
 
-        # elif tokens_type == 'performer':
-        #     print('adopt performer encoder for tokens-to-token')
-        #     self.soft_split0 = nn.Unfold(kernel_size=(7, 7), stride=(4, 4), padding=(2, 2))
-        #     self.soft_split1 = nn.Unfold(kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-        #     self.soft_split2 = nn.Unfold(kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-        #
-        #     #self.attention1 = Token_performer(dim=token_dim, in_dim=in_chans*7*7, kernel_ratio=0.5)
-        #     #self.attention2 = Token_performer(dim=token_dim, in_dim=token_dim*3*3, kernel_ratio=0.5)
-        #     self.attention1 = Token_performer(dim=in_chans*7*7, in_dim=token_dim, kernel_ratio=0.5)
-        #     self.attention2 = Token_performer(dim=token_dim*3*3, in_dim=token_dim, kernel_ratio=0.5)
-        #     self.project = nn.Linear(token_dim * 3 * 3, embed_dim)
-        #
-        # elif tokens_type == 'convolution':  # just for comparison with conolution, not our model
-        #     # for this tokens type, you need change forward as three convolution operation
-        #     print('adopt convolution layers for tokens-to-token')
-        #     self.soft_split0 = nn.Conv2d(3, token_dim, kernel_size=(7, 7), stride=(4, 4), padding=(2, 2))  # the 1st convolution
-        #     self.soft_split1 = nn.Conv2d(token_dim, token_dim, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)) # the 2nd convolution
-        #     self.project = nn.Conv2d(token_dim, embed_dim, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)) # the 3rd convolution
-
         self.num_patches = (img_size // (kernel_size[0][1] * kernel_size[1][1] * kernel_size[2][1])) * (img_size // (
-                kernel_size[0][1] * kernel_size[1][1] * kernel_size[2][
-            1]))  # there are 3 sfot split, stride are 4,2,2 seperately
+                kernel_size[0][1] * kernel_size[1][1] * kernel_size[2][1]))
 
     def forward(self, x):
         # step0: soft split

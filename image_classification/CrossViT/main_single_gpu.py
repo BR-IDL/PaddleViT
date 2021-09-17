@@ -14,24 +14,24 @@
 
 """CrossViT training/validation using single GPU """
 
-import sys
-import os
-import time
-import logging
 import argparse
+import logging
+import os
 import random
+import sys
+import time
+
 import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-from datasets import get_dataloader
-from datasets import get_dataset
-from crossvit import build_crossvit as build_model
-from utils import AverageMeter
-from utils import WarmupCosineScheduler
 from config import get_config
 from config import update_config
-
+from crossvit import build_crossvit as build_model
+from datasets import get_dataloader
+from datasets import get_dataset
+from utils import AverageMeter
+from utils import WarmupCosineScheduler
 
 parser = argparse.ArgumentParser('CrossViT')
 parser.add_argument('-cfg', type=str, default=None)
@@ -46,10 +46,9 @@ parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
 args = parser.parse_args()
 
-
-log_format = "%(asctime)s %(message)s"
+LOG_FORMAT = "%(asctime)s %(message)s"
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format=log_format, datefmt="%m%d %I:%M:%S %p")
+                    format=LOG_FORMAT, datefmt="%m%d %I:%M:%S %p")
 
 # get default config
 config = get_config()
@@ -70,7 +69,7 @@ if not os.path.exists(config.SAVE):
 # set logging format
 logger = logging.getLogger()
 fh = logging.FileHandler(os.path.join(config.SAVE, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
+fh.setFormatter(logging.Formatter(LOG_FORMAT))
 logger.addHandler(fh)
 logger.info(f'config= {config}')
 
@@ -109,14 +108,14 @@ def train(dataloader,
         output = model(image)
         loss = criterion(output, label)
 
-        #NOTE: division may be needed depending on the loss function
+        # NOTE: division may be needed depending on the loss function
         # Here no division is needed:
         # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-        #loss =  loss / accum_iter
+        # loss =  loss / accum_iter
 
         loss.backward()
 
-        if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+        if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
             optimizer.step()
             optimizer.clear_grad()
 
@@ -197,7 +196,7 @@ def main():
     # 1. Create model
     model = build_model(config=config)
 
-    #model = paddle.DataParallel(model)
+    # model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train = get_dataset(config, mode='train')
     dataset_val = get_dataset(config, mode='val')
@@ -260,16 +259,16 @@ def main():
     # 6. Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
         assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams')
-        model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
+        model_state = paddle.load(config.MODEL.PRETRAINED + '.pdparams')
         model.set_dict(model_state)
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
-        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
+        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
+        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
-        opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
+        opt_state = paddle.load(config.MODEL.RESUME + '.pdopt')
         optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
@@ -288,8 +287,8 @@ def main():
                     f"time: {val_time:.2f}")
         return
     # 8. Start training and validation
-    logging.info(f"Start training from epoch {last_epoch+1}.")
-    for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
+    logging.info(f"Start training from epoch {last_epoch + 1}.")
+    for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
         # train
         logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
         train_loss, train_acc, train_time = train(dataloader=dataloader_train,

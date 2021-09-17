@@ -291,7 +291,6 @@ def main_worker(*args):
         optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume Training: Load model and optmizer states from {config.MODEL.RESUME}")
-    
     # 6. Validation
     if config.EVAL:
         logger.info('----- Start Validating')
