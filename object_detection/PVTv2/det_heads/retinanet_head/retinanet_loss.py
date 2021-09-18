@@ -17,10 +17,8 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 
-import sys
-sys.path.append("PPViT-od_head/object_detection/head")
-from det_utils.box_utils import bbox2delta, boxes_iou
-from det_utils.target_assign import anchor_target_matcher
+from ..det_utils.box_utils import bbox2delta, boxes_iou
+from ..det_utils.target_assign import anchor_target_matcher
 
 class RetinaNetLoss(nn.Layer):
     def __init__(

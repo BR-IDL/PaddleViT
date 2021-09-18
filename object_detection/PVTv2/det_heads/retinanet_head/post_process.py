@@ -15,7 +15,7 @@
 import paddle
 import paddle.nn.functional as F
 
-from det_utils.box_utils import nonempty_bbox, delta2bbox, multiclass_nms
+from ..det_utils.box_utils import nonempty_bbox, delta2bbox, multiclass_nms
 
 class RetinaNetPostProcess(object):
     '''
@@ -108,13 +108,14 @@ class RetinaNetPostProcess(object):
             nms_threshold=self.num_thresh,
         )
 
+        # TBD: when box is empty, raise error.
         pred_label = bbox_pred[:, 0:1]
         pred_score = bbox_pred[:, 1:2]
         pred_bbox = bbox_pred[:, 2:]
-        keep_mask = nonempty_bbox(pred_bbox, return_mask=True)
-        keep_mask = paddle.unsqueeze(keep_mask, [1])
-        pred_label = paddle.where(keep_mask, pred_label,
-                                  paddle.ones_like(pred_label) * -1)
+        # keep_mask = nonempty_bbox(pred_bbox, return_mask=True)
+        # keep_mask = paddle.unsqueeze(keep_mask, [1])
+        # pred_label = paddle.where(keep_mask, pred_label,
+        #                           paddle.ones_like(pred_label) * -1)
 
         pred_result = paddle.concat([pred_label, pred_score, pred_bbox], axis=1)
 

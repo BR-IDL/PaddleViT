@@ -187,7 +187,7 @@ class TopFeatP6P7(nn.Layer):
     C5 feature.
     """
     def __init__(self, in_channel, out_channel):
-
+        super().__init__()
         self.p6 = nn.Conv2D(
             in_channels=in_channel, 
             out_channels=out_channel, 
@@ -197,7 +197,7 @@ class TopFeatP6P7(nn.Layer):
             weight_attr=paddle.ParamAttr(initializer=XavierUniform(fan_out=9*in_channel))
         )
         self.p7 = nn.Conv2D(
-            in_channels=in_channel, 
+            in_channels=out_channel, 
             out_channels=out_channel, 
             kernel_size=3, 
             stride=2, 

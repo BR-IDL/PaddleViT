@@ -14,7 +14,7 @@ MODEL:
         QKV_BIAS: True
     DROP_PATH: 0.0 #0.1
 FPN:
-    IN_CHANNELS: [32, 64, 160, 256]
+    IN_CHANNELS: [64, 160, 256]
 TRAIN:
     GRAD_CLIP: None
 

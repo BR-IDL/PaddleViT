@@ -18,11 +18,51 @@ import paddle
 import paddle.nn as nn
 from config import get_config
 from pvtv2_backbone import build_pvtv2
-from det_necks.fpn import FPN, LastLevelMaxPool
+
+# from det_necks.fpn import FPN, LastLevelMaxPool, TopFeatP6P7
 from det_heads.maskrcnn_head.rpn_head import RPNHead
 from det_heads.maskrcnn_head.roi_head import RoIHead
-
+from det_heads.retinanet_head.retinanet_head import RetinaNetHead
 cfg = get_config()
+
+# class PVTv2Det(nn.Layer):
+#     def __init__(self, config):
+#         super().__init__()
+#         self.backbone = build_pvtv2(config)
+#         self.neck = FPN(
+#             in_channels=config.FPN.IN_CHANNELS,
+#             out_channel=config.FPN.OUT_CHANNELS,
+#             strides=config.FPN.STRIDES,
+#             use_c5=config.FPN.USE_C5,
+#             top_block=LastLevelMaxPool(),
+#             use_bias=True
+#         )
+#         self.rpnhead = RPNHead(config)
+#         self.roihead = RoIHead(config)
+
+#         self.config = config
+    
+#     def forward(self, x, gt=None):
+#         feats = self.neck(self.backbone(x.tensors))
+#         rpn_out = self.rpnhead(feats, gt)
+
+#         if self.training and self.config.ROI.PAT_GT_AS_PRO:
+#             proposals = []
+#             for proposal, gt_box in zip(rpn_out[0], gt["gt_boxes"]):
+#                 proposals.append(paddle.concat([proposal, gt_box]))
+#         else:
+#             proposals = rpn_out[0]
+
+#         final_out = self.roihead(feats, proposals, gt)
+#         #print('final_out:', final_out)
+
+#         if self.training:
+#             rpn_losses = rpn_out[2]
+#             # if training, final_out returns losses, now we combine the losses dicts
+#             final_out.update(rpn_losses)
+
+#         return final_out
+
 
 class PVTv2Det(nn.Layer):
     def __init__(self, config):
@@ -33,36 +73,19 @@ class PVTv2Det(nn.Layer):
             out_channel=config.FPN.OUT_CHANNELS,
             strides=config.FPN.STRIDES,
             use_c5=config.FPN.USE_C5,
-            top_block=LastLevelMaxPool(),
+            top_block=TopFeatP6P7(config.FPN.IN_CHANNELS[-1], config.FPN.OUT_CHANNELS),
             use_bias=True
         )
-        self.rpnhead = RPNHead(config)
-        self.roihead = RoIHead(config)
-
+        self.retinahead = RetinaNetHead(config)
         self.config = config
     
     def forward(self, x, gt=None):
         feats = self.neck(self.backbone(x.tensors))
-        rpn_out = self.rpnhead(feats, gt)
+        head_out = self.retinahead(feats, gt)
 
-        if self.training and self.config.ROI.PAT_GT_AS_PRO:
-            proposals = []
-            for proposal, gt_box in zip(rpn_out[0], gt["gt_boxes"]):
-                proposals.append(paddle.concat([proposal, gt_box]))
-        else:
-            proposals = rpn_out[0]
-
-        final_out = self.roihead(feats, proposals, gt)
-        #print('final_out:', final_out)
-
-        if self.training:
-            rpn_losses = rpn_out[2]
-            # if training, final_out returns losses, now we combine the losses dicts
-            final_out.update(rpn_losses)
-
-        return final_out
-
+        return head_out
 
 def build_pvtv2_det(config):
     model = PVTv2Det(config)
     return model
+

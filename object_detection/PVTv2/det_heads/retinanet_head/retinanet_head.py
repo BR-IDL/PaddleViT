@@ -20,9 +20,9 @@ import paddle.nn as nn
 
 from paddle.nn.initializer import Normal, Constant
 
-from retinanet_loss import RetinaNetLoss
-from post_process import RetinaNetPostProcess
-from det_utils.generator_utils import AnchorGenerator
+from .retinanet_loss import RetinaNetLoss
+from .post_process import RetinaNetPostProcess
+from ..det_utils.generator_utils import AnchorGenerator
 
 class RetinaNetHead(nn.Layer):
     '''
@@ -144,6 +144,12 @@ class RetinaNetHead(nn.Layer):
             return loss_dict
         
         else:
+            if isinstance(inputs["imgs_shape"], list):
+                inputs["imgs_shape"] =  paddle.stack(inputs["imgs_shape"])
+            
+            if isinstance(inputs["scale_factor_wh"], list):
+                inputs["scale_factor_wh"] =  paddle.stack(inputs["scale_factor_wh"])
+
             img_whwh = paddle.concat([inputs["imgs_shape"][:, 1:2],
                                       inputs["imgs_shape"][:, 0:1]], axis=-1)
             pred_result, bbox_num = self.postprocess(
@@ -154,7 +160,11 @@ class RetinaNetHead(nn.Layer):
                 img_whwh
             )
 
-            return pred_result, bbox_num
+            if bbox_num.sum() == 0:
+                final_res = [paddle.zeros([1, 6])]
+            else:
+                final_res = paddle.split(pred_result, bbox_num.numpy().tolist())
+            return final_res
 
 
 def transpose_to_bs_hwa_k(tensor, k):
