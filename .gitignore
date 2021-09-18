@@ -137,4 +137,5 @@ dmypy.json
 ./segmentation/readme.txt 
 setr.py.bak
 .idea
-
+*.iml
+*.xml

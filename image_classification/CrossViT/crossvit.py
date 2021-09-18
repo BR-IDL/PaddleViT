@@ -13,7 +13,7 @@
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-
+from functools import partial
 from crossvit_utils import *
 
 class PatchEmbed(nn.Layer):
@@ -202,7 +202,7 @@ class VisionTransformer(nn.Layer):
                  depth=([1, 3, 1], [1, 3, 1], [1, 3, 1]),
                  num_heads=(6, 12), mlp_ratio=(2., 2., 4.), qkv_bias=False, qk_scale=None, drop_rate=0.,
                  attn_drop_rate=0.,
-                 drop_path_rate=0., hybrid_backbone=None, norm_layer=nn.LayerNorm, multi_conv=False):
+                 drop_path_rate=0., hybrid_backbone=None, norm_layer=partial(nn.LayerNorm,epsilon=1e-6), multi_conv=False):
         super().__init__()
 
         self.num_classes = num_classes
