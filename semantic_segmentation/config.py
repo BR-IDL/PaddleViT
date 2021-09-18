@@ -167,6 +167,7 @@ _C.MODEL.TRANS2SEG.HID_DIM = 64
 _C.VAL = CN()
 _C.VAL.USE_GPU = True
 _C.VAL.MULTI_SCALES_VAL = False
+_C.VAL.SAVE_DIR = './predict'
 _C.VAL.SCALE_RATIOS= [0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
 _C.VAL.IMAGE_BASE_SIZE = None # 520 for pascal context
 _C.VAL.KEEP_ORI_SIZE = False

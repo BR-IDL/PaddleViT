@@ -15,7 +15,7 @@ from src.utils import multi_val_fn
 from src.utils import metrics, logger, progbar
 from src.utils import TimeAverager, calculate_eta
 from src.utils import load_entire_model, resume
-
+from src.utils import vis 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Evaluation of Seg. Models')
@@ -38,6 +38,12 @@ def parse_args():
         type=bool, 
         default=False, 
         help='whether employing multiple scales testing'
+    )
+    parser.add_argument(
+        "--svae_prediction", 
+        type=bool, 
+        default=False, 
+        help='whether saving prediction while predicting'
     )
     return parser.parse_args()
 
@@ -123,6 +129,11 @@ if __name__ == '__main__':
                     crop_size=config.VAL.CROP_SIZE,
                     num_classes=config.DATA.NUM_CLASSES,
                     rescale_from_ori=config.VAL.RESCALE_FROM_ORI)
+            if args.save_prediction:
+                if not os.path.exists(config.VAL.SAVE_DIR):
+                    os.mkdir(config.VAL.SAVE_DIR)
+                idx = [iter * config.DATA.BATCH_SIZE_VAL + i for i in range(config.DATA.BATCH_SIZE_VAL)]
+                vis.save_output(config, idx, img, pred)
             for i in range(batch_size):
                 intersect_area, pred_area, label_area = metrics.calculate_area(
                     pred[i],

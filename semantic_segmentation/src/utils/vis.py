@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 
@@ -82,3 +83,26 @@ def get_pseudo_color_map(num_classes=256):
             lab >>= 3
     color_map = color_map[3:]
     return color_map
+
+def save_output(config, idx, img, pred):
+    """
+    concatenate the origin image and the prediction,
+    and save to the dir set in config.
+    """
+    color_map = np.array(get_pseudo_color_map(256))
+    color_map = color_map.reshape(-1, 3)
+    for i, im, p in zip(idx, img, pred):
+        im = im.transpose((1, 2, 0)).numpy()
+        p = p.squeeze((0, 1)).numpy()
+        im = im * config.VAL.STD + config.VAL.MEAN
+        im = im.astype('uint8')
+        im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+        #output = np.zeros_like(pred)
+        output = color_map[p].astype('uint8')
+        im = cv2.resize(im, p.shape[::-1])
+        if im.shape[0] > im.shape[1]:
+            output = np.concatenate([im, output], axis=1)
+        else:
+            output = np.concatenate([im, output], axis=0)
+        outdir = os.path.join(config.VAL.SAVE_DIR,'%d.jpg'%i)
+        cv2.imwrite(outdir, output)
