@@ -1,4 +1,4 @@
-# VOLO: Vision Outlooker for Visual Recognition, [arxiv](https://arxiv.org/abs/2103.17239) 
+# VOLO: Vision Outlooker for Visual Recognition, [arxiv](https://arxiv.org/abs/2106.13112) 
 
 PaddlePaddle training/validation code and pretrained models for **VOLO**.
 
