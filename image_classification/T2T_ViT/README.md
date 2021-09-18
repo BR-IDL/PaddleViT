@@ -1,4 +1,4 @@
-# Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet, [arxiv](https://arxiv.org/abs/2106.13797) 
+# Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet, [arxiv](https://arxiv.org/abs/2101.11986) 
 
 PaddlePaddle training/validation code and pretrained models for **T2T-ViT**.
 
