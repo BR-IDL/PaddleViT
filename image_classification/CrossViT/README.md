@@ -14,6 +14,7 @@ This implementation is developed by [PPViT](https://github.com/BR-IDL/PaddleViT)
 ### Update 
 Update (2021-09-16): Code is released and ported weights are uploaded.
 
+Update (2021-09-22): Support more models eval.
 ## Models Zoo
 | Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
 |--------------------------------|-------|-------|------------|----------|---------------|--------------|
