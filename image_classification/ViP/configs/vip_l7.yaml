@@ -1,0 +1,11 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: ViP
+    NAME: vip_s7
+    MIXER:
+        LAYER: [8, 8, 16, 4]
+        TRANSITIONS: [True, False, False, False]
+        SEGMENT_DIM: [32, 16, 16, 16]
+        EMBED_DIMS: [256, 512, 512, 512]
