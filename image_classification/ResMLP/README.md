@@ -7,25 +7,45 @@ The official and 3rd party pytorch implementation are [here](https://github.com/
 
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
-
-
+<p align="center">
 <img src="./resmlp.png" alt="drawing" width="100%" height="100%"/>
-<figcaption align = "center">ResMLP Model Overview</figcaption>
+<h4 align="center">ResMLP Model Overview</h4>
+</p>
 
 ### Update 
+
+Update (2020-09-23): Add new ResMLP weights.
+
 Update (2020-08-11): Code is released and ported weights are uploaded.
 
 ## Models Zoo
+
+**Original**:
+
 | Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
 |--------------------------------|-------|-------|------------|----------|---------------|--------------|
 | resmlp_24_224                  | 79.38 | 94.55 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/15A5q1XSXBz-y1AcXhy_XaDymLLj2s2Tn/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nLAvyG53REdwYNCLmp4yBA)(jdcx) |
 | resmlp_36_224             | 79.77 | 94.89 | 224        | 0.875      | bicubic      | [google](https://drive.google.com/file/d/1WrhVm-7EKnLmPU18Xm0C7uIqrg-RwqZL/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1QD4EWmM9b2u1r8LsnV6rUA)(33w3) |
 | resmlp_big_24_224         | 81.04 | 95.02 | 224        | 0.875      | bicubic      | [google](https://drive.google.com/file/d/1KLlFuzYb17tC5Mmue3dfyr2L_q4xHTZi/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1oXU6CR0z7O0XNwu_UdZv_w)(r9kb) |
-| resmlp_big_24_distilled_224 | 83.59 | 96.65 | 224        | 0.875      | bicubic      | [google](https://drive.google.com/file/d/199q0MN_BlQh9-HbB28RdxHj1ApMTHow-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1yUrfbqW8vLODDiRV5WWkhQ)(4jk5) |
+
+**Distilled**:
+
+| Model                       | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link                                                         |
+| --------------------------- | ----- | ----- | ---------- | -------- | ------------- | ------------------------------------------------------------ |
+| resmlp_12_distilled_224     | 77.95 | 93.56 | 224        | 0.875    | bicubic       |                                                              |
+| resmlp_24_distilled_224     | 80.76 | 95.22 | 224        | 0.875    | bicubic       |                                                              |
+| resmlp_36_distilled_224     | 81.15 | 95.48 | 224        | 0.875    | bicubic       |                                                              |
+| resmlp_big_24_distilled_224 | 83.59 | 96.65 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/199q0MN_BlQh9-HbB28RdxHj1ApMTHow-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1yUrfbqW8vLODDiRV5WWkhQ)(4jk5) |
+
+**Model pretrained on ImageNet-22k with finetuning on ImageNet-1k**:
+
+| Model             | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link |
+| ----------------- | ----- | ----- | ---------- | -------- | ------------- | ---- |
+| resmlp_big_24_22k | 84.40 | 97.11 | 224        | 0.875    | bicubic       |      |
 
 > *The results are evaluated on ImageNet2012 validation set.
-> 
-> Note: ResMLP weights are ported from [timm](https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/mlp_mixer.py)
+>
+> Note: ResMLP weights are ported from [timm](https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/mlp_mixer.py) and [facebookresearch](https://github.com/facebookresearch/deit/blob/main/README_resmlp.md)
 
 
 
