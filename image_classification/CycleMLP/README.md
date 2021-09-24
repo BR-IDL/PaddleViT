@@ -8,7 +8,7 @@ The official and 3rd party pytorch implementation are [here](https://github.com/
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 <p align="center">
-<img src="./cyclemlp.png" alt="drawing" width="90%" height="90%"/>
+<img src="./cyclemlp.png" alt="drawing" width="70%" height="70%"/>
 <h4 align="center">CycleMLP Model Overview</h4>
 </p>
 
