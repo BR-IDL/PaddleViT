@@ -14,9 +14,11 @@ This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree
 
 ### Update 
 
-Update (2020-09-23): Add new ResMLP weights.
+- Update (2020-09-24): Update new ResMLP weights.
 
-Update (2020-08-11): Code is released and ported weights are uploaded.
+- Update (2020-09-23): Add new ResMLP weights.
+
+- Update (2020-08-11): Code is released and ported weights are uploaded.
 
 ## Models Zoo
 
@@ -32,16 +34,17 @@ Update (2020-08-11): Code is released and ported weights are uploaded.
 
 | Model                       | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link                                                         |
 | --------------------------- | ----- | ----- | ---------- | -------- | ------------- | ------------------------------------------------------------ |
-| resmlp_12_distilled_224     | 77.95 | 93.56 | 224        | 0.875    | bicubic       |                                                              |
-| resmlp_24_distilled_224     | 80.76 | 95.22 | 224        | 0.875    | bicubic       |                                                              |
-| resmlp_36_distilled_224     | 81.15 | 95.48 | 224        | 0.875    | bicubic       |                                                              |
+| resmlp_12_distilled_224 | 77.95 | 93.56 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1cDMpAtCB0pPv6F-VUwvgwAaYtmP8IfRw/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15kJeZ_V1MMjTX9f1DBCgnw)(ghyp) |
+| resmlp_24_distilled_224 | 80.76 | 95.22 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/15d892ExqR1sIAjEn-cWGlljX54C3vihA/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1NgQtSwuAwsVVOB8U6N4Aqw)(sxnx) |
+| resmlp_36_distilled_224 | 81.15 | 95.48 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1Laqz1oDg-kPh6eb6bekQqnE0m-JXeiep/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1p1xGOJbMzH_RWEj36ruQiw)(vt85) |
 | resmlp_big_24_distilled_224 | 83.59 | 96.65 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/199q0MN_BlQh9-HbB28RdxHj1ApMTHow-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1yUrfbqW8vLODDiRV5WWkhQ)(4jk5) |
 
 **Model pretrained on ImageNet-22k with finetuning on ImageNet-1k**:
 
 | Model             | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link |
 | ----------------- | ----- | ----- | ---------- | -------- | ------------- | ---- |
-| resmlp_big_24_22k | 84.40 | 97.11 | 224        | 0.875    | bicubic       |      |
+| resmlp_big_24_22k_224   | 84.40 | 97.11 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1zATKq1ruAI_kX49iqJOl-qomjm9il1LC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1VrnRMbzzZBmLiR45YwICmA)(ve7i) |
+
 
 > *The results are evaluated on ImageNet2012 validation set.
 >
