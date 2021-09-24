@@ -79,7 +79,7 @@ model.set_dict(model_state_dict)
 ```
 
 ## Evaluation
-To evaluate ResMLP model performance on ImageNet2012 with a single GPU, run the following script using command line:
+To evaluate CycleMLP model performance on ImageNet2012 with a single GPU, run the following script using command line:
 ```shell
 sh run_eval.sh
 ```
@@ -120,7 +120,7 @@ python main_multi_gpu.py \
 </details>
 
 ## Training
-To train the ResMLP Transformer model on ImageNet2012 with single GPUs, run the following script using command line:
+To train the CycleMLP Transformer model on ImageNet2012 with single GPUs, run the following script using command line:
 ```shell
 sh run_train.sh
 ```
