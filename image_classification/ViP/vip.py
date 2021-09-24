@@ -27,27 +27,6 @@ zeros_ = nn.initializer.Constant(value=0.0)
 ones_ = nn.initializer.Constant(value=1.0)
 
 
-def drop_path(x, drop_prob=0.0, training=False):
-
-    if drop_prob == 0.0 or not training:
-        return x
-    keep_prob = 1 - drop_prob
-    shape = (x.shape[0],) + (1,) * (x.ndim - 1)
-    random_tensor = paddle.to_tensor(keep_prob) + paddle.rand(shape)
-    random_tensor = paddle.floor(random_tensor)
-    output = x.divide(keep_prob) * random_tensor
-    return output
-
-
-class DropPath(nn.Layer):
-    def __init__(self, drop_prob=None):
-        super(DropPath, self).__init__()
-        self.drop_prob = drop_prob
-
-    def forward(self, x):
-        return drop_path(x, self.drop_prob, self.training)
-
-
 class Identity(nn.Layer):
     def __init__(self, *args, **kwargs):
         super(Identity, self).__init__()
