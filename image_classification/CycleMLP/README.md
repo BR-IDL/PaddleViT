@@ -162,12 +162,10 @@ python main_multi_gpu.py \
 
 ## Reference
 ```
-@misc{hou2021vision,
-    title={Vision Permutator: A Permutable MLP-Like Architecture for Visual Recognition},
-    author={Qibin Hou and Zihang Jiang and Li Yuan and Ming-Ming Cheng and Shuicheng Yan and Jiashi Feng},
-    year={2021},
-    eprint={2106.12368},
-    archivePrefix={arXiv},
-    primaryClass={cs.CV}
+@article{chen2021cyclemlp,
+  title={CycleMLP: A MLP-like Architecture for Dense Prediction},
+  author={Chen, Shoufa and Xie, Enze and Ge, Chongjian and Liang, Ding and Luo, Ping},
+  journal={arXiv preprint arXiv:2107.10224},
+  year={2021}
 }
 ```
