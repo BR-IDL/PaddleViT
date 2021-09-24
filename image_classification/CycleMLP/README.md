@@ -1,4 +1,4 @@
-# CycleMLP: A MLP-like Architecture for Dense Prediction,[arXiv](https://arxiv.org/abs/2107.10224)
+# CycleMLP: A MLP-like Architecture for Dense Prediction, [arXiv](https://arxiv.org/abs/2107.10224)
 
 PaddlePaddle training/validation code and pretrained models for **CycleMLP**.
 
