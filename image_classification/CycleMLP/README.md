@@ -28,7 +28,7 @@ Update (2021-09-24): Code is released and ported weights are uploaded.
 
 > *The results are evaluated on ImageNet2012 validation set.
 > 
-> Note: ViP weights are ported from [here](https://github.com/ShoufaChen/CycleMLP)
+> Note: CycleMLP weights are ported from [here](https://github.com/ShoufaChen/CycleMLP)
 
 
 
