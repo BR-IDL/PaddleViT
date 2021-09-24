@@ -1,0 +1,11 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
+MODEL:
+    TYPE: CycleMLP
+    NAME: cyclemlp_b1
+    MIXER:
+        TRANSITIONS: [True, True, True, True]
+        LAYERS: [2, 2, 4, 2]
+        MLP_RATIOS: [4, 4, 4, 4]
+        EMBED_DIMS: [64, 128, 320, 512]
