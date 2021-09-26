@@ -77,7 +77,7 @@ model.set_dict(model_state_dict)
 ```
 
 ## Evaluation
-To evaluate Conv	MLP model performance on ImageNet2012 with a single GPU, run the following script using command line:
+To evaluate ConvMLP model performance on ImageNet2012 with a single GPU, run the following script using command line:
 ```shell
 sh run_eval.sh
 ```
