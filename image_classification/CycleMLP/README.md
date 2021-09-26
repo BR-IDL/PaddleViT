@@ -68,7 +68,7 @@ To use the model with pretrained weights, download the `.pdparam` weight file an
 For example, assume the downloaded weight file is stored in `./cyclemlp_b1.pdparams`, to use the `cyclemlp_b1` model in python:
 ```python
 from config import get_config
-from vip import build_vip as build_model
+from cyclemlp import build_cyclemlp as build_model
 # config files in ./configs/
 config = get_config('./configs/cyclemlp_b1.yaml')
 # build model
