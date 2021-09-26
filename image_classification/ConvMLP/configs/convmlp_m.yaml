@@ -1,0 +1,12 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: ConvMLP
+    NAME: convmlp_m
+    MIXER:
+        BLOCKS: [3, 6, 3]
+        DIMS: [128, 256, 512]
+        MLP_RATIOS: [3, 3, 3]
+        CHANNELS: 64
+        N_CONV_BLOCKS: 3
