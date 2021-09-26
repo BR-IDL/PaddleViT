@@ -1,6 +1,6 @@
 # Vision Permutator: A Permutable MLP-Like Architecture for Visual Recognition, [arxiv](https://arxiv.org/abs/2106.12368) 
 
-PaddlePaddle training/validation code and pretrained models for **ResMLP**.
+PaddlePaddle training/validation code and pretrained models for **ViP**.
 
 The official and 3rd party pytorch implementation are [here](https://github.com/Andrew-Qibin/VisionPermutator).
 
