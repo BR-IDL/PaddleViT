@@ -84,7 +84,7 @@ _C.VALIDATE_FREQ = 20 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
-_C.NGPUS = 1
+_C.NGPUS = -1 #Default: -1
 
 
 def _update_config_from_file(config, cfg_file):

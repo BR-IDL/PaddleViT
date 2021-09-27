@@ -17,14 +17,14 @@ Implement MLP Class for CycleMLP
 """
 
 import os
+import math
 import paddle
 import paddle.nn as nn
 from paddle import Tensor
-import math
 from paddle.vision.ops import deform_conv2d
 import paddle.nn.functional as F
-
 from droppath import DropPath
+
 
 zeros_ = nn.initializer.Constant(value=0.0)
 ones_ = nn.initializer.Constant(value=1.0)
@@ -33,6 +33,9 @@ kaiming_uniform_ = nn.initializer.KaimingUniform()
 
 
 class Identity(nn.Layer):
+    """Identity layer
+    This is does nothing but passing the input as output
+    """
     def __init__(self):
         super().__init__()
 
@@ -41,14 +44,23 @@ class Identity(nn.Layer):
 
 
 class Mlp(nn.Layer):
-    def __init__(
-        self,
-        in_features,
-        hidden_features=None,
-        out_features=None,
-        act_layer=nn.GELU,
-        drop=0.0,
-    ):
+    """ MLP module
+    Impl using nn.Linear and activation is GELU, dropout is applied.
+    Ops: fc -> act -> dropout -> fc -> dropout
+    
+    Attributes:
+        fc1: nn.Linear
+        fc2: nn.Linear
+        act: GELU
+        dropout1: dropout after fc1
+        dropout2: dropout after fc2
+    """
+    def __init__(self,
+                 in_features,
+                 hidden_features=None,
+                 out_features=None,
+                 act_layer=nn.GELU,
+                 drop=0.0):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -67,19 +79,16 @@ class Mlp(nn.Layer):
 
 
 class CycleFC(nn.Layer):
-    """ """
 
-    def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        kernel_size,  # re-defined kernel_size, represent the spatial area of staircase FC
-        stride: int = 1,
-        padding: int = 0,
-        dilation: int = 1,
-        groups: int = 1,
-        bias: bool = True,
-    ):
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 kernel_size,  # re-defined kernel_size, represent the spatial area of staircase FC
+                 stride: int = 1,
+                 padding: int = 0,
+                 dilation: int = 1,
+                 groups: int = 1,
+                 bias: bool = True):
         super(CycleFC, self).__init__()
 
         if in_channels % groups != 0:
@@ -143,18 +152,16 @@ class CycleFC(nn.Layer):
         """
         B, C, H, W = input.shape
         deformable_groups = self.offset.shape[1] // (
-            2 * self.weight.shape[2] * self.weight.shape[3]
-        )
-        return deform_conv2d(
-            input,
-            self.offset.expand([B, -1, H, W]),
-            self.weight,
-            self.bias,
-            stride=self.stride,
-            padding=self.padding,
-            dilation=self.dilation,
-            deformable_groups=deformable_groups,
-        )
+            2 * self.weight.shape[2] * self.weight.shape[3])
+
+        return deform_conv2d(input,
+                             self.offset.expand([B, -1, H, W]),
+                             self.weight,
+                             self.bias,
+                             stride=self.stride,
+                             padding=self.padding,
+                             dilation=self.dilation,
+                             deformable_groups=deformable_groups)
 
     def extra_repr(self) -> str:
         s = self.__class__.__name__ + "("
@@ -171,9 +178,12 @@ class CycleFC(nn.Layer):
 
 
 class CycleMLP(nn.Layer):
-    def __init__(
-        self, dim, qkv_bias=False, qk_scale=None, attn_drop=0.0, proj_drop=0.0
-    ):
+    def __init__(self,
+                 dim,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 attn_drop=0.0,
+                 proj_drop=0.0):
         super().__init__()
         self.mlp_c = nn.Linear(dim, dim, bias_attr=qkv_bias)
 
@@ -192,47 +202,9 @@ class CycleMLP(nn.Layer):
         c = self.mlp_c(x)
 
         a = (h + w + c).transpose([0, 3, 1, 2]).flatten(2).mean(2)
-        a = (
-            F.softmax(self.reweight(a).reshape(B, C, 3).transpose([2, 0, 1]), axis=0)
-            .unsqueeze(2)
-            .unsqueeze(2)
-        )
-
-        x = h * a[0] + w * a[1] + c * a[2]
-
-        x = self.proj(x)
-        x = self.proj_drop(x)
-
-        return x
-
-
-class CycleMLP(nn.Layer):
-    def __init__(
-        self, dim, qkv_bias=False, qk_scale=None, attn_drop=0.0, proj_drop=0.0
-    ):
-        super().__init__()
-        self.mlp_c = nn.Linear(dim, dim, bias_attr=qkv_bias)
-
-        self.sfc_h = CycleFC(dim, dim, (1, 3), 1, 0)
-        self.sfc_w = CycleFC(dim, dim, (3, 1), 1, 0)
-
-        self.reweight = Mlp(dim, dim // 4, dim * 3)
-
-        self.proj = nn.Linear(dim, dim)
-        self.proj_drop = nn.Dropout(proj_drop)
-
-    def forward(self, x):
-        B, H, W, C = x.shape
-        h = self.sfc_h(x.transpose([0, 3, 1, 2])).transpose([0, 2, 3, 1])
-        w = self.sfc_w(x.transpose([0, 3, 1, 2])).transpose([0, 2, 3, 1])
-        c = self.mlp_c(x)
-
-        a = (h + w + c).transpose([0, 3, 1, 2]).flatten(2).mean(2)
-        a = (
-            F.softmax(self.reweight(a).reshape([B, C, 3]).transpose([2, 0, 1]), axis=0)
-            .unsqueeze(2)
-            .unsqueeze(2)
-        )
+        a = F.softmax(self.reweight(a).reshape((B, C, 3)).transpose([2, 0, 1]), axis=0)
+        a = a.unsqueeze(2)
+        a = a.unsqueeze(2)
 
         x = h * a[0] + w * a[1] + c * a[2]
 
@@ -243,20 +215,18 @@ class CycleMLP(nn.Layer):
 
 
 class CycleBlock(nn.Layer):
-    def __init__(
-        self,
-        dim,
-        mlp_ratio=4.0,
-        qkv_bias=False,
-        qk_scale=None,
-        drop=0.0,
-        attn_drop=0.0,
-        drop_path=0.0,
-        act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
-        skip_lam=1.0,
-        mlp_fn=CycleMLP,
-    ):
+    def __init__(self,
+                 dim,
+                 mlp_ratio=4.0,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop=0.0,
+                 attn_drop=0.0,
+                 drop_path=0.0,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 skip_lam=1.0,
+                 mlp_fn=CycleMLP):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = mlp_fn(dim, qkv_bias=qkv_bias, qk_scale=None, attn_drop=attn_drop)
@@ -266,9 +236,7 @@ class CycleBlock(nn.Layer):
 
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(
-            in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer
-        )
+        self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer)
         self.skip_lam = skip_lam
 
     def forward(self, x):
@@ -280,16 +248,14 @@ class CycleBlock(nn.Layer):
 class PatchEmbedOverlapping(nn.Layer):
     """2D Image to Patch Embedding with overlapping"""
 
-    def __init__(
-        self,
-        patch_size=16,
-        stride=16,
-        padding=0,
-        in_chans=3,
-        embed_dim=768,
-        norm_layer=None,
-        groups=1,
-    ):
+    def __init__(self,
+                 patch_size=16,
+                 stride=16,
+                 padding=0,
+                 in_chans=3,
+                 embed_dim=768,
+                 norm_layer=None,
+                 groups=1):
         super().__init__()
         patch_size = (patch_size, patch_size)
         stride = (stride, stride)
@@ -297,14 +263,12 @@ class PatchEmbedOverlapping(nn.Layer):
         self.patch_size = patch_size
         # remove image_size in model init to support dynamic image size
 
-        self.proj = nn.Conv2D(
-            in_chans,
-            embed_dim,
-            kernel_size=patch_size,
-            stride=stride,
-            padding=padding,
-            groups=groups,
-        )
+        self.proj = nn.Conv2D(in_chans,
+                              embed_dim,
+                              kernel_size=patch_size,
+                              stride=stride,
+                              padding=padding,
+                              groups=groups)
         self.norm = norm_layer(embed_dim) if norm_layer else Identity()
 
     def forward(self, x):
@@ -314,13 +278,14 @@ class PatchEmbedOverlapping(nn.Layer):
 
 class Downsample(nn.Layer):
     """Downsample transition stage"""
-
     def __init__(self, in_embed_dim, out_embed_dim, patch_size):
         super().__init__()
         assert patch_size == 2, patch_size
-        self.proj = nn.Conv2D(
-            in_embed_dim, out_embed_dim, kernel_size=(3, 3), stride=(2, 2), padding=1
-        )
+        self.proj = nn.Conv2D(in_embed_dim,
+                              out_embed_dim,
+                              kernel_size=(3, 3),
+                              stride=(2, 2),
+                              padding=1)
 
     def forward(self, x):
         x = x.transpose([0, 3, 1, 2])
@@ -329,19 +294,19 @@ class Downsample(nn.Layer):
         return x
 
 
-def basic_blocks(
-    dim,
-    index,
-    layers,
-    mlp_ratio=3.0,
-    qkv_bias=False,
-    qk_scale=None,
-    attn_drop=0.0,
-    drop_path_rate=0.0,
-    skip_lam=1.0,
-    mlp_fn=CycleMLP,
-    **kwargs,
-):
+
+
+def basic_blocks(dim,
+                 index,
+                 layers,
+                 mlp_ratio=3.0,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 attn_drop=0.0,
+                 drop_path_rate=0.0,
+                 skip_lam=1.0,
+                 mlp_fn=CycleMLP,
+                 **kwargs):
     blocks = []
 
     for block_idx in range(layers[index]):
@@ -367,53 +332,47 @@ def basic_blocks(
 
 class CycleNet(nn.Layer):
     """CycleMLP Network"""
-
-    def __init__(
-        self,
-        layers,
-        img_size=224,
-        patch_size=4,
-        in_chans=3,
-        num_classes=1000,
-        embed_dims=None,
-        transitions=None,
-        segment_dim=None,
-        mlp_ratios=None,
-        skip_lam=1.0,
-        qkv_bias=False,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.0,
-        norm_layer=nn.LayerNorm,
-        mlp_fn=CycleMLP,
-        fork_feat=False,
-    ):
-
+    def __init__(self,
+                 layers,
+                 img_size=224,
+                 patch_size=4,
+                 in_chans=3,
+                 num_classes=1000,
+                 embed_dims=None,
+                 transitions=None,
+                 segment_dim=None,
+                 mlp_ratios=None,
+                 skip_lam=1.0,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop_rate=0.0,
+                 attn_drop_rate=0.0,
+                 drop_path_rate=0.0,
+                 norm_layer=nn.LayerNorm,
+                 mlp_fn=CycleMLP,
+                 fork_feat=False):
         super().__init__()
         if not fork_feat:
             self.num_classes = num_classes
         self.fork_feat = fork_feat
-
-        self.patch_embed = PatchEmbedOverlapping(
-            patch_size=7, stride=4, padding=2, in_chans=3, embed_dim=embed_dims[0]
-        )
-
+        self.patch_embed = PatchEmbedOverlapping(patch_size=7,
+                                                 stride=4,
+                                                 padding=2,
+                                                 in_chans=3,
+                                                 embed_dim=embed_dims[0])
         network = []
         for i in range(len(layers)):
-            stage = basic_blocks(
-                embed_dims[i],
-                i,
-                layers,
-                mlp_ratio=mlp_ratios[i],
-                qkv_bias=qkv_bias,
-                qk_scale=qk_scale,
-                attn_drop=attn_drop_rate,
-                drop_path_rate=drop_path_rate,
-                norm_layer=norm_layer,
-                skip_lam=skip_lam,
-                mlp_fn=mlp_fn,
-            )
+            stage = basic_blocks(dim=embed_dims[i],
+                                 index=i,
+                                 layers=layers,
+                                 mlp_ratio=mlp_ratios[i],
+                                 qkv_bias=qkv_bias,
+                                 qk_scale=qk_scale,
+                                 attn_drop=attn_drop_rate,
+                                 drop_path_rate=drop_path_rate,
+                                 norm_layer=norm_layer,
+                                 skip_lam=skip_lam,
+                                 mlp_fn=mlp_fn)
             network.append(stage)
             if i >= len(layers) - 1:
                 break
@@ -437,11 +396,7 @@ class CycleNet(nn.Layer):
         else:
             # Classifier head
             self.norm = norm_layer(embed_dims[-1])
-            self.head = (
-                nn.Linear(embed_dims[-1], num_classes)
-                if num_classes > 0
-                else Identity()
-            )
+            self.head = nn.Linear(embed_dims[-1], num_classes) if num_classes > 0 else Identity()
         self.apply(self.cls_init_weights)
 
     def cls_init_weights(self, m):
@@ -461,9 +416,7 @@ class CycleNet(nn.Layer):
 
     def reset_classifier(self, num_classes, global_pool=""):
         self.num_classes = num_classes
-        self.head = (
-            nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else Identity()
-        )
+        self.head = nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else Identity()
 
     def forward_embeddings(self, x):
         x = self.patch_embed(x)
@@ -499,15 +452,14 @@ class CycleNet(nn.Layer):
 
 
 def build_cyclemlp(config):
-    model = CycleNet(
-        num_classes=config.MODEL.NUM_CLASSES,
-        layers=config.MODEL.MIXER.LAYERS,
-        embed_dims=config.MODEL.MIXER.EMBED_DIMS,
-        patch_size=7,
-        transitions=config.MODEL.MIXER.TRANSITIONS,
-        mlp_ratios=config.MODEL.MIXER.MLP_RATIOS,
-        mlp_fn=CycleMLP,
-    )
+    '''build cyclemlp model'''
+    model = CycleNet(num_classes=config.MODEL.NUM_CLASSES,
+                     layers=config.MODEL.MIXER.LAYERS,
+                     embed_dims=config.MODEL.MIXER.EMBED_DIMS,
+                     patch_size=7,
+                     transitions=config.MODEL.MIXER.TRANSITIONS,
+                     mlp_ratios=config.MODEL.MIXER.MLP_RATIOS,
+                     mlp_fn=CycleMLP)
     return model
 
 
