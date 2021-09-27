@@ -17,13 +17,15 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 ### Update 
-Update (2021-09-14): Code is released and ported weights are uploaded.
+- Update (2021-09-27): Model FLOPs and # params are uploaded.
+- Update (2021-09-14): Code is released and ported weights are uploaded.
 
 ## Models Zoo
 
-| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link |
-|--------------------------------|-------|-------|------------|----------|--------------|---------------|
-| repmlpres50-light | 77.01 | 93.46 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/16bCFa-nc_-tPVol-UCczrrDO_bCFf2uM/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1bzmpS6qJJTsOq3SQE7IOyg)(b4fg) |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| repmlp_res50_light_224 		| 77.01 | 93.46 | 87.1M   | 3.3G   | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/16bCFa-nc_-tPVol-UCczrrDO_bCFf2uM/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1bzmpS6qJJTsOq3SQE7IOyg)(b4fg) |
+
 
 > *The results are evaluated on ImageNet2012 validation set.
 >

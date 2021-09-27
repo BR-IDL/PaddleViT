@@ -12,23 +12,25 @@ This implementation is developed by [PPViT](https://github.com/BR-IDL/PaddleViT)
 <figcaption align = "center">CrossVit Model Overview</figcaption>
 
 ### Update 
-Update (2021-09-16): Code is released and ported weights are uploaded.
+- Update (2021-09-27): Model FLOPs and # params are uploaded.
+- Update (2021-09-16): Code is released and ported weights are uploaded.
+- Update (2021-09-22): Support more models eval.
 
-Update (2021-09-22): Support more models eval.
 ## Models Zoo
-| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
-|--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| cross_vit_tiny_224 		| 73.20 | 91.90 | 224   | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1ILTVwQtetcb_hdRjki2ZbR26p-8j5LUp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1byeUsM34_gFL0jVr5P5GAw)(scvb) |
-| cross_vit_small_224 		| 81.01 | 95.33 | 224   | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1ViOJiwbOxTbk1V2Go7PlCbDbWPbjWPJH/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1I9CrpdPU_D5LniqIVBoIPQ)(32us) |
-| cross_vit_base_224 		| 82.12 | 95.87 | 224   | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1vTorkc63O4JE9cYUMHBRxFMDOFoC-iK7/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TR_aBHQ2n1J0RgHFoVh_bw)(jj2q) |
-| cross_vit_9_224 			| 73.78 | 91.93 | 224   | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1UCX9_mJSx2kDAmEd_xDXyd4e6-Mg3RPf/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1M8r5vqMHJ-rFwBoW1uL2qQ)(mjcb) |
-| cross_vit_15_224 			| 81.51 | 95.72 | 224   | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1HwkLWdz6A3Nz-dVbw4ZUcCkxUbPXgHwM/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1wiO_Gjk4fvSq08Ud8xKwVw)(n55b) |
-| cross_vit_18_224 			| 82.29 | 96.00 | 224   | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1C4b_a_6ia8NCEXSUEMDdCEFzedr0RB_m/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1w7VJ7DNqq6APuY7PdlKEjA)(xese) |
-| cross_vit_9_dagger_224 	| 76.92 | 93.61 | 224   | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1_cXQ0M8Hr9UyugZk07DrsBl8dwwCA6br/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1F1tRSaG4EfCV_WiTEwXxBw)(58ah) |
-| cross_vit_15_dagger_224 	| 82.23 | 95.93 | 224   | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1cCgBoozh2WFtSz42LwEUUPPyC5KmkAFg/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1xJ4P2zy3r9RcNFSMtzvZgg)(qwup) |
-| cross_vit_18_dagger_224 	| 82.51 | 96.03 | 224   | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1sdAbWxKL5k3QIo1zdgHzasIOtpy_Ogpw/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15qYHgt0iRxdhtXoC_ct2Jg)(qtw4) |
-| cross_vit_15_dagger_384 	| 83.75 | 96.75 | 384   | 1.0        | bicubic       | [google](https://drive.google.com/file/d/12LQjYbs9-LyrY1YeRt46x9BTB3NJuhpJ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1d-BAm03azLP_CyEHF3c7ZQ)(w71e) |
-| cross_vit_18_dagger_384 	| 84.17 | 96.82 | 384   | 1.0 	     | bicubic       | [google](https://drive.google.com/file/d/1CeGwB6Tv0oL8QtL0d7Ar-d02Lg_PqACr/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1l_6PTldZ3IDB7XWgjM6LhA)(99b6) |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| cross_vit_tiny_224 			| 73.20 | 91.90 | 6.9M    | 1.3G   | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ILTVwQtetcb_hdRjki2ZbR26p-8j5LUp/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1byeUsM34_gFL0jVr5P5GAw)(scvb) |
+| cross_vit_small_224 			| 81.01 | 95.33 | 26.7M   | 5.2G   | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ViOJiwbOxTbk1V2Go7PlCbDbWPbjWPJH/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1I9CrpdPU_D5LniqIVBoIPQ)(32us) |
+| cross_vit_base_224 			| 82.12 | 95.87 | 104.7M  | 20.2G  | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1vTorkc63O4JE9cYUMHBRxFMDOFoC-iK7/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TR_aBHQ2n1J0RgHFoVh_bw)(jj2q) |
+| cross_vit_9_224 				| 73.78 | 91.93 | 8.5M    | 1.6G   | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1UCX9_mJSx2kDAmEd_xDXyd4e6-Mg3RPf/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1M8r5vqMHJ-rFwBoW1uL2qQ)(mjcb) |
+| cross_vit_15_224 				| 81.51 | 95.72 | 27.4M   | 5.2G   | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1HwkLWdz6A3Nz-dVbw4ZUcCkxUbPXgHwM/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1wiO_Gjk4fvSq08Ud8xKwVw)(n55b) |
+| cross_vit_18_224 				| 82.29 | 96.00 | 43.1M   | 8.3G   | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1C4b_a_6ia8NCEXSUEMDdCEFzedr0RB_m/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1w7VJ7DNqq6APuY7PdlKEjA)(xese) |
+| cross_vit_9_dagger_224 		| 76.92 | 93.61 | 8.7M    | 1.7G   | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1_cXQ0M8Hr9UyugZk07DrsBl8dwwCA6br/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1F1tRSaG4EfCV_WiTEwXxBw)(58ah) |
+| cross_vit_15_dagger_224 		| 82.23 | 95.93 | 28.1M   | 5.6G   | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1cCgBoozh2WFtSz42LwEUUPPyC5KmkAFg/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1xJ4P2zy3r9RcNFSMtzvZgg)(qwup) |
+| cross_vit_18_dagger_224 		| 82.51 | 96.03 | 44.1M   | 8.7G   | 224   	    | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1sdAbWxKL5k3QIo1zdgHzasIOtpy_Ogpw/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15qYHgt0iRxdhtXoC_ct2Jg)(qtw4) |
+| cross_vit_15_dagger_384 		| 83.75 | 96.75 | 28.1M   | 16.4G  | 384   	    | 1.0      | bicubic       | [google](https://drive.google.com/file/d/12LQjYbs9-LyrY1YeRt46x9BTB3NJuhpJ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1d-BAm03azLP_CyEHF3c7ZQ)(w71e) |
+| cross_vit_18_dagger_384 		| 84.17 | 96.82 | 44.1M   | 25.8G  | 384   	    | 1.0 	   | bicubic       | [google](https://drive.google.com/file/d/1CeGwB6Tv0oL8QtL0d7Ar-d02Lg_PqACr/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1l_6PTldZ3IDB7XWgjM6LhA)(99b6) |
+|
 
 
 > *The results are evaluated on ImageNet2012 validation set.
