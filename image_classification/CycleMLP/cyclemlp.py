@@ -39,8 +39,8 @@ class Identity(nn.Layer):
     def __init__(self):
         super().__init__()
 
-    def forward(self, input):
-        return input
+    def forward(self, inputs):
+        return inputs
 
 
 class Mlp(nn.Layer):
@@ -145,16 +145,16 @@ class CycleFC(nn.Layer):
                 offset[0, 2 * i + 1, 0, 0] = 0
         return offset
 
-    def forward(self, input: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         """
         Args:
             input (Tensor[batch_size, in_channels, in_height, in_width]): input tensor
         """
-        B, C, H, W = input.shape
+        B, C, H, W = inputs.shape
         deformable_groups = self.offset.shape[1] // (
             2 * self.weight.shape[2] * self.weight.shape[3])
 
-        return deform_conv2d(input,
+        return deform_conv2d(inputs,
                              self.offset.expand([B, -1, H, W]),
                              self.weight,
                              self.bias,
@@ -387,7 +387,6 @@ class CycleNet(nn.Layer):
             self.out_indices = [0, 2, 4, 6]
             for i_emb, i_layer in enumerate(self.out_indices):
                 if i_emb == 0 and os.environ.get("FORK_LAST3", None):
-                    # TODO: more elegant way
                     layer = Identity()
                 else:
                     layer = norm_layer(embed_dims[i_emb])
@@ -461,5 +460,3 @@ def build_cyclemlp(config):
                      mlp_ratios=config.MODEL.MIXER.MLP_RATIOS,
                      mlp_fn=CycleMLP)
     return model
-
-
