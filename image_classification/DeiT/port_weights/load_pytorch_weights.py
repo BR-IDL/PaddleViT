@@ -16,66 +16,69 @@ import argparse
 import numpy as np
 import paddle
 import torch
-import timm
-from transformer import build_vit
+from deit import *
 from config import *
+from stats import count_gelu, count_softmax, count_layernorm
 
 
-#model_name = 'vit_base_patch32_224'
-#model_name = 'vit_base_patch32_384'
+model_name = 'deit_tiny_distilled_patch16_224'
+cfg_name = 'deit_tiny_patch16_224'
+sz = 224
 
-model_name = 'vit_large_patch32_384'
-#model_name = 'vit_large_patch16_384'
-sz = int(model_name[-3::])
+config = get_config()
+parser = argparse.ArgumentParser('')
+parser.add_argument('-cfg', type=str, default=f'./configs/{cfg_name}.yaml')
+parser.add_argument('-dataset', type=str, default=None)
+parser.add_argument('-batch_size', type=int, default=None)
+parser.add_argument('-image_size', type=int, default=None)
+parser.add_argument('-data_path', type=str, default=None)
+parser.add_argument('-ngpus', type=int, default=None)
+parser.add_argument('-eval', action="store_true")
+parser.add_argument('-pretrained', type=str, default=None)
+parser.add_argument('-resume', type=str, default=None)
+parser.add_argument('-teacher_model', type=str, default=None)
+parser.add_argument('-last_epoch', type=int, default=None)
+args = parser.parse_args()
 
-config = get_config(f'./configs/{model_name}.yaml')
+config = get_config()
+config = update_config(config, args)
+print(config)
 
 
 def print_model_named_params(model):
-    print('----------------------------------')
     for name, param in model.named_parameters():
         print(name, param.shape)
-    print('----------------------------------')
-
 
 def print_model_named_buffers(model):
-    print('----------------------------------')
-    for name, param in model.named_buffers():
-        print(name, param.shape)
-    print('----------------------------------')
-
+    for name, buff in model.named_buffers():
+        print(name, buff.shape)
 
 def torch_to_paddle_mapping():
-    prefix = 'patch_embedding'
     mapping = [
-        ('cls_token', f'{prefix}.cls_token'),
-        ('pos_embed', f'{prefix}.position_embeddings'),
-        ('patch_embed.proj', f'{prefix}.patch_embedding'),
+        ('cls_token', 'class_token'),
+        ('dist_token', 'distill_token'),
+        ('pos_embed', 'pos_embed'),
+        ('patch_embed.proj', f'patch_embed.proj'),
     ]
 
-    if 'large' in model_name:
-        num_layers = 24
-    elif 'base' in model_name:
-        num_layers = 12
-    else:
-        raise ValueError('now only support large and base model conversion')
-
+    num_layers = config.MODEL.TRANS.DEPTH
     for idx in range(num_layers):
-        pp_prefix = f'encoder.layers.{idx}'
         th_prefix = f'blocks.{idx}'
+        pp_prefix = f'layers.{idx}'
         layer_mapping = [
-            (f'{th_prefix}.norm1', f'{pp_prefix}.attn_norm'),
-            (f'{th_prefix}.norm2', f'{pp_prefix}.mlp_norm'),
+            (f'{th_prefix}.norm1', f'{pp_prefix}.norm1'),
+            (f'{th_prefix}.attn.qkv', f'{pp_prefix}.attn.qkv'),
+            (f'{th_prefix}.attn.proj', f'{pp_prefix}.attn.proj'),
+            (f'{th_prefix}.norm2', f'{pp_prefix}.norm2'),
             (f'{th_prefix}.mlp.fc1', f'{pp_prefix}.mlp.fc1'), 
             (f'{th_prefix}.mlp.fc2', f'{pp_prefix}.mlp.fc2'), 
-            (f'{th_prefix}.attn.qkv', f'{pp_prefix}.attn.qkv'),
-            (f'{th_prefix}.attn.proj', f'{pp_prefix}.attn.out'),
         ]
         mapping.extend(layer_mapping)
 
     head_mapping = [
-        ('norm', 'encoder.encoder_norm'),
-        ('head', 'classifier')
+        ('norm', 'norm'),
+        ('head', 'head'),
+        ('head_dist', 'head_distill')
     ]
     mapping.extend(head_mapping)
 
@@ -84,17 +87,13 @@ def torch_to_paddle_mapping():
 
 
 def convert(torch_model, paddle_model):
-    def _set_value(th_name, pd_name, transpose=True):
+    def _set_value(th_name, pd_name):
         th_shape = th_params[th_name].shape
         pd_shape = tuple(pd_params[pd_name].shape) # paddle shape default type is list
         #assert th_shape == pd_shape, f'{th_shape} != {pd_shape}'
-        print(f'**SET** {th_name} {th_shape} **TO** {pd_name} {pd_shape}')
-        if isinstance(th_params[th_name], torch.nn.parameter.Parameter):
-            value = th_params[th_name].data.numpy()
-        else:
-            value = th_params[th_name].numpy()
-
-        if len(value.shape) == 2 and transpose:
+        print(f'set {th_name} {th_shape} to {pd_name} {pd_shape}')
+        value = th_params[th_name].cpu().data.numpy()
+        if len(value.shape) == 2:
             value = value.transpose((1, 0))
         pd_params[pd_name].set_value(value)
 
@@ -103,17 +102,16 @@ def convert(torch_model, paddle_model):
     th_params = {}
     for name, param in paddle_model.named_parameters():
         pd_params[name] = param
-    for name, param in torch_model.named_parameters():
-        th_params[name] = param
-
     for name, param in paddle_model.named_buffers():
         pd_params[name] = param
+
+    for name, param in torch_model.named_parameters():
+        th_params[name] = param
     for name, param in torch_model.named_buffers():
         th_params[name] = param
 
     # 2. get name mapping pairs
     mapping = torch_to_paddle_mapping()
-
     # 3. set torch param values to paddle params: may needs transpose on weights
     for th_name, pd_name in mapping:
         if th_name in th_params.keys(): # nn.Parameters
@@ -123,30 +121,38 @@ def convert(torch_model, paddle_model):
             pd_name_w = f'{pd_name}.weight'
             _set_value(th_name_w, pd_name_w)
 
-            if f'{th_name}.bias' in th_params.keys():
-                th_name_b = f'{th_name}.bias'
-                pd_name_b = f'{pd_name}.bias'
-                _set_value(th_name_b, pd_name_b)
+            th_name_b = f'{th_name}.bias'
+            pd_name_b = f'{pd_name}.bias'
+            _set_value(th_name_b, pd_name_b)
 
     return paddle_model
 
-    
+
 def main():
 
-    paddle.set_device('cpu')
-    paddle_model = build_vit(config)
+    #paddle.set_device('cpu')
+    paddle_model = build_deit(config)
     paddle_model.eval()
-    print_model_named_params(paddle_model)
-    print_model_named_buffers(paddle_model)
 
-    print('+++++++++++++++++++++++++++++++++++')
-    device = torch.device('cpu')
-    torch_model = timm.create_model(model_name, pretrained=True)
-    #torch_model = timm.create_model('vit_base_patch16_224', pretrained=True)
+    print_model_named_params(paddle_model)
+    print('--------------')
+    print_model_named_buffers(paddle_model)
+    print('----------------------------------')
+
+    device = torch.device('cuda')
+    torch_model = torch.hub.load('facebookresearch/deit:main',
+                                 f'{model_name}', #'deit_base_distilled_patch16_224',
+                                 pretrained=True)
     torch_model = torch_model.to(device)
     torch_model.eval()
+
     print_model_named_params(torch_model)
+    print('--------------')
     print_model_named_buffers(torch_model)
+    print('----------------------------------')
+
+
+    #return
 
     # convert weights
     paddle_model = convert(torch_model, paddle_model)
@@ -165,16 +171,22 @@ def main():
 
     print(out_torch.shape, out_paddle.shape)
     print(out_torch[0, 0:100])
-    print('========================================================')
     print(out_paddle[0, 0:100])
     assert np.allclose(out_torch, out_paddle, atol = 1e-5)
     
     # save weights for paddle model
+    #model_path = os.path.join('./deit_base_distilled_patch16_224.pdparams')
     model_path = os.path.join(f'./{model_name}.pdparams')
-    #model_path = os.path.join('./vit_base_patch16_224.pdparams')
     paddle.save(paddle_model.state_dict(), model_path)
-    print('all done')
 
+    custom_ops = {paddle.nn.GELU: count_gelu,
+                    paddle.nn.LayerNorm: count_layernorm,
+                    paddle.nn.Softmax: count_softmax,
+    }
+    paddle.flops(paddle_model,
+                 input_size=(1, 3, sz, sz),
+                 custom_ops=custom_ops,
+                 print_detail=False)
 
 if __name__ == "__main__":
     main()

@@ -515,5 +515,5 @@ def build_cswin(config):
                              qk_scale=config.MODEL.TRANS.QK_SCALE,
                              dropout=config.MODEL.DROPOUT,
                              attention_dropout=config.MODEL.ATTENTION_DROPOUT,
-                             droppath=config.MODEL.DROP_PATH)
+                             droppath=config.MODEL.DROPPATH)
     return model

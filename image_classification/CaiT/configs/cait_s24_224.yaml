@@ -1,10 +1,10 @@
 DATA:
-    IMAGE_SIZE: 384
+    IMAGE_SIZE: 224
     CROP_PCT: 1.0
     
 MODEL:
     TYPE: cait
-    NAME: cait_s24_384
+    NAME: cait_s24_224
     TRANS:
         PATCH_SIZE: 16
         EMBED_DIM: 384
