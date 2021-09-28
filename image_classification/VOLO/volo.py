@@ -733,7 +733,8 @@ class VOLO(nn.Layer):
             sbby1 = self.pooling_scale * bby1
             sbbx2 = self.pooling_scale * bbx2
             sbby2 = self.pooling_scale * bby2
-            temp_x[:, sbbx1: sbbx2, sbby1: sbby2, :] = x.flip(axis=[0])[:, sbbx1: sbbx2, sbby1: sbby2, :]
+            if sbbx2 > sbbx1 and sbby2 > sbby1:
+                temp_x[:, sbbx1: sbbx2, sbby1: sbby2, :] = x.flip(axis=[0])[:, sbbx1: sbbx2, sbby1: sbby2, :]
             x = temp_x
         else:
             bbx1, bby1, bbx2, bby2 = 0, 0, 0, 0
@@ -770,7 +771,8 @@ class VOLO(nn.Layer):
         if self.mix_token and self.training:
             x_aux = x_aux.reshape([x_aux.shape[0], patch_h, patch_w, x_aux.shape[-1]])
             temp_x = x_aux.clone()
-            temp_x[:, bbx1:bbx2, bby1:bby2, :] = x_aux.flip(axis=[0])[:, bbx1:bbx2, bby1:bby2, :]
+            if bbx2 > bbx1 and bby2 > bby1:
+                temp_x[:, bbx1:bbx2, bby1:bby2, :] = x_aux.flip(axis=[0])[:, bbx1:bbx2, bby1:bby2, :]
             x_aux = temp_x
             x_aux = x_aux.reshape([x_aux.shape[0], patch_h*patch_w, x_aux.shape[-1]])
 

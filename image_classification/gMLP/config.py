@@ -34,7 +34,7 @@ _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
 _C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 4 # number of data loading threads 
+_C.DATA.NUM_WORKERS = 2 # number of data loading threads 
 
 # model settings
 _C.MODEL = CN()
@@ -85,8 +85,9 @@ _C.REPORT_FREQ = 50 # freq to logging info
 _C.VALIDATE_FREQ = 20 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
+_C.AMP = False # mix precision training
 _C.LOCAL_RANK = 0
-_C.NGPUS = 1
+_C.NGPUS = -1
 
 
 def _update_config_from_file(config, cfg_file):
@@ -131,6 +132,11 @@ def update_config(config, args):
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
         config.TRAIN.LAST_EPOCH = args.last_epoch
+    if args.amp: # only during training
+        if config.EVAL is True:
+            config.AMP = False
+        else:
+            config.AMP = True
 
     #config.freeze()
     return config

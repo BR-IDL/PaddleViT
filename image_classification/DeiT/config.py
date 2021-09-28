@@ -114,6 +114,7 @@ _C.REPORT_FREQ = 100 # freq to logging info
 _C.VALIDATE_FREQ = 100 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
+_C.AMP = False # mix precision training
 _C.LOCAL_RANK = 0
 _C.NGPUS = -1
 
@@ -160,6 +161,9 @@ def update_config(config, args):
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
         config.TRAIN.LAST_EPOCH = args.last_epoch
+    if args.amp: # only during training
+        if config.EVAL is True:
+            config.AMP = False
     if args.teacher_model:
         config.TRAIN.TEACHER_MODEL = args.teacher_model
 

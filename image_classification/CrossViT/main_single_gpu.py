@@ -14,24 +14,24 @@
 
 """CrossViT training/validation using single GPU """
 
-import argparse
-import logging
-import os
-import random
 import sys
+import os
 import time
-
+import logging
+import argparse
+import random
 import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-from config import get_config
-from config import update_config
-from crossvit import build_crossvit as build_model
 from datasets import get_dataloader
 from datasets import get_dataset
+from crossvit import build_crossvit as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
+from config import get_config
+from config import update_config
+
 
 parser = argparse.ArgumentParser('CrossViT')
 parser.add_argument('-cfg', type=str, default=None)
@@ -44,11 +44,13 @@ parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-resume', type=str, default=None)
 parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
+parser.add_argument('-amp', action='store_true')
 args = parser.parse_args()
 
-LOG_FORMAT = "%(asctime)s %(message)s"
+
+log_format = "%(asctime)s %(message)s"
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format=LOG_FORMAT, datefmt="%m%d %I:%M:%S %p")
+                    format=log_format, datefmt="%m%d %I:%M:%S %p")
 
 # get default config
 config = get_config()
@@ -61,7 +63,7 @@ if not config.EVAL:
 else:
     config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
 
-config.freeze()
+#config.freeze()
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
@@ -69,7 +71,7 @@ if not os.path.exists(config.SAVE):
 # set logging format
 logger = logging.getLogger()
 fh = logging.FileHandler(os.path.join(config.SAVE, 'log.txt'))
-fh.setFormatter(logging.Formatter(LOG_FORMAT))
+fh.setFormatter(logging.Formatter(log_format))
 logger.addHandler(fh)
 logger.info(f'config= {config}')
 
@@ -81,7 +83,8 @@ def train(dataloader,
           epoch,
           total_batch,
           debug_steps=100,
-          accum_iter=1):
+          accum_iter=1,
+          amp=False):
     """Training for one epoch
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
@@ -91,6 +94,7 @@ def train(dataloader,
         total_epoch: int, total num of epoch, for logging
         debug_steps: int, num of iters to log info
         accum_iter: int, num of iters for accumulating gradients
+        amp: bool, if True, use mix precision training
     Returns:
         train_loss_meter.avg
         train_acc_meter.avg
@@ -99,25 +103,38 @@ def train(dataloader,
     model.train()
     train_loss_meter = AverageMeter()
     train_acc_meter = AverageMeter()
+    if amp is True:
+        scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
+
 
     for batch_id, data in enumerate(dataloader):
         image = data[0]
         label = data[1]
 
-        output = model(image)
-        loss = criterion(output, label)
+        if amp is True:
+            with paddle.amp.auto_cast():
+                output = model(image)
+                loss = criterion(output, label)
+            scaled = scaler.scale(loss)
+            scaled.backward()
 
-        # NOTE: division may be needed depending on the loss function
-        # Here no division is needed:
-        # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-        # loss =  loss / accum_iter
+            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+                scaler.minimize(optimizer, scaled)
+                optimizer.clear_grad()
 
-        loss.backward()
+        else:
+            output = model(image)
+            loss = criterion(output, label)
+            #NOTE: division may be needed depending on the loss function
+            # Here no division is needed:
+            # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
+            #loss =  loss / accum_iter
+            loss.backward()
 
-        if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-            optimizer.step()
-            optimizer.clear_grad()
+            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+                optimizer.step()
+                optimizer.clear_grad()
 
         pred = F.softmax(output)
         acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
@@ -192,11 +209,9 @@ def main():
     paddle.seed(seed)
     np.random.seed(seed)
     random.seed(seed)
-    paddle.set_device('gpu:0')
+    #paddle.set_device('gpu:0')
     # 1. Create model
-    model = build_model(config=config)
-
-    # model = paddle.DataParallel(model)
+    model = build_model(config)
     # 2. Create train and val dataloader
     dataset_train = get_dataset(config, mode='train')
     dataset_val = get_dataset(config, mode='val')
@@ -299,6 +314,7 @@ def main():
                                                   total_batch=len(dataloader_train),
                                                   debug_steps=config.REPORT_FREQ,
                                                   accum_iter=config.TRAIN.ACCUM_ITER,
+                                                  amp=config.AMP,
                                                   )
         scheduler.step()
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
