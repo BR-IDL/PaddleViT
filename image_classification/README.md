@@ -4,6 +4,7 @@ PaddlePaddle training/validation code and pretrained models for **Image Classifi
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
+* Update (2021-09-28): Add AMP training.
 * Update (2021-09-27): Add more ported model weights.
 * Update (2021-09-09): Add FF-Only, RepMLP models.
 * Update (2021-08-25): Init readme uploaded.
