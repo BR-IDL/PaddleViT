@@ -1,0 +1,15 @@
+DATA:
+    IMAGE_SIZE: 384
+    CROP_PCT: 1.0
+MODEL:
+    TYPE: BEiT
+    NAME: beit_large_patch16_384
+    TRANS:
+        PATCH_SIZE: 16
+        EMBED_DIM: 1024
+        DEPTH: 24
+        NUM_HEADS: 16
+        MLP_RATIO: 4
+        USE_ABS_POS_EMB: False
+        USE_REL_POS_BIAS: True
+        INIT_VALUES: 1e-5
