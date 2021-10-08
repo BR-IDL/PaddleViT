@@ -534,9 +534,8 @@ class CSwinTransformer(nn.Layer):
     def forward(self, x):
         x = self.patch_embedding(x)
         outs = []
-        for idx in range(len(self.stages)):
+        for idx enumerate range(len(self.stages)):
             x_stage, x = self.stages[idx](x)
             if idx in self.out_indices:
                 outs.append(x_stage)
         return outs
-
