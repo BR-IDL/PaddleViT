@@ -62,6 +62,9 @@ _C.MODEL.TRANS.NUM_STAGES = 4
 _C.MODEL.TRANS.STRIDES = [4, 2, 2, 2]
 _C.MODEL.TRANS.SR_RATIOS = [8, 4, 2, 1]
 
+## special settings for CSwin Transformer
+_C.MODEL.TRANS.SPLIT_SIZES = None
+
 # MLA Decoder setting
 _C.MODEL.MLA = CN()
 #_C.MODEL.MLA.MLA_INDEX = [2, 5, 8, 11]   # Base: [2, 5, 8, 11]; Large: [5, 11, 17, 23] 

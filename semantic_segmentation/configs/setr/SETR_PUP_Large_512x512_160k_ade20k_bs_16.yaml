@@ -1,6 +1,6 @@
 DATA:
-    BATCH_SIZE: 2  # per GPU [total bs is set to 8 or 16]
-    BATCH_SIZE_VAL: 1  # per GPU
+    BATCH_SIZE: 1  # per GPU [total bs is set to 8 or 16]
+    BATCH_SIZE_VAL: 2  # per GPU
     DATASET: 'ADE20K' # dataset name
     DATA_PATH: '/home/ssd3/wutianyi/datasets/ADEChallengeData2016'
     CROP_SIZE: (512,512)
