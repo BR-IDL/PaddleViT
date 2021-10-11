@@ -82,12 +82,12 @@ We also provide tutorials:
 2. **[Segmenter](./semantic_segmentation)** (from Inria), realeased with paper [Segmenter: Transformer for Semantic Segmentation](https://arxiv.org/pdf/2105.05633.pdf), by Robin Strudel, Ricardo Garcia, Ivan Laptev, Cordelia Schmid.
 3. **[Trans2seg](./semantic_segmentation)** (from HKU/Sensetime/NJU), released with paper [Segmenting Transparent Object in the Wild with Transformer](https://arxiv.org/pdf/2101.08461.pdf), by Enze Xie, Wenjia Wang, Wenhai Wang, Peize Sun, Hang Xu, Ding Liang, Ping Luo.
 4. **[SegFormer](./semantic_segmentation)** (from HKU/NJU/NVIDIA/Caltech), released with paper [SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers](https://arxiv.org/abs/2105.15203), by Enze Xie, Wenhai Wang, Zhiding Yu, Anima Anandkumar, Jose M. Alvarez, Ping Luo.
+5. **[CSwin Transformer]()** (from USTC and Microsoft), released with paper [CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows
 
 #### Coming Soon:  ####
 1. **[FTN]()** (from Baidu), released with paper [Fully Transformer Networks for Semantic Image Segmentation](https://arxiv.org/pdf/2106.04108.pdf), by Sitong Wu, Tianyi Wu, Fangjian Lin, Shengwei Tian, Guodong Guo.
 2. **[Shuffle Transformer]()** (from Tencent), released with paper [Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/abs/2106.03650), by Zilong Huang, Youcheng Ben, Guozhong Luo, Pei Cheng, Gang Yu, Bin Fu
 3. **[Focal Transformer]()** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
-4. **[CSwin Transformer]()** (from USTC and Microsoft), released with paper [CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows
 ](https://arxiv.org/abs/2107.00652), by Xiaoyi Dong, Jianmin Bao, Dongdong Chen, Weiming Zhang, Nenghai Yu, Lu Yuan, Dong Chen, Baining Guo.
 
 
@@ -322,6 +322,9 @@ We also provide tutorials:
 | UperNet  | Swin_Tiny |     16     |     160k   |  44.90   |       45.37     |   -      |[baidu](https://pan.baidu.com/s/1S8JR4ILw0u4I-DzU4MaeVQ)(lkhg)   |  [config](semantic_segmentation/configs/upernet_swin/upernet_swin_tiny_patch4_windown7_512x512_160k_ade20k.yaml) |
 | UperNet  | Swin_Small |     16     |     160k   |  47.88   |       48.90      |   -      |[baidu](https://pan.baidu.com/s/17RKeSpuWqONVptQZ3B4kEA)(vvy1)   |  [config](semantic_segmentation/configs/upernet_swin/upernet_swin_small_patch4_windown7_512x512_160k_ade20k.yaml) |
 | UperNet  | Swin_Base |     16     |     160k   |   48.59   |       49.04      |   -      |[baidu](https://pan.baidu.com/s/1bM15KHNsb0oSPblQwhxbgw)(y040)   |  [config](semantic_segmentation/configs/upernet_swin/upernet_swin_base_patch4_windown7_512x512_160k_ade20k.yaml) |
+| UperNet  | CSwin_Tiny |     16     |     160k   |  49.46   |           |[baidu](https://pan.baidu.com/s/1ol_gykZjgAFbJ3PkqQ2j0Q)(l1cp) | [baidu](https://pan.baidu.com/s/1gLePNLybtrax9yCQ2fcIPg)(y1eq)  |  [config](seman}tic_segmentation/configs/upernet_cswin/upernet_cswin_tiny_patch4_512x512_160k_ade20k.yaml) |
+| UperNet  | CSwin_Small |     16     |     160k   |  50.88   |      | [baidu](https://pan.baidu.com/s/1mSd_JdNS4DtyVNYxqVobBw)(6vwk)   | [baidu](https://pan.baidu.com/s/1a_vhHoib0-BcRwTnnSVGWA)(fz2e)   | [config](semantic_segmentation/configs/upernet_cswin/upernet_cswin_small_patch4_512x512_160k_ade20k.yaml) |
+| UperNet  | CSwin_Base |     16     |     160k   |  50.64   |      | [baidu](https://pan.baidu.com/s/1suO0jX_Tw56CVm3UhByOWg)(0ys7)   | [baidu](https://pan.baidu.com/s/1Ym-RUooqizgUDEm5jWyrhA)(83w3)   | [config](semantic_segmentation/configs/upernet_cswin/upernet_cswin_base_patch4_512x512_160k_ade20k.yaml) |
 
 #### Trans10kV2 ####
 |Model      | Backbone  | Batch_size | Iteration | mIoU (ss) | mIoU (ms+flip) | Backbone_checkpoint | Model_checkpoint     |     ConfigFile  |
