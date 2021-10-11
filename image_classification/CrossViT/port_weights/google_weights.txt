@@ -1,0 +1,10 @@
+pd_crossvit_base_224.pdparams   https://drive.google.com/file/d/1tQE0gR2yKFhLFy6_CohER4E0JG_c1HF3/view?usp=sharing
+pd_crossvit_tiny_224.pdparams	   https://drive.google.com/file/d/1asOr6WqwOv-XN2fLROhHXz-McxS8paet/view?usp=sharing
+pd_crossvit_small_224.pdparams  https://drive.google.com/file/d/1KjYBH89gCEfT5xrjKkQ_o7_9amC-Zsp4/view?usp=sharing
+pd_crossvit_18_dagger_224.pdparams  https://drive.google.com/file/d/1xJTRDpbjG84RThm1x3mOOTcQbc3edg_C/view?usp=sharing
+pd_crossvit_18_224.pdparams   https://drive.google.com/file/d/1tDwJzitlyxp7Pp0TaCKeFKxt1NxHLysX/view?usp=sharing
+pd_crossvit_15_dagger_384.pdparams   https://drive.google.com/file/d/1jOtXNAS2qpD4UXH_XK6w7KDSZZwjAK83/view?usp=sharing
+pd_crossvit_15_dagger_224.pdparams   https://drive.google.com/file/d/1oBO6kFJ2PcE-ifcPkOyv1GbZJTTCEm_d/view?usp=sharing
+pd_crossvit_15_224.pdparams  https://drive.google.com/file/d/1l_ty0u5Tak18U4DtQOKLj9elZ4sY7yjd/view?usp=sharing
+pd_crossvit_9_dagger_224.pdparams   https://drive.google.com/file/d/13DFAwtc2-AlubypCsEI6JaOgEaVVBzDI/view?usp=sharing
+pd_crossvit_9_224.pdparams  https://drive.google.com/file/d/1VaiE40DGaXtzIVLkCp7v2Vy0p4MbrO-R/view?usp=sharing

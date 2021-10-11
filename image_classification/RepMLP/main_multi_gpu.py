@@ -25,7 +25,8 @@ import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
 import paddle.distributed as dist
-from datasets import get_dataloader, get_dataset
+from datasets import get_dataloader
+from datasets import get_dataset
 from repmlp import build_repmlp as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
@@ -44,6 +45,7 @@ parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-resume', type=str, default=None)
 parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
+parser.add_argument('-amp', action='store_true')
 arguments = parser.parse_args()
 
 
@@ -80,7 +82,8 @@ def train(dataloader,
           epoch,
           total_batch,
           debug_steps=100,
-          accum_iter=1):
+          accum_iter=1,
+          amp=False):
     """Training for one epoch
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
@@ -88,8 +91,9 @@ def train(dataloader,
         criterion: nn.criterion
         epoch: int, current epoch
         total_epoch: int, total num of epoch, for logging
-        debug_steps: int, num of iters to log info
-        accum_iter: int, num of iters for accumulating gradients
+        debug_steps: int, num of iters to log info, default: 100
+        accum_iter: int, num of iters for accumulating gradients, default: 1
+        amp: bool, if True, use mix precision training, default: False
     Returns:
         train_loss_meter.avg
         train_acc_meter.avg
@@ -98,26 +102,37 @@ def train(dataloader,
     model.train()
     train_loss_meter = AverageMeter()
     train_acc_meter = AverageMeter()
+    if amp is True:
+        scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
 
     for batch_id, data in enumerate(dataloader):
         image = data[0]
         label = data[1]
 
-        output = model(image)
-        loss = criterion(output, label)
+        if amp is True:
+            with paddle.amp.auto_cast():
+                output = model(image)
+                loss = criterion(output, label)
+            scaled = scaler.scale(loss)
+            scaled.backward()
 
-        #NOTE: division may be needed depending on the loss function
-        # Here no division is needed:
-        # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-        #
-        #loss =  loss / accum_iter
+            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+                scaler.minimize(optimizer, scaled)
+                optimizer.clear_grad()
+        else:
+            output = model(image)
+            loss = criterion(output, label)
+            #NOTE: division may be needed depending on the loss function
+            # Here no division is needed:
+            # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
+            #
+            #loss =  loss / accum_iter
+            loss.backward()
 
-        loss.backward()
-
-        if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-            optimizer.step()
-            optimizer.clear_grad()
+            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+                optimizer.step()
+                optimizer.clear_grad()
 
         pred = F.softmax(output)
         acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
@@ -319,7 +334,8 @@ def main_worker(*args):
                                                   epoch=epoch,
                                                   total_batch=total_batch_train,
                                                   debug_steps=config.REPORT_FREQ,
-                                                  accum_iter=config.TRAIN.ACCUM_ITER)
+                                                  accum_iter=config.TRAIN.ACCUM_ITER,
+                                                  amp=config.AMP)
         scheduler.step()
 
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +

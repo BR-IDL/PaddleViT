@@ -139,5 +139,3 @@ dmypy.json
 /semantic_segmentation/config.ini
 /semantic_segmentation/job.sh
 /semantic_segmentation/run.sh
-
-

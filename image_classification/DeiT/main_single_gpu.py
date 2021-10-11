@@ -52,6 +52,7 @@ parser.add_argument('-resume', type=str, default=None)
 parser.add_argument('-teacher_model', type=str, default=None)
 parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
+parser.add_argument('-amp', action='store_true')
 args = parser.parse_args()
 
 
@@ -92,7 +93,8 @@ def train(dataloader,
           debug_steps=100,
           accum_iter=1,
           model_ema=None,
-          mixup_fn=None):
+          mixup_fn=None,
+          amp=False):
     """Training for one epoch
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
@@ -104,6 +106,7 @@ def train(dataloader,
         accum_iter: int, num of iters for accumulating gradients
         mode_ema: ModelEma, model moving average instance
         mixup_fn: Mixup, mixup instance
+        amp: bool, if True, use mix precision training
     Returns:
         train_loss_meter.avg
         train_acc_meter.avg
@@ -112,7 +115,10 @@ def train(dataloader,
     model.train()
     train_loss_meter = AverageMeter()
     train_acc_meter = AverageMeter()
+    if amp is True:
+        scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
+
 
     for batch_id, data in enumerate(dataloader):
         image = data[0]
@@ -122,19 +128,29 @@ def train(dataloader,
         if mixup_fn is not None:
             image, label = mixup_fn(image, label_orig)
 
-        output = model(image)
-        loss = criterion(image, output, label)
+        if amp is True:
+            with paddle.amp.auto_cast():
+                output = model(image)
+                loss = criterion(image, output, label)
+            scaled = scaler.scale(loss)
+            scaled.backward()
 
-        #NOTE: division may be needed depending on the loss function
-        # Here no division is needed:
-        # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-        #loss =  loss / accum_iter
+            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+                scaler.minimize(optimizer, scaled)
+                optimizer.clear_grad()
+        else:
+            output = model(image)
+            loss = criterion(image, output, label)
+            #NOTE: division may be needed depending on the loss function
+            # Here no division is needed:
+            # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
+            #loss =  loss / accum_iter
 
-        loss.backward()
+            loss.backward()
 
-        if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-            optimizer.step()
-            optimizer.clear_grad()
+            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+                optimizer.step()
+                optimizer.clear_grad()
 
         if model_ema is not None:
             model_ema.update(model)
@@ -319,18 +335,18 @@ def main():
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
     # 9. Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
-        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams') is True
-        model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
+        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams')
+        model_state = paddle.load(config.MODEL.PRETRAINED + '.pdparams')
         model.set_dict(model_state)
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
-        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
+        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
+        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
-        opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
-        optimizer.set_dict(opt_state)
+        opt_state = paddle.load(config.MODEL.RESUME + '.pdopt')
+        optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
         if model_ema is not None and os.path.isfile(config.MODEL.RESUME_EMA+'.pdparams'):
@@ -352,9 +368,9 @@ def main():
                     f"Validation Acc@5: {val_acc5:.4f}, " +
                     f"time: {val_time:.2f}")
         return
-    # 10. Start training and validation
-    logging.info(f"Start training from epoch {last_epoch+1}.")
-    for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
+    # 8. Start training and validation
+    logging.info(f"Start training from epoch {last_epoch + 1}.")
+    for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
         # train
         logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
         train_loss, train_acc, train_time = train(dataloader=dataloader_train,
@@ -366,7 +382,8 @@ def main():
                                                   debug_steps=config.REPORT_FREQ,
                                                   accum_iter=config.TRAIN.ACCUM_ITER,
                                                   model_ema=model_ema,
-                                                  mixup_fn=mixup_fn)
+                                                  mixup_fn=mixup_fn,
+                                                  amp=config.AMP)
         scheduler.step()
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                     f"Train Loss: {train_loss:.4f}, " +
