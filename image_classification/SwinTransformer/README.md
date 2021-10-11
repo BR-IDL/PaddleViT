@@ -13,6 +13,8 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
+* Update (2021-10-11): New main function for single and multiplt gpus are updated.
+* Update (2021-10-11): Training from scratch is available.
 * Update (2021-09-27): Model FLOPs and num params are uploaded.
 * Update (2021-09-10): More ported weights are uploaded.
 * Update (2021-08-11): Code is released and ported weights are uploaded.
@@ -29,6 +31,11 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 | swin_l_224_22kto1k    		| 86.32 | 97.90 | 196.4M  | 34.3G  | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1yo7rkxKbQ4izy2pY5oQ5QAnkyv7zKcch/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1GsUJbSkGxlGsBYsayyKjVg)(nd2f) |
 | swin_l_384_22kto1k    		| 87.14 | 98.23 | 196.4M  | 100.9G | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1-6DEvkb-FMz72MyKtq9vSPKYBqINxoKK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1JLdS0aTl3I37oDzGKLFSqA)(5g5e) |
 > *The results are evaluated on ImageNet2012 validation set.
+
+### Models trained from scratch using PaddleViT
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| swin_t_224   					| 79.67 | 94.72 | 28.3M   | 4.4G   | 224        | 0.9      | bicubic       | coming soon |
 
 ## Notebooks
 We provide a few notebooks in aistudio to help you get started:
