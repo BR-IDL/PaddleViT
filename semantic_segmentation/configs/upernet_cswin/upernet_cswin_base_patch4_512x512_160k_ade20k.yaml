@@ -7,7 +7,7 @@ DATA:
     NUM_CLASSES: 150
 MODEL:
     NAME: 'UperNet_CSwin'
-    DROPOUT: 0.1   # dropout rate for linear projection
+    DROPOUT: 0.0   # dropout rate for linear projection
     ATTENTION_DROPOUT: 0.0  # dropout rate for attention
     DROP_PATH: 0.2
     ENCODER:
@@ -28,7 +28,7 @@ MODEL:
         HIDDEN_SIZE: 96  # 64(tiny, small), 96(base), 144(large)
         EMBED_DIM: 96
         STAGE_DEPTHS: [2, 4, 32, 2]
-        NUM_HEADS: [4, 8, 16, 32] 
+        NUM_HEADS: [4, 8, 16, 32]
         SPLIT_SIZES: [1, 2, 7, 7]       # cswin
         MLP_RATIO: 4
         QKV_BIAS: True
