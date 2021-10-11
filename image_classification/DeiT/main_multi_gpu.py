@@ -52,6 +52,7 @@ parser.add_argument('-resume', type=str, default=None)
 parser.add_argument('-teacher_model', type=str, default=None)
 parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
+parser.add_argument('-amp', action='store_true')
 arguments = parser.parse_args()
 
 
@@ -90,7 +91,8 @@ def train(dataloader,
           debug_steps=100,
           accum_iter=1,
           model_ema=None,
-          mixup_fn=None):
+          mixup_fn=None,
+          amp=False):
     """Training for one epoch
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
@@ -102,6 +104,7 @@ def train(dataloader,
         accum_iter: int, num of iters for accumulating gradients
         model_ema: ModelEma, model moving average instance
         mixup_fn: Mixup, mixup instance
+        amp: bool, if True, use mix precision training, default: False
     Returns:
         train_loss_meter.avg
         train_acc_meter.avg
@@ -110,6 +113,8 @@ def train(dataloader,
     model.train()
     train_loss_meter = AverageMeter()
     train_acc_meter = AverageMeter()
+    if amp is True:
+        scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
 
     for batch_id, data in enumerate(dataloader):
@@ -120,20 +125,30 @@ def train(dataloader,
         if mixup_fn is not None:
             image, label = mixup_fn(image, label_orig)
 
-        output = model(image)
-        loss = criterion(image, output, label)
 
-        #NOTE: division may be needed depending on the loss function
-        # Here no division is needed:
-        # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-        #
-        #loss =  loss / accum_iter
+        if amp is True:
+            with paddle.amp.auto_cast():
+                output = model(image)
+                loss = criterion(image, output, label)
+            scaled = scaler.scale(loss)
+            scaled.backward()
 
-        loss.backward()
+            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+                scaler.minimize(optimizer, scaled)
+                optimizer.clear_grad()
+        else:
+            output = model(image)
+            loss = criterion(image, output, label)
+            #NOTE: division may be needed depending on the loss function
+            # Here no division is needed:
+            # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
+            #
+            #loss =  loss / accum_iter
+            loss.backward()
 
-        if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-            optimizer.step()
-            optimizer.clear_grad()
+            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+                optimizer.step()
+                optimizer.clear_grad()
 
         if model_ema is not None and paddle.distributed.get_rank() == 0:
             model_ema.update(model)
@@ -210,7 +225,7 @@ def validate(dataloader, model, criterion, total_batch, debug_steps=100):
                 logger.info(
                     f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
                     f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, "+
+                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
                     f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
 
     val_time = time.time() - time_st
@@ -390,7 +405,8 @@ def main_worker(*args):
                                                   debug_steps=config.REPORT_FREQ,
                                                   accum_iter=config.TRAIN.ACCUM_ITER,
                                                   model_ema=model_ema,
-                                                  mixup_fn=mixup_fn)
+                                                  mixup_fn=mixup_fn,
+                                                  amp=config.AMP)
         scheduler.step()
 
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
@@ -428,7 +444,6 @@ def main_worker(*args):
 
 
 def main():
-    # Build dataset
     dataset_train = get_dataset(config, mode='train')
     dataset_val = get_dataset(config, mode='val')
     config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS

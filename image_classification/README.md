@@ -4,6 +4,8 @@ PaddlePaddle training/validation code and pretrained models for **Image Classifi
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
+* Update (2021-09-28): Add AMP training.
+* Update (2021-09-27): Add more ported model weights.
 * Update (2021-09-09): Add FF-Only, RepMLP models.
 * Update (2021-08-25): Init readme uploaded.
 
@@ -19,11 +21,12 @@ This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.g
 7. **[PVTv2](./PVTv2)**
 8. **[Shuffle Transformer](./Shuffle_Transformer)**
 9. **[T2T-ViT](./T2T_ViT)**
-10. **[MLP-Mixer](./MLP-Mixer)**
-11. **[ResMLP](./ResMLP)**
-12. **[gMLP](./gMLP)**
-13. **[FF_Only](./FF_Only)**
-14. **[RepMLP](./RepMLP)**
+10. **[CrossViT](./CrossViT)**
+11. **[MLP-Mixer](./MLP-Mixer)**
+12. **[ResMLP](./ResMLP)**
+13. **[gMLP](./gMLP)**
+14. **[FF_Only](./FF_Only)**
+15. **[RepMLP](./RepMLP)**
 
 
 ## Installation
@@ -99,6 +102,7 @@ PaddleViT now provides the following **transfomer based models**:
 8. **[Shuffle Transformer](./Shuffle_Transformer)** (from Tencent), released with paper [Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/abs/2106.03650), by Zilong Huang, Youcheng Ben, Guozhong Luo, Pei Cheng, Gang Yu, Bin Fu.
 9. **[T2T-ViT](./T2T_ViT)** (from NUS and YITU), released with paper [Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet
 ](https://arxiv.org/abs/2101.11986), by Li Yuan, Yunpeng Chen, Tao Wang, Weihao Yu, Yujun Shi, Zihang Jiang, Francis EH Tay, Jiashi Feng, Shuicheng Yan.
+10. **[CrossViT]()** (from IBM), released with paper [CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899), by Chun-Fu Chen, Quanfu Fan, Rameswar Panda.
 
 PaddleViT now provides the following **MLP based models**:
 1. **[MLP-Mixer](./MLP-Mixer)** (from Google), released with paper [MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601), by Ilya Tolstikhin, Neil Houlsby, Alexander Kolesnikov, Lucas Beyer, Xiaohua Zhai, Thomas Unterthiner, Jessica Yung, Andreas Steiner, Daniel Keysers, Jakob Uszkoreit, Mario Lucic, Alexey Dosovitskiy
@@ -110,9 +114,8 @@ PaddleViT now provides the following **MLP based models**:
 
 
 #### Coming Soon: ####
-1. **[CrossViT]()** (from IBM), released with paper [CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899), by Chun-Fu Chen, Quanfu Fan, Rameswar Panda.
-2. **[Focal Transformer]()** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
-3. **[HaloNet]()**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.
+1. **[Focal Transformer]()** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
+2. **[HaloNet]()**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.
 
 
 ## Contact

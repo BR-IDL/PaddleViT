@@ -135,9 +135,8 @@ dmypy.json
 /semantic_segmentation/tmp
 *.pdparams
 *.pdopt
+
 /semantic_segmentation/pytorch_2_paddle.py
 /semantic_segmentation/config.ini
 /semantic_segmentation/job.sh
 /semantic_segmentation/run.sh
-
-
