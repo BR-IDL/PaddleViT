@@ -91,6 +91,7 @@ if __name__ == '__main__':
     reader_cost_averager = TimeAverager()
     batch_cost_averager = TimeAverager()
     batch_start = time.time()
+    val_start_time = time.time()
     with paddle.no_grad():
         for iter, (img, label) in enumerate(loader_val):
             reader_cost_averager.record(time.time() - batch_start)
@@ -159,9 +160,13 @@ if __name__ == '__main__':
             reader_cost_averager.reset()
             batch_cost_averager.reset()
             batch_start = time.time()
+    val_end_time = time.time()
+    val_time_cost = val_end_time - val_start_time
     class_iou, miou = metrics.mean_iou(intersect_area_all, pred_area_all, label_area_all)
     class_acc, acc = metrics.accuracy(intersect_area_all, pred_area_all)
     kappa = metrics.kappa(intersect_area_all, pred_area_all, label_area_all)
+    logger.info("Val_time_cost:   {}".format(val_time_cost))
     logger.info("[EVAL] #Images: {} mIoU: {:.4f} Acc: {:.4f} Kappa: {:.4f} ".format(len(dataset_val), miou, acc, kappa))
     logger.info("[EVAL] Class IoU: \n" + str(np.round(class_iou, 4)))
     logger.info("[EVAL] Class Acc: \n" + str(np.round(class_acc, 4)))
+    
