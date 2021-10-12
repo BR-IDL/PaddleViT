@@ -544,11 +544,8 @@ def main_worker(*args):
                     config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
                 paddle.save(model.state_dict(), model_path + '.pdparams')
                 paddle.save(optimizer.state_dict(), model_path + '.pdopt')
-                local_logger.info(f"----- Save model: {model_path}.pdparams")
-                local_logger.info(f"----- Save optim: {model_path}.pdopt")
-                if local_rank == 0:
-                    master_logger.info(f"----- Save model: {model_path}.pdparams")
-                    master_logger.info(f"----- Save optim: {model_path}.pdopt")
+                master_logger.info(f"----- Save model: {model_path}.pdparams")
+                master_logger.info(f"----- Save optim: {model_path}.pdopt")
 
 
 def main():
