@@ -55,6 +55,7 @@ _C.MODEL.CNN.PATCH_SIZE = 7
 _C.MODEL.CNN.ACTIVATION = 'GELU'
 
 # training settings
+# training settings
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 150
@@ -73,7 +74,9 @@ _C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
 _C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
 
 _C.TRAIN.OPTIMIZER = CN()
-_C.TRAIN.OPTIMIZER.NAME = 'SGD'
+_C.TRAIN.OPTIMIZER.NAME = 'AdamW'
+_C.TRAIN.OPTIMIZER.EPS = 1e-8
+_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 
 # train augmentation
