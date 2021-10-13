@@ -1,0 +1,12 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.96
+MODEL:
+    TYPE: convmixer
+    NAME: convmixer_768_32
+    CNN:
+        DIM: 768
+        DEPTH: 32
+        KERNEL_SIZE: 7 
+        PATCH_SIZE: 7
+        ACTIVATION: 'ReLU'

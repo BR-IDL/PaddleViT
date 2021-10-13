@@ -1,0 +1,12 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.96
+MODEL:
+    TYPE: convmixer
+    NAME: convmixer_1536_20
+    CNN:
+        DIM: 1536
+        DEPTH: 20
+        KERNEL_SIZE: 9 
+        PATCH_SIZE: 7
+        ACTIVATION: 'GELU'
