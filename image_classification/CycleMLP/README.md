@@ -8,7 +8,7 @@ The official and 3rd party pytorch implementation are [here](https://github.com/
 This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
 
 <p align="center">
-<img src="./cyclemlp.png" alt="drawing" width="70%" height="70%"/>
+<img src="./cyclemlp.png" alt="drawing" width="60%" height="60%"/>
 <h4 align="center">CycleMLP Model Overview</h4>
 </p>
 
@@ -20,11 +20,11 @@ Update (2021-09-24): Code is released and ported weights are uploaded.
 ## Models Zoo
 | Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
 |-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| cyclemlp_b1 					 | 78.85 | 94.60 | 15.1M   |    | 224   	    | 0.9    | bicubic       | [google](https://drive.google.com/file/d/10WQenRy9lfOJF4xEHc9Mekp4zHRh0mJ_/view?usp=sharing)/[baidu](https://pan.baidu.com/s/11UQp1RkWBsZFOqit_uU80w)(mnbr) |
-| cyclemlp_b2 					 | 81.58 | 95.81 | 26.8M   |    | 224   	    | 0.9    | bicubic       | [google](https://drive.google.com/file/d/1dtQHCwtxNh9jgiHivN5iYpHe7uKRUjhk/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Js-Oq5vyiB7oPagn43cn3Q)(jwj9) |
-| cyclemlp_b3 					 | 82.42 | 96.07 | 38.3M   |    | 224   	    | 0.9    | bicubic       | [google](https://drive.google.com/file/d/11kMq112tAwVE5llJIepIIixz74AjaJhU/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1b7cau1yPxqATA8X7t2DXkw)(v2fy) |
-| cyclemlp_b4 					 | 82.96 | 96.33 | 51.8M   |    | 224   	    | 0.875  | bicubic       | [google](https://drive.google.com/file/d/1vwJ0eD9Ic-NvLvCz1zEAmn7RxBMtd_v2/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1P3TlnXRFGWj9nVP5xBGGWQ)(fnqd) |
-| cyclemlp_b5 					 | 83.25 | 96.44 | 75.7M   |    | 224   	    | 0.875  | bicubic       | [google](https://drive.google.com/file/d/12_I4cfOBfp7kC0RvmnMXFqrSxww6plRW/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1-Cka1tNqGUQutkAP3VZXzQ)(s55c) |
+| cyclemlp_b1 					 | 78.85 | 94.60 | 15.1M   |  2.1G  | 224   	    | 0.9    | bicubic       | [google](https://drive.google.com/file/d/10WQenRy9lfOJF4xEHc9Mekp4zHRh0mJ_/view?usp=sharing)/[baidu](https://pan.baidu.com/s/11UQp1RkWBsZFOqit_uU80w)(mnbr) |
+| cyclemlp_b2 					 | 81.58 | 95.81 | 26.8M   |  3.9G  | 224   	    | 0.9    | bicubic       | [google](https://drive.google.com/file/d/1dtQHCwtxNh9jgiHivN5iYpHe7uKRUjhk/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Js-Oq5vyiB7oPagn43cn3Q)(jwj9) |
+| cyclemlp_b3 					 | 82.42 | 96.07 | 38.3M   |  6.9G  | 224   	    | 0.9    | bicubic       | [google](https://drive.google.com/file/d/11kMq112tAwVE5llJIepIIixz74AjaJhU/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1b7cau1yPxqATA8X7t2DXkw)(v2fy) |
+| cyclemlp_b4 					 | 82.96 | 96.33 | 51.8M   |  10.1G  | 224   	    | 0.875  | bicubic       | [google](https://drive.google.com/file/d/1vwJ0eD9Ic-NvLvCz1zEAmn7RxBMtd_v2/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1P3TlnXRFGWj9nVP5xBGGWQ)(fnqd) |
+| cyclemlp_b5 					 | 83.25 | 96.44 | 75.7M   |  12.3G  | 224   	    | 0.875  | bicubic       | [google](https://drive.google.com/file/d/12_I4cfOBfp7kC0RvmnMXFqrSxww6plRW/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1-Cka1tNqGUQutkAP3VZXzQ)(s55c) |
 
 
 
