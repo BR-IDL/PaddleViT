@@ -126,7 +126,7 @@ python main_multi_gpu.py \
 </details>
 
 ## Training
-To train the CycleMLP Transformer model on ImageNet2012 with single GPUs, run the following script using command line:
+To train the CycleMLP model on ImageNet2012 with single GPUs, run the following script using command line:
 ```shell
 sh run_train.sh
 ```
