@@ -69,7 +69,7 @@ To use the model with pretrained weights, download the `.pdparam` weight file an
 For example, assume the downloaded weight file is stored in `./RepMLP-Res50-light-224_train.pdparams`, to use the `RepMLP-Res50-light-224_train` model in python:
 ```python
 from config import get_config
-from resmlp import build_res_mlp as build_model
+from resmlp_resnet import build_resmlp_resnet as build_model
 # config files in ./configs/
 config = get_config('./configs/repmlpres50_light_224_train.yaml')
 # build model
