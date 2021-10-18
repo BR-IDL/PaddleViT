@@ -26,8 +26,8 @@ class Identity(nn.Layer):
     """
     def __init__(self, *args, **kwargs):
         super(Identity, self).__init__()
-    def forward(self, input):
-        return input
+    def forward(self, x):
+        return x
 
 class PreNorm(nn.Layer):
     def __init__(self, dim, fn):
@@ -136,8 +136,7 @@ class MV2Block(nn.Layer):
     def forward(self, x):
         if self.use_res_connect:
             return x + self.conv(x)
-        else:
-            return self.conv(x)
+        return self.conv(x)
 
 
 class MobileViTBlock(nn.Layer):
