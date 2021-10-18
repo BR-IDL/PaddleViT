@@ -230,11 +230,11 @@ class MobileViT(nn.Layer):
 
 
 def build_mobile_vit(config):
-    """Build mlp mixer by reading options in config object
+    """Build MobileViT by reading options in config object
     Args:
         config: config instance contains setting options
     Returns:
-        model: MlpMixer model
+        model: MobileViT model
     """
     dims = config.MODEL.DIMS
     channels = config.MODEL.CHANNELS
@@ -242,44 +242,3 @@ def build_mobile_vit(config):
     expaansion = config.MODEL.MV2_EXPAANSION
     model = MobileViT((256,256),dims,channels,num_classes,expaansion)
     return model
-
-
-def mobilevit_xxs():
-    dims = [64, 80, 96]
-    channels = [16, 16, 24, 24, 48, 48, 64, 64, 80, 80, 320]
-    return MobileViT((256, 256), dims, channels, num_classes=1000, expansion=2)
-
-
-def mobilevit_xs():
-    dims = [96, 120, 144]
-    channels = [16, 32, 48, 48, 64, 64, 80, 80, 96, 96, 384]
-    return MobileViT((256, 256), dims, channels, num_classes=1000)
-
-
-def mobilevit_s():
-    dims = [144, 192, 240]
-    channels = [16, 32, 64, 64, 96, 96, 128, 128, 160, 160, 640]
-    return MobileViT((256, 256), dims, channels, num_classes=1000)
-
-
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if not p.stop_gradient)
-
-
-if __name__ == '__main__':
-    img = paddle.randn([5, 3, 256, 256])
-
-    vit = mobilevit_xxs()
-    out = vit(img)
-    print(out.shape)
-    print(count_parameters(vit))
-
-    vit = mobilevit_xs()
-    out = vit(img)
-    print(out.shape)
-    print(count_parameters(vit))
-
-    vit = mobilevit_s()
-    out = vit(img)
-    print(out.shape)
-    print(count_parameters(vit))
