@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@ Implement Transformer Class for BEiT
 """
 
 import math
+import copy
 from functools import partial
-
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-
 from droppath import DropPath
 
 trunc_normal_ = nn.initializer.TruncatedNormal(std=0.02)
@@ -38,14 +37,12 @@ class Mlp(nn.Layer):
 
     """
 
-    def __init__(
-        self,
-        in_features,
-        hidden_features=None,
-        out_features=None,
-        act_layer=nn.GELU,
-        drop=0.0,
-    ):
+    def __init__(self,
+                 in_features,
+                 hidden_features=None,
+                 out_features=None,
+                 act_layer=nn.GELU,
+                 drop=0.0):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -69,16 +66,13 @@ class PatchEmbed(nn.Layer):
     Apply patch embeddings on input images. Embeddings is implemented using a Conv2D op.
 
     """
-
-    def __init__(
-        self,
-        img_size=224,
-        patch_size=16,
-        in_chans=3,
-        embed_dim=768,
-        norm_layer=None,
-        flatten=True,
-    ):
+    def __init__(self,
+                 img_size=224,
+                 patch_size=16,
+                 in_chans=3,
+                 embed_dim=768,
+                 norm_layer=None,
+                 flatten=True):
         super().__init__()
         img_size = (img_size, img_size)
         patch_size = (patch_size, patch_size)
@@ -97,7 +91,7 @@ class PatchEmbed(nn.Layer):
         B, C, H, W = x.shape
         assert (
             H == self.img_size[0] and W == self.img_size[1]
-        ), f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
+        ), f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})"
         x = self.proj(x)
         if self.flatten:
             x = x.flatten(2).transpose((0, 2, 1))  # BCHW -> BNC
@@ -112,27 +106,23 @@ class Identity(nn.Layer):
     Use this layer to avoid if condition in some forward methods
 
     """
-
     def __init__(self):
         super().__init__()
 
-    def forward(self, input):
-        return input
+    def forward(self, inputs):
+        return inputs
 
 
 class Attention(nn.Layer):
     """Attention Layer"""
-
-    def __init__(
-        self,
-        dim,
-        num_heads=8,
-        qkv_bias=False,
-        attn_drop=0.0,
-        proj_drop=0.0,
-        window_size=None,
-        attn_head_dim=None,
-    ):
+    def __init__(self,
+                 dim,
+                 num_heads=8,
+                 qkv_bias=False,
+                 attn_drop=0.0,
+                 proj_drop=0.0,
+                 window_size=None,
+                 attn_head_dim=None):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
@@ -143,7 +133,6 @@ class Attention(nn.Layer):
 
         self.qkv = nn.Linear(dim, all_head_dim * 3, bias_attr=False)
         if qkv_bias:
-
             self.q_bias = paddle.create_parameter(
                 shape=[all_head_dim], dtype="float32", default_initializer=zeros_
             )
@@ -252,21 +241,19 @@ class Attention(nn.Layer):
 
 
 class Block(nn.Layer):
-    def __init__(
-        self,
-        dim,
-        num_heads,
-        mlp_ratio=4.0,
-        qkv_bias=False,
-        drop=0.0,
-        attn_drop=0.0,
-        drop_path=0.0,
-        init_values=None,
-        act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
-        window_size=None,
-        attn_head_dim=None,
-    ):
+    def __init__(self,
+                 dim,
+                 num_heads,
+                 mlp_ratio=4.0,
+                 qkv_bias=False,
+                 drop=0.0,
+                 attn_drop=0.0,
+                 drop_path=0.0,
+                 init_values=None,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 window_size=None,
+                 attn_head_dim=None):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = Attention(
@@ -290,19 +277,16 @@ class Block(nn.Layer):
         )
 
         if init_values:
-
             self.gamma_1 = paddle.create_parameter(
                 shape=[dim],
                 dtype="float32",
                 default_initializer=nn.initializer.Constant(value=init_values),
             )
-
             self.gamma_2 = paddle.create_parameter(
                 shape=[dim],
                 dtype="float32",
                 default_initializer=nn.initializer.Constant(value=init_values),
             )
-
         else:
             self.gamma_1, self.gamma_2 = None, None
 
@@ -357,32 +341,36 @@ class RelativePositionBias(nn.Layer):
 
         # trunc_normal_(self.relative_position_bias_table, std=.02)
 
+    def forward(self):
+        relative_position_bias = self.relative_position_bias_table[
+            self.relative_position_index.reshape([-1])].reshape(
+                self.window_size[0] * self.window_size[1] + 1,
+                self.window_size[0] * self.window_size[1] + 1, -1)  # Wh*Ww,Wh*Ww,nH
+        return relative_position_bias.transpose([2, 0, 1])  # nH, Wh*Ww, Wh*Ww
+
 
 class Beit(nn.Layer):
     """Beit Layer"""
-
-    def __init__(
-        self,
-        img_size=224,
-        patch_size=16,
-        in_chans=3,
-        num_classes=1000,
-        embed_dim=768,
-        depth=12,
-        num_heads=12,
-        mlp_ratio=4.0,
-        qkv_bias=True,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.0,
-        norm_layer=partial(nn.LayerNorm, epsilon=1e-6),
-        init_values=None,
-        use_abs_pos_emb=True,
-        use_rel_pos_bias=False,
-        use_shared_rel_pos_bias=False,
-        use_mean_pooling=True,
-        init_scale=0.001,
-    ):
+    def __init__(self,
+                 img_size=224,
+                 patch_size=16,
+                 in_chans=3,
+                 num_classes=1000,
+                 embed_dim=768,
+                 depth=12,
+                 num_heads=12,
+                 mlp_ratio=4.0,
+                 qkv_bias=True,
+                 drop_rate=0.0,
+                 attn_drop_rate=0.0,
+                 drop_path_rate=0.0,
+                 norm_layer=partial(nn.LayerNorm, epsilon=1e-6),
+                 init_values=None,
+                 use_abs_pos_emb=True,
+                 use_rel_pos_bias=False,
+                 use_shared_rel_pos_bias=False,
+                 use_mean_pooling=True,
+                 init_scale=0.001):
         super().__init__()
         self.num_classes = num_classes
         # num_features for consistency with other models
@@ -403,7 +391,6 @@ class Beit(nn.Layer):
         )
 
         if use_abs_pos_emb:
-
             self.pos_embed = paddle.create_parameter(
                 shape=[1, num_patches + 1, embed_dim],
                 dtype="float32",
@@ -435,9 +422,7 @@ class Beit(nn.Layer):
                     drop_path=dpr[i],
                     norm_layer=norm_layer,
                     init_values=init_values,
-                    window_size=self.patch_embed.grid_size
-                    if use_rel_pos_bias
-                    else None,
+                    window_size=self.patch_embed.grid_size if use_rel_pos_bias else None,
                 )
                 for i in range(depth)
             ]
@@ -459,7 +444,6 @@ class Beit(nn.Layer):
 
     def fix_init_weight(self):
         def rescale(param, layer_id):
-
             param.set_value(param.divide(paddle.to_tensor(math.sqrt(2.0 * layer_id))))
 
         for layer_id, layer in enumerate(self.blocks):
@@ -481,7 +465,7 @@ class Beit(nn.Layer):
     def get_classifier(self):
         return self.head
 
-    def reset_classifier(self, num_classes, global_pool=""):
+    def reset_classifier(self, num_classes):
         self.num_classes = num_classes
         self.head = (
             nn.Linear(self.embed_dim, num_classes) if num_classes > 0 else Identity()
@@ -501,16 +485,14 @@ class Beit(nn.Layer):
 
         rel_pos_bias = self.rel_pos_bias() if self.rel_pos_bias is not None else None
         for blk in self.blocks:
-
             x = blk(x, rel_pos_bias=rel_pos_bias)
 
         x = self.norm(x)
         if self.fc_norm is not None:
             t = x[:, 1:, :]
-
             return self.fc_norm(t.mean(1))
-        else:
-            return x[:, 0]
+
+        return x[:, 0]
 
     def forward(self, x):
         x = self.forward_features(x)
@@ -519,6 +501,7 @@ class Beit(nn.Layer):
 
 
 def build_beit(config):
+    """ build beit from config"""
     model = Beit(
         img_size=config.DATA.IMAGE_SIZE,
         num_classes=config.MODEL.NUM_CLASSES,

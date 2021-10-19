@@ -5,27 +5,29 @@ PaddlePaddle training/validation code and pretrained models for **BEiT**.
 The official and 3rd party pytorch implementation are [here](https://github.com/microsoft/unilm/tree/master/beit).
 
 
-This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
+This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT).
 
 <p align="center">
 <img src="./beit.png" alt="drawing" width="90%" height="90%"/>
-<h4 align="center">ViP Model Overview</h4>
+<h4 align="center">BEiT Model Overview</h4>
 </p>
 
 
 
 ### Update 
-Update (2021-09-27): Code is released and ported weights are uploaded.
+- Update (2021-10-19): Bug fix and weights links are updated.
+- Update (2021-09-27): Code is released and ported weights are uploaded.
 
 ## Models Zoo
 
-| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
-|--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| beit_base_patch16_224 | 85.21 | 97.66 | 224        | 0.9   | bicubic       |  |
-| beit_base_patch16_384 |  |  | 384      | 1.0    | bicubic      |  |
-| beit_large_patch16_224 |  |  | 224        | 0.9     | bicubic      |  |
-| beit_large_patch16_382 |  |  | 384 | 1.0 | bicubic | |
-| beit_large_patch16_512 |  |  | 512 | 1.0 | bicubic | |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| beit_base_patch16_224_pt22k   | 85.21 | 97.66 | 87M    | 12.7G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1lq5NeQRDHkIQi7U61OidaLhNsXTWfh_Z/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1pjblqaESqfXVrpgo58oR6Q)(fshn) |
+| beit_base_patch16_384_pt22k   | 86.81 | 98.14 | 87M    | 37.3G   | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1wn2NS7kUdlERkzWEDeyZKmcRbmWL7TR2/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1WVbNjxuIUh514pKAgZZEzg)(arvc) |
+| beit_large_patch16_224_pt22k  | 87.48 | 98.30 | 304M   | 45.0G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/11OR1FKxzfafqT7GzTW225nIQjxmGSbCm/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1bvhERVXN2TyRcRJFzg7sIA)(2ya2) |
+| beit_large_patch16_384_pt22k  | 88.40 | 98.60 | 304M   | 131.7G  | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/10EraafYS8CRpEshxClOmE2S1eFCULF1Y/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1H76G2CGLY3YmmYt4-suoRA)(qtrn) |
+| beit_large_patch16_512_pt22k  | 88.60 | 98.66 | 304M   | 234.0G  | 512        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1xIIocftsB1PcDHZttPqLdrJ-G4Tyfrs-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1WtTVK_Wvg-izaF0M6Gzw-Q)(567v) |
+
 
 > *The results are evaluated on ImageNet2012 validation set.
 >
