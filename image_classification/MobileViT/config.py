@@ -17,7 +17,6 @@
 Configuration for data, model archtecture, and training, etc.
 Config can be set by .yaml file or by argparser(limited usage)
 
-
 """
 
 import os
@@ -29,38 +28,49 @@ _C.BASE = ['']
 
 # data settings
 _C.DATA = CN()
-_C.DATA.BATCH_SIZE = 128 #256 # train batch_size for single GPU
-_C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
+_C.DATA.BATCH_SIZE = 8 #1024 batch_size for single GPU
+_C.DATA.BATCH_SIZE_EVAL = 8 #1024 batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
-_C.DATA.IMAGE_SIZE = 256 # input image size: 224 for pretrain, 384 for finetune
-_C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 2 # number of data loading threads
+_C.DATA.IMAGE_SIZE = 224 # input image size
+_C.DATA.CROP_PCT = 0.9 # input image scale ratio, scale is applied before centercrop in eval mode
+_C.DATA.NUM_WORKERS = 4 # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
-_C.MODEL.TYPE = 'MobileViT'
-_C.MODEL.NAME = 'MobileViT'
+_C.MODEL.TYPE = 'CSwin'
+_C.MODEL.NAME = 'CSwin'
 _C.MODEL.RESUME = None
+_C.MODEL.RESUME_EMA = None
 _C.MODEL.PRETRAINED = None
-_C.MODEL.DIMS = [144,192,240]
-_C.MODEL.CHANNELS = [16, 32, 64, 64, 96, 96, 128, 128, 160, 160, 640]
-_C.MODEL.MV2_EXPAANSION = 4
 _C.MODEL.NUM_CLASSES = 1000
-_C.MODEL.DROPOUT = 0.1
-_C.MODEL.DROPPATH = 0.1
+_C.MODEL.DROPOUT = 0.0
+_C.MODEL.DROPPATH = 0.2
+_C.MODEL.ATTENTION_DROPOUT = 0.0
+
+_C.MODEL.PATCH_SIZE = 2 
+_C.MODEL.IN_CHANNELS = 3
+_C.MODEL.DIMS = [16, 32, 48, 48, 48, 64, 80, 96, 384] # conv + mobv2 block out dims 
+_C.MODEL.HIDDEN_DIMS = [96, 120, 133] # mobile vit block hidden dims 
+_C.MODEL.DEPTH = [2, 4, 3] 
+_C.MODEL.NUM_HEADS = 8 
+_C.MODEL.MLP_RATIO = 2.
+_C.MODEL.QKV_BIAS = True
+_C.MODEL.QK_SCALE = None
 
 # training settings
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
-_C.TRAIN.NUM_EPOCHS = 200
-_C.TRAIN.WARMUP_EPOCHS = 100 #34 # ~ 10k steps for 4096 batch size
-_C.TRAIN.WEIGHT_DECAY = 0.01 #0.3 # 0.0 for finetune
-_C.TRAIN.BASE_LR = 0.9e-3 #0.003 for pretrain # 0.03 for finetune
-_C.TRAIN.WARMUP_START_LR = 0.9e-4 #0.0
-_C.TRAIN.END_LR = 0.9e-4
-_C.TRAIN.GRAD_CLIP = 1.0
-_C.TRAIN.ACCUM_ITER = 2 #1
+_C.TRAIN.NUM_EPOCHS = 300
+_C.TRAIN.WARMUP_EPOCHS = 20
+_C.TRAIN.WEIGHT_DECAY = 0.05
+_C.TRAIN.BASE_LR = 0.001
+_C.TRAIN.WARMUP_START_LR = 1e-6
+_C.TRAIN.END_LR = 1e-5
+_C.TRAIN.GRAD_CLIP = None
+_C.TRAIN.ACCUM_ITER = 1
+_C.TRAIN.MODEL_EMA = True
+_C.TRAIN.MODEL_EMA_DECAY = 0.99992
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -69,17 +79,48 @@ _C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
 _C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
 
 _C.TRAIN.OPTIMIZER = CN()
-_C.TRAIN.OPTIMIZER.NAME = 'SGD'
+_C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
 _C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 
+# train augmentation
+_C.TRAIN.MIXUP_ALPHA = 0.8
+_C.TRAIN.CUTMIX_ALPHA = 1.0
+_C.TRAIN.CUTMIX_MINMAX = None
+_C.TRAIN.MIXUP_PROB = 1.0
+_C.TRAIN.MIXUP_SWITCH_PROB = 0.5
+_C.TRAIN.MIXUP_MODE = 'batch'
+
+_C.TRAIN.SMOOTHING = 0.1
+_C.TRAIN.COLOR_JITTER = 0.4
+_C.TRAIN.AUTO_AUGMENT = True #'rand-m9-mstd0.5-inc1'
+
+_C.TRAIN.RANDOM_ERASE_PROB = 0.25
+_C.TRAIN.RANDOM_ERASE_MODE = 'pixel'
+_C.TRAIN.RANDOM_ERASE_COUNT = 1
+_C.TRAIN.RANDOM_ERASE_SPLIT = False
+
+# augmentation
+_C.AUG = CN()
+_C.AUG.COLOR_JITTER = 0.4 # color jitter factor
+_C.AUG.AUTO_AUGMENT = 'rand-m9-mstd0.5-inc1'
+_C.AUG.RE_PROB = 0.25 # random earse prob
+_C.AUG.RE_MODE = 'pixel' # random earse mode
+_C.AUG.RE_COUNT = 1 # random earse count
+_C.AUG.MIXUP = 0.8 # mixup alpha, enabled if >0
+_C.AUG.CUTMIX = 1.0 # cutmix alpha, enabled if >0
+_C.AUG.CUTMIX_MINMAX = None # cutmix min/max ratio, overrides alpha
+_C.AUG.MIXUP_PROB = 1.0 # prob of mixup or cutmix when either/both is enabled
+_C.AUG.MIXUP_SWITCH_PROB = 0.5 # prob of switching cutmix when both mixup and cutmix enabled
+_C.AUG.MIXUP_MODE = 'batch' #how to apply mixup/curmix params, per 'batch', 'pair', or 'elem'
+
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 20 # freq to save chpt
+_C.SAVE_FREQ = 1 # freq to save chpt
 _C.REPORT_FREQ = 50 # freq to logging info
-_C.VALIDATE_FREQ = 20 # freq to do validation
+_C.VALIDATE_FREQ = 10 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.AMP = False # mix precision training

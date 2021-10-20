@@ -1,7 +1,8 @@
+DATA:
+    IMAGE_SIZE: 256
+    CROP_PCT: 0.875
 MODEL:
     TYPE: MobileViT
     NAME: mobilevit_xxs
-    DIMS: [64, 80, 96]
-    CHANNELS: [16, 16, 24, 24, 48, 48, 64, 64, 80, 80, 320]
-    NUM_CLASSES: 1000
-    MV2_EXPAANSION: 2
+    DIMS: [16, 16, 24, 24, 24, 48, 64, 80, 320] # mobile v2 block output channels
+    HIDDEN_DIMS: [64, 80, 96] # mobile vit block hidden dim

@@ -1,3 +1,24 @@
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""utils for ViT
+
+Contains AverageMeter for monitoring, get_exclude_from_decay_fn for training
+and WarmupCosineScheduler for training
+
+"""
+
 import math
 from paddle.optimizer.lr import LRScheduler
 
@@ -21,6 +42,34 @@ class AverageMeter():
         self.sum += val * n
         self.cnt += n
         self.avg = self.sum / self.cnt
+
+
+
+def get_exclude_from_weight_decay_fn(exclude_list=[]):
+    """ Set params with no weight decay during the training
+
+    For certain params, e.g., positional encoding in ViT, weight decay
+    may not needed during the learning, this method is used to find
+    these params.
+
+    Args:
+        exclude_list: a list of params names which need to exclude
+                      from weight decay.
+    Returns:
+        exclude_from_weight_decay_fn: a function returns True if param
+                                      will be excluded from weight decay
+    """
+    if len(exclude_list) == 0:
+        exclude_from_weight_decay_fn = None
+    else:
+        def exclude_fn(param):
+            for name in exclude_list:
+                if param.endswith(name):
+                    return False
+            return True
+        exclude_from_weight_decay_fn = exclude_fn
+    return exclude_from_weight_decay_fn
+
 
 class WarmupCosineScheduler(LRScheduler):
     """Warmup Cosine Scheduler
