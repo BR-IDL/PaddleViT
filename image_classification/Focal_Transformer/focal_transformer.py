@@ -49,10 +49,8 @@ class DropPath(nn.Layer):
 
 class Identity(nn.Layer):
     r""" Identity layer
-
         The output of this layer is the input without any change.
         Use this layer to avoid using 'if' condition in forward methods
-
     """
     def __init__(self):
         super().__init__()
