@@ -1,0 +1,15 @@
+MODEL:
+  TYPE: focal
+  NAME: focal_tiny_patch4_window7_224
+  DROP_PATH: 0.2
+  FOCAL:
+    USE_CONV_EMBED: True
+    EMBED_DIM: 96
+    DEPTHS: [2, 2, 6, 2]
+    NUM_HEADS: [3, 6, 12, 24]
+    WINDOW_SIZE: 7 
+    FOCAL_POOL: "fc"
+    FOCAL_STAGES: [0, 1, 2, 3]
+    FOCAL_LEVELS: [2, 2, 2, 2]
+    FOCAL_WINDOWS: [7, 5, 3, 1]
+    EXPAND_SIZES: [3, 3, 3, 3]
