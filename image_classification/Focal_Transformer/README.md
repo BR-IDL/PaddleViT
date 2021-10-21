@@ -11,7 +11,8 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
   <img src='./model.png'>
   </div>
 
-<center> <h3>Focal Transformer Model Overview</h3> </center>
+<center> <h3>Focal Transformer Model Overview</h3>  </center>
+
 
 ### Update
 
