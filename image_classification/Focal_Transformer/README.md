@@ -106,7 +106,7 @@ python main_single_gpu.py \
 <details>
 
 <summary>
-Run evaluation using `multi-GPUs`:
+Run evaluation using multi-GPUs:
 </summary>
 
 
@@ -150,7 +150,7 @@ python main_single_gpu.py \
 <details>
 
 <summary>
-Run training using `multi-GPUs`:
+Run training using multi-GPUs:
 </summary>
 
 
