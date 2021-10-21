@@ -199,7 +199,8 @@ class WindowAttention(nn.Layer):
         weight_attr, bias_attr = self._init_weights()
 
         # define a parameter table of relative position bias for each window
-        self.relative_position_bias_table = paddle.create_parameter(shape=((2 * window_size[0] - 1) * (2 * window_size[1] - 1), num_heads),
+        self.relative_position_bias_table = paddle.create_parameter(shape=(
+                                                                    (2 * window_size[0] - 1) * (2 * window_size[1] - 1), num_heads),
                                                                     dtype=np.float32, is_bias=True)  # 2*Wh-1 * 2*Ww-1, nH
 
         # get pair-wise relative position index for each token inside the window
@@ -261,7 +262,8 @@ class WindowAttention(nn.Layer):
                 self.relative_position_bias_table_to_windows.append(relative_position_bias_table_to_windows)
                 
                 # define relative position bias index
-                relative_position_index_k = get_relative_position_index(self.window_size, (self.focal_window + 2**k - 1, self.focal_window + 2**k - 1))
+                relative_position_index_k = get_relative_position_index(self.window_size,
+                                                                        (self.focal_window + 2**k - 1, self.focal_window + 2**k - 1))
                 self.register_buffer("relative_position_index_{}".format(k), relative_position_index_k)
 
                 # define unfolding index for focal_level > 0
@@ -290,36 +292,58 @@ class WindowAttention(nn.Layer):
 
 
         # partition q map
-        (q_windows, k_windows, v_windows) = map(
-            lambda t: window_partition(t, self.window_size[0]).reshape((
-            -1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads
-            )).transpose((0, 2, 1, 3)), 
-            (q, k, v)
-        )
-
+        q_windows = window_partition(q, self.window_size[0]).reshape(
+                    (-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3))
+        k_windows = window_partition(k, self.window_size[0]).reshape(
+                    (-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3))
+        v_windows = window_partition(v, self.window_size[0]).reshape(
+                    (-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3))
+        
+        # (q_windows, k_windows, v_windows) = map(
+        #     lambda t: window_partition(t, self.window_size[0]).reshape((
+        #     -1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads
+        #     )).transpose((0, 2, 1, 3)), 
+        #     (q, k, v)
+        # )
 
         if self.expand_size > 0 and self.focal_level > 0:
-            (k_tl, v_tl) = map(
-                lambda t: paddle.roll(t, shifts=(-self.expand_size, -self.expand_size), axis=(1, 2)), (k, v)
-            )
-            (k_tr, v_tr) = map(
-                lambda t: paddle.roll(t, shifts=(-self.expand_size, self.expand_size), axis=(1, 2)), (k, v)
-            )
-            (k_bl, v_bl) = map(
-                lambda t: paddle.roll(t, shifts=(self.expand_size, -self.expand_size), axis=(1, 2)), (k, v)
-            )
-            (k_br, v_br) = map(
-                lambda t: paddle.roll(t, shifts=(self.expand_size, self.expand_size), axis=(1, 2)), (k, v)
-            )        
+            k_tl = paddle.roll(k, shifts=(-self.expand_size, -self.expand_size), axis=(1, 2))
+            v_tl = paddle.roll(v, shifts=(-self.expand_size, -self.expand_size), axis=(1, 2))
+            # (k_tl, v_tl) = map(
+            #     lambda t: paddle.roll(t, shifts=(-self.expand_size, -self.expand_size), axis=(1, 2)), (k, v)
+            # )
+            k_tr = paddle.roll(k, shifts=(-self.expand_size, self.expand_size), axis=(1, 2)), (k, v)
+            v_tr = paddle.roll(v, shifts=(-self.expand_size, self.expand_size), axis=(1, 2)), (k, v)
+            # (k_tr, v_tr) = map(
+            #     lambda t: paddle.roll(t, shifts=(-self.expand_size, self.expand_size), axis=(1, 2)), (k, v)
+            # )
+            k_bl = paddle.roll(k, shifts=(self.expand_size, -self.expand_size), axis=(1, 2)), (k, v)
+            v_bl = paddle.roll(v, shifts=(self.expand_size, -self.expand_size), axis=(1, 2)), (k, v)
+            # (k_bl, v_bl) = map(
+            #     lambda t: paddle.roll(t, shifts=(self.expand_size, -self.expand_size), axis=(1, 2)), (k, v)
+            # )
+            k_br = paddle.roll(k, shifts=(self.expand_size, self.expand_size), axis=(1, 2)), (k, v)
+            v_br = paddle.roll(v, shifts=(self.expand_size, self.expand_size), axis=(1, 2)), (k, v)
+            # (k_br, v_br) = map(
+            #     lambda t: paddle.roll(t, shifts=(self.expand_size, self.expand_size), axis=(1, 2)), (k, v)
+            # )        
             
-            (k_tl_windows, k_tr_windows, k_bl_windows, k_br_windows) = map(
-                lambda t: window_partition(t, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads)), 
-                (k_tl, k_tr, k_bl, k_br)
-            )            
-            (v_tl_windows, v_tr_windows, v_bl_windows, v_br_windows) = map(
-                lambda t: window_partition(t, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads)), 
-                (v_tl, v_tr, v_bl, v_br)
-            )
+            k_tl_windows = window_partition(k_tl, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads))
+            k_tr_windows = window_partition(k_tr, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads))
+            k_bl_windows = window_partition(k_bl, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads))
+            k_br_windows = window_partition(k_br, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads))
+            # (k_tl_windows, k_tr_windows, k_bl_windows, k_br_windows) = map(
+            #     lambda t: window_partition(t, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads)), 
+            #     (k_tl, k_tr, k_bl, k_br)
+            # )
+            v_tl_windows = window_partition(v_tl, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads))
+            v_tr_windows = window_partition(v_tr, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads))
+            v_bl_windows = window_partition(v_bl, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads))
+            v_br_windows = window_partition(v_br, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads))
+            # (v_tl_windows, v_tr_windows, v_bl_windows, v_br_windows) = map(
+            #     lambda t: window_partition(t, self.window_size[0]).reshape((-1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads)), 
+            #     (v_tl, v_tr, v_bl, v_br)
+            # )
             k_rolled = paddle.concat((k_tl_windows, k_tr_windows, k_bl_windows, k_br_windows), 1).transpose((0, 2, 1, 3))
             v_rolled = paddle.concat((v_tl_windows, v_tr_windows, v_bl_windows, v_br_windows), 1).transpose((0, 2, 1, 3))
 
@@ -362,17 +386,25 @@ class WindowAttention(nn.Layer):
                 qkv_pooled = self.qkv(x_window_pooled).reshape((B, nWh, nWw, 3, C)).transpose((3, 0, 4, 1, 2))
                 k_pooled_k, v_pooled_k = qkv_pooled[1], qkv_pooled[2]  # B, C, nWh, nWw
 
-                (k_pooled_k, v_pooled_k) = map(
-                    lambda t: self.unfolds[k](t).reshape((
-                    B, C, self.unfolds[k].kernel_sizes[0], self.unfolds[k].kernel_sizes[1], -1)).transpose((0, 4, 2, 3, 1)).reshape(
-                        (-1, self.unfolds[k].kernel_sizes[0]*self.unfolds[k].kernel_sizes[1], self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3)), 
-                    (k_pooled_k, v_pooled_k)  # (B x (nH*nW)) x nHeads x (unfold_wsize x unfold_wsize) x head_dim
-                )
+                k_pooled_k = self.unfolds[k](k_pooled_k).reshape((
+                            B, C, self.unfolds[k].kernel_sizes[0], self.unfolds[k].kernel_sizes[1], -1)).transpose((0, 4, 2, 3, 1)).reshape(
+                            (-1, self.unfolds[k].kernel_sizes[0]*self.unfolds[k].kernel_sizes[1], self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3))
+                v_pooled_k = self.unfolds[k](v_pooled_k).reshape((
+                            B, C, self.unfolds[k].kernel_sizes[0], self.unfolds[k].kernel_sizes[1], -1)).transpose((0, 4, 2, 3, 1)).reshape(
+                            (-1, self.unfolds[k].kernel_sizes[0]*self.unfolds[k].kernel_sizes[1], self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3))
+                # (k_pooled_k, v_pooled_k) = map(
+                #     lambda t: self.unfolds[k](t).reshape((
+                #     B, C, self.unfolds[k].kernel_sizes[0], self.unfolds[k].kernel_sizes[1], -1)).transpose((0, 4, 2, 3, 1)).reshape(
+                #         (-1, self.unfolds[k].kernel_sizes[0]*self.unfolds[k].kernel_sizes[1], self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3)), 
+                #     (k_pooled_k, v_pooled_k)  # (B x (nH*nW)) x nHeads x (unfold_wsize x unfold_wsize) x head_dim
+                # )
 
-                if k > 0:                    
-                    (k_pooled_k, v_pooled_k) = map(
-                        lambda t: t[:, :, valid_ind_unfold_k], (k_pooled_k, v_pooled_k)
-                    )
+                if k > 0:
+                    k_pooled_k = k_pooled_k[:, :, valid_ind_unfold_k]
+                    v_pooled_k = v_pooled_k[:, :, valid_ind_unfold_k]
+                    # (k_pooled_k, v_pooled_k) = map(
+                    #     lambda t: t[:, :, valid_ind_unfold_k], (k_pooled_k, v_pooled_k)
+                    # )
 
                 k_pooled += [k_pooled_k]
                 v_pooled += [v_pooled_k]
