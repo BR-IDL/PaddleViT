@@ -9,9 +9,8 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 <div align=center>
   <img src='./model.png'>
+  <center> <h3>Focal Transformer Model Overview</h3>  </center>
   </div>
-
-<center> <h3>Focal Transformer Model Overview</h3> </center>
 
 ### Update
 
