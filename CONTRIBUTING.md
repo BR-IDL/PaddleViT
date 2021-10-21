@@ -1,12 +1,13 @@
 # Contribute Code
 
-You encourage and appreciate researchers and developers to contribute to project **PPViT**. 
+You encourage and appreciate researchers and developers to contribute to project **PaddleViT**. 
+To contribute to PaddlePaddle, you have to agree with the [PaddleViT Contributor License Agreement](https://cla-assistant.io/BR-IDL/PaddleViT).
 
 This document explains our workflow and working style.
 
 ## Workflow
 
-PPViT uses this [Git branching model](http://nvie.com/posts/a-successful-git-branching-model/).  You can follow the listed steps for common contributions.
+PaddleViT uses this [Git branching model](http://nvie.com/posts/a-successful-git-branching-model/).  You can follow the listed steps for common contributions.
 
 ### 1. Fork the repo
 
@@ -52,7 +53,7 @@ PPViT uses this [Git branching model](http://nvie.com/posts/a-successful-git-bra
    An experienced Git user pulls from the official repo often -- daily or even hourly, so they notice conflicts with others work early, and it's easier to resolve smaller conflicts.
 
    ```bash
-   $ git remote add upstream https://github.com/xperzy/PPViT
+   $ git remote add upstream https://github.com/BR-IDL/PaddleViT
    $ git pull upstream develop
    ```
 
