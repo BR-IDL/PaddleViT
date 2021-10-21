@@ -15,20 +15,18 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 ### Update
 
-- Update(2021-10-21): 
-	- Code is released and ported weights are uploaded.
-   - Support single gpu and multi gpus training.
+- Update(2021-10-21): Code is released and ported weights are uploaded.
 
 ## Models Zoo
 
-| Model | UseConv | official-Acc@1 | paddle-Acc@1 | official-Acc@5 | paddle-Acc@5 | #Params | FLOPs | Image Size | Crop_pct | Interpolation | Link |
-| :--------: | :--------: | :--------: | :--------: | :--------: | :--------: | :--------: | :--------: | :--------: | :--------: | :--------: | :--------: |
-| Focal-T     | No     | 82.2     | 82.03     | 95.9     | 95.86     | 28.9M     | 4.9G     | 224     | 0.875     | bicubic     | [google]()/[baidu]()     |
-| Focal-T     | Yes     | 82.7     | 82.70     | 96.1     | 96.14     | 30.8M     | 4.9G     | 224     | 0.875      | bicubic     | [google]()/[baidu]()     |
-| Focal-S     | No     | 83.6     | 83.55    | 96.2     | 96.29     | 51.1M     | 9.4G     | 224     | 0.875      | bicubic     | [google]()/[baidu]()     |
-| Focal-S     | Yes     | 83.8     | 83.85     | 96.5     | 96.47     | 53.1M     | 9.4G     | 224     | 0.875      | bicubic     | [google]()/[baidu]()     |
-| Focal-B     | No     | 84.0     | 83.98     | 96.5     | 96.48     | 89.8M     | 16.4G     | 224     | 0.875      | bicubic     | [google]()/[baidu]()     |
-| Focal-B     | Yes     | 84.2     | **     | 97.1     | **     | 93.3M     | 16.4G     | 224     | 0.875      | bicubic     | [google]()/[baidu]()     |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| Focal-T    					| 82.03 | 95.86 | 28.9M   | 4.9G    | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1HzZJbYH_eIo94h0wLUhqTyJ6AYthNKRh/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1JCr2qIA-SZvTqbTO-m2OwA)(i8c2) |
+| Focal-T (use conv)   			| 82.70 | 96.14 | 30.8M   | 4.9G    | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1PS0-gdXHGl95LqH5k5DG62AH6D3i7v0D/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1tVztox4bVJuJEjkD1fLaHQ)(smrk) |
+| Focal-S    					| 83.55 | 96.29 | 51.1M   | 9.4G    | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1HnVAYsI_hmiomyS4Ax3ccPE7gk4mlTU8/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1b7uugAY9RhrgTkUwYcvvow)(dwd8) |
+| Focal-S (use conv)   			| 83.85 | 96.47 | 53.1M   | 9.4G    | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1vcHjYiGNMayoSTPoM8z39XRH6h89TB9V/view?usp=sharing)/[baidu](https://pan.baidu.com/s/174a2aZzCEt3teLuAnIzMtA)(nr7n) |
+| Focal-B    					| 83.98 | 96.48 | 89.8M   | 16.4G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1bNMegxetWpwZNcmDEC3MHCal6SNXSgWR/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1piBslNhxWR78aQJIdoZjEw)(8akn) |
+| Focal-B (use conv)   			| 84.18 | 96.61 | 93.3M   | 16.4G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1-J2gDnKrvZGtasvsAYozrbMXR2LtIJ43/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1GTLfnTlt6I6drPdfSWB1Iw)(5nfi) |
 
 > *The results are evaluated on ImageNet2012 validation set.
 
@@ -172,27 +170,27 @@ python main_single_gpu.py \
 
 </details>
 
-## Arg Info
-- *`-cfg`*: 模型config的yaml文件，位于`./configs`.
-- *`-dataset`*: 使用预置的dataset.py中的数据加载类中预置数据加载方式——支持`imagenet2012`, `cifar10`, `cifar100`.
-- *`-data_path`*: 数据集路径
-- `-batch_size`: 训练数据的批大小，默认为`32`.
-- `-image_size`: 输入网络图像的大小，默认为`224`.
-- `-num_classes`: 模型分类数，默认为`1000`——数据集不同时，要更正同使用的数据集一致.
-- `-output`: 模型文件保存的输出目录，默认为`./output`.
-- `-pretrained`: 模型的预训练模型路径(不必加`.pdparams`后缀)，默认为`None`.
-- `-resume`: 模型的断续路径(文件夹目录)，默认为`None`.
-- `-last_epoch`: 本次训练的起始轮次，默认为`None`.
-- `-save_freq`: 保存checkpoint的轮次频率，默认为`1`.
-- `-log_freq`: 日志输出打印的iter频率，默认为`100`.
-- `-validate_freq`: 验证评估的轮次频率，默认为`10`.【验证时，会自动保存模型】
-- `-accum_iter`: 梯度累加的指令，表示累加次数大小——默认为`1`，不累加.
-- `-num_workers`: 数据加载的工作线程数，默认为`1`.
-- `-ngpus`: 模型训练/验证时使用的gpu数，默认为`-1`.
-- `-eval`: 启动评估，关闭训练.
-- `-amp`: 启动混合精度训练.
+## Arguments
+- *`-cfg`*: path of model config file (.yaml), stored in `./configs`.
+- *`-dataset`*: dataset name, e.g., `imagenet2012`, `cifar10`, `cifar100`.
+- *`-data_path`*: dataset folder path
+- `-batch_size`: batch size，default: `32`.
+- `-image_size`: input image size，default`224`.
+- `-num_classes`: number of classes, default: `1000`.
+- `-output`: output folder for storing weights and logs，default: `./output`.
+- `-pretrained`: pretrain model weights file path, (`.pdparams` file ext is NOT needed) default: `None`.
+- `-resume`: resume model weight and opt file path, (`.paparams` and `.pdopts` file ext are NOT needed, default: `None`.
+- `-last_epoch`: start epoch，default: `None`.
+- `-save_freq`: number of epochs to save checkpoint，default: `1`.
+- `-log_freq`: number of iters to print logging，default: `100`.
+- `-validate_freq`: number of epochs to do validation during training，default: `10`.
+- `-accum_iter`: number of iteration for iter accumulation, default: 1.
+- `-num_workers`: number of workers for data loading，default: `1`.
+- `-ngpus`: number of GPUs to use，you can control GPUs by CUDA_VISIBLE_DEVICES, just set this to -1 default: `-1`.
+- `-eval`: start eval mode.
+- `-amp`: start amp training.
 
-> 倾斜字体部分为`main_single_gpu.py`以及`main_multi_gpu.py`中的必要命令行参数，其余参数根据需要自行配置修改即可。
+> `-cfg`,`-dataset` and `-data_path` in `main_single_gpu.py` and `main_multi_gpu.py` are MUST-HAVE settings.
 
 ## Visualization Attention Map
 **(coming soon)**
