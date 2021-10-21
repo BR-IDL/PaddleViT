@@ -4,23 +4,23 @@ import paddle
 from config import get_config
 from swin_transformer import build_swin as build_model
 
-def count_gelu(layer, input, output):
+def count_gelu(layer, input_, output):
     activation_flops = 8
-    x = input[0]
+    x = input_[0]
     num = x.numel()
     layer.total_ops += num * activation_flops 
 
 
-def count_softmax(layer, input, output):
+def count_softmax(layer, input_, output):
     softmax_flops = 5 # max/substract, exp, sum, divide
-    x = input[0]
+    x = input_[0]
     num = x.numel()
     layer.total_ops += num * softmax_flops 
 
 
-def count_layernorm(layer, input, output):
+def count_layernorm(layer, input_, output):
     layer_norm_flops = 5 # get mean (sum), get variance (square and sum), scale(multiply)
-    x = input[0]
+    x = input_[0]
     num = x.numel()
     layer.total_ops += num * layer_norm_flops 
 

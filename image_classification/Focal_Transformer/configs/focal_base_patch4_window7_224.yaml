@@ -6,9 +6,9 @@ MODEL:
     EMBED_DIM: 128
     DEPTHS: [2, 2, 18, 2]
     NUM_HEADS: [4, 8, 16, 32]
-    WINDOW_SIZE: 7 
+    WINDOW_SIZE: 7
     FOCAL_POOL: "fc"
     FOCAL_STAGES: [0, 1, 2, 3]
     FOCAL_LEVELS: [2, 2, 2, 2]
     FOCAL_WINDOWS: [7, 5, 3, 1]
-    EXPAND_SIZES: [3, 3, 3, 3]   
+    EXPAND_SIZES: [3, 3, 3, 3]

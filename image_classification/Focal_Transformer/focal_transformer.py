@@ -228,10 +228,14 @@ class WindowAttention(nn.Layer):
                                 dtype=np.float32, is_bias=True, attr=nn.initializer.TruncatedNormal(std=.02))  # Wh*Ww, nH, nSurrounding
 
             # get mask for rolled k and rolled v
-            mask_tl = paddle.ones((self.window_size[0], self.window_size[1])); mask_tl[:-self.expand_size, :-self.expand_size] = 0
-            mask_tr = paddle.ones((self.window_size[0], self.window_size[1])); mask_tr[:-self.expand_size, self.expand_size:] = 0
-            mask_bl = paddle.ones((self.window_size[0], self.window_size[1])); mask_bl[self.expand_size:, :-self.expand_size] = 0
-            mask_br = paddle.ones((self.window_size[0], self.window_size[1])); mask_br[self.expand_size:, self.expand_size:] = 0
+            mask_tl = paddle.ones((self.window_size[0], self.window_size[1]))
+            mask_tl[:-self.expand_size, :-self.expand_size] = 0
+            mask_tr = paddle.ones((self.window_size[0], self.window_size[1]))
+            mask_tr[:-self.expand_size, self.expand_size:] = 0
+            mask_bl = paddle.ones((self.window_size[0], self.window_size[1]))
+            mask_bl[self.expand_size:, :-self.expand_size] = 0
+            mask_br = paddle.ones((self.window_size[0], self.window_size[1]))
+            mask_br[self.expand_size:, self.expand_size:] = 0
             mask_rolled = paddle.stack((mask_tl, mask_tr, mask_bl, mask_br), 0).flatten(0)
             self.register_buffer("valid_ind_rolled", paddle.flatten(mask_rolled.nonzero()))
         
@@ -262,7 +266,8 @@ class WindowAttention(nn.Layer):
 
                 # define unfolding index for focal_level > 0
                 if k > 0:
-                    mask = paddle.zeros(kernel_size, kernel_size); mask[(2**k)-1:, (2**k)-1:] = 1
+                    mask = paddle.zeros(kernel_size, kernel_size)
+                    mask[(2**k)-1:, (2**k)-1:] = 1
                     self.register_buffer("valid_ind_unfold_{}".format(k), paddle.flatten(mask.flatten(0).nonzero()))
         
         self.qkv = nn.Linear(dim, dim * 3, weight_attr=weight_attr, bias_attr=bias_attr if qkv_bias else False)
@@ -324,7 +329,8 @@ class WindowAttention(nn.Layer):
             k_rolled = paddle.concat((k_windows, k_rolled), 2)
             v_rolled = paddle.concat((v_windows, v_rolled), 2)
         else:
-            k_rolled = k_windows; v_rolled = v_windows; 
+            k_rolled = k_windows
+            v_rolled = v_windows
 
         if self.pool_method != "none" and self.focal_level > 1:
             k_pooled = []
@@ -358,8 +364,8 @@ class WindowAttention(nn.Layer):
 
                 (k_pooled_k, v_pooled_k) = map(
                     lambda t: self.unfolds[k](t).reshape((
-                    B, C, self.unfolds[k].kernel_sizes[0], self.unfolds[k].kernel_sizes[1], -1)).transpose((0, 4, 2, 3, 1)).\
-                    reshape((-1, self.unfolds[k].kernel_sizes[0]*self.unfolds[k].kernel_sizes[1], self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3)), 
+                    B, C, self.unfolds[k].kernel_sizes[0], self.unfolds[k].kernel_sizes[1], -1)).transpose((0, 4, 2, 3, 1)).reshape(
+                        (-1, self.unfolds[k].kernel_sizes[0]*self.unfolds[k].kernel_sizes[1], self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3)), 
                     (k_pooled_k, v_pooled_k)  # (B x (nH*nW)) x nHeads x (unfold_wsize x unfold_wsize) x head_dim
                 )
 
@@ -808,9 +814,13 @@ class PatchEmbed(nn.Layer):
         if use_conv_embed:
             # if we choose to use conv embedding, then we treat the stem and non-stem differently
             if is_stem:
-                kernel_size = 7; padding = 2; stride = 4
+                kernel_size = 7
+                padding = 2
+                stride = 4
             else:
-                kernel_size = 3; padding = 1; stride = 2
+                kernel_size = 3
+                padding = 1
+                stride = 2
             self.proj = nn.Conv2D(in_chans, embed_dim, kernel_size=kernel_size, stride=stride, padding=padding)
         else:
             self.proj = nn.Conv2D(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
