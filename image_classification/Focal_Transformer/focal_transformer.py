@@ -605,7 +605,6 @@ class FocalTransformerBlock(nn.Layer):
         else:
             shifted_x = x
 
-
         x_windows_all = [shifted_x]
         x_window_masks_all = [self.attn_mask]
         
@@ -656,26 +655,54 @@ class FocalTransformerBlock(nn.Layer):
                 x_window_masks_all += [None]
         
         attn_windows = self.attn(x_windows_all, mask_all=x_window_masks_all)  # nW*B, window_size*window_size, C
-
         attn_windows = attn_windows[:, :self.window_size ** 2]
         
         # merge windows
+        # attn_windows = attn_windows.reshape((-1, self.window_size, self.window_size, C))
+        # shifted_x = window_reverse(attn_windows, self.window_size, H, W)  # B H' W' C
+
+        # reverse cyclic shift
+        # if self.shift_size > 0:
+        #     x = paddle.roll(shifted_x, shifts=(self.shift_size, self.shift_size), axis=(1, 2))
+        # else:
+        #     x = shifted_x
+        # x = x[:, :self.input_resolution[0], :self.input_resolution[1]].reshape((B, -1, C))
+
+
+        # FFN
+        # x = shortcut + self.drop_path(x if (not self.use_layerscale) else (self.gamma_1 * x))
+        # x = x + self.drop_path(self.mlp(self.norm2(x)) if (not self.use_layerscale) else (self.gamma_2 * self.mlp(self.norm2(x))))
+        
+        x = self.merge_windows_and_ffn(attn_windows, shortcut, B, C, H, W)
+
+        return x
+        
+    
+    def merge_windows_and_ffn(self, attn_windows, shortcut, B, C, H, W):
         attn_windows = attn_windows.reshape((-1, self.window_size, self.window_size, C))
         shifted_x = window_reverse(attn_windows, self.window_size, H, W)  # B H' W' C
 
-
         # reverse cyclic shift
+        x = self.reverse_cyclic_shift(shifted_x)
+        x = x[:, :self.input_resolution[0], :self.input_resolution[1]].reshape((B, -1, C))
+
+        # FFN
+        x = self.ffn(x, shortcut)
+
+        return x
+
+
+    def reverse_cyclic_shift(self, shifted_x):
         if self.shift_size > 0:
             x = paddle.roll(shifted_x, shifts=(self.shift_size, self.shift_size), axis=(1, 2))
         else:
             x = shifted_x
-        x = x[:, :self.input_resolution[0], :self.input_resolution[1]].reshape((B, -1, C))
+        return x
 
-        
-        # FFN
+    
+    def ffn(self, x, shortcut):
         x = shortcut + self.drop_path(x if (not self.use_layerscale) else (self.gamma_1 * x))
         x = x + self.drop_path(self.mlp(self.norm2(x)) if (not self.use_layerscale) else (self.gamma_2 * self.mlp(self.norm2(x))))
-
         return x
 
 
