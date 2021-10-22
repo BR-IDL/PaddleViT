@@ -91,6 +91,7 @@ def get_train_transforms(config):
 
     aug_op_list = []
     # STEP1: random crop and resize
+    aug_op_list.append(RandomHorizontalFlip(0.5))
     aug_op_list.append(
         transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
                                      scale=(0.05, 1.0), interpolation='bicubic'))
@@ -101,7 +102,7 @@ def get_train_transforms(config):
         aug_op_list.append(auto_augment)
     else:
         jitter = (float(config.TRAIN.COLOR_JITTER), ) * 3
-        aug_op_list.append(transforms.ColorJitter(jitter))
+        aug_op_list.append(transforms.ColorJitter(*jitter))
     # STEP3: other ops
     aug_op_list.append(transforms.ToTensor())
     aug_op_list.append(transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))

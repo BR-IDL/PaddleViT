@@ -1,6 +1,5 @@
 import paddle
 import paddle.nn as nn
-from droppath import DropPath
 
 
 def _init_weights_linear():

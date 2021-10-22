@@ -128,7 +128,7 @@ def train(dataloader,
         if amp is True: # mixed precision training
             with paddle.amp.auto_cast():
                 output = model(image)
-                loss = criterion(image, output, label)
+                loss = criterion(output, label)
             scaled = scaler.scale(loss)
             scaled.backward()
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):

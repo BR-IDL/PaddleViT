@@ -6,3 +6,12 @@ MODEL:
     NAME: mobilevit_xxs
     DIMS: [16, 16, 24, 24, 24, 48, 64, 80, 320] # mobile v2 block output channels
     HIDDEN_DIMS: [64, 80, 96] # mobile vit block hidden dim
+TRAIN:
+    NUM_EPOCHS: 300
+    WARMUP_EPOCHS: 3
+    BASE_LR: 0.002
+    WARMUP_START_LR: 0.0002
+    END_LR: 0.0002
+    WEIGHT_DECAY: 0.01
+    RANDOM_ERASE_PROB: 0.0
+    AUTO_AUGMENT: False

@@ -95,7 +95,7 @@ def get_train_transforms(config):
         aug_op_list.append(auto_augment)
     else:
         jitter = (float(config.TRAIN.COLOR_JITTER),) * 3
-        aug_op_list.append(transforms.ColorJitter(jitter))
+        aug_op_list.append(transforms.ColorJitter(*jitter))
     # other ops
     aug_op_list.append(transforms.ToTensor())
     aug_op_list.append(transforms.Normalize(mean=[0.485, 0.456, 0.406],
