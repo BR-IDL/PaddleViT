@@ -635,7 +635,7 @@ class FocalTransformerBlock(nn.Layer):
         pad_r = (self.window_size - W % self.window_size) % self.window_size
         pad_b = (self.window_size - H % self.window_size) % self.window_size
         if pad_r > 0 or pad_b > 0:
-            x = F.pad(x, (0, 0, pad_l, pad_r, pad_t, pad_b))
+            x = F.pad(x, [0, 0, pad_l, pad_r, pad_t, pad_b, 0, 0])
 
         B, H, W, C = x.shape 
 
@@ -665,7 +665,7 @@ class FocalTransformerBlock(nn.Layer):
                 elif H < H_pool:
                     pad_t = (H_pool - H) // 2
                     pad_b = H_pool - H - pad_t
-                    x_level_k = F.pad(x_level_k, (0,0,0,0,pad_t,pad_b))
+                    x_level_k = F.pad(x_level_k, [0, 0, 0, 0, pad_t, pad_b, 0, 0])
 
                 if W > W_pool:
                     trim_l = (W - W_pool) // 2
@@ -674,7 +674,7 @@ class FocalTransformerBlock(nn.Layer):
                 elif W < W_pool:
                     pad_l = (W_pool - W) // 2
                     pad_r = W_pool - W - pad_l
-                    x_level_k = F.pad(x_level_k, (0,0,pad_l,pad_r))
+                    x_level_k = F.pad(x_level_k, [0, 0, pad_l, pad_r, 0, 0, 0, 0])
 
                 # B, nw, nw, window_size, window_size, C
                 x_windows_noreshape = window_partition_noreshape(x_level_k, window_size_glo)
