@@ -1068,7 +1068,7 @@ class FocalTransformer(nn.Layer):
         # absolute position embedding
         if self.ape:
             self.absolute_pos_embed = paddle.create_parameter(shape=(1, num_patches, embed_dim),
-                                      dtype=np.int32, is_bias=True,
+                                      dtype=np.float32, is_bias=True,
                                       attr=nn.initializer.TruncatedNormal(std=.02))
 
         self.pos_drop = nn.Dropout(p=drop_rate)
