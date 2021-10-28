@@ -32,7 +32,7 @@ _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 2 # number of data loading threads 
+_C.DATA.NUM_WORKERS = 1 # number of data loading threads 
 
 # model settings
 _C.MODEL = CN()
@@ -42,7 +42,8 @@ _C.MODEL.RESUME = None
 _C.MODEL.RESUME_EMA = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
-_C.MODEL.DROPOUT = 0.1
+_C.MODEL.DROPOUT = 0.0
+_C.MODEL.DROPPATH = 0.1
 _C.MODEL.ATTENTION_DROPOUT = 0.0
 
 # transformer settings
@@ -61,13 +62,15 @@ _C.MODEL.TRANS.INIT_VALUES = 1e-5
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 300
-_C.TRAIN.WARMUP_EPOCHS = 3 #34 # ~ 10k steps for 4096 batch size
-_C.TRAIN.WEIGHT_DECAY = 0.05 #0.3 # 0.0 for finetune
-_C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
-_C.TRAIN.WARMUP_START_LR = 1e-6 #0.0
-_C.TRAIN.END_LR = 5e-4
-_C.TRAIN.GRAD_CLIP = 1.0
-_C.TRAIN.ACCUM_ITER = 2 #1
+_C.TRAIN.WARMUP_EPOCHS = 20
+_C.TRAIN.WEIGHT_DECAY = 0.05
+_C.TRAIN.BASE_LR = 0.001
+_C.TRAIN.WARMUP_START_LR = 1e-6
+_C.TRAIN.END_LR = 1e-5
+_C.TRAIN.GRAD_CLIP = None
+_C.TRAIN.ACCUM_ITER = 2
+_C.TRAIN.MODEL_EMA = True
+_C.TRAIN.MODEL_EMA_DECAY = 0.99992
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -106,15 +109,28 @@ _C.TRAIN.TEACHER_MODEL = './regnety_160' # no ext is needed
 _C.TRAIN.MODEL_EMA = True
 _C.TRAIN.MODEL_EMA_DECAY = 0.99996 
 
+# augmentation
+_C.AUG = CN()
+_C.AUG.COLOR_JITTER = 0.4 # color jitter factor
+_C.AUG.AUTO_AUGMENT = 'rand-m9-mstd0.5-inc1'
+_C.AUG.RE_PROB = 0.25 # random earse prob
+_C.AUG.RE_MODE = 'pixel' # random earse mode
+_C.AUG.RE_COUNT = 1 # random earse count
+_C.AUG.MIXUP = 0.8 # mixup alpha, enabled if >0
+_C.AUG.CUTMIX = 1.0 # cutmix alpha, enabled if >0
+_C.AUG.CUTMIX_MINMAX = None # cutmix min/max ratio, overrides alpha
+_C.AUG.MIXUP_PROB = 1.0 # prob of mixup or cutmix when either/both is enabled
+_C.AUG.MIXUP_SWITCH_PROB = 0.5 # prob of switching cutmix when both mixup and cutmix enabled
+_C.AUG.MIXUP_MODE = 'batch' #how to apply mixup/curmix params, per 'batch', 'pair', or 'elem'
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 5 # freq to save chpt
-_C.REPORT_FREQ = 100 # freq to logging info
-_C.VALIDATE_FREQ = 100 # freq to do validation
-_C.SEED = 0
+_C.SAVE_FREQ = 1 # freq to save chpt
+_C.REPORT_FREQ = 50 # freq to logging info
+_C.VALIDATE_FREQ = 10 # freq to do validation
+_C.SEED = 42
 _C.EVAL = False # run evaluation only
-_C.AMP = False # mix precision training
+_C.AMP = False
 _C.LOCAL_RANK = 0
 _C.NGPUS = -1
 
@@ -164,9 +180,10 @@ def update_config(config, args):
     if args.amp: # only during training
         if config.EVAL is True:
             config.AMP = False
+        else:
+            config.AMP = True
     if args.teacher_model:
         config.TRAIN.TEACHER_MODEL = args.teacher_model
-
     #config.freeze()
     return config
 

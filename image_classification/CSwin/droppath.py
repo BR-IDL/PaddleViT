@@ -32,7 +32,7 @@ class DropPath(nn.Layer):
         Args:
             input: tensor with arbitrary shape
             drop_prob: float number of drop path probability, default: 0.0
-            training: bool, set if current mode is training, default: False
+            training: bool, if current mode is training, default: False
         Returns:
             output: output tensor after drop path
         """

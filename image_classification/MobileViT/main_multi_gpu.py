@@ -460,12 +460,12 @@ def main_worker(*args):
             master_logger.info(
                 f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
         # load ema model
-        if model_ema is not None and os.path.isfile(config.MODEL.RESUME_EMA + '.pdparams'):
-            model_ema_state = paddle.load(config.MODEL.RESUME_EMA + '.pdparams')
-            model_ema.set(model_ema_state)
-            local_logger.info(f'----- Load model ema from {config.MODEL.RESUME_EMA}')
+        if model_ema is not None and os.path.isfile(config.MODEL.RESUME + '-EMA.pdparams'):
+            model_ema_state = paddle.load(config.MODEL.RESUME + '-EMA.pdparams')
+            model_ema.module.set_state_dict(model_ema_state)
+            local_logger.info(f'----- Load model ema from {config.MODEL.RESUME}-EMA.pdparams')
             if local_rank == 0:
-                master_logger.info(f'----- Load model ema from {config.MODEL.RESUME_EMA}')
+                master_logger.info(f'----- Load model ema from {config.MODEL.RESUME}-EMA.pdparams')
     
     # STEP 7: Validation (eval mode)
     if config.EVAL:

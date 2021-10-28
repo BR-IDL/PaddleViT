@@ -21,6 +21,7 @@ import copy
 import numpy as np
 import paddle
 import paddle.nn as nn
+from droppath import DropPath
 
 
 class Identity(nn.Layer):
@@ -300,9 +301,15 @@ class Deit(nn.Layer):
 def build_deit(config):
     """build deit model using config"""
     model = Deit(image_size=config.DATA.IMAGE_SIZE,
-                 depth=config.MODEL.TRANS.DEPTH,
+                 in_channels=config.MODEL.TRANS.IN_CHANNELS,
+                 num_classes=config.MODEL.NUM_CLASSES,
+                 patch_size=config.MODEL.TRANS.PATCH_SIZE,
                  embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                 mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
                  num_heads=config.MODEL.TRANS.NUM_HEADS,
-                 qkv_bias=config.MODEL.TRANS.QKV_BIAS)
+                 depth=config.MODEL.TRANS.DEPTH,
+                 mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+                 qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                 dropout=config.MODEL.DROPOUT,
+                 attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                 droppath=config.MODEL.DROPPATH)
     return model
