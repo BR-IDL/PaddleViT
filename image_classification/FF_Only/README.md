@@ -1,4 +1,5 @@
-# FF_Only: A Stack of Feed-Forward Layers Does Surprisingly Well on ImageNet, [arxiv](https://arxiv.org/abs/2105.02723) 
+# Do You Even Need Attention? A Stack of Feed-Forward Layers Does
+Surprisingly Well on ImageNet, [arxiv](https://arxiv.org/abs/2105.02723) 
 
 PaddlePaddle training/validation code and pretrained models for **FF_Only**.
 
