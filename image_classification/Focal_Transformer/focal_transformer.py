@@ -284,7 +284,7 @@ class WindowAttention(nn.Layer):
 
                 # define unfolding index for focal_level > 0
                 if k > 0:
-                    mask = paddle.zeros(kernel_size, kernel_size)
+                    mask = paddle.zeros((kernel_size, kernel_size))
                     mask[(2**k)-1:, (2**k)-1:] = 1
                     self.register_buffer("valid_ind_unfold_{}".format(k),
                                 paddle.flatten(mask.flatten(0).nonzero()))
@@ -383,7 +383,8 @@ class WindowAttention(nn.Layer):
 
                 if k > 0:
                     valid_ind_unfold_k = getattr(self, "valid_ind_unfold_{}".format(k))
-                    unfolded_mask = unfolded_mask[:, valid_ind_unfold_k]
+                    unfolded_mask = paddle.gather(unfolded_mask, valid_ind_unfold_k, axis=1)
+                    # unfolded_mask = unfolded_mask[:, valid_ind_unfold_k]
 
                 x_window_masks = unfolded_mask.flatten(1).unsqueeze(0)
                 # from numpy to paddle
@@ -413,8 +414,10 @@ class WindowAttention(nn.Layer):
                             self.num_heads, C // self.num_heads)).transpose((0, 2, 1, 3))
 
                 if k > 0:
-                    k_pooled_k = k_pooled_k[:, :, valid_ind_unfold_k]
-                    v_pooled_k = v_pooled_k[:, :, valid_ind_unfold_k]
+                    k_pooled_k = paddle.gather(k_pooled_k, valid_ind_unfold_k, axis=2)
+                    v_pooled_k = paddle.gather(v_pooled_k, valid_ind_unfold_k, axis=2)
+                    # k_pooled_k = k_pooled_k[:, :, valid_ind_unfold_k]
+                    # v_pooled_k = v_pooled_k[:, :, valid_ind_unfold_k]
 
                 k_pooled += [k_pooled_k]
                 v_pooled += [v_pooled_k]
