@@ -67,7 +67,7 @@ To use the model with pretrained weights, download the `.pdparam` weight file an
 For example, assume the downloaded weight file is stored in `./vit_base_patch16_224.pdparams`, to use the `vit_base_patch16_224` model in python:
 ```python
 from config import get_config
-from transformer import build_vit as build_model
+from visual_transformer import build_vit as build_model
 # config files in ./configs/
 config = get_config('./configs/vit_base_patch16_224.yaml')
 # build model
