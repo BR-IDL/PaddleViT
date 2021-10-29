@@ -276,19 +276,23 @@ def main():
     criterion_val = nn.CrossEntropyLoss()
 
     # STEP 5: Define optimizer and lr_scheduler
-    # set lr according to batch size and world size (hacked from official code)
-    linear_scaled_lr = (config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / 512.0
-    linear_scaled_warmup_start_lr = (config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / 512.0
-    linear_scaled_end_lr = (config.TRAIN.END_LR * config.DATA.BATCH_SIZE) / 512.0
-
-    if config.TRAIN.ACCUM_ITER > 1:
-        linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
-
-    config.TRAIN.BASE_LR = linear_scaled_lr
-    config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
-    config.TRAIN.END_LR = linear_scaled_end_lr
+    # set lr according to batch size and world size (hacked from Swin official code and modified for CSwin)
+    if config.TRAIN.LINEAR_SCALED_LR is not None:
+        linear_scaled_lr = (
+            config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_warmup_start_lr = (
+            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_end_lr = (
+            config.TRAIN.END_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+    
+        if config.TRAIN.ACCUM_ITER > 1:
+            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+        
+        config.TRAIN.BASE_LR = linear_scaled_lr
+        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+        config.TRAIN.END_LR = linear_scaled_end_lr
 
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
@@ -354,9 +358,9 @@ def main():
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
-        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
+        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
+        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
         optimizer.set_state_dict(opt_state)

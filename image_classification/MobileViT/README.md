@@ -8,19 +8,22 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 <p align="center">
-<img src="./mobilevit.png" alt="drawing" width="80%" height="80%"/>
+<img src="./mobilevit.png" alt="drawing" width="100%" height="100%"/>
     <h4 align="center">MobileViT Transformer Model Overview</h4>
 </p>
 
 ### Update 
+* Update (2021-10-29): Pretrained model weights (mobilevit_xxs) is released.
 * Update (2021-10-20): Initial code is released.
 
 ## Models Zoo
 | Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
 |-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| mobilevit_xxs   				| | | M   | G   | 256        | 1.0      | bicubic       | [google]()/[baidu]()() |
+| mobilevit_xxs   				| 70.31| 89.68 | 1.32M   | 0.44G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1l3L-_TxS3QisRUIb8ohcv318vrnrHnWA/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1KFZ5G834_-XXN33W67k8eg)(axpc) |
 
 > *The results are evaluated on ImageNet2012 validation set.
+> 
+> *This model is trained from scratch using PaddleViT without multi scale batch sampler.
 
 
 ## Notebooks

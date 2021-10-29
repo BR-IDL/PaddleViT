@@ -31,6 +31,7 @@ class ConvNormAct(nn.Layer):
                               stride=stride,
                               padding=padding,
                               groups=groups,
+                              weight_attr=paddle.ParamAttr(initializer=nn.initializer.KaimingUniform()),
                               bias_attr=bias_attr)
         self.norm = nn.BatchNorm2D(out_channels)
         self.act = nn.Silu()
@@ -59,13 +60,13 @@ class Mlp(nn.Layer):
                  mlp_ratio,
                  dropout=0.):
         super().__init__()
-        w_attr_1, b_attr_1 = self._init_weights()
+        w_attr_1, b_attr_1 = _init_weights_linear()
         self.fc1 = nn.Linear(embed_dim,
                              int(embed_dim * mlp_ratio),
                              weight_attr=w_attr_1,
                              bias_attr=b_attr_1)
 
-        w_attr_2, b_attr_2 = self._init_weights()
+        w_attr_2, b_attr_2 = _init_weights_linear()
         self.fc2 = nn.Linear(int(embed_dim * mlp_ratio),
                              embed_dim,
                              weight_attr=w_attr_2,
@@ -75,10 +76,6 @@ class Mlp(nn.Layer):
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
 
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
-        return weight_attr, bias_attr
 
     def forward(self, x):
         x = self.fc1(x)
