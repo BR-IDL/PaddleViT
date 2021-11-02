@@ -13,6 +13,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
+* Update (2021-11-02): Pretrained model weights (mobilevit_xs) is released.
 * Update (2021-10-29): Pretrained model weights (mobilevit_xxs) is released.
 * Update (2021-10-20): Initial code is released.
 
@@ -20,6 +21,9 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 | Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
 |-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
 | mobilevit_xxs   				| 70.31| 89.68 | 1.32M   | 0.44G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1l3L-_TxS3QisRUIb8ohcv318vrnrHnWA/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1KFZ5G834_-XXN33W67k8eg)(axpc) |
+| mobilevit_xs   				| 74.47| 92.02 | 2.33M   | 0.95G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1oRMA4pNs2Ba0LYDbPufC842tO4OFcgwq/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1IP8S-S6ZAkiL0OEsiBWNkw)(hfhm) |
+| mobilevit_s   				| N/A| N/A | 5.59M   | 1.88G   | 256        | 1.0      | bicubic       | [google]()/[baidu]()() |
+
 
 > *The results are evaluated on ImageNet2012 validation set.
 > 
