@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 Implement MLP Class for ViP
 """
 
-import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-
 from droppath import DropPath
+
 
 trunc_normal_ = nn.initializer.TruncatedNormal(std=0.02)
 zeros_ = nn.initializer.Constant(value=0.0)
@@ -31,19 +30,17 @@ class Identity(nn.Layer):
     def __init__(self, *args, **kwargs):
         super(Identity, self).__init__()
 
-    def forward(self, input):
-        return input
+    def forward(self, inputs):
+        return inputs
 
 
 class Mlp(nn.Layer):
-    def __init__(
-        self,
-        in_features,
-        hidden_features=None,
-        out_features=None,
-        act_layer=nn.GELU,
-        drop=0.0,
-    ):
+    def __init__(self,
+                 in_features,
+                 hidden_features=None,
+                 out_features=None,
+                 act_layer=nn.GELU,
+                 drop=0.0):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -62,15 +59,13 @@ class Mlp(nn.Layer):
 
 
 class WeightedPermuteMLP(nn.Layer):
-    def __init__(
-        self,
-        dim,
-        segment_dim=8,
-        qkv_bias=False,
-        qk_scale=None,
-        attn_drop=0.0,
-        proj_drop=0.0,
-    ):
+    def __init__(self,
+                 dim,
+                 segment_dim=8,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 attn_drop=0.0,
+                 proj_drop=0.0):
         super().__init__()
         self.segment_dim = segment_dim
 
@@ -126,21 +121,19 @@ class WeightedPermuteMLP(nn.Layer):
 
 
 class PermutatorBlock(nn.Layer):
-    def __init__(
-        self,
-        dim,
-        segment_dim,
-        mlp_ratio=4.0,
-        qkv_bias=False,
-        qk_scale=None,
-        drop=0.0,
-        attn_drop=0.0,
-        drop_path=0.0,
-        act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
-        skip_lam=1.0,
-        mlp_fn=WeightedPermuteMLP,
-    ):
+    def __init__(self,
+                 dim,
+                 segment_dim,
+                 mlp_ratio=4.0,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop=0.0,
+                 attn_drop=0.0,
+                 drop_path=0.0,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 skip_lam=1.0,
+                 mlp_fn=WeightedPermuteMLP):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = mlp_fn(
@@ -169,12 +162,12 @@ class PermutatorBlock(nn.Layer):
 
 class PatchEmbed(nn.Layer):
     """Image to Patch Embedding"""
-
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
         super().__init__()
-        self.proj = nn.Conv2D(
-            in_chans, embed_dim, kernel_size=patch_size, stride=patch_size
-        )
+        self.proj = nn.Conv2D(in_chans,
+                              embed_dim,
+                              kernel_size=patch_size,
+                              stride=patch_size)
 
     def forward(self, x):
         x = self.proj(x)  # B, C, H, W
@@ -183,12 +176,12 @@ class PatchEmbed(nn.Layer):
 
 class Downsample(nn.Layer):
     """Image to Patch Embedding"""
-
     def __init__(self, in_embed_dim, out_embed_dim, patch_size):
         super().__init__()
-        self.proj = nn.Conv2D(
-            in_embed_dim, out_embed_dim, kernel_size=patch_size, stride=patch_size
-        )
+        self.proj = nn.Conv2D(in_embed_dim,
+                              out_embed_dim,
+                              kernel_size=patch_size,
+                              stride=patch_size)
 
     def forward(self, x):
         x = x.transpose([0, 3, 1, 2])
@@ -197,22 +190,19 @@ class Downsample(nn.Layer):
         return x
 
 
-def basic_blocks(
-    dim,
-    index,
-    layers,
-    segment_dim,
-    mlp_ratio=3.0,
-    qkv_bias=False,
-    qk_scale=None,
-    attn_drop=0,
-    drop_path_rate=0.0,
-    skip_lam=1.0,
-    mlp_fn=WeightedPermuteMLP,
-    **kwargs
-):
+def basic_blocks(dim,
+                 index,
+                 layers,
+                 segment_dim,
+                 mlp_ratio=3.0,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 attn_drop=0,
+                 drop_path_rate=0.0,
+                 skip_lam=1.0,
+                 mlp_fn=WeightedPermuteMLP,
+                 **kwargs):
     blocks = []
-
     for block_idx in range(layers[index]):
         block_dpr = (
             drop_path_rate * (block_idx + sum(layers[:index])) / (sum(layers) - 1)
@@ -230,36 +220,30 @@ def basic_blocks(
                 mlp_fn=mlp_fn,
             )
         )
-
     blocks = nn.Sequential(*blocks)
-
     return blocks
 
 
 class VisionPermutator(nn.Layer):
     """Vision Permutator"""
-
-    def __init__(
-        self,
-        layers,
-        img_size=224,
-        patch_size=4,
-        in_chans=3,
-        num_classes=1000,
-        embed_dims=None,
-        transitions=None,
-        segment_dim=None,
-        mlp_ratios=None,
-        skip_lam=1.0,
-        qkv_bias=False,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.0,
-        norm_layer=nn.LayerNorm,
-        mlp_fn=WeightedPermuteMLP,
-    ):
-
+    def __init__(self,
+                 layers,
+                 img_size=224,
+                 patch_size=4,
+                 in_chans=3,
+                 num_classes=1000,
+                 embed_dims=None,
+                 transitions=None,
+                 segment_dim=None,
+                 mlp_ratios=None,
+                 skip_lam=1.0,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop_rate=0.0,
+                 attn_drop_rate=0.0,
+                 drop_path_rate=0.0,
+                 norm_layer=nn.LayerNorm,
+                 mlp_fn=WeightedPermuteMLP):
         super().__init__()
         self.num_classes = num_classes
 
@@ -272,20 +256,18 @@ class VisionPermutator(nn.Layer):
 
         network = []
         for i in range(len(layers)):
-            stage = basic_blocks(
-                embed_dims[i],
-                i,
-                layers,
-                segment_dim[i],
-                mlp_ratio=mlp_ratios[i],
-                qkv_bias=qkv_bias,
-                qk_scale=qk_scale,
-                attn_drop=attn_drop_rate,
-                drop_path_rate=drop_path_rate,
-                norm_layer=norm_layer,
-                skip_lam=skip_lam,
-                mlp_fn=mlp_fn,
-            )
+            stage = basic_blocks(embed_dims[i],
+                                 i,
+                                 layers,
+                                 segment_dim[i],
+                                 mlp_ratio=mlp_ratios[i],
+                                 qkv_bias=qkv_bias,
+                                 qk_scale=qk_scale,
+                                 attn_drop=attn_drop_rate,
+                                 drop_path_rate=drop_path_rate,
+                                 norm_layer=norm_layer,
+                                 skip_lam=skip_lam,
+                                 mlp_fn=mlp_fn)
             network.append(stage)
             if i >= len(layers) - 1:
                 break
@@ -294,7 +276,6 @@ class VisionPermutator(nn.Layer):
                 network.append(Downsample(embed_dims[i], embed_dims[i + 1], patch_size))
 
         self.network = nn.LayerList(network)
-
         self.norm = norm_layer(embed_dims[-1])
 
         # Classifier head
@@ -319,7 +300,7 @@ class VisionPermutator(nn.Layer):
         return x
 
     def forward_tokens(self, x):
-        for idx, block in enumerate(self.network):
+        for _, block in enumerate(self.network):
             x = block(x)
         B, H, W, C = x.shape
         x = x.reshape([B, -1, C])
@@ -334,14 +315,13 @@ class VisionPermutator(nn.Layer):
 
 
 def build_vip(config):
-    model = VisionPermutator(
-        num_classes=config.MODEL.NUM_CLASSES,
-        layers=config.MODEL.MIXER.LAYER,
-        embed_dims=config.MODEL.MIXER.EMBED_DIMS,
-        patch_size=7,
-        transitions=config.MODEL.MIXER.TRANSITIONS,
-        segment_dim=config.MODEL.MIXER.SEGMENT_DIM,
-        mlp_ratios=[3, 3, 3, 3],
-        mlp_fn=WeightedPermuteMLP,
-    )
+    """build vip model using config"""
+    model = VisionPermutator(num_classes=config.MODEL.NUM_CLASSES,
+                             layers=config.MODEL.MIXER.LAYER,
+                             embed_dims=config.MODEL.MIXER.EMBED_DIMS,
+                             patch_size=7,
+                             transitions=config.MODEL.MIXER.TRANSITIONS,
+                             segment_dim=config.MODEL.MIXER.SEGMENT_DIM,
+                             mlp_ratios=[3, 3, 3, 3],
+                             mlp_fn=WeightedPermuteMLP)
     return model

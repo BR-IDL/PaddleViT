@@ -119,5 +119,3 @@ class DistillationLoss(nn.Layer):
 
         loss = base_loss * (1 - self.alpha) + distillation_loss * self.alpha
         return loss
-
-

@@ -5,24 +5,25 @@ PaddlePaddle training/validation code and pretrained models for **ViP**.
 The official and 3rd party pytorch implementation are [here](https://github.com/Andrew-Qibin/VisionPermutator).
 
 
-This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
+This implementation is developed by [PPViT](https://github.com/BR-IDL/PaddleViT/).
 
 <p align="center">
-<img src="./vip.png" alt="drawing" width="90%" height="90%"/>
+<img src="./vip_1.png" alt="drawing" width="90%" height="90%"/>
+<img src="./vip_2.png" alt="drawing" width="90%" height="90%"/>
 <h4 align="center">ViP Model Overview</h4>
 </p>
 
 
 ### Update 
-Update (2021-09-23): Code is released and ported weights are uploaded.
+- Update (2021-11-03): Code and weights are updated.
+- Update (2021-09-23): Code is released and ported weights are uploaded.
 
 ## Models Zoo
-| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
-|--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| vip_s7            | 81.50 | 95.76 | 224        | 0.875    | bicubic       |  |
-| vip_m7        | 82.75 | 96.05 | 224        | 0.875      | bicubic      |  |
-| vip_l7    | 83.18 | 96.37 | 224        | 0.875      | bicubic      |  |
-
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| vip_s7  						| 81.50 | 95.76 | 25.1M   | 7.0G   |    224     | 0.875    | bicubic       | [google](https://drive.google.com/file/d/16bZkqzbnN08_o15k3MzbegK8SBwfQAHF/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1uY0FsNPYaM8cr3ZCdAoVkQ)(mh9b) |
+| vip_m7  						| 81.50 | 95.76 | 55.3M   | 16.4G  |    224     | 0.875    | bicubic       | [google](https://drive.google.com/file/d/11lvT2OXW0CVGPZdF9dNjY_uaEIMYrmNu/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1j3V0Q40iSqOY15bTKlFFRw)(hvm8) |
+| vip_l7  						| 81.50 | 95.76 | 87.8M   | 24.5G  |    224     | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1bK08JorLPMjYUep_TnFPKGs0e1j0UBKJ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1I5hnv3wHWEaG3vpDqaNL-w)(tjvh) |
 > *The results are evaluated on ImageNet2012 validation set.
 > 
 > Note: ViP weights are ported from [here](https://github.com/Andrew-Qibin/VisionPermutator)

@@ -9,3 +9,11 @@ MODEL:
         TRANSITIONS: [True, False, False, False]
         SEGMENT_DIM: [32, 16, 16, 16]
         EMBED_DIMS: [192, 384, 384, 384]
+    DROPPATH: 0.1
+    DROPOUT: 0.0
+    ATTENTION_DROPOUT: 0.0
+TRAIN:
+    BASE_LR: 1e-3
+    LINEAR_SCALED_LR: 1024
+    WEIGHT_DECAY: 5e-2
+
