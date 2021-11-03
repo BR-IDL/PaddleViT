@@ -31,6 +31,7 @@ This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.g
 10. **[Focal Transformer](./Focal_Transformer)**
 11. **[BEiT](./BEiT)**
 11. **[MobileViT](./MobileViT)**
+11. **[ViP](./ViP)**
 13. **[MLP-Mixer](./MLP-Mixer)**
 14. **[ResMLP](./ResMLP)**
 15. **[gMLP](./gMLP)**
