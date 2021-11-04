@@ -14,14 +14,15 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 ### Update 
+- Update (2021-11-04): Model weights are updated.
 - Update (2021-10-13): Code is released and ported weights are uploaded.
 
 ## Models Zoo
-| Model                         | Acc@1 | Acc@5 | # Params | Image Size | Crop_pct | Interpolation | Link         |
-|-------------------------------|-------|-------|---------|------------|----------|---------------|--------------|
-| convmixer_768_32 | 80.16	| 95.08	| 21.2M | 224 	    | 0.96  | bicubic 	   |  |
-| convmixer_1024_20 | 76.94	| 94.49	| 24.4M | 224 	    | 0.96  | bicubic 	   |  |
-| convmixer_1536_20 | 81.37	| 95.62	| 51.7M | 224 	    | 0.96  | bicubic 	   |  |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| convmixer_1024_20  			| 76.94 | 93.35 | 24.5M   | 9.5G   |    224     | 0.96     | bicubic       | [google](https://drive.google.com/file/d/1R7zUSl6_6NFFdNOe8tTfoR9VYQtGfD7F/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1DgGA3qYu4deH4woAkvjaBw)(qpn9) |
+| convmixer_768_32  			| 80.16 | 95.08 | 21.2M   | 20.8G  |    224     | 0.96     | bicubic       | [google](https://drive.google.com/file/d/196Lg_Eet-hRj733BYASj22g51wdyaW2a/view?usp=sharing)/[baidu](https://pan.baidu.com/s/17CbRNzY2Sy_Cu7cxNAkWmQ)(m5s5) |
+| convmixer_1536_20  			| 81.37 | 95.62 | 51.8M   | 72.4G  |    224     | 0.96     | bicubic       | [google](https://drive.google.com/file/d/1-LlAlADiu0SXDQmE34GN2GBhqI-RYRqO/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1R-gSzhzQNfkuZVxsaE4vEw)(xqty) |
 > *The results are evaluated on ImageNet2012 validation set.
 ## Notebooks
 We provide a few notebooks in aistudio to help you get started:
