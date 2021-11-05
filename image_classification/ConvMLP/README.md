@@ -18,11 +18,12 @@ This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree
 Update (2021-09-26): Code is released and ported weights are uploaded.
 
 ## Models Zoo
-| Model                          | # Params | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
-|:------------------------------:|:-----:|:-----:|:----------:|:--------:|:-------------:|:------------:|:------------:|
-| convmlp_s   | 9M | 76.76 | 93.40 | 224        | 0.875    | bicubic       |  |
-| convmlp_m |  17.4M   |       |  | 224        | 0.875      | bicubic      |  |
-| convmlp_l | 42.7M |  |  | 224        | 0.875      | bicubic      |  |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| convmlp_s			  			| 76.76 | 93.40 | 9.0M    | 2.4G   |    224     | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1D8kWVfQxOyyktqDixaZoGXB3wVspzjlc/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1WseHYALFB4Of3Dajmlt45g)(3jz3) |
+| convmlp_m			  			| 79.03 | 94.53 | 17.4M   | 4.0G   |    224     | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1TqVlKHq-WRdT9KDoUpW3vNJTIRZvix_m/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1koipCAffG6REUyLYk0rGAQ)(vyp1) |
+| convmlp_l			  			| 80.15 | 95.00 | 42.7M   | 10.0G  |    224     | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1KXxYogDh6lD3QGRtFBoX5agfz81RDN3l/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1f1aEeVoySzImI89gkjcaOA)(ne5x) |
+
 
 > *The results are evaluated on ImageNet2012 validation set.
 > 
@@ -167,6 +168,5 @@ python main_multi_gpu.py \
       eprint={2109.04454},
       archivePrefix={arXiv},
       primaryClass={cs.CV}
-}
 }
 ```

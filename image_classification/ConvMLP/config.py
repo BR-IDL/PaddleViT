@@ -44,6 +44,8 @@ _C.MODEL.NAME = 'ConvMLP'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
+_C.MODEL.DROPPATH = 0.
+_C.MODEL.DROPOUT = 0.
 
 # transformer settings
 _C.MODEL.MIXER = CN()
@@ -64,6 +66,9 @@ _C.TRAIN.WARMUP_START_LR = 5e-7
 _C.TRAIN.END_LR = 5e-6
 _C.TRAIN.GRAD_CLIP = 5.0
 _C.TRAIN.ACCUM_ITER = 1
+_C.TRAIN.MODEL_EMA = True
+_C.TRAIN.MODEL_EMA_DECAY = 0.99996
+_C.TRAIN.LINEAR_SCALED_LR = None
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -72,8 +77,9 @@ _C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
 _C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
 
 _C.TRAIN.OPTIMIZER = CN()
-_C.TRAIN.OPTIMIZER.NAME = 'sgd'
+_C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
+_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 
 # train augmentation
@@ -165,6 +171,8 @@ def update_config(config, args):
     if args.amp: # only during training
         if config.EVAL is True:
             config.AMP = False
+        else:
+            config.AMP = True
 
     #config.freeze()
     return config

@@ -220,4 +220,3 @@ def brightness(image, magnitude):
 def sharpness(image, magnitude):
     magnitude = magnitude * random.choice([-1, 1]) # random negative
     return ImageEnhance.Sharpness(image).enhance(1 + magnitude)
-

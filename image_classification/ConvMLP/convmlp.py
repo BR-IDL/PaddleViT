@@ -18,7 +18,6 @@ Implement MLP Class for ConvMLP
 
 import paddle
 import paddle.nn as nn
-
 from droppath import DropPath
 
 trunc_normal_ = nn.initializer.TruncatedNormal(std=0.02)
@@ -31,8 +30,8 @@ class Identity(nn.Layer):
     def __init__(self):
         super().__init__()
 
-    def forward(self, input):
-        return input
+    def forward(self, inputs):
+        return inputs
 
 
 class ConvTokenizer(nn.Layer):
@@ -77,9 +76,11 @@ class ConvTokenizer(nn.Layer):
 
 
 class ConvStage(nn.Layer):
-    def __init__(
-        self, num_blocks=2, embedding_dim_in=64, hidden_dim=128, embedding_dim_out=128
-    ):
+    def __init__(self,
+                 num_blocks=2,
+                 embedding_dim_in=64,
+                 hidden_dim=128,
+                 embedding_dim_out=128):
         super().__init__()
         self.conv_blocks = nn.LayerList()
         for i in range(num_blocks):
@@ -131,13 +132,11 @@ class ConvStage(nn.Layer):
 
 
 class Mlp(nn.Layer):
-    def __init__(
-        self,
-        embedding_dim_in,
-        hidden_dim=None,
-        embedding_dim_out=None,
-        activation=nn.GELU,
-    ):
+    def __init__(self,
+                 embedding_dim_in,
+                 hidden_dim=None,
+                 embedding_dim_out=None,
+                 activation=nn.GELU):
         super().__init__()
         hidden_dim = hidden_dim or embedding_dim_in
         embedding_dim_out = embedding_dim_out or embedding_dim_in
@@ -201,14 +200,12 @@ class ConvDownsample(nn.Layer):
 
 
 class BasicStage(nn.Layer):
-    def __init__(
-        self,
-        num_blocks,
-        embedding_dims,
-        mlp_ratio=1,
-        stochastic_depth_rate=0.1,
-        downsample=True,
-    ):
+    def __init__(self,
+                 num_blocks,
+                 embedding_dims,
+                 mlp_ratio=1,
+                 stochastic_depth_rate=0.1,
+                 downsample=True):
         super().__init__()
         self.blocks = nn.LayerList()
         dpr = [x.item() for x in paddle.linspace(0, stochastic_depth_rate, num_blocks)]
@@ -234,22 +231,21 @@ class BasicStage(nn.Layer):
 
 
 class ConvMLP(nn.Layer):
-    def __init__(
-        self,
-        blocks,
-        dims,
-        mlp_ratios,
-        channels=64,
-        n_conv_blocks=3,
-        classifier_head=True,
-        num_classes=1000,
-        *args,
-        **kwargs,
-    ):
+    def __init__(self,
+                 blocks,
+                 dims,
+                 mlp_ratios,
+                 channels=64,
+                 n_conv_blocks=3,
+                 classifier_head=True,
+                 num_classes=1000,
+                 droppath=0.,
+                 *args,
+                 **kwargs):
         super().__init__()
         assert (
             len(blocks) == len(mlp_ratios) == len(mlp_ratios)
-        ), f"blocks, dims and mlp_ratios must agree in size, {len(blocks)}, {len(dims)} and {len(mlp_ratios)} passed."
+        ), f"blocks, dims and mlp_ratios must agree in size"
 
         self.tokenizer = ConvTokenizer(embedding_dim=channels)
         self.conv_stages = ConvStage(
@@ -260,12 +256,12 @@ class ConvMLP(nn.Layer):
         )
 
         self.stages = nn.LayerList()
-        for i in range(0, len(blocks)):
+        for i,block in enumerate(blocks):
             stage = BasicStage(
-                num_blocks=blocks[i],
+                num_blocks=block,
                 embedding_dims=dims[i : i + 2],
                 mlp_ratio=mlp_ratios[i],
-                stochastic_depth_rate=0.1,
+                stochastic_depth_rate=droppath,
                 downsample=(i + 1 < len(blocks)),
             )
             self.stages.append(stage)
@@ -315,6 +311,7 @@ def build_convmlp(config):
         n_conv_blocks=config.MODEL.MIXER.N_CONV_BLOCKS,
         classifier_head=True,
         num_classes=config.MODEL.NUM_CLASSES,
+        droppath=config.MODEL.DROPPATH,
     )
     return model
 
