@@ -4,9 +4,9 @@ import paddle
 from config import get_config
 from convmlp import build_convmlp as build_model
 
-def count_gelu(layer, input, output):
+def count_gelu(layer, inputs, output):
     activation_flops = 8
-    x = input[0]
+    x = inputs[0]
     num = x.numel()
     layer.total_ops += num * activation_flops 
 
