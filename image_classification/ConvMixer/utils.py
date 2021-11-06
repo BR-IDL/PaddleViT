@@ -151,7 +151,7 @@ class OneCycleLRScheduler(LRScheduler):
                  min_lr=0,
                  pct_start=0.4,
                  last_epoch=-1,
-                 verbose=True
+                 verbose=False
                  ):
         self.max_lr = max_lr
         self.min_lr = min_lr
