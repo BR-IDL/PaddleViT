@@ -18,7 +18,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 ## Models Zoo
 | Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
 |-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| xcit_nano_12_p16_224_dist | 0.7232 | 0.9086 |    |    | 224        | 1.0    | bicubic       | [google](https://drive.google.com/file/d/1v_wzWv3TaQ0RKkKwRQwuDPzwpOb_jGEs/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1tbc751RVh3fIRsrLzrmeOw)(h2ac) |
+| xcit_nano_12_p16_224_dist | 0.7232 | 0.9086 |    |    | 224        | 1.0    | bicubic       |  |
 |                           |       |       |         |       |            |          |               |                                                              |
 |                           |       |       |         |       |            |          |               |                                                              |
 |                           |       |       |         |       |            |          |               |                                                              |
