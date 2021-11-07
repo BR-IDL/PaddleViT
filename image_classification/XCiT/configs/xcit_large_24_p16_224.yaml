@@ -1,0 +1,14 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 1.0
+MODEL:
+    TYPE: xcit
+    NAME: xcit_large_24_p16_224
+    TRANS:
+        PATCH_SIZE: 16
+        EMBED_DIM: 768
+        DEPTH: 24
+        NUM_HEADS: 16 
+        ETA: 1e-5
+        TOKENS_NORM: True
+
