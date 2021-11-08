@@ -12,55 +12,60 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 
+
 ### Update 
+
 * Update (2021-11-7): Code is released
 
 ## Models Zoo
-| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
-|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| xcit_nano_12_p16_224_dist | 0.7232 | 0.9086 |    |    | 224        | 1.0    | bicubic       |  |
-|                           |       |       |         |       |            |          |               |                                                              |
-|                           |       |       |         |       |            |          |               |                                                              |
-|                           |       |       |         |       |            |          |               |                                                              |
-|                           |       |       |         |       |            |          |               |                                                              |
-|                           |       |       |         |       |            |          |               |                                                              |
-|                           |       |       |         |       |            |          |               |                                                              |
-|                           |       |       |         |       |            |          |               |                                                              |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
+
+| Model                       | Acc@1  | Acc@5  | #Params | FLOPs | Image Size | Crop_pct | Interpolation | Link |
+| --------------------------- | ------ | ------ | ------- | ----- | ---------- | -------- | ------------- | ---- |
+| xcit_nano_12_p16_224_dist   | 0.7232 | 0.9086 |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_nano_12_p16_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_tiny_12_p16_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_tiny_12_p16_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_small_12_p16_224_dist  |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_small_12_p16_384_dist  |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_small_24_p16_224_dist  |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_small_24_p16_384_dist  |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_medium_24_p16_224_dist |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_medium_24_p16_384_dist |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_large_24_p16_224_dist  |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_large_24_p16_384_dist  |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_nano_12_p8_224_dist    |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_nano_12_p8_384_dist    |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_tiny_12_p8_224_dist    |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_tiny_12_p8_384_dist    |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_small_12_p8_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_small_12_p8_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_small_24_p8_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_small_24_p8_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_medium_24_p8_224_dist  |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_medium_24_p8_384_dist  |        |        |         |       | 384        | 1.0      | bicubic       |      |
+| xcit_large_24_p8_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
+| xcit_large_24_p8_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
+
 > *The results are evaluated on ImageNet2012 validation set.
 
 ## Notebooks
+
 We provide a few notebooks in aistudio to help you get started:
 
 **\*(coming soon)\***
 
 
 ## Requirements
+
 - Python>=3.6
 - yaml>=0.2.5
 - [PaddlePaddle](https://www.paddlepaddle.org.cn/documentation/docs/en/install/index_en.html)>=2.1.0
 - [yacs](https://github.com/rbgirshick/yacs)>=0.1.8
 
 ## Data 
+
 ImageNet2012 dataset is used in the following folder structure:
+
 ```
 │imagenet/
 ├──train/
@@ -78,9 +83,11 @@ ImageNet2012 dataset is used in the following folder structure:
 ```
 
 ## Usage
+
 To use the model with pretrained weights, download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
 
 For example, assume the downloaded weight file is stored in `./swin_base_patch4_window7_224.pdparams`, to use the `swin_base_patch4_window7_224` model in python:
+
 ```python
 from config import get_config
 from xcit import build_xcit as build_model
@@ -94,11 +101,15 @@ model.set_dict(model_state_dict)
 ```
 
 ## Evaluation
+
 To evaluate XCiT model performance on ImageNet2012 with a single GPU, run the following script using command line:
+
 ```shell
 sh run_eval.sh
 ```
+
 or
+
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
@@ -112,6 +123,7 @@ python main_single_gpu.py \
 
 <details>
 
+
 <summary>
 Run evaluation using multi-GPUs:
 </summary>
@@ -120,7 +132,9 @@ Run evaluation using multi-GPUs:
 ```shell
 sh run_eval_multi.sh
 ```
+
 or
+
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
@@ -136,11 +150,15 @@ python main_multi_gpu.py \
 
 
 ## Training
+
 To train the XCiT model on ImageNet2012 with single GPU, run the following script using command line:
+
 ```shell
 sh run_train.sh
 ```
+
 or
+
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_singel_gpu.py \
@@ -152,6 +170,7 @@ python main_singel_gpu.py \
 
 <details>
 
+
 <summary>
 Run training using multi-GPUs:
 </summary>
@@ -160,7 +179,9 @@ Run training using multi-GPUs:
 ```shell
 sh run_train_multi.sh
 ```
+
 or
+
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
@@ -174,9 +195,11 @@ python main_multi_gpu.py \
 
 
 ## Visualization Attention Map
+
 **(coming soon)**
 
 ## Reference
+
 ```
 @article{el2021xcit,
   title={XCiT: Cross-Covariance Image Transformers},
