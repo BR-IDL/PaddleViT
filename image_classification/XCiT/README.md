@@ -23,30 +23,10 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 | --------------------------- | ------ | ------ | ------- | ----- | ---------- | -------- | ------------- | ---- |
 | xcit_nano_12_p16_224_dist   | 0.7232 | 0.9086 |         |       | 224        | 1.0      | bicubic       |      |
 | xcit_nano_12_p16_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_tiny_12_p16_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_tiny_12_p16_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_tiny_24_p16_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_tiny_24_p16_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_small_12_p16_224_dist  |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_small_12_p16_384_dist  |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_small_24_p16_224_dist  |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_small_24_p16_384_dist  |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_medium_24_p16_224_dist |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_medium_24_p16_384_dist |        |        |         |       | 384        | 1.0      | bicubic       |      |
 | xcit_large_24_p16_224_dist  |        |        |         |       | 224        | 1.0      | bicubic       |      |
 | xcit_large_24_p16_384_dist  |        |        |         |       | 384        | 1.0      | bicubic       |      |
 | xcit_nano_12_p8_224_dist    |        |        |         |       | 224        | 1.0      | bicubic       |      |
 | xcit_nano_12_p8_384_dist    |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_tiny_12_p8_224_dist    |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_tiny_12_p8_384_dist    |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_tiny_24_p8_224_dist    |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_tiny_24_p8_384_dist    |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_small_12_p8_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_small_12_p8_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_small_24_p8_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_small_24_p8_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_medium_24_p8_224_dist  |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_medium_24_p8_384_dist  |        |        |         |       | 384        | 1.0      | bicubic       |      |
 | xcit_large_24_p8_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
 | xcit_large_24_p8_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
 
