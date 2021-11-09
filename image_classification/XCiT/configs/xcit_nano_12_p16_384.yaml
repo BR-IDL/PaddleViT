@@ -1,0 +1,14 @@
+DATA:
+    IMAGE_SIZE: 384
+    CROP_PCT: 1.0
+MODEL:
+    TYPE: xcit
+    NAME: xcit_nano_12_p16_224
+    TRANS:
+        PATCH_SIZE: 16
+        EMBED_DIM: 128
+        DEPTH: 12
+        NUM_HEADS: 4 
+        ETA: 1.0
+        TOKENS_NORM: False
+
