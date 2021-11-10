@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-from ..utils import OneCycleLRScheduler
+from utils import OneCycleLRScheduler
 
 
 class TestUM(unittest.TestCase):
