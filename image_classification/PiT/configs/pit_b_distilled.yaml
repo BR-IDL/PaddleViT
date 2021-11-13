@@ -1,0 +1,13 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.90
+MODEL:
+    TYPE: PiT
+    NAME: pit_b_distilled
+    DISTILL: True
+    TRANS:
+        PATCH_SIZE: 14
+        STRIDE: 7
+        BASE_DIMS: [64, 64, 64]
+        DEPTH: [3, 6, 4]
+        HEADS: [4, 8, 16]
