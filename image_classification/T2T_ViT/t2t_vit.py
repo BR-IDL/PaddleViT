@@ -441,7 +441,7 @@ class TokenPerformer(nn.Layer):
 
         # same as einsum('bti,bi->bt, qp, kp.sum(axi=1).unsqueeze(2)')
         D = paddle.matmul(qp, kp.sum(axis=1).unsqueeze(2))
-        # same as einsum('bti,bim->bnm')
+        # same as einsum('bin,bim->bnm')
         kptv = paddle.matmul(v, kp, transpose_x=True)
         # same as einsum('bti,bni->btn')
         y = paddle.matmul(qp, kptv, transpose_y=True)
