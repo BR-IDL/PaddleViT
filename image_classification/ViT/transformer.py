@@ -361,7 +361,8 @@ class VisualTransformer(nn.Layer):
                  dropout=0.,
                  attention_dropout=0.,
                  droppath=0.,
-                 train_from_scratch=False):
+                 train_from_scratch=False,
+                 config=None):
         super(VisualTransformer, self).__init__()
         # create patch embedding with positional embedding
         self.patch_embedding = PatchEmbedding(image_size,
@@ -431,5 +432,6 @@ def build_vit(config):
                               dropout=config.MODEL.DROPOUT,
                               attention_dropout=config.MODEL.ATTENTION_DROPOUT,
                               droppath=config.MODEL.DROPPATH,
-                              train_from_scratch=False)
+                              train_from_scratch=False,
+                              config=config)
     return model
