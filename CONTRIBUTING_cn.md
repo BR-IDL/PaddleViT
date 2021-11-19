@@ -49,7 +49,8 @@ PaddleViT 使用这个[Git 分支模型](http://nvie.com/posts/a-successful-git-
    - 我们鼓励编写`unittest` 来测试你编写的类与方法的实现.
    - 在开始合并之前，请在相关数据集上测试模型的性能。
  
-### 6. 持续 pulling
+### 6. 保持本地仓库最新 (Keep Pulling)
+   在准备发起Pull Request之前，需要同步原仓库中最新的代码。
 
    有经验的Git用户会经常从官方存储库中pull数据--每天甚至每小时，因此他们会尽早注意到与其他人的工作冲突，并且更容易解决较小的冲突。
 
@@ -65,6 +66,8 @@ PaddleViT 使用这个[Git 分支模型](http://nvie.com/posts/a-successful-git-
       ```bash
       $ git push origin my-cool-stuff
       ```
+      > 其中，`my-cool-stuff`是您的分支名称
+      
       push操作允许您创建一个pull request,请求此 [official repo](https://github.com/BR-IDL/PaddleViT) 将您的更改拉入到官方库中.
 
    2. 想要创建一个`Pull Request`, 请按照 [这些步骤](https://help.github.com/articles/creating-a-pull-request/).

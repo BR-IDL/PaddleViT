@@ -12,7 +12,7 @@
  
 ## State-of-the-art Visual Transformer and MLP Models for PaddlePaddle ##
 
-:robot: PaddlePaddle Visual Transformers (`PaddleViT` 或 `PPViT`) 为开发者提供视觉Transformer模型集合的高性能实现。 多数模型基于Visual Transformers, Visual Attentions, 以及 MLPs等实现。 此外，PaddleViT集成了PaddlePaddle 2.1+中常用的layers, utilities, optimizers, schedulers, 数据增强, 训练/验证脚本. 此项目旨在通过提供SOTA ViT和MLP模型等完整训练/验证程序，能够为用户提供更简便的方式去使用CV领域的前沿算法。
+:robot: PaddlePaddle Visual Transformers (`PaddleViT` 或 `PPViT`) 为开发者提供视觉领域的高性能Transformer模型集合的实现。 多数模型基于Visual Transformers, Visual Attentions, 以及 MLPs等实现。 此外，PaddleViT集成了PaddlePaddle 2.1+中常用的layers, utilities, optimizers, schedulers, 数据增强, 以及训练/评估脚本等。 此项目旨在通过提供SOTA ViT和MLP模型等完整训练/评估程序，从而为用户提供更简便的方式去使用CV领域的前沿算法。
 
 :robot: PaddleViT 为多项视觉任务提供模型和工具，例如分类， 目标检测，语义分割，GAN等领域。每个模型架构均在独立的Python模块中定义，以便于用户能够快速的实现研究实验。同时，提供了模型的预训练权重，可以用于您自己的数据集进行微调。PaddleViT还集成了常用的工具和模块，用于自定义数据集、数据预处理，性能评估以及DDP等。
 
@@ -21,14 +21,14 @@
 
 ## Quick Links ##
 PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接以获取详细信息： 
-- [PaddleViT-Cls](./image_classification) for Image Classification
-- [PaddleViT-Det](./object_detection/DETR) for object detection
-- [PaddleViT-Seg](./semantic_segmentation) for Semantic Segmentation
-- [PaddleViT-GAN](./gan) for GANs.
+- [PaddleViT-Cls](./image_classification) 用于 图像分类
+- [PaddleViT-Det](./object_detection/DETR) 用于 目标检测
+- [PaddleViT-Seg](./semantic_segmentation) 用于 语义分割
+- [PaddleViT-GAN](./gan) 用于 生成对抗模型
   
 我们同时提供对应教程：
-- Notebooks (coming soon)
-- Online Course (coming soon)
+- Notebooks (即将更新)
+- Online Course (即将更新)
 
 ## Features ##
 1. **State-of-the-art**
@@ -43,7 +43,7 @@ PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接�
    - 所有模型的统一框架
 
 3. **Easily customizable to your needs**
-   - 每个模型的实现示例以复现结果
+   - 每个模型的实现示例
    - 实现模型公开以便于用户自定义 
    - 模型文件可以独立使用以便于快速实现
 
@@ -85,7 +85,7 @@ PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接�
 8. **[ConvMLP](./ConvMLP)** (from UO/UIUC/PAIR), released with [ConvMLP: Hierarchical Convolutional MLPs for Vision](https://arxiv.org/abs/2109.04454), by Jiachen Li, Ali Hassani, Steven Walton, Humphrey Shi.
 9. **[ViP](./ViP)** (from National University of Singapore), released with [Vision Permutator: A Permutable MLP-Like Architecture for Visual Recognition](https://arxiv.org/abs/2106.12368), by Qibin Hou and Zihang Jiang and Li Yuan and Ming-Ming Cheng and Shuicheng Yan and Jiashi Feng.
 
-#### *即将更新:* ####
+#### 即将更新: ####
 1. **[HaloNet]()**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.
 5. **[XCiT]()** (from Facebook/Inria/Sorbonne), released with paper [XCiT: Cross-Covariance Image Transformers](https://arxiv.org/abs/2106.09681), by Alaaeldin El-Nouby, Hugo Touvron, Mathilde Caron, Piotr Bojanowski, Matthijs Douze, Armand Joulin, Ivan Laptev, Natalia Neverova, Gabriel Synnaeve, Jakob Verbeek, Hervé Jegou.
 6. **[CvT]()** (from McGill/Microsoft), released with paper [CvT: Introducing Convolutions to Vision Transformers](https://arxiv.org/abs/2103.15808), by Haiping Wu, Bin Xiao, Noel Codella, Mengchen Liu, Xiyang Dai, Lu Yuan, Lei Zhang
@@ -508,11 +508,12 @@ python main_multi_gpu.py \
 
 
 ## 贡献 ##
-* 我们鼓励并感谢您对 **PaddleViT** 项目的贡献, 请查看[CONTRIBUTING.md](./CONTRIBUTING.md)以参考我们的our workflow 和 work styles.  
+* 我们鼓励并感谢您对 **PaddleViT** 项目的贡献, 请查看[CONTRIBUTING.md](./CONTRIBUTING.md)以参考我们的工作流程和代码风格.  
 
 
-## Licenses ##
-* This repo is under the Apache-2.0 license. 
+## 许可 ##
+* 此 repo 遵循 Apache-2.0 许可. 
 
-## Contact ##
-* Please raise an issue on GitHub.
+## 联系 ##
+如果您有任何问题, 请在我们的Github上创建一个[issue](https://github.com/BR-IDL/PaddleViT/issues).
+

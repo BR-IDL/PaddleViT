@@ -1,6 +1,6 @@
 # PaddleViT-GAN: GAN 领域的 Visual Transformer 模型
   
-PaddlePaddle **GAN**的训练/验证代码以及预训练模型。
+PaddlePaddle **GAN**的训练/评估代码以及预训练模型。
 
 此实现是[PaddleViT](https://github.com/BR-IDL/PaddleViT)项目的一部分。
 
