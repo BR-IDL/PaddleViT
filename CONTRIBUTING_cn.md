@@ -49,7 +49,7 @@ PaddleViT 使用这个[Git 分支模型](http://nvie.com/posts/a-successful-git-
    - 我们鼓励编写`unittest` 来测试你编写的类与方法的实现.
    - 在开始合并之前，请在相关数据集上测试模型的性能。
  
-### 6. Keep pulling
+### 6. 持续 pulling
 
    有经验的Git用户会经常从官方存储库中pull数据--每天甚至每小时，因此他们会尽早注意到与其他人的工作冲突，并且更容易解决较小的冲突。
 
