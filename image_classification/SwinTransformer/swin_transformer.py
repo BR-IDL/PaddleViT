@@ -270,21 +270,21 @@ class WindowAttention(nn.Layer):
         return relative_position_bias
 
     def forward(self, x, mask=None):
-        qkv = self.qkv(x).chunk(3, axis=-1)
-        q, k, v = map(self.transpose_multihead, qkv)
+        qkv = self.qkv(x).chunk(3, axis=-1)     # {list:3}
+        q, k, v = map(self.transpose_multihead, qkv)       # [512,3,49,32] -> [128,6,49,32]-> [32,12,49,32]->[8,24,49,32]
         q = q * self.scale
-        attn = paddle.matmul(q, k, transpose_y=True)
+        attn = paddle.matmul(q, k, transpose_y=True)        # [512,3,49,49] -> [128,6,49,49] -> [32,12,49,49] -> [8,24,49,49]
 
-        relative_position_bias = self.get_relative_pos_bias_from_pos_index()
+        relative_position_bias = self.get_relative_pos_bias_from_pos_index() #[2401,3]->[2401,6]->[2401,12]->[2401,24]
 
         relative_position_bias = relative_position_bias.reshape(
             [self.window_size[0] * self.window_size[1],
              self.window_size[0] * self.window_size[1],
-             -1])
+             -1])       # [49,49,3]->[49,49,6]->[49,49,12]->[49,49,24]
 
         # nH, window_h*window_w, window_h*window_w
-        relative_position_bias = relative_position_bias.transpose([2, 0, 1])
-        attn = attn + relative_position_bias.unsqueeze(0)
+        relative_position_bias = relative_position_bias.transpose([2, 0, 1])  # [3,49,49]->[6,49,49]->[12,49,49]->[24,49,49]
+        attn = attn + relative_position_bias.unsqueeze(0)   
 
         if mask is not None:
             nW = mask.shape[0]
@@ -296,14 +296,14 @@ class WindowAttention(nn.Layer):
         else:
             attn = self.softmax(attn)
 
-        attn = self.attn_dropout(attn)
+        attn = self.attn_dropout(attn)  # [512,3,49,49]->[128,6,49,49]->[32,12,49,49]->[8,24,49,49]
 
-        z = paddle.matmul(attn, v)
+        z = paddle.matmul(attn, v)      # [512,3,49,32]->[128,6,49,32]->[32,12,49,32]->[8,24,49,32]
         z = z.transpose([0, 2, 1, 3])
         new_shape = z.shape[:-2] + [self.dim]
         z = z.reshape(new_shape)
         z = self.proj(z)
-        z = self.proj_dropout(z)
+        z = self.proj_dropout(z)    # [512,49,96]->[128,49,192]->[32,49,384]->[8,49,768]
 
         return z
 
@@ -318,9 +318,9 @@ def windows_partition(x, window_size):
     """
 
     B, H, W, C = x.shape
-    x = x.reshape([B, H//window_size, window_size, W//window_size, window_size, C])
-    x = x.transpose([0, 1, 3, 2, 4, 5])
-    x = x.reshape([-1, window_size, window_size, C]) #(num_windows*B, window_size, window_size, C)
+    x = x.reshape([B, H//window_size, window_size, W//window_size, window_size, C]) # [bs,num_window,window_size,num_window,window_size,C]
+    x = x.transpose([0, 1, 3, 2, 4, 5])     # [bs,num_window,num_window,window_size,window_Size,C]
+    x = x.reshape([-1, window_size, window_size, C]) #(bs*num_windows,window_size, window_size, C)
 
     return x
 
@@ -338,9 +338,9 @@ def windows_reverse(windows, window_size, H, W):
     """
 
     B = int(windows.shape[0] / (H * W / window_size / window_size))
-    x = windows.reshape([B, H // window_size, W // window_size, window_size, window_size, -1])
-    x = x.transpose([0, 1, 3, 2, 4, 5])
-    x = x.reshape([B, H, W, -1])
+    x = windows.reshape([B, H // window_size, W // window_size, window_size, window_size, -1]) # [bs,num_window,num_window,window_size,window_Size,C]
+    x = x.transpose([0, 1, 3, 2, 4, 5]) # [bs,num_window,window_size,num_window,window_size,C]
+    x = x.reshape([B, H, W, -1])  #(bs,num_windows*window_size, num_windows*window_size, C)
     return x
 
 
@@ -438,25 +438,25 @@ class SwinTransformerBlock(nn.Layer):
         H, W = self.input_resolution
         B, L, C = x.shape
         h = x
-        x = self.norm1(x)
+        x = self.norm1(x)   # [bs,H*W,C]
 
         new_shape = [B, H, W, C]
-        x = x.reshape(new_shape)
+        x = x.reshape(new_shape) # [bs,H,W,C]
 
         if self.shift_size > 0:
             shifted_x = paddle.roll(x,
                                     shifts=(-self.shift_size, -self.shift_size),
-                                    axis=(1, 2))
+                                    axis=(1, 2))        # [bs,H,W,C]
         else:
             shifted_x = x
 
-        x_windows = windows_partition(shifted_x, self.window_size)
-        x_windows = x_windows.reshape([-1, self.window_size * self.window_size, C])
+        x_windows = windows_partition(shifted_x, self.window_size)  # [bs*num_windows,7,7,C]
+        x_windows = x_windows.reshape([-1, self.window_size * self.window_size, C]) # [bs*num_windows,7*7,C]
 
-        attn_windows = self.attn(x_windows, mask=self.attn_mask)
-        attn_windows = attn_windows.reshape([-1, self.window_size, self.window_size, C])
+        attn_windows = self.attn(x_windows, mask=self.attn_mask)    # [bs*num_windows,7*7,C]
+        attn_windows = attn_windows.reshape([-1, self.window_size, self.window_size, C])    # [bs*num_windows,7,7,C]
 
-        shifted_x = windows_reverse(attn_windows, self.window_size, H, W)
+        shifted_x = windows_reverse(attn_windows, self.window_size, H, W)   # [bs,H,W,C] 
 
         # reverse cyclic shift
         if self.shift_size > 0:
@@ -466,15 +466,15 @@ class SwinTransformerBlock(nn.Layer):
         else:
             x = shifted_x
 
-        x = x.reshape([B, H*W, C])
+        x = x.reshape([B, H*W, C])      # [bs,H*W,C] 
 
         if self.drop_path is not None:
             x = h + self.drop_path(x)
         else:
             x = h + x
-        h = x
-        x = self.norm2(x)
-        x = self.mlp(x)
+        h = x       # [bs,H*W,C]
+        x = self.norm2(x)       # [bs,H*W,C]
+        x = self.mlp(x)         # [bs,H*W,C]
         if self.drop_path is not None:
             x = h + self.drop_path(x)
         else:
@@ -523,9 +523,9 @@ class SwinTransformerStage(nn.Layer):
 
     def forward(self, x):
         for block in self.blocks:
-            x = block(x)
+            x = block(x)                # [bs,56*56,96] -> [bs,28*28,96*2] -> [bs,14*14,96*4] -> [bs,7*7,96*8]
         if self.downsample is not None:
-            x = self.downsample(x)
+            x = self.downsample(x)      # [bs,28*28,96*2] -> [bs,14*14,96*4] -> [bs,7*7,96*8]
 
         return x
 
@@ -643,23 +643,23 @@ class SwinTransformer(nn.Layer):
         return weight_attr, bias_attr
 
     def forward_features(self, x):
-        x = self.patch_embedding(x)
+        x = self.patch_embedding(x)     # [bs,H*W,96]
         if self.ape:
             x = x + self.absolute_positional_embedding
-        x = self.position_dropout(x)
+        x = self.position_dropout(x)    # [bs,H*W,96]
 
         for stage in self.stages:
-            x = stage(x)
+            x = stage(x)        # [bs,784,192],[bs,196,384],[bs,49,768],[bs,49,768]
 
-        x = self.norm(x)
+        x = self.norm(x)        # [bs,49,768]
         x = x.transpose([0, 2, 1])
-        x = self.avgpool(x)
-        x = x.flatten(1)
+        x = self.avgpool(x)     # [bs,768,1]
+        x = x.flatten(1)        # [bs,768]
         return x
 
     def forward(self, x):
-        x = self.forward_features(x)
-        x = self.fc(x)
+        x = self.forward_features(x)        # [bs,768]
+        x = self.fc(x)                  # [bs,1000]
         return x
 
 
