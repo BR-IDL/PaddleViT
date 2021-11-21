@@ -196,13 +196,13 @@ with 2 gpus on each node.
     docker run --name paddle1 -it -d --gpus "device=2,3" --network paddle_net\
     paddlepaddle/paddle:2.2.0-gpu-cuda10.2-cudnn7 /bin/bash
     ```
-   Noted: 
-   1. One can assign same gpu device to different containers. But it may occur OOM
-   since multiple models will run on the same gpu. 
-   2. One should use `-v` to bind PaddleViT repository to container.
+    >   Noted: 
+    >   1. One can assign same gpu device to different containers. But it may occur OOM since multiple models will run on the same gpu. 
+    >   2. One should use `-v` to bind PaddleViT repository to container.
+
 4. Modify `run_train_multi_node.sh` as described above and run the training script on every container.
    
-    Noted: One can use `ping` or `ip -a` bash command to check containers' ip addresses. 
+    >   Noted: One can use `ping` or `ip -a` bash command to check containers' ip addresses. 
 
 </details>
 
