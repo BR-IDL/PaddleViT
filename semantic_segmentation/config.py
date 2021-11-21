@@ -15,6 +15,11 @@ _C.DATA.CROP_SIZE = (480,480) # input_size (training)
 _C.DATA.NUM_CLASSES = 60  # 19 for cityscapes, 60 for Pascal-Context
 _C.DATA.NUM_WORKERS = 0 # number of data loading threads (curren paddle must set to 0)
 
+# dataset augmentation
+_C.DATA.AUG = CN()
+_C.DATA.AUG.RESIZE = True
+_C.DATA.AUG.MIRROR = True
+
 # model settings
 _C.MODEL = CN()
 _C.MODEL.NAME = 'SETR_MLA'
@@ -64,6 +69,14 @@ _C.MODEL.TRANS.SR_RATIOS = [8, 4, 2, 1]
 
 ## special settings for CSwin Transformer
 _C.MODEL.TRANS.SPLIT_SIZES = None
+
+## special settings for Focal Transformer
+_C.MODEL.TRANS.FOCAL_STAGES = None
+_C.MODEL.TRANS.FOCAL_LEVELS = None
+_C.MODEL.TRANS.FOCAL_WINDOWS = None
+_C.MODEL.TRANS.EXPAND_STAGES = None
+_C.MODEL.TRANS.EXPAND_SIZES = None
+_C.MODEL.TRANS.USE_CONV_EMBED = True
 
 # MLA Decoder setting
 _C.MODEL.MLA = CN()
@@ -134,7 +147,9 @@ _C.TRAIN.END_LR = 1e-4
 _C.TRAIN.DECODER_LR_COEF = 1.0
 _C.TRAIN.GRAD_CLIP = 1.0
 _C.TRAIN.ITERS = 80000
-_C.TRAIN.WEIGHT_DECAY = 0.0 # 0.0 for finetune
+_C.TRAIN.WEIGHT_DECAY = 1e-4 # 0.0 for finetune
+_C.TRAIN.EPSILON = 1e-8
+_C.TRAIN.MOMENTUM = 0.9
 _C.TRAIN.POWER=0.9
 _C.TRAIN.DECAY_STEPS= 80000
 _C.TRAIN.APEX = False
@@ -151,6 +166,16 @@ _C.TRAIN.LR_SCHEDULER.AUX = False # whether to use aux loss
 _C.TRAIN.LR_SCHEDULER.AUX_WEIGHT = 0.4 # aux loss weight
 _C.TRAIN.LR_SCHEDULER.LOSS_NAME = '' # loss name
 _C.TRAIN.LR_SCHEDULER.DECODER_LR_FACTOR = 10.0 # decoder lr x10
+_C.TRAIN.LR_SCHEDULER.WARMUP_STEPS = 100
+_C.TRAIN.LR_SCHEDULER.WARMUP_FACTOR = 1.0 / 3
+_C.TRAIN.LR_SCHEDULER.WARMUP_METHOD = 'linear' # 'linear' or 'constant'
+
+# special for PolynomialDecay
+_C.TRAIN.LR_SCHEDULER.POLY_POWER = 0.9
+
+# special for StepDecay
+_C.TRAIN.LR_SCHEDULER.STEP_DECAY = [3000, 6000]
+_C.TRAIN.LR_SCHEDULER.STEP_GAMMA = 0.1
 
 _C.TRAIN.OPTIMIZER = CN()
 _C.TRAIN.OPTIMIZER.NAME = 'SGD'

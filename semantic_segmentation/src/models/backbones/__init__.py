@@ -5,3 +5,4 @@ from .cswin_transformer import CSwinTransformer
 from .deit import Deit
 from .resnet import *
 from .trans2seg_transformer import *
+from .focal_transformer import FocalTransformer

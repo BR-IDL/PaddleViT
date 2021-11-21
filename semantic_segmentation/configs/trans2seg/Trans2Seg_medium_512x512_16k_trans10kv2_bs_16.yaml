@@ -1,13 +1,13 @@
 DATA:
     DATASET: "Trans10kV2"
-    BATCH_SIZE: 16
+    BATCH_SIZE: 4
     BATCH_SIZE_VAL: 1
     DATA_PATH: 'E:/Trans10K_cls12'
     CROP_SIZE: (512, 512)
     NUM_CLASSES: 12
 TRAIN:
     BASE_LR: 0.0001
-    ITERS: 80000
+    ITERS: 16000
     LR_SCHEDULER:
         NAME: "PolynomialDecay"
     OPTIMIZER:
@@ -18,6 +18,7 @@ VAL:
     CROP_SIZE: [512, 512]
 MODEL:
     NAME: "Trans2Seg"
+    PRETRAINED: /home/aistudio/PaddleViT/semantic_segmentation/resnet50c.pdparams
     ENCODER:
         TYPE: "resnet50c"
         MULTI_GRID: 
@@ -28,4 +29,4 @@ MODEL:
         NUM_HEADS: 8
         MLP_RATIO: 3.
         HID_DIM: 64
-SAVE_DIR: "./output/trans10kv2/Trans2Seg_medium_512x512_80k_trans10kv2_bs_16"
+SAVE_DIR: "./output/trans10kv2/Trans2Seg_medium_512x512_16k_trans10kv2_bs_16"

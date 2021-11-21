@@ -1,1 +1,2 @@
 from .cross_entropy_loss import CrossEntropyLoss
+from .mix_softmax_cross_entropy_loss import MixSoftmaxCrossEntropyLoss

@@ -48,10 +48,10 @@ def get_dataset(config, data_transform, mode='train'):
                 num_classes=config.DATA.NUM_CLASSES, mode='val')
     elif config.DATA.DATASET == "Trans10kV2":
         if mode == 'train':
-            dataset = Trans10kV2(transforms=data_transform,                                                                                                                                                                                   
+            dataset = Trans10kV2(config=config, transforms=data_transform,                                                                                                                                                                                   
                 dataset_root=config.DATA.DATA_PATH, num_classes=config.DATA.NUM_CLASSES, mode='train')
         elif mode == 'val':
-            dataset =  Trans10kV2(transforms=data_transform,
+            dataset =  Trans10kV2(config=config, transforms=data_transform,
                 dataset_root=config.DATA.DATA_PATH, num_classes=config.DATA.NUM_CLASSES, mode='val')
     else:
         raise NotImplementedError("{} dataset is not supported".format(config.DATA.DATASET))
