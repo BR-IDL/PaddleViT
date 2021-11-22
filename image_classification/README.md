@@ -1,3 +1,5 @@
+English | [简体中文](./README_cn.md)
+
 # PaddleViT-Classification: Visual Transformer and MLP Models for Image Classification
 PaddlePaddle training/validation code and pretrained models for **Image Classification**.
 

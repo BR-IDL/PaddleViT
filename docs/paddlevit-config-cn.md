@@ -1,3 +1,5 @@
+简体中文 | [English](./paddlevit-config.md)
+
 ## PaddleViT: 如何使用 config ?
 > 示例代码: [here](../image_classification/ViT/config.py)
 

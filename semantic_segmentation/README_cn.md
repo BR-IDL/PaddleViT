@@ -1,3 +1,4 @@
+简体中文 | [English](./README.md)
 
 # 基于 Visual Transformers 的语义分割工具
 

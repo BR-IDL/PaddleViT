@@ -1,4 +1,6 @@
-## 贡献代码
+简体中文 | [English](./CONTRIBUTING.md)
+
+## 贡献代码 
 
 鼓励并感谢为**PaddleViT**项目提供贡献的研究人员和开发人员。
 

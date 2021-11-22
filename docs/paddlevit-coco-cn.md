@@ -1,3 +1,5 @@
+简体中文 | [English](./paddlevit-coco.md)
+
 # PaddleViT 教程: 用于目标检测的COCO数据集
 [COCO dataset](https://cocodataset.org/#home) 是计算机视觉领域中最流行的数据集之一，用于对各种视觉任务进行基准测试，例如目标检测、分割、关键点检测等。在本教程中，我们介绍了加载和处理COCO数据集以及进行目标检测的详细PaddleViT实现。我们将完成从使用`pycocotools`实现`CocoDataset`，到在`transforms`中应用于训练和评估的增强细节的实现。
 

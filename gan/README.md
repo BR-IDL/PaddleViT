@@ -1,3 +1,5 @@
+English | [简体中文](./README_cn.md)
+
 # PaddleViT-GAN: Visual Transformer Models for GAN
 PaddlePaddle training/validation code and pretrained models for **GAN**.
 

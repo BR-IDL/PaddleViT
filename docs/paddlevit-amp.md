@@ -1,3 +1,5 @@
+English | [简体中文](./paddlevit-amp-cn.md)
+
 # PaddleViT: How to use Automatic Mixed Precision (AMP) Training?
 
 ## Introduction:

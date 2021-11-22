@@ -1,3 +1,5 @@
+简体中文 | [English](./README.md)
+
 # PaddleViT-Classification:图像分类领域的Visual Transformer 和 MLP 模型
 PaddlePaddle用于图像分类的训练/评估代码和预训练模型。
 
