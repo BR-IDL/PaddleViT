@@ -1,3 +1,5 @@
+English | [简体中文](./README_cn.md)
+
 # PaddlePaddle Vision Transformers #
 
 [![GitHub](https://img.shields.io/github/license/BR-IDL/PaddleViT?color=blue)](./LICENSE)

@@ -1,3 +1,4 @@
+English | [简体中文](./README_cn.md)
 
 # Semantic segmentation toolkit based on Visual Transformers
 

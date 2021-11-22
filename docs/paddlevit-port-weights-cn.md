@@ -1,3 +1,5 @@
+简体中文 | [English](./paddlevit-port-weights.md)
+
 ## PaddleViT: 如何将模型从 Pytorch 移植到 Paddle?
 > 源码: [here](../image_classification/ViT/load_pytorch_weights.py)
 

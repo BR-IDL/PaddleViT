@@ -1,3 +1,5 @@
+English | [简体中文](./paddlevit-multi-gpu-cn.md)
+
 ## PaddleViT: How to use multi-gpu?
 This document presents **how to use** and **how to implement** multi-gpu (single node) for training and validation in `PaddleViT` for training and validating your model. 
 

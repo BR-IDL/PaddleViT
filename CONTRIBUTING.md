@@ -1,3 +1,5 @@
+English | [简体中文](./CONTRIBUTING_cn.md)
+
 # Contribute Code
 
 You encourage and appreciate researchers and developers to contribute to project **PaddleViT**. 

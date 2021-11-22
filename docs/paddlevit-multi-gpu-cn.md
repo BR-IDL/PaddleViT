@@ -1,3 +1,5 @@
+简体中文 | [English](./paddlevit-multi-gpu.md)
+
 ## PaddleViT: 如何使用多GPU ?
 本文档介绍如何使用和如何实现多GPU（单结点）以在`PaddleViT`中训练和评估模型的方法。
 

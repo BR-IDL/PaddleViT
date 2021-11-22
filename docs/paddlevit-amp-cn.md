@@ -1,3 +1,5 @@
+简体中文 | [English](./paddlevit-amp.md)
+
 # PaddleViT:如何使用自动混合精度(AMP)训练 ？
 
 ## Introduction:
