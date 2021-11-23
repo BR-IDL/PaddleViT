@@ -73,7 +73,7 @@ config = get_config('./configs/vit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./vit_base_patch16_224')
+model_state_dict = paddle.load('./vit_base_patch16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -91,7 +91,7 @@ python main_single_gpu.py \
     -batch_size=16 \
     -data_path='/dataset/imagenet' \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained='./vit_base_patch16_224.pdparams'
 ```
 
 <details>
@@ -113,7 +113,7 @@ python main_multi_gpu.py \
     -batch_size=16 \
     -data_path='/dataset/imagenet' \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained='./vit_base_patch16_224.pdparams'
 ```
 
 </details>
