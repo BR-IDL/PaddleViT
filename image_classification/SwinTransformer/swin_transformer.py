@@ -221,7 +221,7 @@ class WindowAttention(nn.Layer):
         coords_w = paddle.arange(self.window_size[1])
         coords = paddle.stack(paddle.meshgrid([coords_h, coords_w])) # [2, window_h, window_w]
         coords_flatten = paddle.flatten(coords, 1) # [2, window_h * window_w]
-        # 2, window_h * window_w, window_h * window_h
+        # 2, window_h * window_w, window_h * window_w
         relative_coords = coords_flatten.unsqueeze(2) - coords_flatten.unsqueeze(1)
         # winwod_h*window_w, window_h*window_w, 2
         relative_coords = relative_coords.transpose([1, 2, 0])
