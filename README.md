@@ -410,7 +410,7 @@ We also provide tutorials:
 
 
 ## Quick Demo for Image Classification
-To use the model with pretrained weights, go to the specific subfolder e.g., `/image_classification/ViT/`, then download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `。、configs/`.  
+To use the model with pretrained weights, go to the specific subfolder e.g., `/image_classification/ViT/`, then download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs`.  
 
 Assume the downloaded weight file is stored in `./vit_base_patch16_224.pdparams`, to use the `vit_base_patch16_224` model in python:
 ```python
@@ -421,7 +421,7 @@ config = get_config('./configs/vit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./vit_base_patch16_224')
+model_state_dict = paddle.load('./vit_base_patch16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 > :robot: See the README file in each model folder for detailed usages.
@@ -441,7 +441,7 @@ python main_single_gpu.py \
     -batch_size=16 \
     -data_path='/dataset/imagenet' \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained='./vit_base_patch16_224.pdparams'
 ```
 
 <details>

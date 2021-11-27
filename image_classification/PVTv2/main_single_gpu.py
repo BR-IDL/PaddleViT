@@ -83,15 +83,6 @@ def train(dataloader,
           epoch,
           total_epochs,
           total_batch,
-
-
-def train(dataloader,
-          model,
-          criterion,
-          optimizer,
-          epoch,
-          total_epochs,
-          total_batch,
           debug_steps=100,
           accum_iter=1,
           model_ema=None,
@@ -271,7 +262,8 @@ def main():
                          prob=config.TRAIN.MIXUP_PROB,
                          switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
                          mode=config.TRAIN.MIXUP_MODE,
-                         label_smoothing=config.TRAIN.SMOOTHING)
+                         label_smoothing=config.TRAIN.SMOOTHING,
+                         num_classes=config.MODEL.NUM_CLASSES)
 
     # STEP 4: Define criterion
     if config.TRAIN.MIXUP_PROB > 0.:
