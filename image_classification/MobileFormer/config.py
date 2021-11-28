@@ -176,7 +176,7 @@ def _update_config_from_file(config, cfg_file):
             )
     print('=> merge config from {}'.format(cfg_file))
     config.merge_from_file(cfg_file)
-    config.freeze()
+    #config.freeze()
 
 def update_config(config, args):
     """Update config by ArgumentParser
@@ -185,6 +185,8 @@ def update_config(config, args):
     Return:
         config: updated config
     """
+    if args.cfg:
+        _update_config_from_file(config, args.cfg)
     if args.model_type:
         config.MODEL.MF.TYPE = args.model_type
     if args.dataset:

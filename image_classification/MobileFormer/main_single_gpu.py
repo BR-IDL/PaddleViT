@@ -42,6 +42,7 @@ def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
     parser = argparse.ArgumentParser('Focal Transformer')
     parser.add_argument('-cfg', type=str, default=None)
+    parser.add_argument('-model_type', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=32)
     parser.add_argument('-image_size', type=int, default=224)

@@ -66,19 +66,18 @@ class DepthWiseConv(nn.Layer):
                  stride=1,
                  padding=0,
                  is_lite=False):
-        super(DepthWiseConv, self).__init__(
-                 name_scope="DepthWiseConv")
+        super(DepthWiseConv, self).__init__(name_scope="DepthWiseConv")
         self.is_lite = is_lite
         conv_weight_attr, conv_bias_attr = self._conv_init()
         if is_lite is False:
             self.conv = nn.Conv2D(in_channels=in_channels,
-                                out_channels=in_channels,
-                                groups=in_channels,
-                                kernel_size=kernel_size,
-                                stride=stride,
-                                padding=padding,
-                                weight_attr=conv_weight_attr,
-                                bias_attr=conv_bias_attr)
+                                  out_channels=in_channels,
+                                  groups=in_channels,
+                                  kernel_size=kernel_size,
+                                  stride=stride,
+                                  padding=padding,
+                                  weight_attr=conv_weight_attr,
+                                  bias_attr=conv_bias_attr)
         else:
             self.conv = nn.Sequential(
                 # [[0, 1, 2]] -- [3, 1]
@@ -88,8 +87,8 @@ class DepthWiseConv(nn.Layer):
                           stride=[stride, 1],
                           padding=[padding, 0],
                           groups=in_channels,
-                        weight_attr=conv_weight_attr,
-                        bias_attr=conv_bias_attr),
+                          weight_attr=conv_weight_attr,
+                          bias_attr=conv_bias_attr),
                 nn.BatchNorm2D(in_channels),
                 # [[0], [1], [2]] -- [1, 3]
                 nn.Conv2D(in_channels=in_channels,
@@ -98,8 +97,8 @@ class DepthWiseConv(nn.Layer):
                           stride=[1, stride],
                           padding=[0, padding],
                           groups=in_channels,
-                        weight_attr=conv_weight_attr,
-                        bias_attr=conv_bias_attr)
+                          weight_attr=conv_weight_attr,
+                          bias_attr=conv_bias_attr)
             )
 
     def _conv_init(self):
@@ -121,8 +120,7 @@ class PointWiseConv(nn.Layer):
                  in_channels,
                  out_channels,
                  groups=1):
-        super(PointWiseConv, self).__init__(
-                 name_scope="PointWiseConv")
+        super(PointWiseConv, self).__init__(name_scope="PointWiseConv")
         conv_weight_attr, conv_bias_attr = self._conv_init()
         self.conv = nn.Conv2D(in_channels=in_channels,
                               out_channels=out_channels,
@@ -130,8 +128,8 @@ class PointWiseConv(nn.Layer):
                               stride=1,
                               padding=0,
                               groups=groups,
-                            weight_attr=conv_weight_attr,
-                            bias_attr=conv_bias_attr)
+                              weight_attr=conv_weight_attr,
+                              bias_attr=conv_bias_attr)
 
     def _conv_init(self):
         weight_attr = nn.initializer.KaimingNormal()
@@ -171,8 +169,7 @@ class BottleNeck(nn.Layer):
                  reduce=4,
                  use_dyrelu=False,
                  is_lite=False):
-        super(BottleNeck, self).__init__(
-                 name_scope="BottleNeck")
+        super(BottleNeck, self).__init__(name_scope="BottleNeck")
         self.is_lite = is_lite
         self.use_dyrelu = use_dyrelu
         assert use_dyrelu is False or (use_dyrelu is True and embed_dims is not None), \
@@ -198,11 +195,11 @@ class BottleNeck(nn.Layer):
             self.act = nn.ReLU()
         else:
             self.act = DyReLU(in_channels=hidden_channels,
-                                embed_dims=embed_dims,
-                                k=k,
-                                coefs=coefs,
-                                consts=consts,
-                                reduce=reduce)
+                              embed_dims=embed_dims,
+                              k=k,
+                              coefs=coefs,
+                              consts=consts,
+                              reduce=reduce)
 
     def forward(self, feature_map, tokens):
         x = self.in_pw(feature_map)
@@ -235,8 +232,7 @@ class Classifier_Head(nn.Layer):
                  hidden_features,
                  num_classes=1000,
                  act=nn.Hardswish):
-        super(Classifier_Head, self).__init__(
-                 name_scope="Classifier_Head")
+        super(Classifier_Head, self).__init__(name_scope="Classifier_Head")
         linear_weight_attr, linear_bias_attr = self._linear_init()
         self.avg_pool = nn.AdaptiveAvgPool2D(output_size=1)
         self.flatten = nn.Flatten()
@@ -244,6 +240,7 @@ class Classifier_Head(nn.Layer):
                              out_features=hidden_features,
                              weight_attr=linear_weight_attr,
                              bias_attr=linear_bias_attr)
+        linear_weight_attr, linear_bias_attr = self._linear_init()
         self.fc2 = nn.Linear(in_features=hidden_features,
                              out_features=num_classes,
                              weight_attr=linear_weight_attr,
@@ -299,9 +296,8 @@ class Mobile(nn.Layer):
                  consts=[1.0, 0.0],
                  reduce=4,
                  use_dyrelu=False):
-        super(Mobile, self).__init__(
-                 name_scope="Mobile")
-        self.add_dw = True if stride==2 else False
+        super(Mobile, self).__init__(name_scope="Mobile")
+        self.add_dw = (stride == 2)
         self.bneck = BottleNeck(in_channels=in_channels,
                                 hidden_channels=hidden_channels,
                                 out_channels=out_channels,
@@ -349,8 +345,7 @@ class ToFormer_Bridge(nn.Layer):
                  num_head=1,
                  dropout_rate=0.,
                  attn_dropout_rate=0.):
-        super(ToFormer_Bridge, self).__init__(
-                 name_scope="ToFormer_Bridge")
+        super(ToFormer_Bridge, self).__init__(name_scope="ToFormer_Bridge")
         self.num_head = num_head
         self.head_dims = in_channels // num_head
         self.scale = self.head_dims ** -0.5
@@ -373,7 +368,7 @@ class ToFormer_Bridge(nn.Layer):
 
         self.softmax = nn.Softmax()
         self.dropout = nn.Dropout(dropout_rate)
-        self.attn_dropout= nn.Dropout(attn_dropout_rate)
+        self.attn_dropout = nn.Dropout(attn_dropout_rate)
 
     def _linear_init(self):
         weight_attr = nn.initializer.KaimingNormal()
@@ -401,8 +396,7 @@ class ToFormer_Bridge(nn.Layer):
         for i in range(self.num_head):
             q_list.append(
                 # B, 1, M, head_dims
-                self.heads_q_proj[i](token[:, i, :, :]).reshape(
-                                shape=[B, 1, M, self.head_dims])
+                self.heads_q_proj[i](token[:, i, :, :]).reshape([B, 1, M, self.head_dims])
             )
         q = paddle.concat(q_list, axis=1) # B, num_head, M, head_dims
         return q
@@ -447,8 +441,7 @@ class ToMobile_Bridge(nn.Layer):
                  num_head=1,
                  dropout_rate=0.,
                  attn_dropout_rate=0.):
-        super(ToMobile_Bridge, self).__init__(
-                 name_scope="ToMobile_Bridge")
+        super(ToMobile_Bridge, self).__init__(name_scope="ToMobile_Bridge")
         self.num_head = num_head
         self.head_dims = in_channels // num_head
         self.scale = self.head_dims ** -0.5
@@ -475,7 +468,7 @@ class ToMobile_Bridge(nn.Layer):
 
         self.softmax = nn.Softmax()
         self.dropout = nn.Dropout(dropout_rate)
-        self.attn_dropout= nn.Dropout(attn_dropout_rate)
+        self.attn_dropout = nn.Dropout(attn_dropout_rate)
 
     def _linear_init(self):
         weight_attr = nn.initializer.KaimingNormal()
@@ -506,13 +499,11 @@ class ToMobile_Bridge(nn.Layer):
         for i in range(self.num_head):
             k_list.append(
                 # B, 1, M, head_dims
-                self.heads_k_proj[i](k_[:, i, :, :]).reshape(
-                                shape=[B, 1, M, self.head_dims])
+                self.heads_k_proj[i](k_[:, i, :, :]).reshape([B, 1, M, self.head_dims])
             )
             v_list.append(
                 # B, 1, M, head_dims
-                self.heads_v_proj[i](v_[:, i, :, :]).reshape(
-                                shape=[B, 1, M, self.head_dims])
+                self.heads_v_proj[i](v_[:, i, :, :]).reshape([B, 1, M, self.head_dims])
             )
         k = paddle.concat(k_list, axis=1) # B, num_head, M, head_dims
         v = paddle.concat(v_list, axis=1) # B, num_head, M, head_dims
@@ -571,17 +562,17 @@ class Former(nn.Layer):
         super(Former, self).__init__(name_scope="Former")
 
         self.attn = Attention(embed_dims=embed_dims,
-                                num_head=num_head,
-                                dropout_rate=dropout_rate,
-                                attn_dropout_rate=attn_dropout_rate,
-                                qkv_bias=qkv_bias)
+                              num_head=num_head,
+                              dropout_rate=dropout_rate,
+                              attn_dropout_rate=attn_dropout_rate,
+                              qkv_bias=qkv_bias)
         self.attn_ln = norm(embed_dims)
         self.attn_droppath = DropPath(droppath_rate)
 
         self.mlp = MLP(in_features=embed_dims,
-                        mlp_ratio=mlp_ratio,
-                        mlp_dropout_rate=mlp_dropout_rate,
-                        act=act)
+                       mlp_ratio=mlp_ratio,
+                       mlp_dropout_rate=mlp_dropout_rate,
+                       act=act)
         self.mlp_ln = norm(embed_dims)
         self.mlp_droppath = DropPath(droppath_rate)
 
@@ -646,8 +637,7 @@ class MFBlock(nn.Layer):
                  norm=nn.LayerNorm,
                  act=nn.GELU,
                  qkv_bias=True):
-        super(MFBlock, self).__init__(
-                 name_scope="MFBlock")
+        super(MFBlock, self).__init__(name_scope="MFBlock")
         self.mobile = Mobile(in_channels=in_channels,
                              hidden_channels=hidden_channels,
                              out_channels=out_channels,
@@ -844,11 +834,12 @@ class MobileFormer(nn.Layer):
                                   in_channels,
                                   norm,
                                   alpha):
-        self.end_toformer_bridge = ToFormer_Bridge(embed_dims=self.embed_dims,
-                                                    in_channels=int(alpha * in_channels),
-                                                    num_head=self.num_head,
-                                                    dropout_rate=self.dropout_rate,
-                                                    attn_dropout_rate=self.attn_dropout_rate)
+        self.end_toformer_bridge = ToFormer_Bridge(
+            embed_dims=self.embed_dims,
+            in_channels=int(alpha * in_channels),
+            num_head=self.num_head,
+            dropout_rate=self.dropout_rate,
+            attn_dropout_rate=self.attn_dropout_rate)
         self.former_bridge_norm = norm(self.embed_dims)
 
     def _create_channel_conv(self,
@@ -929,7 +920,7 @@ class MobileFormer(nn.Layer):
 
     def _to_batch_tokens(self, batch_size):
         # B, token_size, embed_dims
-        return paddle.concat([self.tokens]*batch_size,  axis=0)
+        return paddle.concat([self.tokens] * batch_size, axis=0)
 
     def bridge_forward(self, inputs):
         B, _, _, _ = inputs.shape
