@@ -1,7 +1,6 @@
 DATA:
     IMAGE_SIZE: 224
     CROP_PCT: 0.875
-    BATCH_SIZE: 4096
 MODEL:
     TYPE: MAE
     NAME: vit_large_patch16_224
@@ -10,6 +9,7 @@ MODEL:
         MLP_RATIO: 4.0
         QKV_BIAS: true
         MASK_RATIO: 0.75
+        DROPPATH: 0.0
         ENCODER:
             EMBED_DIM: 768
             DEPTH: 12
@@ -24,6 +24,8 @@ TRAIN:
     WEIGHT_DECAY: 0.05
     BASE_LR: 1.5e-4
     WARMUP_START_LR: 1e-6
+    GRAD_CLIP: False
+    ACCUM_ITER: 2 # the total batch size should be 4096
 
     LR_SCHEDULER:
         NAME: 'warmupcosine'

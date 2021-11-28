@@ -60,9 +60,11 @@ config = update_config(config, arguments)
 
 # set output folder
 if not config.EVAL:
-    config.SAVE = '{}/train-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
+    config.SAVE = '{}/train-{}'.format(config.SAVE,
+                                       time.strftime('%Y%m%d-%H-%M-%S'))
 else:
-    config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
+    config.SAVE = '{}/eval-{}'.format(config.SAVE,
+                                      time.strftime('%Y%m%d-%H-%M-%S'))
 
 if not os.path.exists(config.SAVE):
     os.makedirs(config.SAVE, exist_ok=True)
@@ -104,7 +106,6 @@ def train(dataloader,
         scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
 
-
     for batch_id, data in enumerate(dataloader):
         image = data[0]
 
@@ -128,7 +129,7 @@ def train(dataloader,
             # loss =  loss / accum_iter
             loss.backward()
 
-            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+            if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 optimizer.step()
                 optimizer.clear_grad()
 
@@ -160,10 +161,11 @@ def main_worker(*args):
     model = build_model(config)
     model = paddle.DataParallel(model)
     # 2. Create train dataloader
-    dataset_train= args[0]
+    dataset_train = args[0]
     dataloader_train = get_dataloader(config, dataset_train, 'train', True)
     total_batch_train = len(dataloader_train)
-    logging.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
+    logging.info(
+        f'----- Total # of train batch (single gpu): {total_batch_train}')
     # 3. Define criterion
     criterion = nn.MSELoss()
     # 4. Define lr_scheduler
@@ -182,14 +184,16 @@ def main_worker(*args):
                                                              T_max=config.TRAIN.NUM_EPOCHS,
                                                              last_epoch=last_epoch)
     elif config.scheduler == "multi-step":
-        milestones = [int(v.strip()) for v in config.TRAIN.LR_SCHEDULER.MILESTONES.split(",")]
+        milestones = [int(v.strip())
+                      for v in config.TRAIN.LR_SCHEDULER.MILESTONES.split(",")]
         scheduler = paddle.optimizer.lr.MultiStepDecay(learning_rate=config.TRAIN.BASE_LR,
                                                        milestones=milestones,
                                                        gamma=config.TRAIN.LR_SCHEDULER.DECAY_RATE,
                                                        last_epoch=last_epoch)
     else:
         logging.fatal(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
-        raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
+        raise NotImplementedError(
+            f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
     # 5. Define optimizer
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
         if config.TRAIN.GRAD_CLIP:
@@ -216,18 +220,21 @@ def main_worker(*args):
             epsilon=config.TRAIN.OPTIMIZER.EPS,
             grad_clip=clip,
             #apply_decay_param_fun=get_exclude_from_weight_decay_fn(['pos_embed', 'cls_token']),
-            )
+        )
     else:
         logging.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
-        raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
+        raise NotImplementedError(
+            f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
     # 6. Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
         if (config.MODEL.PRETRAINED).endswith('.pdparams'):
-            raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
+            raise ValueError(
+                f'{config.MODEL.PRETRAINED} should not contain .pdparams')
         assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams') is True
         model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
         model.set_dict(model_state)
-        logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
+        logger.info(
+            f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
         assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
@@ -243,16 +250,17 @@ def main_worker(*args):
     logging.info(f"Start training from epoch {last_epoch + 1}.")
     for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
         # train
-        logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
+        logging.info(
+            f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
         train_loss, train_time = train(dataloader=dataloader_train,
-                                                  model=model,
-                                                  criterion=criterion,
-                                                  optimizer=optimizer,
-                                                  epoch=epoch,
-                                                  total_batch=total_batch_train,
-                                                  debug_steps=config.REPORT_FREQ,
-                                                  accum_iter=config.TRAIN.ACCUM_ITER,
-                                                  amp=config.AMP)
+                                       model=model,
+                                       criterion=criterion,
+                                       optimizer=optimizer,
+                                       epoch=epoch,
+                                       total_batch=total_batch_train,
+                                       debug_steps=config.REPORT_FREQ,
+                                       accum_iter=config.TRAIN.ACCUM_ITER,
+                                       amp=config.AMP)
         scheduler.step()
 
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
@@ -274,7 +282,8 @@ def main_worker(*args):
 
 def main():
     dataset_train = get_dataset(config, mode='train')
-    config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS
+    config.NGPUS = len(paddle.static.cuda_places()
+                       ) if config.NGPUS == -1 else config.NGPUS
     dist.spawn(main_worker, args=(dataset_train, ), nprocs=config.NGPUS)
 
 

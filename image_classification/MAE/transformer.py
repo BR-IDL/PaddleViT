@@ -55,21 +55,26 @@ class PositionalEmbedding(nn.Layer):
         """ Sinusoid position encoding table """
         super(PositionalEmbedding, self).__init__()
         self.seq_len = seq_len
+
         def get_position_angle_vec(embed_dim, position):
             return [position / np.power(10000, 2 * (hid_j // 2) / embed_dim) for hid_j in range(embed_dim)]
 
-        sinusoid_table = np.array([get_position_angle_vec(encoder_embed_dim, pos_i) for pos_i in range(seq_len)])
+        sinusoid_table = np.array([get_position_angle_vec(
+            encoder_embed_dim, pos_i) for pos_i in range(seq_len)])
         sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
         sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
         encoder_position_embedding = paddle.to_tensor([sinusoid_table])
 
-        sinusoid_table = np.array([get_position_angle_vec(decoder_embed_dim, pos_i) for pos_i in range(seq_len)])
+        sinusoid_table = np.array([get_position_angle_vec(
+            decoder_embed_dim, pos_i) for pos_i in range(seq_len)])
         sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
         sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
         decoder_position_embedding = paddle.to_tensor([sinusoid_table])
 
-        self.register_buffer('encoder_position_embedding', encoder_position_embedding)
-        self.register_buffer('decoder_position_embedding', decoder_position_embedding)
+        self.register_buffer('encoder_position_embedding',
+                             encoder_position_embedding)
+        self.register_buffer('decoder_position_embedding',
+                             decoder_position_embedding)
 
     def get_encoder_embedding(self, seq_length=None):
         if seq_length is None:
@@ -360,7 +365,8 @@ class MaskLayer(nn.Layer):
         _, seq_len, _ = x.shape
         seq_len = seq_len - 1  # should not shuffle the [cls] token
         self.mask_num = int(seq_len * self.mask_ratio)
-        index = [i for i in range(1, seq_len + 1)]  # should not shuffle the [cls] token
+        # should not shuffle the [cls] token
+        index = [i for i in range(1, seq_len + 1)]
         random.shuffle(index)
         self.perm = paddle.to_tensor([0] + index)  # add back [cls] token
         shuffled_x = paddle.index_select(x, self.perm, axis=1)
@@ -398,8 +404,10 @@ class MaskLayer(nn.Layer):
         """
         batch, _, _ = x.shape
         mask_tokens = self.mask_token.expand((batch, self.mask_num, -1))
-        unmasked_x = paddle.concat([x, mask_tokens], axis=1)  # [batch, seq_len + 1, decoder_embed_dim]
-        shuffled_pos_embedding = paddle.index_select(pos_embedding, self.perm, axis=1)
+        # [batch, seq_len + 1, decoder_embed_dim]
+        unmasked_x = paddle.concat([x, mask_tokens], axis=1)
+        shuffled_pos_embedding = paddle.index_select(
+            pos_embedding, self.perm, axis=1)
         return unmasked_x + shuffled_pos_embedding
 
 
@@ -595,7 +603,6 @@ class MAEPretrainTransformer(nn.Layer):
         self.reconstruction_layer = nn.Linear(decoder_embed_dim,
                                               in_channels * patch_size * patch_size)
 
-
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
             initializer=paddle.nn.initializer.KaimingUniform())
@@ -610,7 +617,8 @@ class MAEPretrainTransformer(nn.Layer):
         x += self.position_embedding.get_encoder_embedding(x.shape[1])
         x, attn = self.encoder(x)
         x = self.linear_projection(x)
-        x = self.mask_layer.unmask(x, self.position_embedding.get_decoder_embedding())
+        x = self.mask_layer.unmask(
+            x, self.position_embedding.get_decoder_embedding())
         masked_image = self.mask_layer.mask_label(image, self.patch_size)
         x, attn = self.decoder(x)
 
@@ -738,5 +746,5 @@ def build_mae_pretrain(config):
 
 
 def build_mas_finetune(config):
-    #TODO: to be implemented
+    # TODO: to be implemented
     pass

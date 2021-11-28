@@ -1,7 +1,6 @@
 DATA:
     IMAGE_SIZE: 224
     CROP_PCT: 0.875
-    BATCH_SIZE: 1024
 MODEL:
     TYPE: MAE
     NAME: vit_large_patch16_224
