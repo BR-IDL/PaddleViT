@@ -8,15 +8,16 @@ MODEL:
     TRANS:
         PATCH_SIZE: 16
         MLP_RATIO: 4.0
-        NUM_HEADS: 12
         QKV_BIAS: true
         MASK_RATIO: 0.75
         ENCODER:
             EMBED_DIM: 768
             DEPTH: 12
+            NUM_HEADS: 12
         DECODER:
             EMBED_DIM: 512
             DEPTH: 8
+            NUM_HEADS: 8
 TRAIN:
     NUM_EPOCHS: 800
     WARMUP_EPOCHS: 40

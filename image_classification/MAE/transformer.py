@@ -19,6 +19,7 @@ Implement Transformer Class for ViT
 import copy
 import random
 
+import numpy as np
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
@@ -40,14 +41,54 @@ class Identity(nn.Layer):
         return x
 
 
-class PatchEmbedding(nn.Layer):
-    """Patch Embedding and Position Embedding
+class PositionalEmbedding(nn.Layer):
+    """Position Embedding
 
-    Apply patch embedding and position embedding on input images.
+    Apply positional embedding on input images.
+
+    Attributes:
+        encoder_position_embedding: sine-cosine version positional embedding
+        decoder_position_embedding: sine-cosine version positional embedding
+    """
+
+    def __init__(self, encoder_embed_dim, decoder_embed_dim, seq_len=197):
+        """ Sinusoid position encoding table """
+        super(PositionalEmbedding, self).__init__()
+        self.seq_len = seq_len
+        def get_position_angle_vec(embed_dim, position):
+            return [position / np.power(10000, 2 * (hid_j // 2) / embed_dim) for hid_j in range(embed_dim)]
+
+        sinusoid_table = np.array([get_position_angle_vec(encoder_embed_dim, pos_i) for pos_i in range(seq_len)])
+        sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
+        sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
+        encoder_position_embedding = paddle.to_tensor([sinusoid_table])
+
+        sinusoid_table = np.array([get_position_angle_vec(decoder_embed_dim, pos_i) for pos_i in range(seq_len)])
+        sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
+        sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
+        decoder_position_embedding = paddle.to_tensor([sinusoid_table])
+
+        self.register_buffer('encoder_position_embedding', encoder_position_embedding)
+        self.register_buffer('decoder_position_embedding', decoder_position_embedding)
+
+    def get_encoder_embedding(self, seq_length=None):
+        if seq_length is None:
+            seq_length = self.seq_len
+        return self.encoder_position_embedding[:, :seq_length, :]
+
+    def get_decoder_embedding(self, seq_length=None):
+        if seq_length is None:
+            seq_length = self.seq_len
+        return self.decoder_position_embedding[:, :seq_length, :]
+
+
+class PatchEmbedding(nn.Layer):
+    """Patch Embedding
+
+    Apply patch embedding on input images.
 
     Attributes:
         patch_embddings: impl using a patch_size x patch_size Conv2D operation
-        position_embddings: a parameter with len = num_patch + 1(for cls_token)
         cls_token: token insert to the patch feature for classification
         dropout: dropout for embeddings
     """
@@ -66,12 +107,6 @@ class PatchEmbedding(nn.Layer):
                                          kernel_size=patch_size,
                                          stride=patch_size)
 
-        # TODO: the position_embedding should be sin-cos version
-        self.position_embeddings = paddle.create_parameter(
-            shape=[1, n_patches + 1, embed_dim],
-            dtype='float32',
-            default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-
         self.cls_token = paddle.create_parameter(
             shape=[1, 1, embed_dim],
             dtype='float32',
@@ -81,15 +116,12 @@ class PatchEmbedding(nn.Layer):
 
     def forward(self, x):
         cls_tokens = self.cls_token.expand(
-            (x.shape[0], -1, -1))  # [batch, 1, embed_dim]
+            (x.shape[0], -1, -1))
         x = self.patch_embedding(x)
         x = x.flatten(2)
         x = x.transpose([0, 2, 1])
-        # [batch, 1 + seq_len, embed_dim]
         x = paddle.concat((cls_tokens, x), axis=1)
-
-        embeddings = x + self.position_embeddings  # tensor broadcast
-        embeddings = self.dropout(embeddings)
+        embeddings = self.dropout(x)
         return embeddings
 
 
@@ -223,10 +255,10 @@ class Mlp(nn.Layer):
         return x
 
 
-class EncoderLayer(nn.Layer):
-    """Encoder Layer
+class TransformerLayer(nn.Layer):
+    """Transformer Layer
 
-    Encoder layer contains attention, norm, mlp and residual
+    Transformer Layer contains attention, norm, mlp and residual
 
     Attributes:
         hidden_size: transformer feature dim
@@ -320,6 +352,7 @@ class MaskLayer(nn.Layer):
         Shuffle x then mask the last few tokens according to mask ratio.
         Args:
             x: tensor of [batch, seq_len + 1, encoder_embed_dim]
+            note the extra 1 is corresponding to [cls] token
 
         Returns:
             masked_x: tensor of [batch, seq_len + 1 - mask_num, encoder_embed_dim]
@@ -327,7 +360,7 @@ class MaskLayer(nn.Layer):
         _, seq_len, _ = x.shape
         seq_len = seq_len - 1  # should not shuffle the [cls] token
         self.mask_num = int(seq_len * self.mask_ratio)
-        index = [i for i in range(1, seq_len)]
+        index = [i for i in range(1, seq_len + 1)]  # should not shuffle the [cls] token
         random.shuffle(index)
         self.perm = paddle.to_tensor([0] + index)  # add back [cls] token
         shuffled_x = paddle.index_select(x, self.perm, axis=1)
@@ -353,29 +386,30 @@ class MaskLayer(nn.Layer):
         masked_label = shuffled_label[:, 0: -self.mask_num, :]
         return masked_label
 
-    def unmask(self, x):
+    def unmask(self, x, pos_embedding):
         """
         Add back mask tokens. Then add shuffled positional embedding
         Args:
             x: tensor of [batch, seq_len + 1 - mask_num, decoder_embed_dim]
+            pos_embedding: tensor of [batch, seq_len + 1, decoder_embed_dim]
 
         Returns:
             unmasked_x: tensor of [batch, seq_len + 1, decoder_embed_dim]
         """
         batch, _, _ = x.shape
-        mask_tokens = self.mask_token.expand(batch, self.mask_num, -1)
-        # [batch, seq_len + 1, decoder_embed_dim]
-        unmasked_x = paddle.concat([x, mask_tokens], axis=1)
-        shuffled_pos_embedding = None  # TODO:
+        mask_tokens = self.mask_token.expand((batch, self.mask_num, -1))
+        unmasked_x = paddle.concat([x, mask_tokens], axis=1)  # [batch, seq_len + 1, decoder_embed_dim]
+        shuffled_pos_embedding = paddle.index_select(pos_embedding, self.perm, axis=1)
+        return unmasked_x + shuffled_pos_embedding
 
 
 class Encoder(nn.Layer):
     """Transformer encoder
 
-    Encoder contains a list of EncoderLayer, and a LayerNorm.
+    Encoder contains a list of TransformerLayer, and a LayerNorm.
 
     Attributes:
-        layers: nn.LayerList contains multiple EncoderLayers
+        layers: nn.LayerList contains multiple TransformerLayers
         encoder_norm: nn.LayerNorm which is applied after last encoder layer
     """
 
@@ -393,13 +427,13 @@ class Encoder(nn.Layer):
         depth_decay = [x.item() for x in paddle.linspace(0, droppath, depth)]
         layer_list = []
         for i in range(depth):
-            encoder_layer = EncoderLayer(embed_dim,
-                                         num_heads,
-                                         qkv_bias,
-                                         mlp_ratio,
-                                         dropout,
-                                         attention_dropout,
-                                         droppath=depth_decay[i])
+            encoder_layer = TransformerLayer(embed_dim,
+                                             num_heads,
+                                             qkv_bias,
+                                             mlp_ratio,
+                                             dropout,
+                                             attention_dropout,
+                                             droppath=depth_decay[i])
             layer_list.append(copy.deepcopy(encoder_layer))
         self.layers = nn.LayerList(layer_list)
 
@@ -427,11 +461,11 @@ class Encoder(nn.Layer):
 class Decoder(nn.Layer):
     """Transformer decoder
 
-        Decoder contains a list of EncoderLayer, and a LayerNorm.
+        Decoder contains a list of TransformerLayer, and a LayerNorm.
 
         Attributes:
-            layers: nn.LayerList contains multiple EncoderLayers
-            encoder_norm: nn.LayerNorm which is applied after last encoder layer
+            layers: nn.LayerList contains multiple TransformerLayers
+            decoder_norm: nn.LayerNorm which is applied after last encoder layer
         """
 
     def __init__(self,
@@ -447,22 +481,20 @@ class Decoder(nn.Layer):
         # stochatic depth decay
         depth_decay = [x.item() for x in paddle.linspace(0, droppath, depth)]
 
-        # TODO: need to add position embedding
-
         layer_list = []
         for i in range(depth):
-            encoder_layer = EncoderLayer(embed_dim,
-                                         num_heads,
-                                         qkv_bias,
-                                         mlp_ratio,
-                                         dropout,
-                                         attention_dropout,
-                                         droppath=depth_decay[i])
-            layer_list.append(copy.deepcopy(encoder_layer))
+            decoder_layer = TransformerLayer(embed_dim,
+                                             num_heads,
+                                             qkv_bias,
+                                             mlp_ratio,
+                                             dropout,
+                                             attention_dropout,
+                                             droppath=depth_decay[i])
+            layer_list.append(copy.deepcopy(decoder_layer))
         self.layers = nn.LayerList(layer_list)
 
         w_attr_1, b_attr_1 = self._init_weights()
-        self.encoder_norm = nn.LayerNorm(embed_dim,
+        self.decoder_norm = nn.LayerNorm(embed_dim,
                                          weight_attr=w_attr_1,
                                          bias_attr=b_attr_1,
                                          epsilon=1e-6)
@@ -478,7 +510,7 @@ class Decoder(nn.Layer):
         for layer in self.layers:
             x, attn = layer(x)
             self_attn.append(attn)
-        out = self.encoder_norm(x)
+        out = self.decoder_norm(x)
         return out, self_attn
 
 
@@ -515,7 +547,8 @@ class MAEPretrainTransformer(nn.Layer):
                  decoder_embed_dim=512,
                  encoder_depth=12,
                  decoder_depth=8,
-                 num_heads=12,
+                 encoder_num_heads=12,
+                 decoder_num_heads=8,
                  mlp_ratio=4,
                  qkv_bias=True,
                  dropout=0.,
@@ -524,8 +557,13 @@ class MAEPretrainTransformer(nn.Layer):
                  train_from_scratch=False,
                  config=None):
         super(MAEPretrainTransformer, self).__init__()
+        self.patch_size = patch_size
+
         # create mask layer
         self.mask_layer = MaskLayer(mask_ratio, decoder_embed_dim)
+        # create positional embedding
+        self.position_embedding = PositionalEmbedding(encoder_embed_dim, decoder_embed_dim,
+                                                      int(1 + (image_size / patch_size) * (image_size / patch_size)))
         # create patch embedding with positional embedding
         self.patch_embedding = PatchEmbedding(image_size,
                                               patch_size,
@@ -534,7 +572,7 @@ class MAEPretrainTransformer(nn.Layer):
                                               dropout)
         # create multi head self-attention encoder
         self.encoder = Encoder(encoder_embed_dim,
-                               num_heads,
+                               encoder_num_heads,
                                encoder_depth,
                                qkv_bias,
                                mlp_ratio,
@@ -546,7 +584,7 @@ class MAEPretrainTransformer(nn.Layer):
                                            decoder_embed_dim)
         # create multi head self-attention decoder
         self.decoder = Decoder(decoder_embed_dim,
-                               num_heads,
+                               decoder_num_heads,
                                decoder_depth,
                                qkv_bias,
                                mlp_ratio,
@@ -565,20 +603,22 @@ class MAEPretrainTransformer(nn.Layer):
             initializer=paddle.nn.initializer.KaimingUniform())
         return weight_attr, bias_attr
 
-    def forward(self, x, label):
-        x = self.patch_embedding(x)
+    def forward(self, image):
+        x = self.patch_embedding(image)
         x = self.mask_layer.mask(x)
+        # add positional embedding before encoding
+        x += self.position_embedding.get_encoder_embedding(x.shape[1])
         x, attn = self.encoder(x)
-        # Note: we unshuffle label and positional embedding instead of x
-        x = self.mask_layer.unmask(x)
-        masked_label = self.mask_layer.mask_label(label)
-        x = self.decoder(x)
+        x = self.linear_projection(x)
+        x = self.mask_layer.unmask(x, self.position_embedding.get_decoder_embedding())
+        masked_image = self.mask_layer.mask_label(image, self.patch_size)
+        x, attn = self.decoder(x)
 
         # only reconstruct unmasked patches
-        _, unmask_length, _ = masked_label.shape
-        reconstruct_image = self.reconstruction_layer(
+        _, unmask_length, _ = masked_image.shape
+        reconstructed_image = self.reconstruction_layer(
             x[:, 1: unmask_length + 1, :])
-        return reconstruct_image, masked_label
+        return reconstructed_image, masked_image
 
 
 class MAEFinetuneTransformer(nn.Layer):
@@ -685,7 +725,8 @@ def build_mae_pretrain(config):
                                    decoder_embed_dim=config.MODEL.TRANS.DECODER.EMBED_DIM,
                                    encoder_depth=config.MODEL.TRANS.ENCODER.DEPTH,
                                    decoder_depth=config.MODEL.TRANS.DECODER.DEPTH,
-                                   num_heads=config.MODEL.TRANS.NUM_HEADS,
+                                   encoder_num_heads=config.MODEL.TRANS.ENCODER.NUM_HEADS,
+                                   decoder_num_heads=config.MODEL.TRANS.DECODER.NUM_HEADS,
                                    mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
                                    qkv_bias=config.MODEL.TRANS.QKV_BIAS,
                                    dropout=config.MODEL.DROPOUT,

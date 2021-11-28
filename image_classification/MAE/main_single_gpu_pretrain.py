@@ -33,11 +33,6 @@ from config import get_config
 from config import update_config
 
 
-os.system(r"export PATH='/home/huangbz/cuda/cuda-10.2/bin'")
-os.system(r"export LD_LIBRARY_PATH='/home/huangbz/cuda/cuda-10.2/lib64'")
-# print(os.environ['LD_LIBRARY_PATH'])
-os.system("echo env | grep LD_LIBRARY_PATH")
-
 parser = argparse.ArgumentParser('ViT')
 parser.add_argument('-cfg', type=str, default=None)
 parser.add_argument('-dataset', type=str, default=None)
@@ -97,17 +92,15 @@ def train(dataloader,
         criterion: nn.criterion
         epoch: int, current epoch
         total_epoch: int, total num of epoch, for logging
-        debug_steps: int, num of iters to log info
-        accum_iter: int, num of iters for accumulating gradients
-        amp: bool, if True, use mix precision training
+        debug_steps: int, num of iters to log info, default: 100
+        accum_iter: int, num of iters for accumulating gradients, default: 1
+        amp: bool, if True, use mix precision training, default: False
     Returns:
         train_loss_meter.avg
-        train_acc_meter.avg
         train_time
     """
     model.train()
     train_loss_meter = AverageMeter()
-    train_acc_meter = AverageMeter()
     if amp is True:
         scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
@@ -115,12 +108,11 @@ def train(dataloader,
 
     for batch_id, data in enumerate(dataloader):
         image = data[0]
-        label = data[1]
 
         if amp is True:
             with paddle.amp.auto_cast():
-                output, masked_image = model(image)
-                loss = criterion(output, masked_image)
+                reconstructed_image, masked_image = model(image)
+                loss = criterion(reconstructed_image, masked_image)
             scaled = scaler.scale(loss)
             scaled.backward()
 
@@ -129,8 +121,8 @@ def train(dataloader,
                 optimizer.clear_grad()
 
         else:
-            output, masked_image = model(image)
-            loss = criterion(output, masked_image)
+            reconstructed_image, masked_image = model(image)
+            loss = criterion(reconstructed_image, masked_image)
             # NOTE: division may be needed depending on the loss function
             # Here no division is needed:
             # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
@@ -141,71 +133,17 @@ def train(dataloader,
                 optimizer.step()
                 optimizer.clear_grad()
 
-        pred = F.softmax(output)
-        acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
-
         batch_size = image.shape[0]
         train_loss_meter.update(loss.numpy()[0], batch_size)
-        train_acc_meter.update(acc.numpy()[0], batch_size)
 
         if batch_id % debug_steps == 0:
             logger.info(
                 f"Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                 f"Step[{batch_id:04d}/{total_batch:04d}], " +
-                f"Avg Loss: {train_loss_meter.avg:.4f}, " +
-                f"Avg Acc: {train_acc_meter.avg:.4f}")
+                f"Avg Loss: {train_loss_meter.avg:.4f}")
 
     train_time = time.time() - time_st
-    return train_loss_meter.avg, train_acc_meter.avg, train_time
-
-
-# TODO: need to be modified
-def validate(dataloader, model, criterion, total_batch, debug_steps=100):
-    """Validation for whole dataset
-    Args:
-        dataloader: paddle.io.DataLoader, dataloader instance
-        model: nn.Layer, a ViT model
-        criterion: nn.criterion
-        total_epoch: int, total num of epoch, for logging
-        debug_steps: int, num of iters to log info
-    Returns:
-        val_loss_meter.avg
-        val_acc1_meter.avg
-        val_acc5_meter.avg
-        val_time
-    """
-    model.eval()
-    val_loss_meter = AverageMeter()
-    val_acc1_meter = AverageMeter()
-    val_acc5_meter = AverageMeter()
-    time_st = time.time()
-
-    with paddle.no_grad():
-        for batch_id, data in enumerate(dataloader):
-            image = data[0]
-            label = data[1]
-
-            output = model(image)
-            loss = criterion(output, label)
-
-            pred = F.softmax(output)
-            acc1 = paddle.metric.accuracy(pred, label.unsqueeze(1))
-            acc5 = paddle.metric.accuracy(pred, label.unsqueeze(1), k=5)
-
-            batch_size = image.shape[0]
-            val_loss_meter.update(loss.numpy()[0], batch_size)
-            val_acc1_meter.update(acc1.numpy()[0], batch_size)
-            val_acc5_meter.update(acc5.numpy()[0], batch_size)
-
-            if batch_id % debug_steps == 0:
-                logger.info(
-                    f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
-                    f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
-                    f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
-
-    val_time = time.time() - time_st
-    return val_loss_meter.avg, val_acc1_meter.avg, val_acc5_meter.avg, val_time
+    return train_loss_meter.avg, train_time
 
 
 def main():
@@ -218,11 +156,9 @@ def main():
     #paddle.set_device('gpu:0')
     # 1. Create model
     model = build_model(config)
-    # 2. Create train and val dataloader
+    # 2. Create train dataloader
     dataset_train = get_dataset(config, mode='train')
-    dataset_val = get_dataset(config, mode='val')
     dataloader_train = get_dataloader(config, dataset_train, 'train', False)
-    dataloader_val = get_dataloader(config, dataset_val, 'val', False)
     # 3. Define criterion
     criterion = nn.MSELoss()
     # 4. Define lr_scheduler
@@ -293,26 +229,13 @@ def main():
         optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
-    # 7. Validation
-    if config.EVAL:
-        logger.info('----- Start Validating')
-        val_loss, val_acc1, val_acc5, val_time = validate(
-            dataloader=dataloader_val,
-            model=model,
-            criterion=criterion,
-            total_batch=len(dataloader_val),
-            debug_steps=config.REPORT_FREQ)
-        logger.info(f"Validation Loss: {val_loss:.4f}, " +
-                    f"Validation Acc@1: {val_acc1:.4f}, " +
-                    f"Validation Acc@5: {val_acc5:.4f}, " +
-                    f"time: {val_time:.2f}")
-        return
-    # 8. Start training and validation
+
+    # 7. Start training and validation
     logging.info(f"Start training from epoch {last_epoch + 1}.")
     for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
         # train
         logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        train_loss, train_acc, train_time = train(dataloader=dataloader_train,
+        train_loss, train_time = train(dataloader=dataloader_train,
                                                   model=model,
                                                   criterion=criterion,
                                                   optimizer=optimizer,
@@ -323,24 +246,13 @@ def main():
                                                   amp=config.AMP,
                                                   )
         scheduler.step()
+
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                     f"Train Loss: {train_loss:.4f}, " +
-                    f"Train Acc: {train_acc:.4f}, " +
                     f"time: {train_time:.2f}")
         # validation
-        if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
-            logger.info(f'----- Validation after Epoch: {epoch}')
-            val_loss, val_acc1, val_acc5, val_time = validate(
-                dataloader=dataloader_val,
-                model=model,
-                criterion=criterion,
-                total_batch=len(dataloader_val),
-                debug_steps=config.REPORT_FREQ)
-            logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                        f"Validation Loss: {val_loss:.4f}, " +
-                        f"Validation Acc@1: {val_acc1:.4f}, " +
-                        f"Validation Acc@5: {val_acc5:.4f}, " +
-                        f"time: {val_time:.2f}")
+        # No need to do validation during pretraining
+
         # model save
         if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             model_path = os.path.join(

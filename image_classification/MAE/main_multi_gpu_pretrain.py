@@ -96,117 +96,53 @@ def train(dataloader,
         amp: bool, if True, use mix precision training, default: False
     Returns:
         train_loss_meter.avg
-        train_acc_meter.avg
         train_time
     """
     model.train()
     train_loss_meter = AverageMeter()
-    train_acc_meter = AverageMeter()
     if amp is True:
         scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
 
+
     for batch_id, data in enumerate(dataloader):
         image = data[0]
-        label = data[1]
 
         if amp is True:
             with paddle.amp.auto_cast():
-                output = model(image)
-                loss = criterion(output, label)
+                reconstructed_image, masked_image = model(image)
+                loss = criterion(reconstructed_image, masked_image)
             scaled = scaler.scale(loss)
             scaled.backward()
 
-            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+            if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 scaler.minimize(optimizer, scaled)
                 optimizer.clear_grad()
+
         else:
-            output = model(image)
-            loss = criterion(output, label)
-            #NOTE: division may be needed depending on the loss function
+            reconstructed_image, masked_image = model(image)
+            loss = criterion(reconstructed_image, masked_image)
+            # NOTE: division may be needed depending on the loss function
             # Here no division is needed:
             # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-            #
-            #loss =  loss / accum_iter
+            # loss =  loss / accum_iter
             loss.backward()
 
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 optimizer.step()
                 optimizer.clear_grad()
 
-        pred = F.softmax(output)
-        acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
-
         batch_size = image.shape[0]
         train_loss_meter.update(loss.numpy()[0], batch_size)
-        train_acc_meter.update(acc.numpy()[0], batch_size)
 
         if batch_id % debug_steps == 0:
             logger.info(
                 f"Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                 f"Step[{batch_id:04d}/{total_batch:04d}], " +
-                f"Avg Loss: {train_loss_meter.avg:.4f}, " +
-                f"Avg Acc: {train_acc_meter.avg:.4f}")
+                f"Avg Loss: {train_loss_meter.avg:.4f}")
 
     train_time = time.time() - time_st
-    return train_loss_meter.avg, train_acc_meter.avg, train_time
-
-
-def validate(dataloader, model, criterion, total_batch, debug_steps=100):
-    """Validation for whole dataset
-    Args:
-        dataloader: paddle.io.DataLoader, dataloader instance
-        model: nn.Layer, a ViT model
-        criterion: nn.criterion
-        total_epoch: int, total num of epoch, for logging
-        debug_steps: int, num of iters to log info
-    Returns:
-        val_loss_meter.avg
-        val_acc1_meter.avg
-        val_acc5_meter.avg
-        val_time
-    """
-    model.eval()
-    val_loss_meter = AverageMeter()
-    val_acc1_meter = AverageMeter()
-    val_acc5_meter = AverageMeter()
-    time_st = time.time()
-
-    with paddle.no_grad():
-        for batch_id, data in enumerate(dataloader):
-            image = data[0]
-            label = data[1]
-
-            output = model(image)
-            loss = criterion(output, label)
-
-            pred = F.softmax(output)
-            acc1 = paddle.metric.accuracy(pred, label.unsqueeze(1))
-            acc5 = paddle.metric.accuracy(pred, label.unsqueeze(1), k=5)
-
-            dist.all_reduce(loss)
-            dist.all_reduce(acc1)
-            dist.all_reduce(acc5)
-            loss = loss / dist.get_world_size()
-            acc1 = acc1 / dist.get_world_size()
-            acc5 = acc5 / dist.get_world_size()
-
-            batch_size = paddle.to_tensor(image.shape[0])
-            dist.all_reduce(batch_size)
-
-            val_loss_meter.update(loss.numpy()[0], batch_size.numpy()[0])
-            val_acc1_meter.update(acc1.numpy()[0], batch_size.numpy()[0])
-            val_acc5_meter.update(acc5.numpy()[0], batch_size.numpy()[0])
-
-            if batch_id % debug_steps == 0:
-                logger.info(
-                    f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
-                    f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
-                    f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
-
-    val_time = time.time() - time_st
-    return val_loss_meter.avg, val_acc1_meter.avg, val_acc5_meter.avg, val_time
+    return train_loss_meter.avg, train_time
 
 
 def main_worker(*args):
@@ -223,17 +159,14 @@ def main_worker(*args):
     # 1. Create model
     model = build_model(config)
     model = paddle.DataParallel(model)
-    # 2. Create train and val dataloader
-    dataset_train, dataset_val = args[0], args[1]
+    # 2. Create train dataloader
+    dataset_train= args[0]
     dataloader_train = get_dataloader(config, dataset_train, 'train', True)
-    dataloader_val = get_dataloader(config, dataset_val, 'test', True)
     total_batch_train = len(dataloader_train)
-    total_batch_val = len(dataloader_val)
     logging.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
-    logging.info(f'----- Total # of val batch (single gpu): {total_batch_val}')
     # 3. Define criterion
-    criterion = nn.CrossEntropyLoss()
-    # 4. Define optimizer and lr_scheduler
+    criterion = nn.MSELoss()
+    # 4. Define lr_scheduler
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
         scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
@@ -257,7 +190,7 @@ def main_worker(*args):
     else:
         logging.fatal(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
-
+    # 5. Define optimizer
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
@@ -287,8 +220,7 @@ def main_worker(*args):
     else:
         logging.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
-
-    # 5. Load pretrained model / load resumt model and optimizer states
+    # 6. Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
         if (config.MODEL.PRETRAINED).endswith('.pdparams'):
             raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
@@ -306,28 +238,13 @@ def main_worker(*args):
         optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume Training: Load model and optmizer states from {config.MODEL.RESUME}")
-    
-    # 6. Validation
-    if config.EVAL:
-        logger.info('----- Start Validating')
-        val_loss, val_acc1, val_acc5, val_time = validate(
-            dataloader=dataloader_val,
-            model=model,
-            criterion=criterion,
-            total_batch=total_batch_val,
-            debug_steps=config.REPORT_FREQ)
-        logger.info(f"Validation Loss: {val_loss:.4f}, " +
-                    f"Validation Acc@1: {val_acc1:.4f}, " +
-                    f"Validation Acc@5: {val_acc5:.4f}, " +
-                    f"time: {val_time:.2f}")
-        return
 
-    # 6. Start training and validation
-    logging.info(f"Start training from epoch {last_epoch+1}.")
-    for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
+    # 7. Start training and validation
+    logging.info(f"Start training from epoch {last_epoch + 1}.")
+    for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
         # train
         logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        train_loss, train_acc, train_time = train(dataloader=dataloader_train,
+        train_loss, train_time = train(dataloader=dataloader_train,
                                                   model=model,
                                                   criterion=criterion,
                                                   optimizer=optimizer,
@@ -340,22 +257,10 @@ def main_worker(*args):
 
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                     f"Train Loss: {train_loss:.4f}, " +
-                    f"Train Acc: {train_acc:.4f}, " +
                     f"time: {train_time:.2f}")
         # validation
-        if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
-            logger.info(f'----- Validation after Epoch: {epoch}')
-            val_loss, val_acc1, val_acc5, val_time = validate(
-                dataloader=dataloader_val,
-                model=model,
-                criterion=criterion,
-                total_batch=total_batch_val,
-                debug_steps=config.REPORT_FREQ)
-            logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                        f"Validation Loss: {val_loss:.4f}, " +
-                        f"Validation Acc@1: {val_acc1:.4f}, " +
-                        f"Validation Acc@5: {val_acc5:.4f}, " +
-                        f"time: {val_time:.2f}")
+        # No need to do validation during pretraining
+
         # model save
         if local_rank == 0:
             if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
@@ -369,9 +274,8 @@ def main_worker(*args):
 
 def main():
     dataset_train = get_dataset(config, mode='train')
-    dataset_val = get_dataset(config, mode='val')
     config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS
-    dist.spawn(main_worker, args=(dataset_train, dataset_val, ), nprocs=config.NGPUS)
+    dist.spawn(main_worker, args=(dataset_train, ), nprocs=config.NGPUS)
 
 
 if __name__ == "__main__":
