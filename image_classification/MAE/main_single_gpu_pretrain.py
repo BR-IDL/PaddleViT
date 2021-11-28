@@ -352,5 +352,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # print(os.environ['LD_LIBRARY_PATH'])
     main()

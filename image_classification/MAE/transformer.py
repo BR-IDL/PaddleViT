@@ -395,10 +395,10 @@ class Encoder(nn.Layer):
         for i in range(depth):
             encoder_layer = EncoderLayer(embed_dim,
                                          num_heads,
-                                         qkv_bias=True,
-                                         mlp_ratio=4.,
-                                         dropout=0.,
-                                         attention_dropout=0.,
+                                         qkv_bias,
+                                         mlp_ratio,
+                                         dropout,
+                                         attention_dropout,
                                          droppath=depth_decay[i])
             layer_list.append(copy.deepcopy(encoder_layer))
         self.layers = nn.LayerList(layer_list)
@@ -424,7 +424,7 @@ class Encoder(nn.Layer):
         return out, self_attn
 
 
-class Decoder(nn.layer):
+class Decoder(nn.Layer):
     """Transformer decoder
 
         Decoder contains a list of EncoderLayer, and a LayerNorm.
@@ -453,10 +453,10 @@ class Decoder(nn.layer):
         for i in range(depth):
             encoder_layer = EncoderLayer(embed_dim,
                                          num_heads,
-                                         qkv_bias=True,
-                                         mlp_ratio=4.,
-                                         dropout=0.,
-                                         attention_dropout=0.,
+                                         qkv_bias,
+                                         mlp_ratio,
+                                         dropout,
+                                         attention_dropout,
                                          droppath=depth_decay[i])
             layer_list.append(copy.deepcopy(encoder_layer))
         self.layers = nn.LayerList(layer_list)
@@ -510,7 +510,7 @@ class MAEPretrainTransformer(nn.Layer):
                  image_size=224,
                  patch_size=16,
                  in_channels=3,
-                 num_classes=1000,
+                 mask_ratio=0.75,
                  encoder_embed_dim=768,
                  decoder_embed_dim=512,
                  encoder_depth=12,
@@ -525,7 +525,7 @@ class MAEPretrainTransformer(nn.Layer):
                  config=None):
         super(MAEPretrainTransformer, self).__init__()
         # create mask layer
-        self.mask_layer = MaskLayer(decoder_embed_dim)
+        self.mask_layer = MaskLayer(mask_ratio, decoder_embed_dim)
         # create patch embedding with positional embedding
         self.patch_embedding = PatchEmbedding(image_size,
                                               patch_size,
@@ -557,30 +557,6 @@ class MAEPretrainTransformer(nn.Layer):
         self.reconstruction_layer = nn.Linear(decoder_embed_dim,
                                               in_channels * patch_size * patch_size)
 
-        # classifier head (for training from scracth)
-        if train_from_scratch:
-            w_attr_1, b_attr_1 = self._init_weights()
-            w_attr_2, b_attr_2 = self._init_weights()
-            self.classifier = nn.Sequential(
-                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                          config.MODEL.TRANS.HIDDEN_SIZE,
-                          weight_attr=w_attr_1,
-                          bias_attr=b_attr_1),
-                nn.ReLU(),
-                nn.Dropout(config.MODEL.DROPOUT),
-                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                          config.MODEL.NUM_CLASSES,
-                          weight_attr=w_attr_2,
-                          bias_attr=b_attr_2),
-                nn.Dropout(config.MODEL.DROPOUT),
-            )
-        else:
-            # classifier head (for finetuning)
-            w_attr_1, b_attr_1 = self._init_weights()
-            self.classifier = nn.Linear(encoder_embed_dim,
-                                        num_classes,
-                                        weight_attr=w_attr_1,
-                                        bias_attr=b_attr_1)
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
@@ -704,9 +680,11 @@ def build_mae_pretrain(config):
     model = MAEPretrainTransformer(image_size=config.DATA.IMAGE_SIZE,
                                    patch_size=config.MODEL.TRANS.PATCH_SIZE,
                                    in_channels=3,
-                                   num_classes=config.MODEL.NUM_CLASSES,
-                                   encoder_embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                                   encoder_depth=config.MODEL.TRANS.DEPTH,
+                                   mask_ratio=config.MODEL.TRANS.MASK_RATIO,
+                                   encoder_embed_dim=config.MODEL.TRANS.ENCODER.EMBED_DIM,
+                                   decoder_embed_dim=config.MODEL.TRANS.DECODER.EMBED_DIM,
+                                   encoder_depth=config.MODEL.TRANS.ENCODER.DEPTH,
+                                   decoder_depth=config.MODEL.TRANS.DECODER.DEPTH,
                                    num_heads=config.MODEL.TRANS.NUM_HEADS,
                                    mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
                                    qkv_bias=config.MODEL.TRANS.QKV_BIAS,
@@ -716,3 +694,8 @@ def build_mae_pretrain(config):
                                    train_from_scratch=False,
                                    config=config)
     return model
+
+
+def build_mas_finetune(config):
+    #TODO: to be implemented
+    pass
