@@ -26,7 +26,7 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 from datasets import get_dataloader
 from datasets import get_dataset
-from transformer import build_vit as build_model
+from transformer import build_mae_pretrain as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
@@ -119,22 +119,22 @@ def train(dataloader,
 
         if amp is True:
             with paddle.amp.auto_cast():
-                output = model(image)
-                loss = criterion(output, label)
+                output, masked_image = model(image)
+                loss = criterion(output, masked_image)
             scaled = scaler.scale(loss)
             scaled.backward()
 
-            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+            if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 scaler.minimize(optimizer, scaled)
                 optimizer.clear_grad()
 
         else:
-            output = model(image)
-            loss = criterion(output, label)
-            #NOTE: division may be needed depending on the loss function
+            output, masked_image = model(image)
+            loss = criterion(output, masked_image)
+            # NOTE: division may be needed depending on the loss function
             # Here no division is needed:
             # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-            #loss =  loss / accum_iter
+            # loss =  loss / accum_iter
             loss.backward()
 
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
@@ -159,6 +159,7 @@ def train(dataloader,
     return train_loss_meter.avg, train_acc_meter.avg, train_time
 
 
+# TODO: need to be modified
 def validate(dataloader, model, criterion, total_batch, debug_steps=100):
     """Validation for whole dataset
     Args:
@@ -223,7 +224,7 @@ def main():
     dataloader_train = get_dataloader(config, dataset_train, 'train', False)
     dataloader_val = get_dataloader(config, dataset_val, 'val', False)
     # 3. Define criterion
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.MSELoss()
     # 4. Define lr_scheduler
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":

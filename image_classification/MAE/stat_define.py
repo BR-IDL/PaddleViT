@@ -2,7 +2,7 @@ import os
 import glob
 import paddle
 from config import get_config
-from transformer import build_vit as build_model
+from transformer import build_mae_pretrain as build_model
 
 def count_gelu(layer, input, output):
     activation_flops = 8
