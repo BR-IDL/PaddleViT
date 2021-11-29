@@ -4,12 +4,12 @@ DATA:
 MODEL:
     TYPE: MAE
     NAME: vit_base_patch16_224
+    DROPPATH: 0.0
     TRANS:
         PATCH_SIZE: 16
         MLP_RATIO: 4.0
         QKV_BIAS: true
         MASK_RATIO: 0.75
-        DROPPATH: 0.0
         ENCODER:
             EMBED_DIM: 768
             DEPTH: 12
