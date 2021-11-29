@@ -299,10 +299,10 @@ class Encoder(nn.Layer):
         for i in range(depth):
             encoder_layer = EncoderLayer(embed_dim,
                                          num_heads,
-                                         qkv_bias=True,
-                                         mlp_ratio=4.,
-                                         dropout=0.,
-                                         attention_dropout=0.,
+                                         qkv_bias=qkv_bias,
+                                         mlp_ratio=mlp_ratio,
+                                         dropout=dropout,
+                                         attention_dropout=attention_dropout,
                                          droppath=depth_decay[i])
             layer_list.append(copy.deepcopy(encoder_layer))
         self.layers = nn.LayerList(layer_list)
