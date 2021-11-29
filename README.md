@@ -156,11 +156,18 @@ We also provide tutorials:
 3. Install dependency packages
     * General dependencies:
         ```
-        pip install yacs, yaml
+        pip install yacs, pyyaml
         ```
     * Packages for Segmentation:
         ```
-        pip install cityscapesScripts, detail
+        pip install cityscapesScripts
+        ```
+        Install `detail` package:
+        ```shell
+        git clone https://github.com/ccvl/detail-api
+        cd detail-api/PythonAPI
+        make
+        make install
         ```
     * Packages for GAN:
         ```

@@ -156,11 +156,18 @@ PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接�
 3. 安装依赖项.
     *  通用的依赖项:
         ```
-        pip install yacs, yaml
+        pip install yacs, pyyaml
         ```
     *  分割需要的依赖项:
         ```
-        pip install cityscapesScripts, detail
+        pip install cityscapesScripts
+        ```
+        安装 `detail` package:
+        ```shell
+        git clone https://github.com/ccvl/detail-api
+        cd detail-api/PythonAPI
+        make
+        make install
         ```
     *  GAN需要的依赖项:
         ```

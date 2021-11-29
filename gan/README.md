@@ -18,7 +18,7 @@ Update (2021-08-25): Init readme uploaded.
 ## Installation
 This module is tested on Python3.6+, and PaddlePaddle 2.1.0+. Most dependencies are installed by PaddlePaddle installation. You only need to install the following packages:
 ```shell
-pip install yacs yaml lmdb
+pip install yacs pyyaml lmdb
 ```
 Then download the github repo:
 ```shell
