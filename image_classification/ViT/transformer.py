@@ -105,24 +105,44 @@ class Attention(nn.Layer):
     def __init__(self,
                  embed_dim,
                  num_heads,
+                 attn_head_size=None,
                  qkv_bias=True,
                  dropout=0.,
                  attention_dropout=0.):
         super().__init__()
-        self.num_heads = num_heads 
-        self.attn_head_size = int(embed_dim / self.num_heads)
-        self.all_head_size = self.attn_head_size * self.num_heads
+
+        assert isinstance(
+            embed_dim, int), f"Expected the type of `embed_dim` to be int, but received {type(embed_dim)}."
+        assert isinstance(
+            num_heads, int), f"Expected the type of `embed_dim` to be int, but received {type(num_heads)}."
+
+        assert embed_dim > 0, f"Expected `embed_dim` to be greater than 0, but received {embed_dim}."
+        assert num_heads > 0, f"Expected `num_heads` to be greater than 0, but received {num_heads}"
+
+        self.embed_dim = embed_dim
+        self.num_heads = num_heads
+
+        if attn_head_size is not None:
+            assert isinstance(
+                attn_head_size, int), f"Expected the type of `embed_dim` to be int, but received {type(attn_head_size)}."
+            assert attn_head_size > 0, f"Expected `attn_head_size` to be greater than 0, but received {attn_head_size}."
+            self.attn_head_size = attn_head_size
+        else:
+            self.attn_head_size = embed_dim // num_heads
+            assert self.attn_head_size * num_heads == embed_dim, f"`embed_dim` must be divisible by `num_heads`."
+
+        self.all_head_size = self.attn_head_size * num_heads
 
         w_attr_1, b_attr_1 = self._init_weights()
         self.qkv = nn.Linear(embed_dim,
-                             self.all_head_size*3, #weights for q, k, and v
+                             self.all_head_size*3,  # weights for q, k, and v
                              weight_attr=w_attr_1,
                              bias_attr=b_attr_1 if qkv_bias else False)
 
         self.scales = self.attn_head_size ** -0.5
 
         w_attr_2, b_attr_2 = self._init_weights()
-        self.out = nn.Linear(embed_dim,
+        self.out = nn.Linear(self.all_head_size,
                              embed_dim,
                              weight_attr=w_attr_2,
                              bias_attr=b_attr_2)
@@ -160,7 +180,6 @@ class Attention(nn.Layer):
         z = self.out(z)
         z = self.proj_dropout(z)
         return z, attn_weights
-
 
 class Mlp(nn.Layer):
     """ MLP module
