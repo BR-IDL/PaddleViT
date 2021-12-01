@@ -28,6 +28,7 @@ class Identity(nn.Layer):
     The output of this layer is the input without any change.
     Use this layer to avoid using 'if' condition in forward methods
     """
+
     def __init__(self):
         super(Identity, self).__init__()
 
@@ -37,9 +38,7 @@ class Identity(nn.Layer):
 
 class PatchEmbedding(nn.Layer):
     """Patch Embedding and Position Embedding
-
     Apply patch embedding and position embedding on input images.
-
     Attributes:
         patch_embddings: impl using a patch_size x patch_size Conv2D operation
         position_embddings: a parameter with len = num_patch + 1(for cls_token)
@@ -62,7 +61,7 @@ class PatchEmbedding(nn.Layer):
                                          stride=patch_size)
 
         self.position_embeddings = paddle.create_parameter(
-            shape=[1, n_patches+1, embed_dim],
+            shape=[1, n_patches + 1, embed_dim],
             dtype='float32',
             default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
 
@@ -80,17 +79,15 @@ class PatchEmbedding(nn.Layer):
         x = x.transpose([0, 2, 1])
         x = paddle.concat((cls_tokens, x), axis=1)
 
-        embeddings = x + self.position_embeddings # tensor broadcast
+        embeddings = x + self.position_embeddings  # tensor broadcast
         embeddings = self.dropout(embeddings)
         return embeddings
 
 
 class Attention(nn.Layer):
     """ Attention module
-
     Attention module for ViT, here q, k, v are assumed the same.
     The qkv mappings are stored as one single param.
-
     Attributes:
         num_heads: number of heads
         attn_head_size: feature dim of single head
@@ -102,6 +99,7 @@ class Attention(nn.Layer):
         proj_dropout: final dropout before output
         softmax: softmax op for attention
     """
+
     def __init__(self,
                  embed_dim,
                  num_heads,
@@ -111,31 +109,37 @@ class Attention(nn.Layer):
                  attention_dropout=0.):
         super().__init__()
 
-        assert isinstance(
-            embed_dim, int), f"Expected the type of `embed_dim` to be int, but received {type(embed_dim)}."
-        assert isinstance(
-            num_heads, int), f"Expected the type of `embed_dim` to be int, but received {type(num_heads)}."
+        assert isinstance(embed_dim, int), (
+            f"Expected the type of `embed_dim` to be {int}, but received {type(embed_dim)}.")
+        assert isinstance(num_heads, int), (
+            f"Expected the type of `num_heads` to be {int}, but received {type(num_heads)}.")
 
-        assert embed_dim > 0, f"Expected `embed_dim` to be greater than 0, but received {embed_dim}."
-        assert num_heads > 0, f"Expected `num_heads` to be greater than 0, but received {num_heads}"
+        assert embed_dim > 0, (
+            f"Expected `embed_dim` to be greater than 0, but received {embed_dim}")
+        assert num_heads > 0, (
+            f"Expected `num_heads` to be greater than 0, but received {num_heads}")
 
         self.embed_dim = embed_dim
         self.num_heads = num_heads
 
         if attn_head_size is not None:
-            assert isinstance(
-                attn_head_size, int), f"Expected the type of `embed_dim` to be int, but received {type(attn_head_size)}."
-            assert attn_head_size > 0, f"Expected `attn_head_size` to be greater than 0, but received {attn_head_size}."
+            assert isinstance(attn_head_size, int), (
+                f"Expected the type of `attn_head_size` to be {int}, "
+                f"but received {type(attn_head_size)}.")
+            assert attn_head_size > 0, f"Expected `attn_head_size` to be greater than 0," \
+                                       f" but received {attn_head_size}."
             self.attn_head_size = attn_head_size
         else:
             self.attn_head_size = embed_dim // num_heads
-            assert self.attn_head_size * num_heads == embed_dim, f"`embed_dim` must be divisible by `num_heads`."
+            assert self.attn_head_size * num_heads == embed_dim, (
+                f"`embed_dim` must be divisible by `num_heads`,"
+                f" but received embed_dim={embed_dim}, num_heads={num_heads}.")
 
         self.all_head_size = self.attn_head_size * num_heads
 
         w_attr_1, b_attr_1 = self._init_weights()
         self.qkv = nn.Linear(embed_dim,
-                             self.all_head_size*3,  # weights for q, k, and v
+                             self.all_head_size * 3,  # weights for q, k, and v
                              weight_attr=w_attr_1,
                              bias_attr=b_attr_1 if qkv_bias else False)
 
@@ -181,12 +185,11 @@ class Attention(nn.Layer):
         z = self.proj_dropout(z)
         return z, attn_weights
 
+
 class Mlp(nn.Layer):
     """ MLP module
-
     Impl using nn.Linear and activation is GELU, dropout is applied.
     Ops: fc -> act -> dropout -> fc -> dropout
-
     Attributes:
         fc1: nn.Linear
         fc2: nn.Linear
@@ -194,6 +197,7 @@ class Mlp(nn.Layer):
         dropout1: dropout after fc1
         dropout2: dropout after fc2
     """
+
     def __init__(self,
                  embed_dim,
                  mlp_ratio,
@@ -216,9 +220,9 @@ class Mlp(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.XavierUniform()) #default in pp: xavier
+            initializer=paddle.nn.initializer.XavierUniform())  # default in pp: xavier
         bias_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.Normal(std=1e-6)) #default in pp: zero
+            initializer=paddle.nn.initializer.Normal(std=1e-6))  # default in pp: zero
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -232,9 +236,7 @@ class Mlp(nn.Layer):
 
 class EncoderLayer(nn.Layer):
     """Encoder Layer
-
     Encoder layer contains attention, norm, mlp and residual
-
     Attributes:
         hidden_size: transformer feature dim
         attn_norm: nn.LayerNorm before attention
@@ -242,9 +244,11 @@ class EncoderLayer(nn.Layer):
         mlp: mlp modual
         attn: attention modual
     """
+
     def __init__(self,
                  embed_dim,
                  num_heads,
+                 attn_head_size=None,
                  qkv_bias=True,
                  mlp_ratio=4.,
                  dropout=0.,
@@ -259,6 +263,7 @@ class EncoderLayer(nn.Layer):
 
         self.attn = Attention(embed_dim,
                               num_heads,
+                              attn_head_size,
                               qkv_bias,
                               dropout,
                               attention_dropout)
@@ -295,17 +300,17 @@ class EncoderLayer(nn.Layer):
 
 class Encoder(nn.Layer):
     """Transformer encoder
-
     Encoder encoder contains a list of EncoderLayer, and a LayerNorm.
-
     Attributes:
         layers: nn.LayerList contains multiple EncoderLayers
         encoder_norm: nn.LayerNorm which is applied after last encoder layer
     """
+
     def __init__(self,
                  embed_dim,
                  num_heads,
                  depth,
+                 attn_head_size=None,
                  qkv_bias=True,
                  mlp_ratio=4.0,
                  dropout=0.,
@@ -318,6 +323,7 @@ class Encoder(nn.Layer):
         for i in range(depth):
             encoder_layer = EncoderLayer(embed_dim,
                                          num_heads,
+                                         attn_head_size=attn_head_size,
                                          qkv_bias=qkv_bias,
                                          mlp_ratio=mlp_ratio,
                                          dropout=dropout,
@@ -348,11 +354,9 @@ class Encoder(nn.Layer):
 
 class VisualTransformer(nn.Layer):
     """ViT transformer
-
     ViT Transformer, classifier is a single Linear layer for finetune,
     For training from scratch, two layer mlp should be used.
     Classification is done using cls_token.
-
     Args:
         image_size: int, input image size, default: 224
         patch_size: int, patch size, default: 16
@@ -367,6 +371,7 @@ class VisualTransformer(nn.Layer):
         attention_dropout: float, dropout rate for attention layers default: 0.
         droppath: float, droppath rate for droppath layers, default: 0.
     """
+
     def __init__(self,
                  image_size=224,
                  patch_size=16,
@@ -375,6 +380,7 @@ class VisualTransformer(nn.Layer):
                  embed_dim=768,
                  depth=12,
                  num_heads=12,
+                 attn_head_size=None,
                  mlp_ratio=4,
                  qkv_bias=True,
                  dropout=0.,
@@ -393,6 +399,7 @@ class VisualTransformer(nn.Layer):
         self.encoder = Encoder(embed_dim,
                                num_heads,
                                depth,
+                               attn_head_size,
                                qkv_bias,
                                mlp_ratio,
                                dropout,
@@ -404,20 +411,20 @@ class VisualTransformer(nn.Layer):
             w_attr_1, b_attr_1 = self._init_weights()
             w_attr_2, b_attr_2 = self._init_weights()
             self.classifier = nn.Sequential(
-                                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                                          config.MODEL.TRANS.HIDDEN_SIZE,
-                                          weight_attr=w_attr_1,
-                                          bias_attr=b_attr_1),
-                                nn.ReLU(),
-                                nn.Dropout(config.MODEL.DROPOUT),
-                                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                                          config.MODEL.NUM_CLASSES,
-                                          weight_attr=w_attr_2,
-                                          bias_attr=b_attr_2),
-                                nn.Dropout(config.MODEL.DROPOUT),
-                                )
+                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
+                          config.MODEL.TRANS.HIDDEN_SIZE,
+                          weight_attr=w_attr_1,
+                          bias_attr=b_attr_1),
+                nn.ReLU(),
+                nn.Dropout(config.MODEL.DROPOUT),
+                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
+                          config.MODEL.NUM_CLASSES,
+                          weight_attr=w_attr_2,
+                          bias_attr=b_attr_2),
+                nn.Dropout(config.MODEL.DROPOUT),
+            )
         else:
-        # classifier head (for finetuning)
+            # classifier head (for finetuning)
             w_attr_1, b_attr_1 = self._init_weights()
             self.classifier = nn.Linear(embed_dim,
                                         num_classes,
@@ -434,7 +441,7 @@ class VisualTransformer(nn.Layer):
     def forward(self, x):
         x = self.patch_embedding(x)
         x, attn = self.encoder(x)
-        logits = self.classifier(x[:, 0]) # take only cls_token as classifier
+        logits = self.classifier(x[:, 0])  # take only cls_token as classifier
         return logits
 
 
@@ -446,6 +453,7 @@ def build_vit(config):
                               embed_dim=config.MODEL.TRANS.EMBED_DIM,
                               depth=config.MODEL.TRANS.DEPTH,
                               num_heads=config.MODEL.TRANS.NUM_HEADS,
+                              attn_head_size=config.MODEL.TRANS.ATTN_HEAD_SIZE,
                               mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
                               qkv_bias=config.MODEL.TRANS.QKV_BIAS,
                               dropout=config.MODEL.DROPOUT,
