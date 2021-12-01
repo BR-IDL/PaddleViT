@@ -448,7 +448,7 @@ python main_single_gpu.py \
     -batch_size=16 \
     -data_path=/dataset/imagenet \
     -eval \
-    -pretrained=./vit_base_patch16_224.pdparams
+    -pretrained=./vit_base_patch16_224
 ```
 
 <details>
