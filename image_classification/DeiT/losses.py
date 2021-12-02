@@ -21,29 +21,50 @@ import paddle.nn.functional as F
 class LabelSmoothingCrossEntropyLoss(nn.Layer):
     """ cross entropy loss for label smoothing
     Args:
-        smoothing: float, smoothing rate
-        x: tensor, predictions (before softmax) with shape [N, num_classes]
-        target: tensor, target label with shape [N]
+        smoothing: float, label smoothing rate
+        x: Tensor, predictions (default is before softmax) with shape [N, num_classes] as default
+        target: tensor, target label with shape [N] as default
+        weight: tensor, optional, a manual rescaling weight given to each class        
+        reduction: str, optional, indicate how to average the loss by batch_size,
+                   default is ``'mean'``, the candicates are ``'none'`` | ``'mean'`` | ``'sum'``
+        axis: int, optional, the index of dimension to perform softmax calculations,
+                   default is ``-1``, when axis != -1 -> the shape of x and target may not be default
+        use_softmax: bool, optional, when use_softmax=False, ``x`` should be after softmax,
+                     default is ``True``, the candicates are ``True`` | ``False``
+        name: str, optional, the name of the operator, default is ``None``,
+              for more information, please refer to :ref:`api_guide_Name`.
     Return:
         loss: float, cross entropy loss value
     """
-    def __init__(self, smoothing=0.1):
+    def __init__(self,
+                 smoothing=0.1,
+                 weight=None,                 
+                 reduction='mean',                 
+                 axis=-1,
+                 use_softmax=True,
+                 name=None):
         super().__init__()
         assert 0 <= smoothing < 1.0
         self.smoothing = smoothing
-        self.confidence = 1 - smoothing
+        self.weight = weight
+        self.reduction = reduction        
+        self.axis = axis
+        self.use_softmax = use_softmax
+        self.name = name
 
-    def forward(self, x, target):
-        log_probs = F.log_softmax(x) # [N, num_classes]
-        # target_index is used to get prob for each of the N samples
-        target_index = paddle.zeros([x.shape[0], 2], dtype='int64') # [N, 2]
-        target_index[:, 0] = paddle.arange(x.shape[0])
-        target_index[:, 1] = target
-
-        nll_loss = -log_probs.gather_nd(index=target_index) # index: [N]
-        smooth_loss = -log_probs.mean(axis=-1)
-        loss = self.confidence * nll_loss + self.smoothing * smooth_loss
-        return loss.mean()
+    def forward(self, input, target):
+        target = paddle.nn.functional.one_hot(target, num_classes=input.shape[1])
+        target = paddle.nn.functional.label_smooth(target, epsilon=self.smoothing)        
+        loss = paddle.nn.functional.cross_entropy(
+            input,
+            target,            
+            weight=self.weight,            
+            reduction=self.reduction,
+            soft_label=True,
+            axis=self.axis,
+            use_softmax=self.use_softmax,
+            name=self.name)
+        return loss
 
 
 class SoftTargetCrossEntropyLoss(nn.Layer):
