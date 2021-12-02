@@ -22,14 +22,14 @@ class LabelSmoothingCrossEntropyLoss(nn.Layer):
     """ cross entropy loss for label smoothing
     Args:
         smoothing: float, label smoothing rate
-        x: Tensor, predictions (default is before softmax) with shape [N, num_classes] as default
+        x: tensor, predictions (default is before softmax) with shape [N, num_classes] as default
         target: tensor, target label with shape [N] as default
         weight: tensor, optional, a manual rescaling weight given to each class        
         reduction: str, optional, indicate how to average the loss by batch_size,
                    default is ``'mean'``, the candicates are ``'none'`` | ``'mean'`` | ``'sum'``
         axis: int, optional, the index of dimension to perform softmax calculations,
-                   default is ``-1``, when axis != -1 -> the shape of x and target may not be default
-        use_softmax: bool, optional, when use_softmax=False, ``x`` should be after softmax,
+                   default is ``-1``, if `axis` is not -1 -> the shape of x and target may not be default
+        use_softmax: bool, optional, if `use_softmax` is ``False``, ``x`` should be after softmax,
                      default is ``True``, the candicates are ``True`` | ``False``
         name: str, optional, the name of the operator, default is ``None``,
               for more information, please refer to :ref:`api_guide_Name`.
