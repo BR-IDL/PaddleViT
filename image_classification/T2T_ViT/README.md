@@ -73,8 +73,8 @@ from t2t_vit import build_t2t_vit as build_model
 config = get_config('./configs/t2t_vit_7.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./t2t_vit_7')
+# load pretrained weights
+model_state_dict = paddle.load('./t2t_vit_7.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -87,12 +87,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/t2t_vit_7.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/t2t_vit_7.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./t2t_vit_7'
+    -pretrained=/path/to/pretrained/model/t2t_vit_7  # .pdparams is NOT needed
 ```
 
 <details>
@@ -109,12 +109,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/t2t_vit_7.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/t2t_vit_7.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./t2t_vit_7'
+    -pretrained=/path/to/pretrained/model/t2t_vit_7  # .pdparams is NOT needed
 ```
 
 </details>
@@ -129,10 +129,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg='./configs/t2t_vit_7.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/t2t_vit_7.yaml \
+  -dataset=imagenet2012 \
   -batch_size=16 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/path/to/dataset/imagenet/train
 ```
 
 <details>
@@ -149,10 +149,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg='./configs/t2t_vit_7.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/t2t_vit_7.yaml \
+    -dataset=imagenet2012 \
     -batch_size=32 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>

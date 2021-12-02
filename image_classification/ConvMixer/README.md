@@ -65,8 +65,8 @@ from convmixer import build_convmixer as build_model
 config = get_config('./configs/convmixer_768_32.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./convmixer_768_32')
+# load pretrained weights
+model_state_dict = paddle.load('./convmixer_768_32.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -79,12 +79,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/convmixer_768_32.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/convmixer_768_32.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./convmixer_768_32'
+    -pretrained=/path/to/pretrained/model/convmixer_768_32  # .pdparams is NOT needed
 ```
 
 <details>
@@ -101,12 +101,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/convmixer_768_32.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/convmixer_768_32.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./convmixer_768_32'
+    -pretrained=/path/to/pretrained/model/convmixer_768_32  # .pdparams is NOT needed
 ```
 
 </details>
@@ -121,10 +121,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg='./configs/convmixer_768_32.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/convmixer_768_32.yaml \
+  -dataset=imagenet2012 \
   -batch_size=16 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/path/to/dataset/imagenet/train \
 ```
 
 <details>
@@ -141,10 +141,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg='./configs/convmixer_768_32.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/convmixer_768_32.yaml \
+    -dataset=imagenet2012 \
     -batch_size=32 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train \
 ```
 
 </details>

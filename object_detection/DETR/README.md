@@ -72,8 +72,8 @@ from detr import build_detr
 config = get_config('./configs/detr_resnet50.yaml')
 # build model
 model, critertion, postprocessors = build_detr(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./detr_resnet50')
+# load pretrained weights
+model_state_dict = paddle.load('./detr_resnet50.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -86,12 +86,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/detr_resnet50.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/detr_resnet50.yaml \
+    -dataset=coco \
     -batch_size=4 \
-    -data_path='/dataset/coco' \
+    -data_path=/path/to/dataset/coco/val \
     -eval \
-    -pretrained='./detr_resnet50'
+    -pretrained=/path/to/pretrained/model/detr_resnet50  # .pdparams is NOT needed
 ```
 
 <details>
@@ -108,12 +108,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/detr_resnet50.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/detr_resnet50.yaml \
+    -dataset=coco \
     -batch_size=4 \
-    -data_path='/dataset/coco' \
+    -data_path=/path/to/dataset/coco/val \
     -eval \
-    -pretrained='./detr_resnet50'
+    -pretrained=/path/to/pretrained/model/detr_resnet50  # .pdparams is NOT needed
 ```
 
 </details>
@@ -128,10 +128,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=1 \
 python main_single_gpu.py \
-    -cfg='./configs/detr_resnet50.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/detr_resnet50.yaml \
+    -dataset=coco \
     -batch_size=2 \
-    -data_path='/dataset/coco' \
+    -data_path=/path/to/dataset/coco/train
 ```
 
 <details>
@@ -148,10 +148,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/detr_resnet50.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/detr_resnet50.yaml \
+    -dataset=coco \
     -batch_size=2 \
-    -data_path='/dataset/coco' \
+    -data_path=/path/to/dataset/coco/train
 ```
 
 </details>

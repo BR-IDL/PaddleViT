@@ -74,8 +74,8 @@ from resmlp_resnet import build_resmlp_resnet as build_model
 config = get_config('./configs/repmlpres50_light_224_train.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./RepMLP-Res50-light-224_train')
+# load pretrained weights
+model_state_dict = paddle.load('./RepMLP-Res50-light-224_train.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -88,12 +88,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/repmlpres50_light_224_train.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/repmlpres50_light_224_train.yaml \
+    -dataset=imagenet2012 \
     -batch_size=128 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./RepMLP-Res50-light-224_train'
+    -pretrained=/path/to/pretrained/model/RepMLP-Res50-light-224_train  # .pdparams is NOT needed
 ```
 
 <details>
@@ -110,12 +110,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg='./configs/repmlpres50_light_224_train.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/repmlpres50_light_224_train.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./RepMLP-Res50-light-224_train'
+    -pretrained=/path/to/pretrained/model/RepMLP-Res50-light-224_train  # .pdparams is NOT needed
 ```
 
 </details>
@@ -129,10 +129,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/repmlpres50_light_224_train.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/repmlpres50_light_224_train.yaml \
+    -dataset=imagenet2012 \
     -batch_size=32 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 <details>
@@ -148,10 +148,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/repmlpres50_light_224_train.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/repmlpres50_light_224_train.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \ 
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>

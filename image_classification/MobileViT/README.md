@@ -72,8 +72,8 @@ from swin import build_mobile_vit as build_model
 config = get_config('./configs/mobilevit_xxs.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./mobilevit_xxs')
+# load pretrained weights
+model_state_dict = paddle.load('./mobilevit_xxs.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -86,12 +86,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/mobilevit_xxs.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/mobilevit_xxs.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./mobilevit_xxs'
+    -pretrained=/path/to/pretrained/model/mobilevit_xxs  # .pdparams is NOT needed
 ```
 
 <details>
@@ -108,12 +108,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/mobilevit_xxs.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/mobilevit_xxs.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./mobilevit_xxs'
+    -pretrained=/path/to/pretrained/model/mobilevit_xxs  # .pdparams is NOT needed
 ```
 
 </details>
@@ -128,10 +128,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_singel_gpu.py \
-  -cfg='./configs/mobilevit_xxs.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/mobilevit_xxs.yaml \
+  -dataset=imagenet2012 \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/path/to/dataset/imagenet/train
 ```
 
 <details>
@@ -148,10 +148,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/mobilevit_xxs.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/mobilevit_xxs.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>

@@ -76,7 +76,7 @@ from swin_det import build_swin_det
 config = get_config('./configs/swin_t_maskrcnn.yaml')
 # build model
 model = build_swin_det(config)
-# load pretrained weights, .pdparams is NOT needed
+# load pretrained weights
 model_state_dict = paddle.load('./mask_rcnn_swin_tiny_patch4_window7.pdparams')
 model.set_dict(model_state_dict)
 ```
@@ -90,12 +90,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/swin_t_maskrcnn.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/swin_t_maskrcnn.yaml \
+    -dataset=coco \
     -batch_size=4 \
-    -data_path='/dataset/coco' \
+    -data_path=/path/to/dataset/coco/val \
     -eval \
-    -pretrained='./mask_rcnn_swin_tiny_patch4_window7'
+    -pretrained=/path/to/pretrained/model/mask_rcnn_swin_tiny_patch4_window7  # .pdparams is NOT needed
 ```
 
 <details>
@@ -112,12 +112,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/swin_t_maskrcnn.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/swin_t_maskrcnn.yaml \
+    -dataset=coco \
     -batch_size=4 \
-    -data_path='/dataset/coco' \
+    -data_path=/path/to/dataset/coco/val \
     -eval \
-    -pretrained='./mask_rcnn_swin_tiny_patch4_window7'
+    -pretrained=/path/to/pretrained/model/mask_rcnn_swin_tiny_patch4_window7  # .pdparams is NOT needed
 ```
 
 </details>
@@ -132,11 +132,11 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=1 \
 python main_single_gpu.py \
-    -cfg='./configs/swin_t_maskrcnn.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/swin_t_maskrcnn.yaml \
+    -dataset=coco \
     -batch_size=2 \
-    -data_path='/dataset/coco' \
-    -pretrained='./swin_tiny_patch4_window7_224.pdparams'
+    -data_path=/path/to/dataset/coco/train \
+    -pretrained=/path/to/pretrained/model/swin_tiny_patch4_window7_224.pdparams  # .pdparams is NOT needed
 ```
 The `pretrained` arguments sets the pretrained backbone weights, which can be found in Swin classification [here](../../image_classification/SwinTransformer).
 <details>
@@ -153,11 +153,11 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/swin_t_maskrcnn.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/swin_t_maskrcnn.yaml \
+    -dataset=coco \
     -batch_size=2 \
-    -data_path='/dataset/coco' \
-    -pretrained='./swin_tiny_patch4_window7_224.pdparams'
+    -data_path=/path/to/dataset/coco/train \
+    -pretrained=/path/to/pretrained/model/swin_tiny_patch4_window7_224.pdparams  # .pdparams is NOT needed
 ```
 The `pretrained` arguments sets the pretrained backbone weights, which can be found in Swin classification [here](../../image_classification/SwinTransformer).
 </details>

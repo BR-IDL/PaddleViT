@@ -79,7 +79,7 @@ from pvtv2_det import build_pvtv2_det
 config = get_config('./configs/pvtv2_b0.yaml')
 # build model
 model = build_pvtv2_det(config)
-# load pretrained weights, .pdparams is NOT needed
+# load pretrained weights
 model_state_dict = paddle.load('./pvtv2_b0_maskrcnn.pdparams')
 model.set_dict(model_state_dict)
 ```
@@ -93,12 +93,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/pvtv2_b0.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/pvtv2_b0.yaml \
+    -dataset=coco \
     -batch_size=4 \
-    -data_path='/dataset/coco' \
+    -data_path=/path/to/dataset/coco/val \
     -eval \
-    -pretrained='./pvtv2_b0_maskrcnn'
+    -pretrained=/path/to/pretrained/model/pvtv2_b0_maskrcnn  # .pdparams is NOT needed
 ```
 
 <details>
@@ -115,12 +115,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/pvtv2_b0.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/pvtv2_b0.yaml \
+    -dataset=coco \
     -batch_size=4 \
-    -data_path='/dataset/coco' \
+    -data_path=/path/to/dataset/coco/val \
     -eval \
-    -pretrained='./pvtv2_b0_maskrcnn'
+    -pretrained=/path/to/pretrained/model/pvtv2_b0_maskrcnn  # .pdparams is NOT needed
 ```
 
 </details>
@@ -135,11 +135,11 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=1 \
 python main_single_gpu.py \
-    -cfg='./configs/pvtv2_b0.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/pvtv2_b0.yaml \
+    -dataset=coco \
     -batch_size=2 \
-    -data_path='/dataset/coco' \
-    -pretrained='./pvtv2_b0'
+    -data_path=/path/to/dataset/coco/train \
+    -pretrained=/path/to/pretrained/model/pvtv2_b0  # .pdparams is NOT needed
 ```
 The `pretrined` arguments sets the pretrained backbone weights, which can be found in PVTv2 classification [here](../../image_classification/PVTv2).
 <details>
@@ -156,11 +156,11 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/pvtv2_b0.yaml' \
-    -dataset='coco' \
+    -cfg=./configs/pvtv2_b0.yaml \
+    -dataset=coco \
     -batch_size=2 \
-    -data_path='/dataset/coco' \
-    -pretrained='./pvtv2_b0'
+    -data_path=/path/to/dataset/coco/train \
+    -pretrained=/path/to/pretrained/model/pvtv2_b0  # .pdparams is NOT needed
 ```
 The `pretrined` arguments sets the pretrained backbone weights, which can be found in PVTv2 classification [here](../../image_classification/PVTv2).
 </details>

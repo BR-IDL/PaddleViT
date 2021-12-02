@@ -73,8 +73,8 @@ from deit import build_deit as build_model
 config = get_config('./configs/deit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./deit_base_patch16_224')
+# load pretrained weights
+model_state_dict = paddle.load('./deit_base_patch16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -87,12 +87,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/deit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/deit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/imagenet/val/dataset/val \
     -eval \
-    -pretrained='./deit_base_patch16_224'
+    -pretrained=/path/to/pretrained/model/deit_base_patch16_224  # .pdparams is NOT needed
 ```
 
 <details>
@@ -109,12 +109,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/deit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/deit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./deit_base_patch16_224'
+    -pretrained=/path/to/pretrained/model/deit_base_patch16_224  # .pdparams is NOT needed
 ```
 
 </details>
@@ -131,11 +131,11 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg='./configs/deit_base_patch16_224.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/deit_base_patch16_224.yaml \
+  -dataset=imagenet2012 \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
-  -teacher_model='./regnety_160'
+  -data_path=/path/to/dataset/imagenet/train \
+  -teacher_model=/path/to/pretrained/model/regnety_160  # .pdparams is NOT needed
 ```
 
 <details>
@@ -152,11 +152,11 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/deit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/deit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
-    -teacher_model='./regnety_160'
+    -data_path=/path/to/dataset/imagenet/train \
+    -teacher_model=/path/to/pretrained/model/regnety_160  # .pdparams is NOT needed
 ```
 
 </details>
