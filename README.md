@@ -443,12 +443,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/vit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/vit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/dataset/imagenet \
     -eval \
-    -pretrained='./vit_base_patch16_224.pdparams'
+    -pretrained=./vit_base_patch16_224
 ```
 
 <details>
@@ -465,12 +465,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/vit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/vit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/dataset/imagenet \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained=./vit_base_patch16_224
 ```
 
 </details>
@@ -485,10 +485,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg='./configs/vit_base_patch16_224.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/vit_base_patch16_224.yaml \
+  -dataset=imagenet2012 \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/dataset/imagenet \
 ```
 
 
@@ -506,10 +506,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/vit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/vit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/dataset/imagenet \
 ```
 
 </details>
