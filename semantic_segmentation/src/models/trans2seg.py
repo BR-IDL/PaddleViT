@@ -19,7 +19,7 @@ class Trans2Seg(nn.Layer):
         c1_channels = 256
         c4_channels = 2048
         self.nclass = config.DATA.NUM_CLASSES
-        self.aux = config.TRAIN.LR_SCHEDULER.AUX
+        self.aux = config.MODEL.AUX.AUXIHEAD
         self.backbone = config.MODEL.ENCODER.TYPE.lower()
         
         # Create cnn encoder, the input image is fed to CNN to extract features
@@ -46,6 +46,7 @@ class Trans2Seg(nn.Layer):
         # for transformer decoder, we specifically define a set of learnable class prototype embeddings as query,
         # the features from transformer encoder as key
         self.transformer_decoder = TransformerDecoder(
+                                     nclass=config.DATA.NUM_CLASSES,
                                      embed_dim=last_channels,
                                      depth=vit_params['DEPTH'],
                                      num_heads=vit_params['NUM_HEADS'],

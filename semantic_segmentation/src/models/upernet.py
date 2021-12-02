@@ -9,6 +9,7 @@ import paddle
 import paddle.nn as nn
 from src.models.backbones import SwinTransformer
 from src.models.backbones import CSwinTransformer
+from src.models.backbones import FocalTransformer
 from src.models.decoders import UperHead, FCNHead
 
 
@@ -28,6 +29,8 @@ class UperNet(nn.Layer):
             self.encoder = SwinTransformer(config)
         elif config.MODEL.ENCODER.TYPE == "CSwinTransformer":
             self.encoder = CSwinTransformer(config)
+        elif config.MODEL.ENCODER.TYPE == "FocalTransformer":
+            self.encoder = FocalTransformer(config)
         self.num_layers = len(config.MODEL.TRANS.STAGE_DEPTHS)
         self.auxi_head = config.MODEL.AUX.AUXIHEAD
         self.decoder_type = config.MODEL.DECODER_TYPE
