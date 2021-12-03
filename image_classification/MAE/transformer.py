@@ -547,9 +547,9 @@ class MAEPretrainTransformer(nn.Layer):
         masked_target = self.mask_target(target, self.patch_size)
         # only reconstruct unmasked source patches
         _, unmask_length, _ = masked_target.shape
-        reconstructed_image = self.reconstruction_layer(
+        output = self.reconstruction_layer(
             source[:, 1: unmask_length + 1, :])
-        return reconstructed_image, masked_target
+        return output, masked_target
 
     def mask(self, x):
         """

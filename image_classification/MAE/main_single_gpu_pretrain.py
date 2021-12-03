@@ -121,8 +121,8 @@ def train(dataloader,
                 optimizer.clear_grad()
 
         else:
-            reconstructed_image, masked_image = model(image)
-            loss = criterion(reconstructed_image, masked_image)
+            output, target = model(image)
+            loss = criterion(output, target)
             # NOTE: division may be needed depending on the loss function
             # Here no division is needed:
             # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
