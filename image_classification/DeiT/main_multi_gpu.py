@@ -325,6 +325,7 @@ def main_worker(*args):
     
     # STEP 1: Create model
     model = build_model(config)
+    model = paddle.DataParallel(model)
     # define model ema
     model_ema = None
     if not config.EVAL and config.TRAIN.MODEL_EMA and local_rank == 0:
