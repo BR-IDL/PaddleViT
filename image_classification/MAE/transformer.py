@@ -325,92 +325,6 @@ class TransformerLayer(nn.Layer):
         return x, attn
 
 
-class MaskLayer(nn.Layer):
-    """Mask Layer
-
-    Mask Layer is used to mask random patches
-    According to the paper, it should shuffle patch sequence and remove mask patches
-    before encoding.Then before decoding, it should add back mask tokens and unshuffle
-    the sequence.
-
-    However, for simplicity, we unshuffle positional embedding and label instead.
-
-
-    Attributes:
-        decoder_embed_dim: decoder embedding dimension
-        perm: indicator list to unshuffle sequence
-    """
-
-    def __init__(self, mask_ratio, decoder_embed_dim):
-        super(MaskLayer, self).__init__()
-        self.mask_ratio = mask_ratio
-        self.mask_token = paddle.create_parameter(
-            shape=[1, 1, decoder_embed_dim],
-            dtype='float32',
-            default_initializer=paddle.nn.initializer.Constant(0))
-        self.perm = None
-        self.mask_num = None
-        # TODO: consider to use 'paddle.index_select'
-
-    def mask(self, x):
-        """
-        Shuffle x then mask the last few tokens according to mask ratio.
-        Args:
-            x: tensor of [batch, seq_len + 1, encoder_embed_dim]
-            note the extra 1 is corresponding to [cls] token
-
-        Returns:
-            masked_x: tensor of [batch, seq_len + 1 - mask_num, encoder_embed_dim]
-        """
-        _, seq_len, _ = x.shape
-        seq_len = seq_len - 1  # should not shuffle the [cls] token
-        self.mask_num = int(seq_len * self.mask_ratio)
-        # should not shuffle the [cls] token
-        index = [i for i in range(1, seq_len + 1)]
-        random.shuffle(index)
-        self.perm = paddle.to_tensor([0] + index)  # add back [cls] token
-        shuffled_x = paddle.index_select(x, self.perm, axis=1)
-        masked_x = shuffled_x[:, 0: -self.mask_num, :]
-        return masked_x
-
-    def mask_label(self, label, patch_size):
-        """
-        Shuffle and mask label
-        According to the paper, the reconstruction loss is only calculated
-        over unmasked tokens.
-        Args:
-            label: tensor of [batch, channel, image_size, image_size]
-
-        Returns:
-            masked_label: tensor of [batch, seq_len-mask_num, channel * patch_size * patch_size]
-            note that seq_len = (image_size / patch_size) ^ 2
-        """
-        shuffled_label = F.unfold(
-            label, patch_size, patch_size).transpose((0, 2, 1))
-        # shuffled_label shape is [batch, seq_len , channel * patch_size * patch_size]
-
-        masked_label = shuffled_label[:, 0: -self.mask_num, :]
-        return masked_label
-
-    def unmask(self, x, pos_embedding):
-        """
-        Add back mask tokens. Then add shuffled positional embedding
-        Args:
-            x: tensor of [batch, seq_len + 1 - mask_num, decoder_embed_dim]
-            pos_embedding: tensor of [batch, seq_len + 1, decoder_embed_dim]
-
-        Returns:
-            unmasked_x: tensor of [batch, seq_len + 1, decoder_embed_dim]
-        """
-        batch, _, _ = x.shape
-        mask_tokens = self.mask_token.expand((batch, self.mask_num, -1))
-        # [batch, seq_len + 1, decoder_embed_dim]
-        unmasked_x = paddle.concat([x, mask_tokens], axis=1)
-        shuffled_pos_embedding = paddle.index_select(
-            pos_embedding, self.perm, axis=1)
-        return unmasked_x + shuffled_pos_embedding
-
-
 class Encoder(nn.Layer):
     """Transformer encoder
 
@@ -566,9 +480,14 @@ class MAEPretrainTransformer(nn.Layer):
                  config=None):
         super(MAEPretrainTransformer, self).__init__()
         self.patch_size = patch_size
-
-        # create mask layer
-        self.mask_layer = MaskLayer(mask_ratio, decoder_embed_dim)
+        # mask-related parameters
+        self.mask_ratio = mask_ratio
+        self.mask_token = paddle.create_parameter(
+            shape=[1, 1, decoder_embed_dim],
+            dtype='float32',
+            default_initializer=paddle.nn.initializer.Constant(0))
+        self.perm = None
+        self.mask_num = None
         # create positional embedding
         self.position_embedding = PositionalEmbedding(encoder_embed_dim, decoder_embed_dim,
                                                       int(1 + (image_size / patch_size) * (image_size / patch_size)))
@@ -599,7 +518,7 @@ class MAEPretrainTransformer(nn.Layer):
                                dropout,
                                attention_dropout,
                                droppath)
-        # TODO: create reconstruction layer
+        # create reconstruction layer
         self.reconstruction_layer = nn.Linear(decoder_embed_dim,
                                               in_channels * patch_size * patch_size)
 
@@ -611,23 +530,85 @@ class MAEPretrainTransformer(nn.Layer):
         return weight_attr, bias_attr
 
     def forward(self, image):
-        x = self.patch_embedding(image)
-        x = self.mask_layer.mask(x)
+        source = self.patch_embedding(image)
+        target = image
+
+        # mask source before encoding
+        source = self.mask(source)
         # add positional embedding before encoding
-        x += self.position_embedding.get_encoder_embedding(x.shape[1])
-        x, attn = self.encoder(x)
-        x = self.linear_projection(x)
-        x = self.mask_layer.unmask(
-            x, self.position_embedding.get_decoder_embedding())
-        masked_image = self.mask_layer.mask_label(image, self.patch_size)
-        x, attn = self.decoder(x)
+        source += self.position_embedding.get_encoder_embedding(source.shape[1])
+        source, attn = self.encoder(source)
+        source = self.linear_projection(source)
+        source = self.unmask(
+            source, self.position_embedding.get_decoder_embedding())
+        source, attn = self.decoder(source)
 
-        # only reconstruct unmasked patches
-        _, unmask_length, _ = masked_image.shape
+        # only sustain unmasked target patches
+        masked_target = self.mask_target(target, self.patch_size)
+        # only reconstruct unmasked source patches
+        _, unmask_length, _ = masked_target.shape
         reconstructed_image = self.reconstruction_layer(
-            x[:, 1: unmask_length + 1, :])
-        return reconstructed_image, masked_image
+            source[:, 1: unmask_length + 1, :])
+        return reconstructed_image, masked_target
 
+    def mask(self, x):
+        """
+        Shuffle x then mask the last few tokens according to mask ratio.
+        Args:
+            x: tensor of [batch, seq_len + 1, encoder_embed_dim]
+            note the extra 1 is corresponding to [cls] token
+
+        Returns:
+            masked_x: tensor of [batch, seq_len + 1 - mask_num, encoder_embed_dim]
+        """
+        _, seq_len, _ = x.shape
+        seq_len = seq_len - 1  # should not shuffle the [cls] token
+        self.mask_num = int(seq_len * self.mask_ratio)
+        # should not shuffle the [cls] token
+        index = [i for i in range(1, seq_len + 1)]
+        random.shuffle(index)
+        self.perm = paddle.to_tensor([0] + index)  # add back [cls] token
+        shuffled_x = paddle.index_select(x, self.perm, axis=1)
+        masked_x = shuffled_x[:, 0: -self.mask_num, :]
+        return masked_x
+
+    def mask_target(self, target, patch_size):
+        """
+        Shuffle and mask label
+        According to the paper, the reconstruction loss is only calculated
+        over unmasked tokens.
+        Args:
+            patch_size: int
+            target: tensor of [batch, channel, image_size, image_size]
+
+        Returns:
+            masked_label: tensor of [batch, seq_len-mask_num, channel * patch_size * patch_size]
+            note that seq_len = (image_size / patch_size) ^ 2
+        """
+        shuffled_target = F.unfold(
+            target, patch_size, patch_size).transpose((0, 2, 1))
+        # shuffled_label shape is [batch, seq_len , channel * patch_size * patch_size]
+
+        masked_target = shuffled_target[:, 0: -self.mask_num, :]
+        return masked_target
+
+    def unmask(self, x, pos_embedding):
+        """
+        Add back mask tokens. Then add shuffled positional embedding
+        Args:
+            x: tensor of [batch, seq_len + 1 - mask_num, decoder_embed_dim]
+            pos_embedding: tensor of [batch, seq_len + 1, decoder_embed_dim]
+
+        Returns:
+            unmasked_x: tensor of [batch, seq_len + 1, decoder_embed_dim]
+        """
+        batch, _, _ = x.shape
+        mask_tokens = self.mask_token.expand((batch, self.mask_num, -1))
+        # [batch, seq_len + 1, decoder_embed_dim]
+        unmasked_x = paddle.concat([x, mask_tokens], axis=1)
+        shuffled_pos_embedding = paddle.index_select(
+            pos_embedding, self.perm, axis=1)
+        return unmasked_x + shuffled_pos_embedding
 
 class MAEFinetuneTransformer(nn.Layer):
     # TODO: 补注释
