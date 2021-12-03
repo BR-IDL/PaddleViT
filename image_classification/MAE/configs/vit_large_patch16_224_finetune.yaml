@@ -4,6 +4,7 @@ DATA:
 MODEL:
     TYPE: MAE
     NAME: vit_large_patch16_224
+    DROPPATH: 0.1
     TRANS:
         PATCH_SIZE: 16
         MLP_RATIO: 4.0
@@ -13,16 +14,14 @@ MODEL:
             EMBED_DIM: 768
             DEPTH: 12
             NUM_HEADS: 12
-        DECODER:
-            EMBED_DIM: 512
-            DEPTH: 8
-            NUM_HEADS: 8
+
 TRAIN:
     NUM_EPOCHS: 50
     WARMUP_EPOCHS: 5
     WEIGHT_DECAY: 0.05
     BASE_LR: 1e-3
     WARMUP_START_LR: 1e-6
+    ACCUM_ITER: 2 # the total batch size should be 1024
 
     LR_SCHEDULER:
         NAME: 'warmupcosine'
@@ -30,3 +29,12 @@ TRAIN:
     OPTIMIZER:
         NAME: 'AdamW'
         BETAS: (0.9, 0.999)
+
+    SMOOTHING: 0.1
+    AUTO_AUGMENT: True #'rand-m9-mstd0.5-inc1'
+    MIXUP_ALPHA: 0.8
+    MIXUP_PROB: 1.0
+    MIXUP_SWITCH_PROB: 0.5
+    MIXUP_MODE: 'batch'
+    CUTMIX_ALPHA: 1.0
+    CUTMIX_MINMAX: None

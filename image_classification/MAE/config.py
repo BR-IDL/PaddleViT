@@ -76,6 +76,16 @@ _C.TRAIN.END_LR = 5e-4
 _C.TRAIN.GRAD_CLIP = 1.0
 _C.TRAIN.ACCUM_ITER = 2  # 1
 
+# train augmentation (only for finetune)
+_C.TRAIN.SMOOTHING = 0.1
+_C.TRAIN.AUTO_AUGMENT = True #'rand-m9-mstd0.5-inc1'
+_C.TRAIN.MIXUP_ALPHA = 0.8
+_C.TRAIN.MIXUP_PROB = 1.0
+_C.TRAIN.MIXUP_SWITCH_PROB = 0.5
+_C.TRAIN.MIXUP_MODE = 'batch'
+_C.TRAIN.CUTMIX_ALPHA = 1.0
+_C.TRAIN.CUTMIX_MINMAX = None
+
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
 _C.TRAIN.LR_SCHEDULER.MILESTONES = "30, 60, 90"  # only used in StepLRScheduler

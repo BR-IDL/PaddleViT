@@ -388,46 +388,49 @@ def main_worker(*args):
     if local_rank == 0:
         master_logger.info(f"Start training from epoch {last_epoch + 1}.")
     for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
-        # train
-        local_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        if local_rank == 0:
-            master_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        train_loss, avg_loss, train_time = train(
-            dataloader=dataloader_train,
-            model=model,
-            criterion=criterion,
-            optimizer=optimizer,
-            epoch=epoch,
-            total_epochs=config.TRAIN.NUM_EPOCHS,
-            total_batch=total_batch_train,
-            debug_steps=config.REPORT_FREQ,
-            accum_iter=config.TRAIN.ACCUM_ITER,
-            amp=config.AMP,
-            local_logger=local_logger,
-            master_logger=master_logger)
-
-        scheduler.step()
-
-        local_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                          f"Train Loss: {train_loss:.4f}, " +
-                          f"time: {train_time:.2f}")
-        if local_rank == 0:
-            master_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                               f"Train Loss: {avg_loss:.4f}, " +
-                               f"time: {train_time:.2f}")
+        # # train
+        # local_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
+        # if local_rank == 0:
+        #     master_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
+        # train_loss, avg_loss, train_time = train(
+        #     dataloader=dataloader_train,
+        #     model=model,
+        #     criterion=criterion,
+        #     optimizer=optimizer,
+        #     epoch=epoch,
+        #     total_epochs=config.TRAIN.NUM_EPOCHS,
+        #     total_batch=total_batch_train,
+        #     debug_steps=config.REPORT_FREQ,
+        #     accum_iter=config.TRAIN.ACCUM_ITER,
+        #     amp=config.AMP,
+        #     local_logger=local_logger,
+        #     master_logger=master_logger)
+        #
+        # scheduler.step()
+        #
+        # local_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+        #                   f"Train Loss: {train_loss:.4f}, " +
+        #                   f"time: {train_time:.2f}")
+        # if local_rank == 0:
+        #     master_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+        #                        f"Train Loss: {avg_loss:.4f}, " +
+        #                        f"time: {train_time:.2f}")
 
         # validation
         # No need to do validation during pretraining
 
         # model save
         if local_rank == 0:
+            print("!!!!!!!!!!!!")
             if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
                 model_path = os.path.join(
-                    config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
+                        config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-0")
                 paddle.save(model.state_dict(), model_path + '.pdparams')
                 paddle.save(optimizer.state_dict(), model_path + '.pdopt')
                 master_logger.info(f"----- Save model: {model_path}.pdparams")
                 master_logger.info(f"----- Save optim: {model_path}.pdopt")
+        if epoch == 11:
+            break
 
 
 def main():

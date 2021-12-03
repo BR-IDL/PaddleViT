@@ -47,11 +47,10 @@ class PositionalEmbedding(nn.Layer):
     Apply positional embedding on input images.
 
     Attributes:
-        encoder_position_embedding: sine-cosine version positional embedding
-        decoder_position_embedding: sine-cosine version positional embedding
+        position_embedding: sine-cosine version positional embedding
     """
 
-    def __init__(self, encoder_embed_dim, decoder_embed_dim, seq_len=197):
+    def __init__(self, embed_dim, seq_len=197):
         """ Sinusoid position encoding table """
         super(PositionalEmbedding, self).__init__()
         self.seq_len = seq_len
@@ -60,31 +59,18 @@ class PositionalEmbedding(nn.Layer):
             return [position / np.power(10000, 2 * (hid_j // 2) / embed_dim) for hid_j in range(embed_dim)]
 
         sinusoid_table = np.array([get_position_angle_vec(
-            encoder_embed_dim, pos_i) for pos_i in range(seq_len)])
+            embed_dim, pos_i) for pos_i in range(seq_len)])
         sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
         sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
-        encoder_position_embedding = paddle.to_tensor([sinusoid_table])
+        position_embedding = paddle.to_tensor([sinusoid_table])
 
-        sinusoid_table = np.array([get_position_angle_vec(
-            decoder_embed_dim, pos_i) for pos_i in range(seq_len)])
-        sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
-        sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
-        decoder_position_embedding = paddle.to_tensor([sinusoid_table])
+        self.register_buffer('position_embedding',
+                             position_embedding)
 
-        self.register_buffer('encoder_position_embedding',
-                             encoder_position_embedding)
-        self.register_buffer('decoder_position_embedding',
-                             decoder_position_embedding)
-
-    def get_encoder_embedding(self, seq_length=None):
+    def get_positional_embedding(self, seq_length=None):
         if seq_length is None:
             seq_length = self.seq_len
-        return self.encoder_position_embedding[:, :seq_length, :]
-
-    def get_decoder_embedding(self, seq_length=None):
-        if seq_length is None:
-            seq_length = self.seq_len
-        return self.decoder_position_embedding[:, :seq_length, :]
+        return self.position_embedding[:, :seq_length, :]
 
 
 class PatchEmbedding(nn.Layer):
@@ -459,7 +445,9 @@ class MAEPretrainTransformer(nn.Layer):
         self.perm = None
         self.mask_num = None
         # create positional embedding
-        self.position_embedding = PositionalEmbedding(encoder_embed_dim, decoder_embed_dim,
+        self.encoder_position_embedding = PositionalEmbedding(encoder_embed_dim,
+                                                      int(1 + (image_size / patch_size) * (image_size / patch_size)))
+        self.decoder_position_embedding = PositionalEmbedding(decoder_embed_dim,
                                                       int(1 + (image_size / patch_size) * (image_size / patch_size)))
         # create patch embedding with positional embedding
         self.patch_embedding = PatchEmbedding(image_size,
@@ -500,11 +488,11 @@ class MAEPretrainTransformer(nn.Layer):
         # mask source before encoding
         source = self.mask(source)
         # add positional embedding before encoding
-        source += self.position_embedding.get_encoder_embedding(source.shape[1])
+        source += self.encoder_position_embedding.get_encoder_embedding(source.shape[1])
         source, attn = self.encoder(source)
         source = self.linear_projection(source)
         source = self.unmask(
-            source, self.position_embedding.get_decoder_embedding())
+            source, self.decoder_position_embedding.get_decoder_embedding())
         source, attn = self.decoder(source)
 
         # only sustain unmasked target patches
@@ -587,9 +575,8 @@ class MAEFinetuneTransformer(nn.Layer):
         patch_size: int, patch size, default: 16
         in_channels: int, input image channels, default: 3
         num_classes: int, number of classes for classification, default: 1000
-        encoder_embed_dim: int, embedding dimension (patch embed out dim), default: 768
-        decoder_embed_dim: int, embedding dimension (patch embed out dim), default: 512
-        encoder_depth: int, number ot transformer blocks, default: 12
+        embed_dim: int, embedding dimension (patch embed out dim), default: 768
+        depth: int, number ot transformer blocks, default: 12
         num_heads: int, number of attention heads, default: 12
         mlp_ratio: float, ratio of mlp hidden dim to embed dim(mlp in dim), default: 4.0
         qkv_bias: bool, If True, enable qkv(nn.Linear) layer with bias, default: True
@@ -603,8 +590,8 @@ class MAEFinetuneTransformer(nn.Layer):
                  patch_size=16,
                  in_channels=3,
                  num_classes=1000,
-                 encoder_embed_dim=768,
-                 encoder_depth=12,
+                 embed_dim=768,
+                 depth=12,
                  num_heads=12,
                  mlp_ratio=4,
                  qkv_bias=True,
@@ -614,53 +601,43 @@ class MAEFinetuneTransformer(nn.Layer):
                  train_from_scratch=False,
                  config=None):
         super(MAEFinetuneTransformer, self).__init__()
+        # create positional embedding
+        self.encoder_position_embedding = PositionalEmbedding(embed_dim,
+                                                      int(1 + (image_size / patch_size) * (image_size / patch_size)))
         # create patch embedding with positional embedding
         self.patch_embedding = PatchEmbedding(image_size,
                                               patch_size,
                                               in_channels,
-                                              encoder_embed_dim,
+                                              embed_dim,
                                               dropout)
         # create multi head self-attention encoder
-        self.encoder = Encoder(encoder_embed_dim,
+        self.encoder = Encoder(embed_dim,
                                num_heads,
-                               encoder_depth,
+                               depth,
                                qkv_bias,
                                mlp_ratio,
                                dropout,
                                attention_dropout,
                                droppath)
 
-        # classifier head (for training from scracth)
-        if train_from_scratch:
-            w_attr_1, b_attr_1 = self._init_weights()
-            w_attr_2, b_attr_2 = self._init_weights()
-            self.classifier = nn.Sequential(
-                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                          config.MODEL.TRANS.HIDDEN_SIZE,
-                          weight_attr=w_attr_1,
-                          bias_attr=b_attr_1),
-                nn.ReLU(),
-                nn.Dropout(config.MODEL.DROPOUT),
-                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                          config.MODEL.NUM_CLASSES,
-                          weight_attr=w_attr_2,
-                          bias_attr=b_attr_2),
-                nn.Dropout(config.MODEL.DROPOUT),
-            )
-        else:
-            # classifier head (for finetuning)
-            w_attr_1, b_attr_1 = self._init_weights()
-            self.classifier = nn.Linear(encoder_embed_dim,
-                                        num_classes,
-                                        weight_attr=w_attr_1,
-                                        bias_attr=b_attr_1)
+        # classifier head (for finetuning)
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.classifier = nn.Linear(embed_dim,
+                                    num_classes,
+                                    weight_attr=w_attr_1,
+                                    bias_attr=b_attr_1)
 
     def forward(self, x):
         x = self.patch_embedding(x)
+        x += self.encoder_position_embedding.get_positional_embedding(x.shape[1])
         x, attn = self.encoder(x)
-        logits = self.decoder(x)
+        logits = self.classifier(x[:, 0])  # take only cls_token as classifier
         return logits
 
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        return weight_attr, bias_attr
 
 def build_mae_pretrain(config):
     model = MAEPretrainTransformer(image_size=config.DATA.IMAGE_SIZE,
@@ -683,6 +660,19 @@ def build_mae_pretrain(config):
     return model
 
 
-def build_mas_finetune(config):
+def build_mae_finetune(config):
     # TODO: to be implemented
-    pass
+    model = MAEFinetuneTransformer(image_size=config.DATA.IMAGE_SIZE,
+                                   patch_size=config.MODEL.TRANS.PATCH_SIZE,
+                                   in_channels=3,
+                                   embed_dim=config.MODEL.TRANS.ENCODER.EMBED_DIM,
+                                   depth=config.MODEL.TRANS.ENCODER.DEPTH,
+                                   num_heads=config.MODEL.TRANS.ENCODER.NUM_HEADS,
+                                   mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+                                   qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                                   dropout=config.MODEL.DROPOUT,
+                                   attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                                   droppath=config.MODEL.DROPPATH,
+                                   train_from_scratch=False,
+                                   config=config)
+    return model
