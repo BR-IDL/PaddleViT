@@ -282,10 +282,7 @@ class TransformerLayer(nn.Layer):
                  attention_dropout=0.,
                  droppath=0.):
         super().__init__()
-        w_attr_1, b_attr_1 = self._init_weights()
         self.attn_norm = nn.LayerNorm(embed_dim,
-                                      weight_attr=w_attr_1,
-                                      bias_attr=b_attr_1,
                                       epsilon=1e-6)
 
         self.attn = Attention(embed_dim,
@@ -295,19 +292,10 @@ class TransformerLayer(nn.Layer):
                               attention_dropout)
         self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
 
-        w_attr_2, b_attr_2 = self._init_weights()
         self.mlp_norm = nn.LayerNorm(embed_dim,
-                                     weight_attr=w_attr_2,
-                                     bias_attr=b_attr_2,
                                      epsilon=1e-6)
 
         self.mlp = Mlp(embed_dim, mlp_ratio, dropout)
-
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(
-            initializer=nn.initializer.Constant(0.0))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
-        return weight_attr, bias_attr
 
     def forward(self, x):
         h = x
@@ -359,17 +347,8 @@ class Encoder(nn.Layer):
             layer_list.append(copy.deepcopy(encoder_layer))
         self.layers = nn.LayerList(layer_list)
 
-        w_attr_1, b_attr_1 = self._init_weights()
         self.encoder_norm = nn.LayerNorm(embed_dim,
-                                         weight_attr=w_attr_1,
-                                         bias_attr=b_attr_1,
                                          epsilon=1e-6)
-
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(
-            initializer=nn.initializer.Constant(0.0))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
-        return weight_attr, bias_attr
 
     def forward(self, x):
         self_attn = []
@@ -415,17 +394,8 @@ class Decoder(nn.Layer):
             layer_list.append(copy.deepcopy(decoder_layer))
         self.layers = nn.LayerList(layer_list)
 
-        w_attr_1, b_attr_1 = self._init_weights()
         self.decoder_norm = nn.LayerNorm(embed_dim,
-                                         weight_attr=w_attr_1,
-                                         bias_attr=b_attr_1,
                                          epsilon=1e-6)
-
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(
-            initializer=nn.initializer.Constant(0.0))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
-        return weight_attr, bias_attr
 
     def forward(self, x):
         self_attn = []
@@ -522,12 +492,6 @@ class MAEPretrainTransformer(nn.Layer):
         self.reconstruction_layer = nn.Linear(decoder_embed_dim,
                                               in_channels * patch_size * patch_size)
 
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.KaimingUniform())
-        bias_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.KaimingUniform())
-        return weight_attr, bias_attr
 
     def forward(self, image):
         source = self.patch_embedding(image)
@@ -690,13 +654,6 @@ class MAEFinetuneTransformer(nn.Layer):
                                         num_classes,
                                         weight_attr=w_attr_1,
                                         bias_attr=b_attr_1)
-
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.KaimingUniform())
-        bias_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.KaimingUniform())
-        return weight_attr, bias_attr
 
     def forward(self, x):
         x = self.patch_embedding(x)
