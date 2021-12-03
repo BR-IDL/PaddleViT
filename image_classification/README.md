@@ -49,7 +49,7 @@ This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.g
 ## Installation
 This module is tested on Python3.6+, and PaddlePaddle 2.1.0+. Most dependencies are installed by PaddlePaddle installation. You only need to install the following packages:
 ```shell
-pip install yacs yaml
+pip install yacs pyyaml
 ```
 Then download the github repo:
 ```shell

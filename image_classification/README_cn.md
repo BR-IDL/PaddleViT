@@ -42,7 +42,7 @@ PaddlePaddle用于图像分类的训练/评估代码和预训练模型。
 ## 安装
 该模块在 Python3.6+ 和 PaddlePaddle 2.1.0+ 上进行了测试，多数依赖项通过PaddlePaddle安装。 您只需要安装以下包：
 ```shell
-pip install yacs yaml
+pip install yacs pyyaml
 ```
 然后，下载github repo:
 ```shell
