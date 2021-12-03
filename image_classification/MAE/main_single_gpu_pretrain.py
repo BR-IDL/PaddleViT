@@ -33,47 +33,41 @@ from config import get_config
 from config import update_config
 
 
-parser = argparse.ArgumentParser('ViT')
-parser.add_argument('-cfg', type=str, default=None)
-parser.add_argument('-dataset', type=str, default=None)
-parser.add_argument('-batch_size', type=int, default=None)
-parser.add_argument('-image_size', type=int, default=None)
-parser.add_argument('-data_path', type=str, default=None)
-parser.add_argument('-ngpus', type=int, default=None)
-parser.add_argument('-pretrained', type=str, default=None)
-parser.add_argument('-resume', type=str, default=None)
-parser.add_argument('-last_epoch', type=int, default=None)
-parser.add_argument('-eval', action='store_true')
-parser.add_argument('-amp', action='store_true')
-args = parser.parse_args()
+def get_arguments():
+    """return argumeents, this will overwrite the config after loading yaml file"""
+    parser = argparse.ArgumentParser('ViT')
+    parser.add_argument('-cfg', type=str, default=None)
+    parser.add_argument('-dataset', type=str, default=None)
+    parser.add_argument('-batch_size', type=int, default=None)
+    parser.add_argument('-image_size', type=int, default=None)
+    parser.add_argument('-data_path', type=str, default=None)
+    parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-pretrained', type=str, default=None)
+    parser.add_argument('-resume', type=str, default=None)
+    parser.add_argument('-last_epoch', type=int, default=None)
+    parser.add_argument('-eval', action='store_true')
+    parser.add_argument('-amp', action='store_true')
+    arguments = parser.parse_args()
+    return arguments
 
 
-log_format = "%(asctime)s %(message)s"
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format=log_format, datefmt="%m%d %I:%M:%S %p")
-
-# get default config
-config = get_config()
-# update config by arguments
-config = update_config(config, args)
-
-# set output folder
-if not config.EVAL:
-    config.SAVE = '{}/train-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
-else:
-    config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
-
-#config.freeze()
-
-if not os.path.exists(config.SAVE):
-    os.makedirs(config.SAVE, exist_ok=True)
-
-# set logging format
-logger = logging.getLogger()
-fh = logging.FileHandler(os.path.join(config.SAVE, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logger.addHandler(fh)
-logger.info(f'config= {config}')
+def get_logger(filename, logger_name=None):
+    """set logging file and format
+    Args:
+        filename: str, full path of the logger file to write
+        logger_name: str, the logger name, e.g., 'master_logger', 'local_logger'
+    Return:
+        logger: python logger
+    """
+    log_format = "%(asctime)s %(message)s"
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt="%m%d %I:%M:%S %p")
+    # different name is needed when creating multiple logger in one process
+    logger = logging.getLogger(logger_name)
+    fh = logging.FileHandler(os.path.join(filename))
+    fh.setFormatter(logging.Formatter(log_format))
+    logger.addHandler(fh)
+    return logger
 
 
 def train(dataloader,
@@ -81,23 +75,27 @@ def train(dataloader,
           criterion,
           optimizer,
           epoch,
+          total_epochs,
           total_batch,
           debug_steps=100,
           accum_iter=1,
-          amp=False):
+          amp=False,
+          logger=None):
     """Training for one epoch
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
         model: nn.Layer, a ViT model
         criterion: nn.criterion
         epoch: int, current epoch
-        total_epoch: int, total num of epoch, for logging
+        total_epochs: int, total num of epochs
+        total_batch: int, total num of batches for one epoch
         debug_steps: int, num of iters to log info, default: 100
         accum_iter: int, num of iters for accumulating gradients, default: 1
         amp: bool, if True, use mix precision training, default: False
+        logger: logger for logging, default: None
     Returns:
-        train_loss_meter.avg
-        train_time
+        train_loss_meter.avg: float, average loss on current process/gpu
+        train_time: float, training time
     """
     model.train()
     train_loss_meter = AverageMeter()
@@ -111,8 +109,8 @@ def train(dataloader,
 
         if amp is True:
             with paddle.amp.auto_cast():
-                reconstructed_image, masked_image = model(image)
-                loss = criterion(reconstructed_image, masked_image)
+                output, target = model(image)
+                loss = criterion(output, target)
             scaled = scaler.scale(loss)
             scaled.backward()
 
@@ -136,9 +134,9 @@ def train(dataloader,
         batch_size = image.shape[0]
         train_loss_meter.update(loss.numpy()[0], batch_size)
 
-        if batch_id % debug_steps == 0:
+        if logger and batch_id % debug_steps == 0:
             logger.info(
-                f"Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+                f"Epoch[{epoch:03d}/{total_epochs:03d}], " +
                 f"Step[{batch_id:04d}/{total_batch:04d}], " +
                 f"Avg Loss: {train_loss_meter.avg:.4f}")
 
@@ -148,12 +146,25 @@ def train(dataloader,
 
 def main():
     # 0. Preparation
+    # config is updated by: (1) config.py, (2) yaml file, (3) arguments
+    arguments = get_arguments()
+    config = get_config()
+    config = update_config(config, arguments)
+    # set output folder
+    if not config.EVAL:
+        config.SAVE = '{}/train-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
+    else:
+        config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
+    if not os.path.exists(config.SAVE):
+        os.makedirs(config.SAVE, exist_ok=True)
     last_epoch = config.TRAIN.LAST_EPOCH
     seed = config.SEED
     paddle.seed(seed)
     np.random.seed(seed)
     random.seed(seed)
-    #paddle.set_device('gpu:0')
+    logger = get_logger(filename=os.path.join(config.SAVE, 'log.txt'))
+    logger.info(f'\n{config}')
+
     # 1. Create model
     model = build_model(config)
     # 2. Create train dataloader
@@ -183,7 +194,7 @@ def main():
                                                        gamma=config.TRAIN.LR_SCHEDULER.DECAY_RATE,
                                                        last_epoch=last_epoch)
     else:
-        logging.fatal(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
+        logger.fatal(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
     # 5. Define optimizer
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
@@ -211,12 +222,14 @@ def main():
             epsilon=config.TRAIN.OPTIMIZER.EPS,
             grad_clip=clip)
     else:
-        logging.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
+        logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
     # 6. Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
-        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams')
-        model_state = paddle.load(config.MODEL.PRETRAINED + '.pdparams')
+        if (config.MODEL.PRETRAINED).endswith('.pdparams'):
+            raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
+        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams') is True
+        model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
         model.set_dict(model_state)
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
@@ -240,11 +253,12 @@ def main():
                                                   criterion=criterion,
                                                   optimizer=optimizer,
                                                   epoch=epoch,
+                                                  total_epochs=config.TRAIN.NUM_EPOCHS,
                                                   total_batch=len(dataloader_train),
                                                   debug_steps=config.REPORT_FREQ,
                                                   accum_iter=config.TRAIN.ACCUM_ITER,
                                                   amp=config.AMP,
-                                                  )
+                                                  logger=logger)
         scheduler.step()
 
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
