@@ -156,7 +156,7 @@ PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接�
 3. 安装依赖项.
     *  通用的依赖项:
         ```
-        pip install yacs, pyyaml
+        pip install yacs pyyaml
         ```
     *  分割需要的依赖项:
         ```

@@ -156,7 +156,7 @@ We also provide tutorials:
 3. Install dependency packages
     * General dependencies:
         ```
-        pip install yacs, pyyaml
+        pip install yacs pyyaml
         ```
     * Packages for Segmentation:
         ```
