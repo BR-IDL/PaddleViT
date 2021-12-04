@@ -21,6 +21,8 @@ import os
 import math
 from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
+from rand_augment import rand_augment_policy_original
+from rand_augment import RandAugment
 
 class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
@@ -80,13 +82,17 @@ def get_train_transforms(config):
         transforms_train: training transforms
     """
 
-    transforms_train = transforms.Compose([
-        transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
-                                     scale=(0.05, 1.0)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    aug_op_list = []
+    aug_op_list.append(transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
+                                     scale=(0.05, 1.0)))
+    # use RandAug (9, 0.5) only during finetuning
+    if config.TRAIN.RAND_AUGMENT:
+        policy = rand_augment_policy_original(config.TRAIN.RAND_AUGMENT_MAGNITUDE)
+        rand_augment = RandAugment(policy, config.TRAIN.RAND_AUGMENT_LAYERS)
+        aug_op_list.append(rand_augment)
+    aug_op_list.append(transforms.ToTensor())
+    aug_op_list.append(transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]))
+    transforms_train = transforms.Compose(aug_op_list)
     return transforms_train
 
 
