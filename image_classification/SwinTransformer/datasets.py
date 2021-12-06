@@ -152,7 +152,7 @@ def get_dataset(config, mode='train'):
         dataset: dataset object
     """
 
-    assert mode in ['train', 'val']
+    assert mode in ['train', 'test']
     if config.DATA.DATASET == "cifar10":
         if mode == 'train':
             dataset = datasets.Cifar10(mode=mode, transform=get_train_transforms(config))
