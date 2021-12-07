@@ -217,6 +217,8 @@ def update_config(config, args):
     if args.amp: # only during training
         if config.EVAL is True:
             config.AMP = False
+        else:
+            config.AMP = True
     
     # output folder
     config.SAVE = os.path.join(config.SAVE, config.MODEL.NAME, config.TAG)
