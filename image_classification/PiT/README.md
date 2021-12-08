@@ -13,20 +13,25 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 ### Update 
-* Update (2021-11-13): Code is released and ported weights are uploaded.
+* Update (2021-12-08): Code is updated and ported weights are uploaded.
+* Update (2021-11-13): Code is released.
 
 ## Models Zoo
-| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
-|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| pit_ti | 72.91 | 91.40 |    |    | 224        | 0.9      | bicubic       |  |
-| pit_xs | 78.12 | 96.06 |    |    | 224        | 0.9      | bicubic       |  |
-| pit_s |       |       |    |   | 224        | 0.9      | bicubic       |  |
-| pit_b |  |       |    |   | 224      | 0.9    | bicubic       |  |
-| pit_ti_dist |  |       |    |       | 224        | 0.9      | bicubic       |  |
-| pit_xs_dist |  |       |    |   | 224      | 0.9    | bicubic       |  |
-| pit_s_dist |  |  |   |   | 224        | 0.9      | bicubic       |  |
-| pit_b_dist |  |  |   |  | 224     | 0.9    | bicubic       |  |
+| Model          | Acc@1 	| Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|----------------|----------|-------|---------|--------|------------|----------|---------------|--------------|
+| pit_ti 	     | 72.91	| 91.40	| 4.8M    | 0.5G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1bbeqzlR_CFB8CAyTUN52p2q6ii8rt0AW/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Yrq5Q16MolPYHQsT_9P1mw)(ydmi)  |
+| pit_ti_distill | 74.54	| 92.10 | 5.1M    | 0.5G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1m4L0OVI0sYh8vCv37WhqCumRSHJaizqX/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RIM9NGq6pwfNN7GJ5WZg2w)(7k4s)  |
+| pit_xs 	     | 78.18    | 94.16 | 10.5M   | 1.1G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1qoMQ-pmqLRQmvAwZurIbpvgMK8MOEgqJ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15d7ep05vI2UoKvL09Zf_wg)(gytu)  |
+| pit_xs_distill | 79.31 	| 94.36 | 10.9M   | 1.1G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1EfHOIiTJOR-nRWE5AsnJMsPCncPHEgl8/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1DqlgVF7U5qHfGD3QJAad4A)(ie7s)  |
+| pit_s  		 | 81.08 	| 95.33 | 23.4M   | 2.4G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1TDSybTrwQpcFf9PgCIhGX1t-f_oak66W/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Vk-W1INskQq7J5Qs4yphCg)(kt1n)  |
+| pit_s_distill  | 81.99 	| 95.79 | 24.0M   | 2.5G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1U3VPP6We1vIaX-M3sZuHmFhCQBI9g_dL/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1L7rdWmMW8tiGkduqmak9Fw)(hhyc)  |
+| pit_b   		 | 82.44 	| 95.71 | 73.5M	  | 10.6G  | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1-NBZ9-83nZ52jQ4DNZAIj8Xv6oh54nx-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1XRDPY4OxFlDfl8RMQ56rEg)(uh2v)  |
+| pit_b_distill  | 84.14 	| 96.86 | 74.5M   | 10.7G  | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/12Yi4eWDQxArhgQb96RXkNWjRoCsDyNo9/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1vJOUGXPtvC0abg-jnS4Krw)(3e6g)  |
 > *The results are evaluated on ImageNet2012 validation set.
+
+| Teacher Model | Link |
+| -- | -- |
+| RegNet_Y_160  | [google](https://drive.google.com/file/d/1_nEYFnQqlGGqboLq_VmdRvV9mLGSrbyG/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1NZNhiO4xDfqHiRiIbk9BCA)(gjsm)   |
 
 ## Notebooks
 We provide a few notebooks in aistudio to help you get started:

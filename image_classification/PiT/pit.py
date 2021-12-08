@@ -18,12 +18,11 @@ Implement Transformer Class for PiT
 
 import math
 from functools import partial
-
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-
 from droppath import DropPath
+
 
 trunc_normal_ = nn.initializer.TruncatedNormal(std=0.02)
 zeros_ = nn.initializer.Constant(value=0.0)
@@ -37,7 +36,6 @@ class Identity(nn.Layer):
     Use this layer to avoid if condition in some forward methods
 
     """
-
     def __init__(self):
         super().__init__()
 
@@ -59,14 +57,12 @@ class Mlp(nn.Layer):
         dropout2: dropout after fc2
     """
 
-    def __init__(
-        self,
-        in_features,
-        hidden_features=None,
-        out_features=None,
-        act_layer=nn.GELU,
-        drop=0.0,
-    ):
+    def __init__(self,
+                 in_features,
+                 hidden_features=None,
+                 out_features=None,
+                 act_layer=nn.GELU,
+                 drop=0.0):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -117,19 +113,17 @@ class Attention(nn.Layer):
         return x
 
 
-class transformer_block(nn.Layer):
-    def __init__(
-        self,
-        dim,
-        num_heads,
-        mlp_ratio=4.0,
-        qkv_bias=False,
-        drop=0.0,
-        attn_drop=0.0,
-        drop_path=0.0,
-        act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
-    ):
+class TransformerBlock(nn.Layer):
+    def __init__(self,
+                 dim,
+                 num_heads,
+                 mlp_ratio=4.0,
+                 qkv_bias=False,
+                 drop=0.0,
+                 attn_drop=0.0,
+                 drop_path=0.0,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = Attention(
@@ -156,17 +150,15 @@ class transformer_block(nn.Layer):
 
 
 class Transformer(nn.Layer):
-    def __init__(
-        self,
-        base_dim,
-        depth,
-        heads,
-        mlp_ratio,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_prob=None,
-    ):
-        super(Transformer, self).__init__()
+    def __init__(self,
+                 base_dim,
+                 depth,
+                 heads,
+                 mlp_ratio,
+                 drop_rate=0.0,
+                 attn_drop_rate=0.0,
+                 drop_path_prob=None):
+        super().__init__()
         self.layers = nn.LayerList([])
         embed_dim = base_dim * heads
 
@@ -175,7 +167,7 @@ class Transformer(nn.Layer):
 
         self.blocks = nn.LayerList(
             [
-                transformer_block(
+                TransformerBlock(
                     dim=embed_dim,
                     num_heads=heads,
                     mlp_ratio=mlp_ratio,
@@ -206,9 +198,9 @@ class Transformer(nn.Layer):
         return x, cls_tokens
 
 
-class conv_head_pooling(nn.Layer):
+class ConvHeadPooling(nn.Layer):
     def __init__(self, in_feature, out_feature, stride, padding_mode="zeros"):
-        super(conv_head_pooling, self).__init__()
+        super().__init__()
 
         self.conv = nn.Conv2D(
             in_feature,
@@ -222,16 +214,14 @@ class conv_head_pooling(nn.Layer):
         self.fc = nn.Linear(in_feature, out_feature)
 
     def forward(self, x, cls_token):
-
         x = self.conv(x)
         cls_token = self.fc(cls_token)
-
         return x, cls_token
 
 
-class conv_embedding(nn.Layer):
+class ConvEmbedding(nn.Layer):
     def __init__(self, in_channels, out_channels, patch_size, stride, padding):
-        super(conv_embedding, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2D(
             in_channels,
             out_channels,
@@ -247,23 +237,20 @@ class conv_embedding(nn.Layer):
 
 
 class PoolingTransformer(nn.Layer):
-    def __init__(
-        self,
-        image_size,
-        patch_size,
-        stride,
-        base_dims,
-        depth,
-        heads,
-        mlp_ratio=4,
-        num_classes=1000,
-        in_chans=3,
-        attn_drop_rate=0.0,
-        drop_rate=0.0,
-        drop_path_rate=0.0,
-    ):
-        super(PoolingTransformer, self).__init__()
-
+    def __init__(self,
+                 image_size,
+                 patch_size,
+                 stride,
+                 base_dims,
+                 depth,
+                 heads,
+                 mlp_ratio=4,
+                 num_classes=1000,
+                 in_chans=3,
+                 attn_drop_rate=0.0,
+                 drop_rate=0.0,
+                 drop_path_rate=0.0):
+        super().__init__()
         total_block = sum(depth)
         padding = 0
         block_idx = 0
@@ -282,7 +269,7 @@ class PoolingTransformer(nn.Layer):
             default_initializer=trunc_normal_,
         )
 
-        self.patch_embed = conv_embedding(
+        self.patch_embed = ConvEmbedding(
             in_chans, base_dims[0] * heads[0], patch_size, stride, padding
         )
 
@@ -317,7 +304,7 @@ class PoolingTransformer(nn.Layer):
             )
             if stage < len(heads) - 1:
                 self.pools.append(
-                    conv_head_pooling(
+                    ConvHeadPooling(
                         base_dims[stage] * heads[stage],
                         base_dims[stage + 1] * heads[stage + 1],
                         stride=2,
@@ -387,8 +374,7 @@ class DistilledPoolingTransformer(PoolingTransformer):
         x_dist = self.head_dist(cls_token[:, 1])
         if self.training:
             return x_cls, x_dist
-        else:
-            return (x_cls + x_dist) / 2
+        return (x_cls + x_dist) / 2
 
 
 def build_pit(config):

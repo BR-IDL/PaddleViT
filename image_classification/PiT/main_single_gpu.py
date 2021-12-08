@@ -1,5 +1,4 @@
-
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""pit training/validation using single GPU """
+"""PiT training/validation using single GPU """
 
 import sys
 import os
 import time
 import logging
+import copy
 import argparse
 import random
 import numpy as np
@@ -36,12 +36,14 @@ from mixup import Mixup
 from losses import LabelSmoothingCrossEntropyLoss
 from losses import SoftTargetCrossEntropyLoss
 from losses import DistillationLoss
+from model_ema import ModelEma
 from pit import build_pit as build_model
+from regnet import build_regnet as build_teacher_model
 
 
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('Swin')
+    parser = argparse.ArgumentParser('PiT')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=None)
@@ -51,6 +53,7 @@ def get_arguments():
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
+    parser.add_argument('-teacher_model', type=str, default=None)
     parser.add_argument('-eval', action='store_true')
     parser.add_argument('-amp', action='store_true')
     arguments = parser.parse_args()
@@ -85,6 +88,7 @@ def train(dataloader,
           total_batch,
           debug_steps=100,
           accum_iter=1,
+          model_ema=None,
           mixup_fn=None,
           amp=False,
           logger=None):
@@ -98,6 +102,7 @@ def train(dataloader,
         total_batch: int, total num of batches for one epoch
         debug_steps: int, num of iters to log info, default: 100
         accum_iter: int, num of iters for accumulating gradients, default: 1
+        model_ema: ModelEma, model moving average instance
         mixup_fn: Mixup, mixup instance, default: None
         amp: bool, if True, use mix precision training, default: False
         logger: logger for logging, default: None
@@ -113,6 +118,7 @@ def train(dataloader,
     if amp is True:
         scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
+
 
     for batch_id, data in enumerate(dataloader):
         image = data[0]
@@ -133,7 +139,7 @@ def train(dataloader,
                 optimizer.clear_grad()
         else: # full precision training
             output = model(image)
-            loss = criterion(output, label)
+            loss = criterion(image, output, label)
             #NOTE: division may be needed depending on the loss function
             # Here no division is needed:
             # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
@@ -144,7 +150,11 @@ def train(dataloader,
                 optimizer.step()
                 optimizer.clear_grad()
 
-        pred = F.softmax(output)
+        if model_ema is not None:
+            model_ema.update(model)
+
+        # average of output and kd_output, like model eval mode
+        pred = F.softmax((output[0] + output[1]) / 2)
         if mixup_fn:
             acc = paddle.metric.accuracy(pred, label_orig)
         else:
@@ -237,6 +247,10 @@ def main():
 
     # STEP 1: Create model
     model = build_model(config)
+    # define model ema
+    model_ema = None
+    if not config.EVAL and config.TRAIN.MODEL_EMA:
+        model_ema = ModelEma(model, decay=config.TRAIN.MODEL_EMA_DECAY)
 
     # STEP 2: Create train and val dataloader
     dataset_train = get_dataset(config, mode='train')
@@ -265,7 +279,28 @@ def main():
     # only use cross entropy for val
     criterion_val = nn.CrossEntropyLoss()
 
-    # STEP 5: Define optimizer and lr_scheduler
+    # STEP 5: Create Teacher model
+    teacher_model = None
+    if not config.EVAL:
+        if config.TRAIN.DISTILLATION_TYPE != 'none':
+            logger.info(f'Creating teacher model: {config.TRAIN.TEACHER_MODEL}')
+            teacher_model = build_teacher_model() 
+            assert os.path.isfile(config.TRAIN.TEACHER_MODEL + '.pdparams')
+            teacher_model_state = paddle.load(config.TRAIN.TEACHER_MODEL + '.pdparams')
+            teacher_model.set_dict(teacher_model_state)
+            teacher_model.eval()
+            logger.info(f"----- Load teacher model state from {config.TRAIN.TEACHER_MODEL}")
+            # wrap the criterion:
+            criterion = DistillationLoss(criterion,
+                                         teacher_model,
+                                         config.TRAIN.DISTILLATION_TYPE,
+                                         config.TRAIN.DISTILLATION_ALPHA,
+                                         config.TRAIN.DISTILLATION_TAU)
+        else:
+            logger.fatal('Distillation type cannot be None')
+            raise ValueError('Distillation type cannot be None')
+
+    # STEP 6: Define optimizer and lr_scheduler
     # set lr according to batch size and world size (hacked from official code)
     linear_scaled_lr = (config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / 512.0
     linear_scaled_warmup_start_lr = (config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / 512.0
@@ -279,7 +314,7 @@ def main():
     config.TRAIN.BASE_LR = linear_scaled_lr
     config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
     config.TRAIN.END_LR = linear_scaled_end_lr
-
+    
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
         scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
@@ -335,7 +370,7 @@ def main():
         logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
 
-    # STEP 6: Load pretrained model or load resume model and optimizer states
+    # STEP 7: Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
         if (config.MODEL.PRETRAINED).endswith('.pdparams'):
             raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
@@ -345,16 +380,21 @@ def main():
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
-        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
+        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
+        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
         optimizer.set_state_dict(opt_state)
         logger.info(
-            f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
-
-    # STEP 7: Validation (eval mode)
+            f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
+        # load ema model
+        if model_ema is not None and os.path.isfidile(config.MODEL.RESUME + '-EMA.pdparams'):
+            model_ema_state = paddle.load(config.MODEL.RESUME + '-EMA.pdparams')
+            model_ema.module.set_state_dict(model_ema_state)
+            logger.info(f'----- Load model ema from {config.MODEL.RESUME}-EMA.pdparams')
+    
+    # STEP 8: Validation (eval mode)
     if config.EVAL:
         logger.info('----- Start Validating')
         val_loss, val_acc1, val_acc5, val_time = validate(
@@ -370,7 +410,7 @@ def main():
                     f"time: {val_time:.2f}")
         return
 
-    # STEP 8: Start training and validation (train mode)
+    # STEP 9: Start training and validation (train mode)
     logger.info(f"Start training from epoch {last_epoch+1}.")
     for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
         # train
@@ -384,6 +424,7 @@ def main():
                                                   total_batch=len(dataloader_train),
                                                   debug_steps=config.REPORT_FREQ,
                                                   accum_iter=config.TRAIN.ACCUM_ITER,
+                                                  model_ema=model_ema,
                                                   mixup_fn=mixup_fn,
                                                   amp=config.AMP,
                                                   logger=logger)
@@ -415,6 +456,11 @@ def main():
             paddle.save(optimizer.state_dict(), model_path + '.pdopt')
             logger.info(f"----- Save model: {model_path}.pdparams")
             logger.info(f"----- Save optim: {model_path}.pdopt")
+            if model_ema is not None:
+                model_ema_path = os.path.join(
+                    config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}-EMA")
+                paddle.save(model_ema.state_dict(), model_ema_path + '.pdparams')
+                logger.info(f"----- Save ema model: {model_ema_path}.pdparams")
 
 
 if __name__ == "__main__":

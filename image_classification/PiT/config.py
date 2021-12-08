@@ -45,6 +45,9 @@ _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DISTILL = True
+_C.MODEL.DROPOUT = 0.0
+_C.MODEL.ATTENTION_DROPOUT = 0.0
+_C.MODEL.DROP_PATH = 0.1
 
 
 # transformer settings
@@ -66,6 +69,9 @@ _C.TRAIN.WARMUP_START_LR = 5e-7
 _C.TRAIN.END_LR = 5e-6
 _C.TRAIN.GRAD_CLIP = 5.0
 _C.TRAIN.ACCUM_ITER = 1
+_C.TRAIN.MODEL_EMA = True
+_C.TRAIN.MODEL_EMA_DECAY = 0.99996
+_C.TRAIN.LINEAR_SCALED_LR = None
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -95,6 +101,14 @@ _C.TRAIN.RANDOM_ERASE_PROB = 0.25
 _C.TRAIN.RANDOM_ERASE_MODE = 'pixel'
 _C.TRAIN.RANDOM_ERASE_COUNT = 1
 _C.TRAIN.RANDOM_ERASE_SPLIT = False
+
+_C.TRAIN.DISTILLATION_TYPE = 'hard' # hard, soft, none 
+_C.TRAIN.DISTILLATION_ALPHA = 0.5
+_C.TRAIN.DISTILLATION_TAU = 1.0
+_C.TRAIN.TEACHER_MODEL = './regnety_160' # no ext is needed
+
+_C.TRAIN.MODEL_EMA = True
+_C.TRAIN.MODEL_EMA_DECAY = 0.99996 
 
 # augmentation
 _C.AUG = CN()
@@ -168,7 +182,10 @@ def update_config(config, args):
     if args.amp: # only during training
         if config.EVAL is True:
             config.AMP = False
-
+        else:
+            config.AMP = True
+    if args.teacher_model:
+        config.TRAIN.TEACHER_MODEL = args.teacher_model
     #config.freeze()
     return config
 
