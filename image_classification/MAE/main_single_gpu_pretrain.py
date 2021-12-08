@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using single GPU """
+"""MAE pre-training using single GPU, this is just a demo, we recommand using multi-gpu version"""
 
 import sys
 import os
@@ -35,7 +35,7 @@ from config import update_config
 
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('ViT')
+    parser = argparse.ArgumentParser('MAE')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=None)
@@ -99,18 +99,18 @@ def train(dataloader,
     """
     model.train()
     train_loss_meter = AverageMeter()
+
     if amp is True:
         scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
-
 
     for batch_id, data in enumerate(dataloader):
         image = data[0]
 
         if amp is True:
             with paddle.amp.auto_cast():
-                output, target = model(image)
-                loss = criterion(output, target)
+                reconstructed_image, masked_image = model(image)
+                loss = criterion(reconstructed_image, masked_image)
             scaled = scaler.scale(loss)
             scaled.backward()
 
@@ -119,8 +119,8 @@ def train(dataloader,
                 optimizer.clear_grad()
 
         else:
-            output, target = model(image)
-            loss = criterion(output, target)
+            reconstructed_image, masked_image = model(image)
+            loss = criterion(reconstructed_image, masked_image)
             # NOTE: division may be needed depending on the loss function
             # Here no division is needed:
             # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'

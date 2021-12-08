@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using single GPU """
+"""ViT finetuning/validation using single GPU """
 
 import sys
 import os

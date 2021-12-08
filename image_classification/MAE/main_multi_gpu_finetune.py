@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using single GPU """
+"""MAE finetuning/validation using multiple GPU """
 
 import sys
 import os
@@ -27,14 +27,13 @@ import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader
 from datasets import get_dataset
-from transformer import build_mae_finetune as build_model
+from transformer import build_mae_pretrain as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
+from utils import get_exclude_from_weight_decay_fn
 from config import get_config
 from config import update_config
 from mixup import Mixup
-from losses import LabelSmoothingCrossEntropyLoss
-from losses import SoftTargetCrossEntropyLoss
 
 
 def get_arguments():
@@ -125,19 +124,17 @@ def train(dataloader,
 
         if mixup_fn is not None:
             image, label = mixup_fn(image, label_orig)
-
+        
         if amp is True: # mixed precision training
             with paddle.amp.auto_cast():
                 output = model(image)
                 loss = criterion(output, label)
             scaled = scaler.scale(loss)
             scaled.backward()
-
-            if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 scaler.minimize(optimizer, scaled)
                 optimizer.clear_grad()
-
-        else:
+        else: # full precision training
             output = model(image)
             loss = criterion(output, label)
             # NOTE: division may be needed depending on the loss function
@@ -146,7 +143,7 @@ def train(dataloader,
             # loss =  loss / accum_iter
             loss.backward()
 
-            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+            if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 optimizer.step()
                 optimizer.clear_grad()
 
@@ -207,7 +204,7 @@ def validate(dataloader,
         dataloader: paddle.io.DataLoader, dataloader instance
         model: nn.Layer, a ViT model
         criterion: nn.criterion
-        total_batch: int, total num of batches for one epoch
+        total_epoch: int, total num of epoch, for logging
         debug_steps: int, num of iters to log info, default: 100
         local_logger: logger for local process/gpu, default: None
         master_logger: logger for main process, default: None
@@ -288,7 +285,7 @@ def validate(dataloader,
 
 
 def main_worker(*args):
-    # 0. Preparation
+    # STEP 0: Preparation
     config = args[0]
     dist.init_parallel_env()
     last_epoch = config.TRAIN.LAST_EPOCH
@@ -313,14 +310,15 @@ def main_worker(*args):
     local_logger.info(f'----- world_size = {world_size}, local_rank = {local_rank}')
     if local_rank == 0:
         master_logger.info(f'----- world_size = {world_size}, local_rank = {local_rank}')
-
-    # 1. Create model
+    
+    # STEP 1: Create model
     model = build_model(config)
     model = paddle.DataParallel(model)
-    # 2. Create train and val dataloader
+
+    # STEP 2: Create train and val dataloader
     dataset_train, dataset_val = args[1], args[2]
     dataloader_train = get_dataloader(config, dataset_train, 'train', True)
-    dataloader_val = get_dataloader(config, dataset_val, 'val', True)
+    dataloader_val = get_dataloader(config, dataset_val, 'test', True)
     total_batch_train = len(dataloader_train)
     total_batch_val = len(dataloader_val)
     local_logger.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
@@ -329,7 +327,7 @@ def main_worker(*args):
         master_logger.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
         master_logger.info(f'----- Total # of val batch (single gpu): {total_batch_val}')
 
-    # 3. Define Mixup function and criterion
+    # STEP 3: Define Mixup function
     mixup_fn = None
     if config.TRAIN.MIXUP_PROB > 0 or config.TRAIN.CUTMIX_ALPHA > 0 or config.TRAIN.CUTMIX_MINMAX is not None:
         mixup_fn = Mixup(mixup_alpha=config.TRAIN.MIXUP_ALPHA,
@@ -338,9 +336,9 @@ def main_worker(*args):
                          prob=config.TRAIN.MIXUP_PROB,
                          switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
                          mode=config.TRAIN.MIXUP_MODE,
-                         label_smoothing=config.TRAIN.SMOOTHING,
-                         num_classes=config.MODEL.NUM_CLASSES)
+                         label_smoothing=config.TRAIN.SMOOTHING)
 
+    # STEP 4: Define criterion
     if config.TRAIN.MIXUP_PROB > 0.:
         criterion = SoftTargetCrossEntropyLoss()
     elif config.TRAIN.SMOOTHING:
@@ -349,7 +347,26 @@ def main_worker(*args):
         criterion = nn.CrossEntropyLoss()
     # only use cross entropy for val
     criterion_val = nn.CrossEntropyLoss()
-    # 4. Define lr_scheduler
+
+    # STEP 5: Define optimizer and lr_scheduler
+    # set lr according to batch size and world size (hacked from Swin official code and modified for CSwin)
+    if config.TRAIN.LINEAR_SCALED_LR is not None:
+        linear_scaled_lr = (
+            config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_warmup_start_lr = (
+            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_end_lr = (
+            config.TRAIN.END_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+    
+        if config.TRAIN.ACCUM_ITER > 1:
+            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+        
+        config.TRAIN.BASE_LR = linear_scaled_lr
+        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+        config.TRAIN.END_LR = linear_scaled_end_lr
+
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
         scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
@@ -365,7 +382,8 @@ def main_worker(*args):
                                                              T_max=config.TRAIN.NUM_EPOCHS,
                                                              last_epoch=last_epoch)
     elif config.scheduler == "multi-step":
-        milestones = [int(v.strip()) for v in config.TRAIN.LR_SCHEDULER.MILESTONES.split(",")]
+        milestones = [int(v.strip())
+                      for v in config.TRAIN.LR_SCHEDULER.MILESTONES.split(",")]
         scheduler = paddle.optimizer.lr.MultiStepDecay(learning_rate=config.TRAIN.BASE_LR,
                                                        milestones=milestones,
                                                        gamma=config.TRAIN.LR_SCHEDULER.DECAY_RATE,
@@ -375,7 +393,7 @@ def main_worker(*args):
         if local_rank == 0:
             master_logger.fatal(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
-    # 5. Define optimizer
+
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
@@ -395,20 +413,24 @@ def main_worker(*args):
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
             learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-            weight_decay=config.TRAIN.WEIGHT_DECAY,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
             epsilon=config.TRAIN.OPTIMIZER.EPS,
-            grad_clip=clip)
+            grad_clip=clip,
+            #apply_decay_param_fun=get_exclude_from_weight_decay_fn(['pos_embed', 'cls_token']),
+        )
     else:
         local_logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         if local_rank == 0:
             master_logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
-    # 6. Load pretrained model or load resume model and optimizer states
+
+    # STEP 6: Load pretrained model / load resumt model and optimizer states
     if config.MODEL.PRETRAINED:
         if (config.MODEL.PRETRAINED).endswith('.pdparams'):
-            raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
+            raise ValueError(
+                f'{config.MODEL.PRETRAINED} should not contain .pdparams')
         assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams') is True
         model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
         model.set_dict(model_state)
@@ -422,14 +444,14 @@ def main_worker(*args):
         assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
         model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
-        opt_state = paddle.load(config.MODEL.RESUME + '.pdopt')
+        opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
         optimizer.set_state_dict(opt_state)
         local_logger.info(
             f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
         if local_rank == 0:
             master_logger.info(
                 f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
-
+    
     # STEP 7: Validation (eval mode)
     if config.EVAL:
         local_logger.info('----- Start Validating')
@@ -521,8 +543,11 @@ def main_worker(*args):
                     config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
                 paddle.save(model.state_dict(), model_path + '.pdparams')
                 paddle.save(optimizer.state_dict(), model_path + '.pdopt')
-                master_logger.info(f"----- Save model: {model_path}.pdparams")
-                master_logger.info(f"----- Save optim: {model_path}.pdopt")
+                local_logger.info(f"----- Save model: {model_path}.pdparams")
+                local_logger.info(f"----- Save optim: {model_path}.pdopt")
+                if local_rank == 0:
+                    master_logger.info(f"----- Save model: {model_path}.pdparams")
+                    master_logger.info(f"----- Save optim: {model_path}.pdopt")
 
 
 def main():

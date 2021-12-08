@@ -1,4 +1,4 @@
-#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT training/validation using multiple GPU """
+"""MEA pre-training using multiple GPU """
 
 import sys
 import os
@@ -30,13 +30,14 @@ from datasets import get_dataset
 from transformer import build_mae_pretrain as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
+from utils import get_exclude_from_weight_decay_fn
 from config import get_config
 from config import update_config
 
 
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('ViT')
+    parser = argparse.ArgumentParser('MAE')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=None)
@@ -93,12 +94,15 @@ def train(dataloader,
         total_batch: int, total num of batches for one epoch
         debug_steps: int, num of iters to log info, default: 100
         accum_iter: int, num of iters for accumulating gradients, default: 1
+        mixup_fn: Mixup, mixup instance, default: None
         amp: bool, if True, use mix precision training, default: False
         local_logger: logger for local process/gpu, default: None
         master_logger: logger for main process, default: None
     Returns:
         train_loss_meter.avg: float, average loss on current process/gpu
+        train_acc_meter.avg: float, average top1 accuracy on current process/gpu
         master_train_loss_meter.avg: float, average loss on all processes/gpus
+        master_train_acc_meter.avg: float, average top1 accuracy on all processes/gpus
         train_time: float, training time
     """
     model.train()
@@ -114,8 +118,8 @@ def train(dataloader,
 
         if amp is True:
             with paddle.amp.auto_cast():
-                output, target = model(image)
-                loss = criterion(output, target)
+                reconstructed_image, masked_image = model(image)
+                loss = criterion(reconstructed_image, masked_image)
             scaled = scaler.scale(loss)
             scaled.backward()
 
@@ -124,8 +128,8 @@ def train(dataloader,
                 optimizer.clear_grad()
 
         else:
-            output, target = model(image)
-            loss = criterion(output, target)
+            reconstructed_image, masked_image = model(image)
+            loss = criterion(reconstructed_image, masked_image)
             # NOTE: division may be needed depending on the loss function
             # Here no division is needed:
             # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
@@ -166,100 +170,8 @@ def train(dataloader,
             train_time)
 
 
-def validate(dataloader,
-             model,
-             criterion,
-             total_batch,
-             debug_steps=100,
-             local_logger=None,
-             master_logger=None):
-    """Validation for whole dataset
-    Args:
-        dataloader: paddle.io.DataLoader, dataloader instance
-        model: nn.Layer, a ViT model
-        criterion: nn.criterion
-        total_epoch: int, total num of epoch, for logging
-        debug_steps: int, num of iters to log info, default: 100
-        local_logger: logger for local process/gpu, default: None
-        master_logger: logger for main process, default: None
-    Returns:
-        val_loss_meter.avg: float, average loss on current process/gpu
-        val_acc1_meter.avg: float, average top1 accuracy on current process/gpu
-        val_acc5_meter.avg: float, average top5 accuracy on current process/gpu
-        master_val_loss_meter.avg: float, average loss on all processes/gpus
-        master_val_acc1_meter.avg: float, average top1 accuracy on all processes/gpus
-        master_val_acc5_meter.avg: float, average top5 accuracy on all processes/gpus
-        val_time: float, validation time
-    """
-    model.eval()
-    val_loss_meter = AverageMeter()
-    val_acc1_meter = AverageMeter()
-    val_acc5_meter = AverageMeter()
-    master_val_loss_meter = AverageMeter()
-    master_val_acc1_meter = AverageMeter()
-    master_val_acc5_meter = AverageMeter()
-    time_st = time.time()
-
-    with paddle.no_grad():
-        for batch_id, data in enumerate(dataloader):
-            image = data[0]
-            label = data[1]
-
-            output = model(image)
-            loss = criterion(output, label)
-
-            pred = F.softmax(output)
-            acc1 = paddle.metric.accuracy(pred, label.unsqueeze(1))
-            acc5 = paddle.metric.accuracy(pred, label.unsqueeze(1), k=5)
-
-            batch_size = paddle.to_tensor(image.shape[0])
-
-            master_loss = loss.clone()
-            master_acc1 = acc1.clone()
-            master_acc5 = acc5.clone()
-            master_batch_size = batch_size.clone()
-
-            dist.all_reduce(master_loss)
-            dist.all_reduce(master_acc1)
-            dist.all_reduce(master_acc5)
-            dist.all_reduce(master_batch_size)
-            master_loss = master_loss / dist.get_world_size()
-            master_acc1 = master_acc1 / dist.get_world_size()
-            master_acc5 = master_acc5 / dist.get_world_size()
-
-            master_val_loss_meter.update(master_loss.numpy()[0], master_batch_size.numpy()[0])
-            master_val_acc1_meter.update(master_acc1.numpy()[0], master_batch_size.numpy()[0])
-            master_val_acc5_meter.update(master_acc5.numpy()[0], master_batch_size.numpy()[0])
-
-            val_loss_meter.update(loss.numpy()[0], batch_size.numpy()[0])
-            val_acc1_meter.update(acc1.numpy()[0], batch_size.numpy()[0])
-            val_acc5_meter.update(acc5.numpy()[0], batch_size.numpy()[0])
-
-            if batch_id % debug_steps == 0:
-                if local_logger:
-                    local_logger.info(
-                        f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
-                        f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                        f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
-                        f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
-                if master_logger and dist.get_rank() == 0:
-                    master_logger.info(
-                        f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
-                        f"Avg Loss: {master_val_loss_meter.avg:.4f}, " +
-                        f"Avg Acc@1: {master_val_acc1_meter.avg:.4f}, " +
-                        f"Avg Acc@5: {master_val_acc5_meter.avg:.4f}")
-    val_time = time.time() - time_st
-    return (val_loss_meter.avg,
-            val_acc1_meter.avg,
-            val_acc5_meter.avg,
-            master_val_loss_meter.avg,
-            master_val_acc1_meter.avg,
-            master_val_acc5_meter.avg,
-            val_time)
-
-
 def main_worker(*args):
-    # 0. Preparation
+    # STEP 0: Preparation
     config = args[0]
     dist.init_parallel_env()
     last_epoch = config.TRAIN.LAST_EPOCH
@@ -284,11 +196,12 @@ def main_worker(*args):
     local_logger.info(f'----- world_size = {world_size}, local_rank = {local_rank}')
     if local_rank == 0:
         master_logger.info(f'----- world_size = {world_size}, local_rank = {local_rank}')
-
-    # 1. Create model
+    
+    # STEP 1: Create model
     model = build_model(config)
     model = paddle.DataParallel(model)
-    # 2. Create train dataloader
+
+    # STEP 2: Create train and val dataloader
     dataset_train = args[1]
     dataloader_train = get_dataloader(config, dataset_train, 'train', True)
     total_batch_train = len(dataloader_train)
@@ -296,9 +209,27 @@ def main_worker(*args):
     if local_rank == 0:
         master_logger.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
 
-    # 3. Define criterion
+    # STEP 3: Define criterion
     criterion = nn.MSELoss()
-    # 4. Define lr_scheduler
+
+    # STEP 4: Define optimizer and lr_scheduler
+    # set lr according to batch size and world size (hacked from Swin official code and modified for CSwin)
+    if config.TRAIN.LINEAR_SCALED_LR is not None:
+        linear_scaled_lr = (
+            config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_warmup_start_lr = (
+            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_end_lr = (
+            config.TRAIN.END_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+    
+        if config.TRAIN.ACCUM_ITER > 1:
+            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+        
+        config.TRAIN.BASE_LR = linear_scaled_lr
+        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+        config.TRAIN.END_LR = linear_scaled_end_lr
 
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
@@ -315,7 +246,8 @@ def main_worker(*args):
                                                              T_max=config.TRAIN.NUM_EPOCHS,
                                                              last_epoch=last_epoch)
     elif config.scheduler == "multi-step":
-        milestones = [int(v.strip()) for v in config.TRAIN.LR_SCHEDULER.MILESTONES.split(",")]
+        milestones = [int(v.strip())
+                      for v in config.TRAIN.LR_SCHEDULER.MILESTONES.split(",")]
         scheduler = paddle.optimizer.lr.MultiStepDecay(learning_rate=config.TRAIN.BASE_LR,
                                                        milestones=milestones,
                                                        gamma=config.TRAIN.LR_SCHEDULER.DECAY_RATE,
@@ -326,7 +258,6 @@ def main_worker(*args):
             master_logger.fatal(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
 
-    # 5. Define optimizer
     if config.TRAIN.OPTIMIZER.NAME == "SGD":
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
@@ -359,10 +290,11 @@ def main_worker(*args):
             master_logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
 
-    # 6: Load pretrained model / load resumt model and optimizer states
+    # STEP 5: Load pretrained model / load resumt model and optimizer states
     if config.MODEL.PRETRAINED:
         if (config.MODEL.PRETRAINED).endswith('.pdparams'):
-            raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
+            raise ValueError(
+                f'{config.MODEL.PRETRAINED} should not contain .pdparams')
         assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams') is True
         model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
         model.set_dict(model_state)
@@ -383,54 +315,53 @@ def main_worker(*args):
         if local_rank == 0:
             master_logger.info(
                 f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
-    # 7. Start training and validation
-    local_logger.info(f"Start training from epoch {last_epoch + 1}.")
+    
+    # STEP 6: Start training (train mode)
+    local_logger.info(f"Start training from epoch {last_epoch+1}.")
     if local_rank == 0:
-        master_logger.info(f"Start training from epoch {last_epoch + 1}.")
-    for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
-        # # train
-        # local_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        # if local_rank == 0:
-        #     master_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        # train_loss, avg_loss, train_time = train(
-        #     dataloader=dataloader_train,
-        #     model=model,
-        #     criterion=criterion,
-        #     optimizer=optimizer,
-        #     epoch=epoch,
-        #     total_epochs=config.TRAIN.NUM_EPOCHS,
-        #     total_batch=total_batch_train,
-        #     debug_steps=config.REPORT_FREQ,
-        #     accum_iter=config.TRAIN.ACCUM_ITER,
-        #     amp=config.AMP,
-        #     local_logger=local_logger,
-        #     master_logger=master_logger)
-        #
-        # scheduler.step()
-        #
-        # local_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-        #                   f"Train Loss: {train_loss:.4f}, " +
-        #                   f"time: {train_time:.2f}")
-        # if local_rank == 0:
-        #     master_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-        #                        f"Train Loss: {avg_loss:.4f}, " +
-        #                        f"time: {train_time:.2f}")
+        master_logger.info(f"Start training from epoch {last_epoch+1}.")
+    for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
+        # train
+        local_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
+        if local_rank == 0:
+            master_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
 
-        # validation
-        # No need to do validation during pretraining
+        train_loss,avg_loss, train_time = train(
+            dataloader=dataloader_train,
+            model=model,
+            criterion=criterion,
+            optimizer=optimizer,
+            epoch=epoch,
+            total_epochs=config.TRAIN.NUM_EPOCHS,
+            total_batch=total_batch_train,
+            debug_steps=config.REPORT_FREQ,
+            accum_iter=config.TRAIN.ACCUM_ITER,
+            amp=config.AMP,
+            local_logger=local_logger,
+            master_logger=master_logger)
+
+        scheduler.step()
+
+        local_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+                          f"Train Loss: {train_loss:.4f}, " +
+                          f"time: {train_time:.2f}")
+        if local_rank == 0:
+            master_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+                               f"Train Loss: {avg_loss:.4f}, " +
+                               f"time: {train_time:.2f}")
 
         # model save
         if local_rank == 0:
-            print("!!!!!!!!!!!!")
             if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
                 model_path = os.path.join(
-                        config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-0")
+                    config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
                 paddle.save(model.state_dict(), model_path + '.pdparams')
                 paddle.save(optimizer.state_dict(), model_path + '.pdopt')
-                master_logger.info(f"----- Save model: {model_path}.pdparams")
-                master_logger.info(f"----- Save optim: {model_path}.pdopt")
-        if epoch == 11:
-            break
+                local_logger.info(f"----- Save model: {model_path}.pdparams")
+                local_logger.info(f"----- Save optim: {model_path}.pdopt")
+                if local_rank == 0:
+                    master_logger.info(f"----- Save model: {model_path}.pdparams")
+                    master_logger.info(f"----- Save optim: {model_path}.pdopt")
 
 
 def main():
@@ -450,8 +381,7 @@ def main():
 
     # get dataset and start DDP
     dataset_train = get_dataset(config, mode='train')
-    config.NGPUS = len(paddle.static.cuda_places()
-                       ) if config.NGPUS == -1 else config.NGPUS
+    config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS
     dist.spawn(main_worker, args=(config, dataset_train, ), nprocs=config.NGPUS)
 
 
