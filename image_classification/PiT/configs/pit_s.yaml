@@ -1,0 +1,13 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.90
+MODEL:
+    TYPE: PiT
+    NAME: pit_s
+    DISTILL: False
+    TRANS:
+        PATCH_SIZE: 16
+        STRIDE: 8
+        BASE_DIMS: [48, 48, 48]
+        DEPTH: [2, 6, 4]
+        HEADS: [3, 6, 12]
