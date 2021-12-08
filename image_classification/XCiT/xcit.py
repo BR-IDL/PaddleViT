@@ -18,12 +18,11 @@ Implement Transformer Class for XCiT
 
 import math
 from functools import partial
-
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-
 from drop import DropPath
+
 
 trunc_normal_ = nn.initializer.TruncatedNormal(std=0.02)
 zeros_ = nn.initializer.Constant(value=0.0)
@@ -35,15 +34,12 @@ class Mlp(nn.Layer):
     MLP using nn.Linear and activation is GELU, dropout is applied.
     Ops: fc1 -> act -> dropout -> fc2 -> dropout
     """
-
-    def __init__(
-        self,
-        in_features,
-        hidden_features=None,
-        out_features=None,
-        act_layer=nn.GELU,
-        drop=0.0,
-    ):
+    def __init__(self,
+                 in_features,
+                 hidden_features=None,
+                 out_features=None,
+                 act_layer=nn.GELU,
+                 drop=0.0):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -66,20 +62,18 @@ class Identity(nn.Layer):
     The output of this layer is the input without any change.
     Use this layer to avoid if condition in some forward methods
     """
-
     def __init__(self):
         super().__init__()
 
-    def forward(self, input):
-        return input
+    def forward(self, inputs):
+        return inputs
 
 
 class PositionalEncodingFourier(nn.Layer):
     """
     Positional encoding relying on a fourier kernel matching the one used in the
-    "Attention is all of Need" paper. 
+    "Attention is all of Need" paper.
     """
-
     def __init__(self, hidden_dim=32, dim=768, temperature=10000):
         super().__init__()
         self.token_projection = nn.Conv2D(hidden_dim * 2, dim, kernel_size=1)
@@ -100,15 +94,12 @@ class PositionalEncodingFourier(nn.Layer):
         dim_t = paddle.arange(self.hidden_dim, dtype="int64")
         dim_t = self.temperature ** (2 * (dim_t // 2) / self.hidden_dim)
 
-        # print(x_embed.unsqueeze(2).shape)
         pos_x = x_embed.unsqueeze(3) / dim_t
         pos_y = y_embed.unsqueeze(3) / dim_t
         pos_x = paddle.stack(
-            (pos_x[:, :, :, 0::2].sin(), pos_x[:, :, :, 1::2].cos()), axis=4
-        ).flatten(3)
+            (pos_x[:, :, :, 0::2].sin(), pos_x[:, :, :, 1::2].cos()), axis=4).flatten(3)
         pos_y = paddle.stack(
-            (pos_y[:, :, :, 0::2].sin(), pos_y[:, :, :, 1::2].cos()), axis=4
-        ).flatten(3)
+            (pos_y[:, :, :, 0::2].sin(), pos_y[:, :, :, 1::2].cos()), axis=4).flatten(3)
         pos = paddle.concat((pos_y, pos_x), axis=3).transpose([0, 3, 1, 2])
         pos = self.token_projection(pos)
         return pos
@@ -117,22 +108,18 @@ class PositionalEncodingFourier(nn.Layer):
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
     return paddle.nn.Sequential(
-        nn.Conv2D(
-            in_planes,
-            out_planes,
-            kernel_size=3,
-            stride=stride,
-            padding=1,
-            bias_attr=False,
-        ),
-        nn.BatchNorm2D(out_planes),
-    )
+        nn.Conv2D(in_planes,
+                  out_planes,
+                  kernel_size=3,
+                  stride=stride,
+                  padding=1,
+                  bias_attr=False),
+        nn.BatchNorm2D(out_planes))
 
 
 class ConvPatchEmbed(nn.Layer):
     """ Image to Patch Embedding using multiple convolutional layers
     """
-
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
         super().__init__()
         img_size = (img_size, img_size)
@@ -161,7 +148,7 @@ class ConvPatchEmbed(nn.Layer):
                 conv3x3(embed_dim // 2, embed_dim, 2),
             )
         else:
-            raise ("For convolutional projection, patch size has to be in [8, 16]")
+            raise ValueError("For convolutional projection, patch size has to be in [8, 16]")
 
     def forward(self, x, padding_size=None):
         B, C, H, W = x.shape
@@ -178,16 +165,13 @@ class LPI(nn.Layer):
     to augment the implicit communcation performed by the block diagonal scatter attention.
     Implemented using 2 layers of separable 3x3 convolutions with GeLU and BatchNorm2d
     """
-
-    def __init__(
-        self,
-        in_features,
-        hidden_features=None,
-        out_features=None,
-        act_layer=nn.GELU,
-        drop=0.0,
-        kernel_size=3,
-    ):
+    def __init__(self,
+                 in_features,
+                 hidden_features=None,
+                 out_features=None,
+                 act_layer=nn.GELU,
+                 drop=0.0,
+                 kernel_size=3):
         super().__init__()
         out_features = out_features or in_features
 
@@ -225,16 +209,13 @@ class LPI(nn.Layer):
 class ClassAttention(nn.Layer):
     """Class Attention Layer as in CaiT https://arxiv.org/abs/2103.17239
     """
-
-    def __init__(
-        self,
-        dim,
-        num_heads=8,
-        qkv_bias=False,
-        qk_scale=None,
-        attn_drop=0.0,
-        proj_drop=0.0,
-    ):
+    def __init__(self,
+                 dim,
+                 num_heads=8,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 attn_drop=0.0,
+                 proj_drop=0.0):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
@@ -266,22 +247,19 @@ class ClassAttention(nn.Layer):
 class ClassAttentionBlock(nn.Layer):
     """Class Attention Layer as in CaiT https://arxiv.org/abs/2103.17239
     """
-
-    def __init__(
-        self,
-        dim,
-        num_heads,
-        mlp_ratio=4.0,
-        qkv_bias=False,
-        qk_scale=None,
-        drop=0.0,
-        attn_drop=0.0,
-        drop_path=0.0,
-        act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
-        eta=None,
-        tokens_norm=False,
-    ):
+    def __init__(self,
+                 dim,
+                 num_heads,
+                 mlp_ratio=4.0,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop=0.0,
+                 attn_drop=0.0,
+                 drop_path=0.0,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 eta=None,
+                 tokens_norm=False):
         super().__init__()
         self.norm1 = norm_layer(dim)
 
@@ -342,16 +320,13 @@ class XCA(nn.Layer):
      sum. The weights are obtained from the (softmax normalized) Cross-covariance
     matrix (Q^T K \\in d_h \\times d_h)
     """
-
-    def __init__(
-        self,
-        dim,
-        num_heads=8,
-        qkv_bias=False,
-        qk_scale=None,
-        attn_drop=0.0,
-        proj_drop=0.0,
-    ):
+    def __init__(self,
+                 dim,
+                 num_heads=8,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 attn_drop=0.0,
+                 proj_drop=0.0):
         super().__init__()
         self.num_heads = num_heads
         # self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
@@ -389,21 +364,19 @@ class XCA(nn.Layer):
 
 
 class XCABlock(nn.Layer):
-    def __init__(
-        self,
-        dim,
-        num_heads,
-        mlp_ratio=4.0,
-        qkv_bias=False,
-        qk_scale=None,
-        drop=0.0,
-        attn_drop=0.0,
-        drop_path=0.0,
-        act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
-        num_tokens=196,
-        eta=None,
-    ):
+    def __init__(self,
+                 dim,
+                 num_heads,
+                 mlp_ratio=4.0,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop=0.0,
+                 attn_drop=0.0,
+                 drop_path=0.0,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 num_tokens=196,
+                 eta=None):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = XCA(
@@ -461,29 +434,26 @@ class XCiT(nn.Layer):
     https://github.com/rwightman/pytorch-image-models/tree/master/timm
     https://github.com/facebookresearch/deit/
     """
-
-    def __init__(
-        self,
-        img_size=224,
-        patch_size=16,
-        in_chans=3,
-        num_classes=1000,
-        embed_dim=768,
-        depth=12,
-        num_heads=12,
-        mlp_ratio=4.0,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.0,
-        norm_layer=partial(nn.LayerNorm, epsilon=1e-6),
-        cls_attn_layers=2,
-        use_pos=True,
-        patch_proj="linear",
-        eta=None,
-        tokens_norm=False,
-    ):
+    def __init__(self,
+                 img_size=224,
+                 patch_size=16,
+                 in_chans=3,
+                 num_classes=1000,
+                 embed_dim=768,
+                 depth=12,
+                 num_heads=12,
+                 mlp_ratio=4.0,
+                 qkv_bias=True,
+                 qk_scale=None,
+                 drop_rate=0.0,
+                 attn_drop_rate=0.0,
+                 drop_path_rate=0.0,
+                 norm_layer=partial(nn.LayerNorm, epsilon=1e-6),
+                 cls_attn_layers=2,
+                 use_pos=True,
+                 patch_proj="linear",
+                 eta=None,
+                 tokens_norm=False):
         """
         Args:
             img_size (int, tuple): input image size

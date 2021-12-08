@@ -15,21 +15,21 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 ### Update 
 
+* Update (2021-12-8): Code is updated and ported weights are uploaded.
 * Update (2021-11-7): Code is released
 
 ## Models Zoo
 
 | Model                       | Acc@1  | Acc@5  | #Params | FLOPs | Image Size | Crop_pct | Interpolation | Link |
 | --------------------------- | ------ | ------ | ------- | ----- | ---------- | -------- | ------------- | ---- |
-| xcit_nano_12_p16_224_dist   | 0.7232 | 0.9086 |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_nano_12_p16_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_large_24_p16_224_dist  |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_large_24_p16_384_dist  |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_nano_12_p8_224_dist    |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_nano_12_p8_384_dist    |        |        |         |       | 384        | 1.0      | bicubic       |      |
-| xcit_large_24_p8_224_dist   |        |        |         |       | 224        | 1.0      | bicubic       |      |
-| xcit_large_24_p8_384_dist   |        |        |         |       | 384        | 1.0      | bicubic       |      |
-
+| xcit_nano_12_p16_224_dist   | 72.32  | 90.86  | 0.6G    | 3.1M      | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/14FsYtm48JB-rQFF9CanJsJaPESniWD7q/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15kdY4vzwU2QiBSU5127AYA)(7qvz)     |
+| xcit_nano_12_p16_384_dist   | 75.46  | 92.70  | 1.6G    | 3.1M      | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1zR-hFQryocF9muG-erzcxFuJme5y_e9f/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1449qtQzEMg6lqdtClyiCRQ)(1y2j)     |
+| xcit_large_24_p16_224_dist  | 84.92  | 97.13  | 35.9G   | 189.1M    | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1lAtko_KwOagjwaFvUkeXirVClXCV8gt-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Gs401mXqG1bifi1hBdXtig)(kfv8)     |
+| xcit_large_24_p16_384_dist  | 85.76  | 97.54  | 105.5G  | 189.1M    | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/15djnKz_-eooncvyZp_UTwOiHIm1Hxo_G/view?usp=sharing)/[baidu](https://pan.baidu.com/s/14583hbtIVbZ_2ifZepQItQ)(ffq3)     |
+| xcit_nano_12_p8_224_dist    | 76.33  | 93.10  | 2.2G    | 3.0M      | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1XxRNjskLvSVp6lvhlsnylq6g7vd_5MsI/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1DZJxuahFJyz-rEEsCqhhrA)(jjs7)     |
+| xcit_nano_12_p8_384_dist    | 77.82  | 94.04  | 6.3G    | 3.0M      | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1P3ln8JqLzMKbJAhCanRbu7i5NMPVFNec/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ECY9-PVDMNSup8NMQiqBrw)(dmc1)     |
+| xcit_large_24_p8_224_dist   | 85.40  | 97.40  | 141.4G  | 188.9M    | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/14ZoDxEez5NKVNAsbgjTPisjOQEAA30Wy/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1D_zyvjzIVFp6iqx1s7IEbA)(y7gw)     |
+| xcit_large_24_p8_384_dist   | 85.99  | 97.69  | 415.5G  | 188.9M    | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1stcUwwFNJ38mdaFsNXq24CBMmDenJ_e4/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1lwbBk7GFuqnnP_iU2OuDRw)(9xww)     |
 > *The results are evaluated on ImageNet2012 validation set.
 
 ## Notebooks

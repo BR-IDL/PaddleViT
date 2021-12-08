@@ -44,6 +44,9 @@ _C.MODEL.NAME = 'XCiT'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
+_C.MODEL.DROPOUT = 0.0
+_C.MODEL.ATTENTION_DROPOUT = 0.0
+_C.MODEL.DROP_PATH = 0.1
 
 # transformer settings
 _C.MODEL.TRANS = CN()
@@ -65,6 +68,7 @@ _C.TRAIN.WARMUP_START_LR = 0.0
 _C.TRAIN.END_LR = 0.0
 _C.TRAIN.GRAD_CLIP = 1.0
 _C.TRAIN.ACCUM_ITER = 2
+_C.TRAIN.LINEAR_SCALED_LR = None
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -77,6 +81,23 @@ _C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
 _C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
+
+# train augmentation
+_C.TRAIN.MIXUP_ALPHA = 0.8
+_C.TRAIN.CUTMIX_ALPHA = 1.0
+_C.TRAIN.CUTMIX_MINMAX = None
+_C.TRAIN.MIXUP_PROB = 1.0
+_C.TRAIN.MIXUP_SWITCH_PROB = 0.5
+_C.TRAIN.MIXUP_MODE = 'batch'
+
+_C.TRAIN.SMOOTHING = 0.1
+_C.TRAIN.COLOR_JITTER = 0.4
+_C.TRAIN.AUTO_AUGMENT = True #'rand-m9-mstd0.5-inc1'
+
+_C.TRAIN.RANDOM_ERASE_PROB = 0.25
+_C.TRAIN.RANDOM_ERASE_MODE = 'pixel'
+_C.TRAIN.RANDOM_ERASE_COUNT = 1
+_C.TRAIN.RANDOM_ERASE_SPLIT = False
 
 # augmentation
 _C.AUG = CN()
@@ -95,9 +116,9 @@ _C.AUG.MIXUP_MODE = 'batch' #how to apply mixup/curmix params, per 'batch', 'pai
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 20 # freq to save chpt
+_C.SAVE_FREQ = 1 # freq to save chpt
 _C.REPORT_FREQ = 50 # freq to logging info
-_C.VALIDATE_FREQ = 20 # freq to do validation
+_C.VALIDATE_FREQ = 10 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.AMP = False # mix precision training
