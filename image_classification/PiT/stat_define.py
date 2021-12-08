@@ -4,9 +4,9 @@ import paddle
 from config import get_config
 from pit import build_pit as build_model
 
-def count_gelu(layer, input, output):
+def count_gelu(layer, inputs, output):
     activation_flops = 8
-    x = input[0]
+    x = inputs[0]
     num = x.numel()
     layer.total_ops += num * activation_flops 
 
@@ -18,9 +18,9 @@ def count_softmax(layer, input, output):
     layer.total_ops += num * softmax_flops 
 
 
-def count_layernorm(layer, input, output):
+def count_layernorm(layer, inputs, output):
     layer_norm_flops = 5 # get mean (sum), get variance (square and sum), scale(multiply)
-    x = input[0]
+    x = inputs[0]
     num = x.numel()
     layer.total_ops += num * layer_norm_flops 
 

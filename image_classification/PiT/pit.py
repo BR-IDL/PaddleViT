@@ -260,6 +260,7 @@ class PoolingTransformer(nn.Layer):
         self.base_dims = base_dims
         self.heads = heads
         self.num_classes = num_classes
+        self.depth = depth
 
         self.patch_size = patch_size
 
@@ -284,17 +285,17 @@ class PoolingTransformer(nn.Layer):
         self.transformers = nn.LayerList([])
         self.pools = nn.LayerList([])
 
-        for stage in range(len(depth)):
+        for stage, depth in enumerate(self.depth):
             drop_path_prob = [
                 drop_path_rate * i / total_block
-                for i in range(block_idx, block_idx + depth[stage])
+                for i in range(block_idx, block_idx + depth)
             ]
-            block_idx += depth[stage]
+            block_idx += depth
 
             self.transformers.append(
                 Transformer(
                     base_dims[stage],
-                    depth[stage],
+                    depth,
                     heads[stage],
                     mlp_ratio,
                     drop_rate,
@@ -334,9 +335,9 @@ class PoolingTransformer(nn.Layer):
         x = self.pos_drop(x + pos_embed)
         cls_tokens = self.cls_token.expand([x.shape[0], -1, -1])
 
-        for stage in range(len(self.pools)):
+        for stage, pool_layer in enumerate(self.pools):
             x, cls_tokens = self.transformers[stage](x, cls_tokens)
-            x, cls_tokens = self.pools[stage](x, cls_tokens)
+            x, cls_tokens = pool_layer(x, cls_tokens)
         x, cls_tokens = self.transformers[-1](x, cls_tokens)
 
         cls_tokens = self.norm(cls_tokens)

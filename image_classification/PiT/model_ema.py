@@ -58,4 +58,3 @@ class ModelEma:
 
     def state_dict(self):
         return self.module.state_dict()
-
