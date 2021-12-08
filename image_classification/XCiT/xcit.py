@@ -297,7 +297,7 @@ class ClassAttentionBlock(nn.Layer):
         else:
             self.gamma1, self.gamma2 = 1.0, 1.0
 
-        # FIXME: A hack for models pre-trained with layernorm over all the tokens not just the CLS
+        # A hack for models pre-trained with layernorm over all the tokens not just the CLS
         self.tokens_norm = tokens_norm
 
     def forward(self, x, H, W, mask=None):
