@@ -11,9 +11,9 @@ def count_gelu(layer, inputs, output):
     layer.total_ops += num * activation_flops 
 
 
-def count_softmax(layer, input, output):
+def count_softmax(layer, inputs, output):
     softmax_flops = 5 # max/substract, exp, sum, divide
-    x = input[0]
+    x = inputs[0]
     num = x.numel()
     layer.total_ops += num * softmax_flops 
 

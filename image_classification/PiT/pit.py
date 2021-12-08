@@ -285,17 +285,17 @@ class PoolingTransformer(nn.Layer):
         self.transformers = nn.LayerList([])
         self.pools = nn.LayerList([])
 
-        for stage, depth in enumerate(self.depth):
+        for stage, stage_depth in enumerate(self.depth):
             drop_path_prob = [
                 drop_path_rate * i / total_block
-                for i in range(block_idx, block_idx + depth)
+                for i in range(block_idx, block_idx + stage_depth)
             ]
-            block_idx += depth
+            block_idx += stage_depth
 
             self.transformers.append(
                 Transformer(
                     base_dims[stage],
-                    depth,
+                    stage_depth,
                     heads[stage],
                     mlp_ratio,
                     drop_rate,

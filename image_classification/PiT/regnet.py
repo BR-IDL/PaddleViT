@@ -3,11 +3,9 @@ import copy
 import paddle
 import paddle.nn as nn
 
-"""
-RegNet y-160
-This is a simple version of regnet which only implements RegNetY-160.
-This model is used as the teacher model for DeiT.
-"""
+#RegNet y-160
+#This is a simple version of regnet which only implements RegNetY-160.
+#This model is used as the teacher model for DeiT.
 
 class Identity(nn.Layer):
     """ Identity Layer """
