@@ -165,9 +165,9 @@ class Attention(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
-            initializer=nn.initializer.KaimingUniform())
+            initializer=nn.initializer.TruncatedNormal(std=.02))
         bias_attr = paddle.ParamAttr(
-            initializer=nn.initializer.KaimingUniform())
+            initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def transpose_multihead(self, x):
@@ -232,9 +232,9 @@ class Mlp(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.XavierUniform())  # default in pp: xavier
+            initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
         bias_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.Normal(std=1e-6))  # default in pp: zero
+            initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -268,7 +268,11 @@ class TransformerLayer(nn.Layer):
                  attention_dropout=0.,
                  droppath=0.):
         super().__init__()
+
+        w_attr_1, b_attr_1 = self._init_weights()
         self.attn_norm = nn.LayerNorm(embed_dim,
+                                      weight_attr=w_attr_1,
+                                      bias_attr=b_attr_1,
                                       epsilon=1e-6)
 
         self.attn = Attention(embed_dim,
@@ -278,10 +282,18 @@ class TransformerLayer(nn.Layer):
                               attention_dropout)
         self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
 
+        w_attr_2, b_attr_2 = self._init_weights()
         self.mlp_norm = nn.LayerNorm(embed_dim,
+                                     weight_attr=w_attr_2,
+                                     bias_attr=b_attr_2,
                                      epsilon=1e-6)
 
         self.mlp = Mlp(embed_dim, mlp_ratio, dropout)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         h = x
@@ -332,9 +344,17 @@ class Encoder(nn.Layer):
                                              droppath=depth_decay[i])
             layer_list.append(copy.deepcopy(encoder_layer))
         self.layers = nn.LayerList(layer_list)
-
+        
+        w_attr, b_attr = self._init_weights()
         self.encoder_norm = nn.LayerNorm(embed_dim,
+                                         weight_attr=w_attr,
+                                         bias_attr=b_attr,
                                          epsilon=1e-6)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         self_attn = []
@@ -380,8 +400,16 @@ class Decoder(nn.Layer):
             layer_list.append(copy.deepcopy(decoder_layer))
         self.layers = nn.LayerList(layer_list)
 
+        w_attr, b_attr = self._init_weights()
         self.decoder_norm = nn.LayerNorm(embed_dim,
+                                         weight_attr=w_attr,
+                                         bias_attr=b_attr,
                                          epsilon=1e-6)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         self_attn = []
@@ -393,7 +421,6 @@ class Decoder(nn.Layer):
 
 
 class MAEPretrainTransformer(nn.Layer):
-    # TODO: 补注释
     """ViT transformer
 
     ViT Transformer, classifier is a single Linear layer for finetune,
@@ -465,8 +492,11 @@ class MAEPretrainTransformer(nn.Layer):
                                attention_dropout,
                                droppath)
         # the embed_dim is different in encoder and decoder, so add a linear layer
+        w_attr_1, b_attr_1 = self._init_weights()
         self.linear_projection = nn.Linear(encoder_embed_dim,
-                                           decoder_embed_dim)
+                                           decoder_embed_dim,
+                                           weight_attr=w_attr_1,
+                                           bias_attr=b_attr_1)
         # create multi head self-attention decoder
         self.decoder = Decoder(decoder_embed_dim,
                                decoder_num_heads,
@@ -477,30 +507,39 @@ class MAEPretrainTransformer(nn.Layer):
                                attention_dropout,
                                droppath)
         # create reconstruction layer
+        w_attr_2, b_attr_2 = self._init_weights()
         self.reconstruction_layer = nn.Linear(decoder_embed_dim,
-                                              in_channels * patch_size * patch_size)
+                                              in_channels * patch_size * patch_size,
+                                              weight_attr=w_attr_2,
+                                              bias_attr=b_attr_2)
 
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(
+            initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(
+            initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, image):
         source = self.patch_embedding(image)
         target = image
 
         # mask source before encoding
-        source = self.mask(source)
+        source = self.mask(source) # no mask tokens: [B, 0.25*L, embed_dim]
         # add positional embedding before encoding
-        source += self.encoder_position_embedding.get_encoder_embedding(source.shape[1])
+        # may add overall pos embed, not only for 0.25*L, but for all L
+        source += self.encoder_position_embedding.get_positional_embedding(source.shape[1])
         source, attn = self.encoder(source)
         source = self.linear_projection(source)
         source = self.unmask(
-            source, self.decoder_position_embedding.get_decoder_embedding())
+            source, self.decoder_position_embedding.get_positional_embedding())
         source, attn = self.decoder(source)
 
-        # only sustain unmasked target patches
+        # only sustain masked target patches
         masked_target = self.mask_target(target, self.patch_size)
-        # only reconstruct unmasked source patches
-        _, unmask_length, _ = masked_target.shape
-        output = self.reconstruction_layer(
-            source[:, 1: unmask_length + 1, :])
+        # only reconstruct masked source patches
+        _, mask_length, _ = masked_target.shape
+        output = self.reconstruction_layer(source[:, -mask_length::, :])
         return output, masked_target
 
     def mask(self, x):
@@ -515,14 +554,14 @@ class MAEPretrainTransformer(nn.Layer):
         """
         _, seq_len, _ = x.shape
         seq_len = seq_len - 1  # should not shuffle the [cls] token
-        self.mask_num = int(seq_len * self.mask_ratio)
+        self.mask_num = int(seq_len * self.mask_ratio)  # l * 0.75
         # should not shuffle the [cls] token
         index = [i for i in range(1, seq_len + 1)]
         random.shuffle(index)
         self.perm = paddle.to_tensor([0] + index)  # add back [cls] token
         shuffled_x = paddle.index_select(x, self.perm, axis=1)
-        masked_x = shuffled_x[:, 0: -self.mask_num, :]
-        return masked_x
+        no_mask_x = shuffled_x[:, 0: -self.mask_num, :] # [B, 0 : 0.25*L, embed_dim]
+        return no_mask_x
 
     def mask_target(self, target, patch_size):
         """
@@ -541,7 +580,7 @@ class MAEPretrainTransformer(nn.Layer):
             target, patch_size, patch_size).transpose((0, 2, 1))
         # shuffled_label shape is [batch, seq_len , channel * patch_size * patch_size]
 
-        masked_target = shuffled_target[:, 0: -self.mask_num, :]
+        masked_target = shuffled_target[:, -self.mask_num::, :] # [B, -0.75*L:end, embed_dim]
         return masked_target
 
     def unmask(self, x, pos_embedding):
@@ -562,8 +601,8 @@ class MAEPretrainTransformer(nn.Layer):
             pos_embedding, self.perm, axis=1)
         return unmasked_x + shuffled_pos_embedding
 
+
 class MAEFinetuneTransformer(nn.Layer):
-    # TODO: 补注释
     """ViT transformer
 
     ViT Transformer, classifier is a single Linear layer for finetune,
@@ -639,6 +678,7 @@ class MAEFinetuneTransformer(nn.Layer):
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
         return weight_attr, bias_attr
 
+
 def build_mae_pretrain(config):
     model = MAEPretrainTransformer(image_size=config.DATA.IMAGE_SIZE,
                                    patch_size=config.MODEL.TRANS.PATCH_SIZE,
@@ -661,7 +701,6 @@ def build_mae_pretrain(config):
 
 
 def build_mae_finetune(config):
-    # TODO: to be implemented
     model = MAEFinetuneTransformer(image_size=config.DATA.IMAGE_SIZE,
                                    patch_size=config.MODEL.TRANS.PATCH_SIZE,
                                    in_channels=3,
