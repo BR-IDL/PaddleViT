@@ -1,0 +1,49 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
+MODEL:
+    TYPE: MobileFormer
+    NAME: MobileFormer_214M
+    DROPPATH: 0.1
+    DROPOUT: 0.1
+    MLP_DROPOUT: 0.1
+    ATTENTION_DROPOUT: 0.1
+    MF:
+        IN_CHANNELS: 3
+        TOKENS: [6, 192]
+        NUM_HEAD: 4
+        MLP_RATIO: 2.0
+        ALPHA: 1.0
+        QKV_BIAS: True
+        POINTWISECONV_GROUPS: 1
+        STEM:
+            OUT_CHANNELS: 12
+            KERNELS: 3
+            STRIEDS: 2
+            PADDINGS: 1
+        LITE_BNECK:
+            IN_CHANNEL: 12
+            HIDDEN_CHANNEL: 24
+            OUT_CHANNEL: 12
+            KERNEL: 3
+            STRIED: 1
+            PADDING: 1
+        BLOCK:
+            IN_CHANNELS: [12, 20, 20, 40, 40, 80, 80, 112, 112, 160, 160]
+            HIDDEN_CHANNELS: [72, 60, 120, 160, 240, 320, 480, 672, 672, 960, 960]
+            OUT_CHANNELS: [20, 20, 40, 40, 80, 80, 112, 112, 160, 160, 160]
+            KERNELS: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+            STRIEDS: [2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1]
+            PADDINGS: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        CHANNEL_CONV:
+            IN_CHANNEL: 160
+            OUT_CHANNEL: 960
+        HEAD:
+            IN_CHANNEL: 960
+            HIDDEN_FEATURE: 1600
+        DYRELU:
+            USE_DYRELU: True
+            REDUCE: 4.65
+            DYRELU_K: 2
+            COEFS: [1.0, 0.5]
+            CONSTS: [1.0, 0.0]

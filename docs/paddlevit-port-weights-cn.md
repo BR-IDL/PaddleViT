@@ -1,5 +1,7 @@
+简体中文 | [English](./paddlevit-port-weights.md)
+
 ## PaddleViT: 如何将模型从 Pytorch 移植到 Paddle?
-> 源码: [here](../image_classification/ViT/load_pytorch_weights.py)
+> 源码: [here](../image_classification/SwinTransformer/port_weights/load_pytorch_weights.py)
 
 ### Step 0:
 如果你想要从一些ViT模型的PyTorch实现转换到Paddle版本，并需要将预训练权重从pytorch `.pth`文件转换为paddle`.pdparams` 文件。

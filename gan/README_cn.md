@@ -1,3 +1,5 @@
+简体中文 | [English](./README.md)
+
 # PaddleViT-GAN: GAN 领域的 Visual Transformer 模型
   
 PaddlePaddle **GAN**的训练/评估代码以及预训练模型。
@@ -18,7 +20,7 @@ PaddlePaddle **GAN**的训练/评估代码以及预训练模型。
 该模块在 Python3.6+ 和 PaddlePaddle 2.1.0+ 上进行了测试，大多数依赖项通过PaddlePaddle安装，您只需要安装以下依赖项：
 
 ```shell
-pip install yacs yaml lmdb
+pip install yacs pyyaml lmdb
 ```
 然后 下载 github repo:
 ```shell

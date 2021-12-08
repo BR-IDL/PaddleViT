@@ -1,3 +1,5 @@
+English | [简体中文](./paddlevit-coco-cn.md)
+
 # PaddleViT Tutorial: COCO Datast for Object Detection
 [COCO dataset](https://cocodataset.org/#home) is one of the most popular datasets in computer vision community for benchmarking a variety of vision tasks such as object detection, segmentation, and keypoint detection, etc. In this tutorial, we present the detailed PaddleViT implementations of loading and processing COCO dataset for object detection. We will go through the whole procedures from implementing our `CocoDataset` by utilizing `pycocotools`, to the augmentation details that applied for both training and evaluation in `transforms`.
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""T2T-ViT training/validation using single GPU """
+"""MobileFormer training/validation using single GPU """
 
 import sys
 import os
@@ -35,23 +35,33 @@ from mixup import Mixup
 from losses import LabelSmoothingCrossEntropyLoss
 from losses import SoftTargetCrossEntropyLoss
 from losses import DistillationLoss
-from model_ema import ModelEma
-from t2t_vit import build_t2t_vit as build_model
+from mobileformer import build_mformer as build_model
 
 
-<<<<<<< HEAD
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('T2T-ViT')
+    parser = argparse.ArgumentParser('Focal Transformer')
     parser.add_argument('-cfg', type=str, default=None)
+    parser.add_argument('-model_type', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
-    parser.add_argument('-batch_size', type=int, default=None)
-    parser.add_argument('-image_size', type=int, default=None)
+    parser.add_argument('-batch_size', type=int, default=32)
+    parser.add_argument('-image_size', type=int, default=224)
+    parser.add_argument('-num_classes', type=int, default=1000)
     parser.add_argument('-data_path', type=str, default=None)
-    parser.add_argument('-ngpus', type=int, default=None)
+
+    parser.add_argument('-output', type=str, default='./output')
+
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
+
+    parser.add_argument('-save_freq', type=int, default=1)
+    parser.add_argument('-log_freq', type=int, default=100)
+    parser.add_argument('-validate_freq', type=int, default=10)
+    parser.add_argument('-accum_iter', type=int, default=1)
+    parser.add_argument('-num_workers', type=int, default=1)
+    parser.add_argument('-ngpus', type=int, default=-1)
+
     parser.add_argument('-eval', action='store_true')
     parser.add_argument('-amp', action='store_true')
     arguments = parser.parse_args()
@@ -75,49 +85,6 @@ def get_logger(filename, logger_name=None):
     fh.setFormatter(logging.Formatter(log_format))
     logger.addHandler(fh)
     return logger
-=======
-parser = argparse.ArgumentParser('T2T-ViT Transformer')
-parser.add_argument('-cfg', type=str, default=None)
-parser.add_argument('-dataset', type=str, default=None)
-parser.add_argument('-batch_size', type=int, default=None)
-parser.add_argument('-image_size', type=int, default=None)
-parser.add_argument('-data_path', type=str, default=None)
-parser.add_argument('-ngpus', type=int, default=None)
-parser.add_argument('-pretrained', type=str, default=None)
-parser.add_argument('-resume', type=str, default=None)
-parser.add_argument('-last_epoch', type=int, default=None)
-parser.add_argument('-eval', action='store_true')
-parser.add_argument('-amp', action='store_true')
-args = parser.parse_args()
-
-
-log_format = "%(asctime)s %(message)s"
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format=log_format, datefmt="%m%d %I:%M:%S %p")
-
-# get default config
-config = get_config()
-# update config by arguments
-config = update_config(config, args)
-
-# set output folder
-if not config.EVAL:
-    config.SAVE = '{}/train-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
-else:
-    config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
-
-#config.freeze()
-
-if not os.path.exists(config.SAVE):
-    os.makedirs(config.SAVE, exist_ok=True)
-
-# set logging format
-logger = logging.getLogger()
-fh = logging.FileHandler(os.path.join(config.SAVE, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logger.addHandler(fh)
-logger.info(f'config= {config}')
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
 
 
 def train(dataloader,
@@ -129,35 +96,22 @@ def train(dataloader,
           total_batch,
           debug_steps=100,
           accum_iter=1,
-<<<<<<< HEAD
-          model_ema=None,
           mixup_fn=None,
           amp=False,
           logger=None):
-=======
-          amp=False):
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
     """Training for one epoch
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
         model: nn.Layer, a ViT model
         criterion: nn.criterion
         epoch: int, current epoch
-<<<<<<< HEAD
         total_epochs: int, total num of epochs
         total_batch: int, total num of batches for one epoch
         debug_steps: int, num of iters to log info, default: 100
         accum_iter: int, num of iters for accumulating gradients, default: 1
-        model_ema: ModelEma, model moving average instance
         mixup_fn: Mixup, mixup instance, default: None
         amp: bool, if True, use mix precision training, default: False
         logger: logger for logging, default: None
-=======
-        total_epoch: int, total num of epoch, for logging
-        debug_steps: int, num of iters to log info
-        accum_iter: int, num of iters for accumulating gradients
-        amp: bool, if True, use mix precision training
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
     Returns:
         train_loss_meter.avg: float, average loss on current process/gpu
         train_acc_meter.avg: float, average top1 accuracy on current process/gpu
@@ -166,14 +120,10 @@ def train(dataloader,
     model.train()
     train_loss_meter = AverageMeter()
     train_acc_meter = AverageMeter()
-<<<<<<< HEAD
 
-=======
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
     if amp is True:
         scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
-
 
     for batch_id, data in enumerate(dataloader):
         image = data[0]
@@ -201,38 +151,9 @@ def train(dataloader,
             #loss =  loss / accum_iter
             loss.backward()
 
-<<<<<<< HEAD
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 optimizer.step()
                 optimizer.clear_grad()
-
-        if model_ema is not None:
-            model_ema.update(model)
-=======
-        if amp is True:
-            with paddle.amp.auto_cast():
-                output = model(image)
-                loss = criterion(output, label)
-            scaled = scaler.scale(loss)
-            scaled.backward()
-
-            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-                scaler.minimize(optimizer, scaled)
-                optimizer.clear_grad()
-
-        else:
-            output = model(image)
-            loss = criterion(output, label)
-            #NOTE: division may be needed depending on the loss function
-            # Here no division is needed:
-            # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-            #loss =  loss / accum_iter
-            loss.backward()
-
-            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-                optimizer.step()
-                optimizer.clear_grad()
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
 
         pred = F.softmax(output)
         if mixup_fn:
@@ -327,16 +248,8 @@ def main():
 
     # STEP 1: Create model
     model = build_model(config)
-<<<<<<< HEAD
-    # define model ema
-    model_ema = None
-    if not config.EVAL and config.TRAIN.MODEL_EMA:
-        model_ema = ModelEma(model, decay=config.TRAIN.MODEL_EMA_DECAY)
 
     # STEP 2: Create train and val dataloader
-=======
-    # 2. Create train and val dataloader
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
     dataset_train = get_dataset(config, mode='train')
     dataset_val = get_dataset(config, mode='val')
     dataloader_train = get_dataloader(config, dataset_train, 'train', False)
@@ -351,8 +264,8 @@ def main():
                          prob=config.TRAIN.MIXUP_PROB,
                          switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
                          mode=config.TRAIN.MIXUP_MODE,
-                         label_smoothing=config.TRAIN.SMOOTHING)
-
+                         label_smoothing=config.TRAIN.SMOOTHING,
+                         num_classes=config.MODEL.NUM_CLASSES)
     # STEP 4: Define criterion
     if config.TRAIN.MIXUP_PROB > 0.:
         criterion = SoftTargetCrossEntropyLoss()
@@ -426,8 +339,8 @@ def main():
             weight_decay=config.TRAIN.WEIGHT_DECAY,
             epsilon=config.TRAIN.OPTIMIZER.EPS,
             grad_clip=clip,
-            #apply_decay_param_fun=get_exclude_from_weight_decay_fn([
-            #    'absolute_pos_embed', 'relative_position_bias_table']),
+            apply_decay_param_fun=get_exclude_from_weight_decay_fn([
+                'absolute_pos_embed', 'relative_position_bias_table']),
             )
     else:
         logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
@@ -435,37 +348,23 @@ def main():
 
     # STEP 6: Load pretrained model or load resume model and optimizer states
     if config.MODEL.PRETRAINED:
-<<<<<<< HEAD
         if (config.MODEL.PRETRAINED).endswith('.pdparams'):
             raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
         assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams') is True
         model_state = paddle.load(config.MODEL.PRETRAINED+'.pdparams')
-=======
-        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams')
-        model_state = paddle.load(config.MODEL.PRETRAINED + '.pdparams')
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
         model.set_dict(model_state)
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
-        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
+        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
+        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
         model.set_dict(model_state)
-<<<<<<< HEAD
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
-=======
-        opt_state = paddle.load(config.MODEL.RESUME + '.pdopt')
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
         optimizer.set_state_dict(opt_state)
         logger.info(
-            f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
-        # load ema model
-        if model_ema is not None and os.path.isfile(config.MODEL.RESUME_EMA + '.pdparams'):
-            model_ema_state = paddle.load(config.MODEL.RESUME_EMA + '.pdparams')
-            model_ema.set(model_ema_state)
-            logger.info(f'----- Load model ema from {config.MODEL.RESUME_EMA}')
-    
+            f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
+
     # STEP 7: Validation (eval mode)
     if config.EVAL:
         logger.info('----- Start Validating')
@@ -481,16 +380,10 @@ def main():
                     f"Validation Acc@5: {val_acc5:.4f}, " +
                     f"time: {val_time:.2f}")
         return
-<<<<<<< HEAD
 
     # STEP 8: Start training and validation (train mode)
     logger.info(f"Start training from epoch {last_epoch+1}.")
     for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
-=======
-    # 8. Start training and validation
-    logging.info(f"Start training from epoch {last_epoch + 1}.")
-    for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
         # train
         logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
         train_loss, train_acc, train_time = train(dataloader=dataloader_train,
@@ -502,15 +395,9 @@ def main():
                                                   total_batch=len(dataloader_train),
                                                   debug_steps=config.REPORT_FREQ,
                                                   accum_iter=config.TRAIN.ACCUM_ITER,
-<<<<<<< HEAD
-                                                  model_ema=model_ema,
                                                   mixup_fn=mixup_fn,
                                                   amp=config.AMP,
                                                   logger=logger)
-=======
-                                                  amp=config.AMP,
-                                                  )
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
         scheduler.step()
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                     f"Train Loss: {train_loss:.4f}, " +
@@ -539,11 +426,6 @@ def main():
             paddle.save(optimizer.state_dict(), model_path + '.pdopt')
             logger.info(f"----- Save model: {model_path}.pdparams")
             logger.info(f"----- Save optim: {model_path}.pdopt")
-            if model_ema is not None:
-                model_ema_path = os.path.join(
-                    config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}-EMA")
-                paddle.save(model_ema.state_dict(), model_ema_path + '.pdparams')
-                logger.info(f"----- Save ema model: {model_ema_path}.pdparams")
 
 
 if __name__ == "__main__":

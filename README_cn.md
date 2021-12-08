@@ -1,3 +1,5 @@
+简体中文 | [English](./README.md)
+
 # PaddlePaddle Vision Transformers #
 
 [![GitHub](https://img.shields.io/github/license/BR-IDL/PaddleViT?color=blue)](./LICENSE)
@@ -154,11 +156,18 @@ PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接�
 3. 安装依赖项.
     *  通用的依赖项:
         ```
-        pip install yacs, yaml
+        pip install yacs, pyyaml
         ```
     *  分割需要的依赖项:
         ```
-        pip install cityscapesScripts, detail
+        pip install cityscapesScripts
+        ```
+        安装 `detail` package:
+        ```shell
+        git clone https://github.com/ccvl/detail-api
+        cd detail-api/PythonAPI
+        make
+        make install
         ```
     *  GAN需要的依赖项:
         ```
@@ -395,7 +404,7 @@ PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接�
 #### Trans10kV2 ####
 |Model      | Backbone  | Batch_size | Iteration | mIoU (ss) | mIoU (ms+flip) | Backbone_checkpoint | Model_checkpoint     |     ConfigFile  |
 |-----------|-----------|------------|-----------|-----------|----------------|-----------------------------------------------|-----------------------------------------------------------------------|------------|
-|Trans2seg_Medium | Resnet50c |     16      |    80k    |  72.25  |      -        |   [google](https://drive.google.com/file/d/1C6nMg6DgQ73wzF21UwDVxmkcRTeKngnK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1hs0tbSGIeMLLGMq05NN--w)(4dd5)    | [google](https://drive.google.com/file/d/1zGEBEN27CQMgZBYqqAg_agJE6CPLOpYW/view?usp=sharing)/[baidu](https://pan.baidu.com/s/102GUBeoEPMqMEqF3smgyCA)(qcb0)   | [config](semantic_segmentation/configs/trans2seg/Trans2Seg_medium_512x512_80k_trans10kv2_bs_16.yaml)| 
+|Trans2seg_Medium | Resnet50c |     16      |    16k    |  75.97  |      -        |   [google](https://drive.google.com/file/d/1C6nMg6DgQ73wzF21UwDVxmkcRTeKngnK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1hs0tbSGIeMLLGMq05NN--w)(4dd5)    | [google](https://drive.google.com/file/d/1C6nMg6DgQ73wzF21UwDVxmkcRTeKngnK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1wdOUD6S8QGqD6S-98Yb37w)(w25r)   | [config](semantic_segmentation/configs/trans2seg/Trans2Seg_medium_512x512_16k_trans10kv2_bs_16.yaml)| 
 
 ### GAN ###
 | Model                          | FID | Image Size | Crop_pct | Interpolation | Model        |

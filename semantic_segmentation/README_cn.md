@@ -1,3 +1,4 @@
+简体中文 | [English](./README.md)
 
 # 基于 Visual Transformers 的语义分割工具
 
@@ -120,14 +121,14 @@ Trans10K_cls12
 #### 在单GPU上进行单尺度测试
 ```shell
 CUDA_VISIBLE_DEVICES=0 python3  val.py  \
-    --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
+    --config ./configs/setr/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
     --model_path ./pretrain_models/setr/SETR_MLA_pascal_context_b8_80k.pdparams
 ```
 
 #### 在单GPU上进行多尺度测试
 ```shell
 CUDA_VISIBLE_DEVICES=0,1 python3 val.py \
-    --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
+    --config ./configs/setr/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
     --model_path ./pretrain_models/setr/SETR_MLA_pascal_context_b8_80k.pdparams \
     --multi_scales True
 ```
@@ -135,14 +136,14 @@ CUDA_VISIBLE_DEVICES=0,1 python3 val.py \
 #### 在多GPU上进行单尺度测试 
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -u -m paddle.distributed.launch val.py \
-    --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
+    --config ./configs/setr/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
     --model_path ./pretrain_models/setr/SETR_MLA_pascal_context_b8_80k.pdparams
 ```
 
 #### 在多GPU上进行多尺度测试
 ```shell                                                                                                                                                                                       
 CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -u -m paddle.distributed.launch val.py \
-    --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
+    --config ./configs/setr/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml \
     --model_path ./pretrain_models/setr/SETR_MLA_pascal_context_b8_80k.pdparams \
     --multi_scales True
 ```
@@ -157,7 +158,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -u -m paddle.distributed.launch val.py \
 
 ```shell
 CUDA_VISIBLE_DEVICES=0 python3  train.py \
-    --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml
+    --config ./configs/setr/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml
 ```
 > 注意:
 > - 可以在`-cfg`中设置的 `.yaml`文件中更改lr,图像尺寸，模型层等训练选项。所有可用的设置均在`./config.py`可以找到。
@@ -166,7 +167,7 @@ CUDA_VISIBLE_DEVICES=0 python3  train.py \
 
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -u -m paddle.distributed.launch train.py \
-    --config ./configs/SETR/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml
+    --config ./configs/setr/SETR_MLA_Large_480x480_80k_pascal_context_bs_8.yaml
 
 ```
 > 注意:

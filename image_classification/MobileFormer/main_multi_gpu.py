@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Swin training/validation using multiple GPU """
+"""MobileFormer training/validation using multiple GPU """
 
 import sys
 import os
@@ -27,10 +27,6 @@ import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader
 from datasets import get_dataset
-<<<<<<< HEAD
-=======
-from shuffle_transformer import build_shuffle_transformer as build_model
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from utils import get_exclude_from_weight_decay_fn
@@ -40,22 +36,33 @@ from mixup import Mixup
 from losses import LabelSmoothingCrossEntropyLoss
 from losses import SoftTargetCrossEntropyLoss
 from losses import DistillationLoss
-from shuffle_transformer import build_shuffle_transformer as build_model
+from mobileformer import build_mformer as build_model
 
 
-<<<<<<< HEAD
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('Shuffle Transformer')
+    parser = argparse.ArgumentParser('Focal Transformer')
+    parser.add_argument('-model_type', type=str, default=None)
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
-    parser.add_argument('-batch_size', type=int, default=None)
-    parser.add_argument('-image_size', type=int, default=None)
+    parser.add_argument('-batch_size', type=int, default=32)
+    parser.add_argument('-image_size', type=int, default=224)
+    parser.add_argument('-num_classes', type=int, default=1000)
     parser.add_argument('-data_path', type=str, default=None)
-    parser.add_argument('-ngpus', type=int, default=None)
+
+    parser.add_argument('-output', type=str, default='./output')
+
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
+
+    parser.add_argument('-save_freq', type=int, default=1)
+    parser.add_argument('-log_freq', type=int, default=100)
+    parser.add_argument('-validate_freq', type=int, default=10)
+    parser.add_argument('-accum_iter', type=int, default=1)
+    parser.add_argument('-num_workers', type=int, default=1)
+    parser.add_argument('-ngpus', type=int, default=-1)
+
     parser.add_argument('-eval', action='store_true')
     parser.add_argument('-amp', action='store_true')
     arguments = parser.parse_args()
@@ -79,47 +86,6 @@ def get_logger(filename, logger_name=None):
     fh.setFormatter(logging.Formatter(log_format))
     logger.addHandler(fh)
     return logger
-=======
-parser = argparse.ArgumentParser('Shuffle Transformer')
-parser.add_argument('-cfg', type=str, default=None)
-parser.add_argument('-dataset', type=str, default=None)
-parser.add_argument('-batch_size', type=int, default=None)
-parser.add_argument('-image_size', type=int, default=None)
-parser.add_argument('-data_path', type=str, default=None)
-parser.add_argument('-ngpus', type=int, default=None)
-parser.add_argument('-pretrained', type=str, default=None)
-parser.add_argument('-resume', type=str, default=None)
-parser.add_argument('-last_epoch', type=int, default=None)
-parser.add_argument('-eval', action='store_true')
-parser.add_argument('-amp', action='store_true')
-arguments = parser.parse_args()
-
-
-log_format = "%(asctime)s %(message)s"
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format=log_format, datefmt="%m%d %I:%M:%S %p")
-
-# get default config
-config = get_config()
-# update config by arguments
-config = update_config(config, arguments)
-
-# set output folder
-if not config.EVAL:
-    config.SAVE = '{}/train-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
-else:
-    config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
-
-if not os.path.exists(config.SAVE):
-    os.makedirs(config.SAVE, exist_ok=True)
-
-# set logging format
-logger = logging.getLogger()
-fh = logging.FileHandler(os.path.join(config.SAVE, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logger.addHandler(fh)
-logger.info(f'config= {config}')
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
 
 
 def train(dataloader,
@@ -131,21 +97,16 @@ def train(dataloader,
           total_batch,
           debug_steps=100,
           accum_iter=1,
-<<<<<<< HEAD
           mixup_fn=None,
           amp=False,
           local_logger=None,
           master_logger=None):
-=======
-          amp=False):
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
     """Training for one epoch
     Args:
         dataloader: paddle.io.DataLoader, dataloader instance
         model: nn.Layer, a ViT model
         criterion: nn.criterion
         epoch: int, current epoch
-<<<<<<< HEAD
         total_epochs: int, total num of epochs
         total_batch: int, total num of batches for one epoch
         debug_steps: int, num of iters to log info, default: 100
@@ -154,12 +115,6 @@ def train(dataloader,
         amp: bool, if True, use mix precision training, default: False
         local_logger: logger for local process/gpu, default: None
         master_logger: logger for main process, default: None
-=======
-        total_epoch: int, total num of epoch, for logging
-        debug_steps: int, num of iters to log info, default: 100
-        accum_iter: int, num of iters for accumulating gradients, default: 1
-        amp: bool, if True, use mix precision training, default: False
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
     Returns:
         train_loss_meter.avg: float, average loss on current process/gpu
         train_acc_meter.avg: float, average top1 accuracy on current process/gpu
@@ -170,12 +125,9 @@ def train(dataloader,
     model.train()
     train_loss_meter = AverageMeter()
     train_acc_meter = AverageMeter()
-<<<<<<< HEAD
     master_train_loss_meter = AverageMeter()
     master_train_acc_meter = AverageMeter()
 
-=======
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
     if amp is True:
         scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     time_st = time.time()
@@ -206,7 +158,6 @@ def train(dataloader,
             #loss =  loss / accum_iter
             loss.backward()
 
-<<<<<<< HEAD
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 optimizer.step()
                 optimizer.clear_grad()
@@ -218,31 +169,6 @@ def train(dataloader,
             acc = paddle.metric.accuracy(pred, label_orig.unsqueeze(1))
 
         batch_size = paddle.to_tensor(image.shape[0])
-=======
-        if amp is True:
-            with paddle.amp.auto_cast():
-                output = model(image)
-                loss = criterion(output, label)
-            scaled = scaler.scale(loss)
-            scaled.backward()
-
-            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-                scaler.minimize(optimizer, scaled)
-                optimizer.clear_grad()
-        else:
-            output = model(image)
-            loss = criterion(output, label)
-            #NOTE: division may be needed depending on the loss function
-            # Here no division is needed:
-            # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-            #
-            #loss =  loss / accum_iter
-            loss.backward()
-
-            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-                optimizer.step()
-                optimizer.clear_grad()
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
 
         # sync from other gpus for overall loss and acc
         master_loss = loss.clone()
@@ -425,7 +351,8 @@ def main_worker(*args):
                          prob=config.TRAIN.MIXUP_PROB,
                          switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
                          mode=config.TRAIN.MIXUP_MODE,
-                         label_smoothing=config.TRAIN.SMOOTHING)
+                         label_smoothing=config.TRAIN.SMOOTHING,
+                         num_classes=config.MODEL.NUM_CLASSES)
 
     # STEP 4: Define criterion
     if config.TRAIN.MIXUP_PROB > 0.:
@@ -569,7 +496,6 @@ def main_worker(*args):
         master_logger.info(f"Start training from epoch {last_epoch+1}.")
     for epoch in range(last_epoch+1, config.TRAIN.NUM_EPOCHS+1):
         # train
-<<<<<<< HEAD
         local_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
         if local_rank == 0:
             master_logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
@@ -588,18 +514,6 @@ def main_worker(*args):
             local_logger=local_logger,
             master_logger=master_logger)
 
-=======
-        logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        train_loss, train_acc, train_time = train(dataloader=dataloader_train,
-                                                  model=model,
-                                                  criterion=criterion,
-                                                  optimizer=optimizer,
-                                                  epoch=epoch,
-                                                  total_batch=total_batch_train,
-                                                  debug_steps=config.REPORT_FREQ,
-                                                  accum_iter=config.TRAIN.ACCUM_ITER,
-                                                  amp=config.AMP)
->>>>>>> 54d976a7fd1d306ed286cf82bfb13cb1249eddd8
         scheduler.step()
 
         local_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
@@ -643,11 +557,8 @@ def main_worker(*args):
                     config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
                 paddle.save(model.state_dict(), model_path + '.pdparams')
                 paddle.save(optimizer.state_dict(), model_path + '.pdopt')
-                local_logger.info(f"----- Save model: {model_path}.pdparams")
-                local_logger.info(f"----- Save optim: {model_path}.pdopt")
-                if local_rank == 0:
-                    master_logger.info(f"----- Save model: {model_path}.pdparams")
-                    master_logger.info(f"----- Save optim: {model_path}.pdopt")
+                master_logger.info(f"----- Save model: {model_path}.pdparams")
+                master_logger.info(f"----- Save optim: {model_path}.pdopt")
 
 
 def main():

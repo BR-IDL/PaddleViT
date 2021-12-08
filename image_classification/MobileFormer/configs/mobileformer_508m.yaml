@@ -1,0 +1,49 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
+MODEL:
+    TYPE: MobileFormer
+    NAME: MobileFormer_508M
+    DROPPATH: 0.1
+    DROPOUT: 0.1
+    MLP_DROPOUT: 0.1
+    ATTENTION_DROPOUT: 0.1
+    MF:
+        IN_CHANNELS: 3
+        TOKENS: [6, 192]
+        NUM_HEAD: 8
+        MLP_RATIO: 2.0
+        ALPHA: 1.0
+        QKV_BIAS: True
+        POINTWISECONV_GROUPS: 1
+        STEM:
+            OUT_CHANNELS: 24
+            KERNELS: 3
+            STRIEDS: 2
+            PADDINGS: 1
+        LITE_BNECK:
+            IN_CHANNEL: 24
+            HIDDEN_CHANNEL: 48
+            OUT_CHANNEL: 24
+            KERNEL: 3
+            STRIED: 1
+            PADDING: 1
+        BLOCK:
+            IN_CHANNELS: [24, 40, 40, 72, 72, 128, 128, 176, 176, 240, 240]
+            HIDDEN_CHANNELS: [144, 120, 240, 216, 432, 512, 768, 1056, 1056, 1440, 1440]
+            OUT_CHANNELS: [40, 40, 72, 72, 128, 128, 176, 176, 240, 240, 240]
+            KERNELS: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+            STRIEDS: [2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1]
+            PADDINGS: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        CHANNEL_CONV:
+            IN_CHANNEL: 240
+            OUT_CHANNEL: 1440
+        HEAD:
+            IN_CHANNEL: 1440
+            HIDDEN_FEATURE: 1920
+        DYRELU:
+            USE_DYRELU: True
+            REDUCE: 3.25
+            DYRELU_K: 2
+            COEFS: [1.0, 0.5]
+            CONSTS: [1.0, 0.0]

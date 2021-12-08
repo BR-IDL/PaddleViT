@@ -1,3 +1,5 @@
+English | [简体中文](./README_cn.md)
+
 # PaddlePaddle Vision Transformers #
 
 [![GitHub](https://img.shields.io/github/license/BR-IDL/PaddleViT?color=blue)](./LICENSE)
@@ -154,11 +156,18 @@ We also provide tutorials:
 3. Install dependency packages
     * General dependencies:
         ```
-        pip install yacs, yaml
+        pip install yacs, pyyaml
         ```
     * Packages for Segmentation:
         ```
-        pip install cityscapesScripts, detail
+        pip install cityscapesScripts
+        ```
+        Install `detail` package:
+        ```shell
+        git clone https://github.com/ccvl/detail-api
+        cd detail-api/PythonAPI
+        make
+        make install
         ```
     * Packages for GAN:
         ```
@@ -395,7 +404,7 @@ We also provide tutorials:
 #### Trans10kV2 ####
 |Model      | Backbone  | Batch_size | Iteration | mIoU (ss) | mIoU (ms+flip) | Backbone_checkpoint | Model_checkpoint     |     ConfigFile  |
 |-----------|-----------|------------|-----------|-----------|----------------|-----------------------------------------------|-----------------------------------------------------------------------|------------|
-|Trans2seg_Medium | Resnet50c |     16      |    80k    |  72.25  |      -        |   [google](https://drive.google.com/file/d/1C6nMg6DgQ73wzF21UwDVxmkcRTeKngnK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1hs0tbSGIeMLLGMq05NN--w)(4dd5)    | [google](https://drive.google.com/file/d/1zGEBEN27CQMgZBYqqAg_agJE6CPLOpYW/view?usp=sharing)/[baidu](https://pan.baidu.com/s/102GUBeoEPMqMEqF3smgyCA)(qcb0)   | [config](semantic_segmentation/configs/trans2seg/Trans2Seg_medium_512x512_80k_trans10kv2_bs_16.yaml)| 
+|Trans2seg_Medium | Resnet50c |     16      |    16k    |  75.97  |      -        |   [google](https://drive.google.com/file/d/1C6nMg6DgQ73wzF21UwDVxmkcRTeKngnK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1hs0tbSGIeMLLGMq05NN--w)(4dd5)    | [google](https://drive.google.com/file/d/1C6nMg6DgQ73wzF21UwDVxmkcRTeKngnK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1wdOUD6S8QGqD6S-98Yb37w)(w25r)   | [config](semantic_segmentation/configs/trans2seg/Trans2Seg_medium_512x512_16k_trans10kv2_bs_16.yaml)| 
 
 ### GAN ###
 | Model                          | FID | Image Size | Crop_pct | Interpolation | Model        |
@@ -408,7 +417,7 @@ We also provide tutorials:
 
 
 ## Quick Demo for Image Classification
-To use the model with pretrained weights, go to the specific subfolder e.g., `/image_classification/ViT/`, then download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `。、configs/`.  
+To use the model with pretrained weights, go to the specific subfolder e.g., `/image_classification/ViT/`, then download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs`.  
 
 Assume the downloaded weight file is stored in `./vit_base_patch16_224.pdparams`, to use the `vit_base_patch16_224` model in python:
 ```python
@@ -419,7 +428,7 @@ config = get_config('./configs/vit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./vit_base_patch16_224')
+model_state_dict = paddle.load('./vit_base_patch16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 > :robot: See the README file in each model folder for detailed usages.
@@ -434,12 +443,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/vit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/vit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/dataset/imagenet \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained=./vit_base_patch16_224
 ```
 
 <details>
@@ -456,12 +465,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/vit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/vit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/dataset/imagenet \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained=./vit_base_patch16_224
 ```
 
 </details>
@@ -476,10 +485,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg='./configs/vit_base_patch16_224.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/vit_base_patch16_224.yaml \
+  -dataset=imagenet2012 \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/dataset/imagenet \
 ```
 
 
@@ -497,10 +506,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/vit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/vit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/dataset/imagenet \
 ```
 
 </details>

@@ -1,0 +1,6 @@
+DATA:
+    BATCH_SIZE: 512
+MODEL:
+    TRANS:
+        EMBED_DIM: 768
+
