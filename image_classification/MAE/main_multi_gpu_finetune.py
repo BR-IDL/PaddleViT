@@ -27,7 +27,7 @@ import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader
 from datasets import get_dataset
-from transformer import build_mae_pretrain as build_model
+from transformer import build_mae_finetune as build_model
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from utils import get_exclude_from_weight_decay_fn
