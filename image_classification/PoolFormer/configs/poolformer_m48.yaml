@@ -1,0 +1,11 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.95
+MODEL:
+    TYPE: poolformer
+    NAME: poolformer_m48
+    TRANS:
+        LAYERS: [8, 8, 24, 8]
+        EMBED_DIMS: [96, 192, 384, 768]
+        LAYER_SCALE_INIT_VALUE: 1e-6
+
