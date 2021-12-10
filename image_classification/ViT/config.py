@@ -33,6 +33,7 @@ _C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
+_C.DATA.IMAGE_CHANNELS = 3 # input image channels
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 2 # number of data loading threads 
 
@@ -106,6 +107,7 @@ def _update_config_from_file(config, cfg_file):
     print('merging config from {}'.format(cfg_file))
     config.merge_from_file(cfg_file)
     config.freeze()
+
 
 def update_config(config, args):
     """Update config by ArgumentParser

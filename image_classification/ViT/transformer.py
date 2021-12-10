@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import copy
 import paddle
 import paddle.nn as nn
 from droppath import DropPath
-from config import get_config
 
 
 class Identity(nn.Layer):
@@ -28,9 +27,8 @@ class Identity(nn.Layer):
     The output of this layer is the input without any change.
     Use this layer to avoid using 'if' condition in forward methods
     """
-
     def __init__(self):
-        super(Identity, self).__init__()
+        super().__init__()
 
     def forward(self, x):
         return x
@@ -45,7 +43,6 @@ class PatchEmbedding(nn.Layer):
         cls_token: token insert to the patch feature for classification
         dropout: dropout for embeddings
     """
-
     def __init__(self,
                  image_size=224,
                  patch_size=16,
@@ -99,7 +96,6 @@ class Attention(nn.Layer):
         proj_dropout: final dropout before output
         softmax: softmax op for attention
     """
-
     def __init__(self,
                  embed_dim,
                  num_heads,
@@ -156,8 +152,8 @@ class Attention(nn.Layer):
         self.softmax = nn.Softmax(axis=-1)
 
     def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=nn.initializer.KaimingUniform())
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.KaimingUniform())
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def transpose_multihead(self, x):
@@ -173,7 +169,6 @@ class Attention(nn.Layer):
         attn = paddle.matmul(q, k, transpose_y=True)
         attn = attn * self.scales
         attn = self.softmax(attn)
-        attn_weights = attn
         attn = self.attn_dropout(attn)
 
         z = paddle.matmul(attn, v)
@@ -183,7 +178,7 @@ class Attention(nn.Layer):
         # reshape
         z = self.out(z)
         z = self.proj_dropout(z)
-        return z, attn_weights
+        return z
 
 
 class Mlp(nn.Layer):
@@ -220,9 +215,9 @@ class Mlp(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.XavierUniform())  # default in pp: xavier
+            initializer=paddle.nn.initializer.TruncatedNormal(std=0.2))
         bias_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.Normal(std=1e-6))  # default in pp: zero
+            initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -244,7 +239,6 @@ class EncoderLayer(nn.Layer):
         mlp: mlp modual
         attn: attention modual
     """
-
     def __init__(self,
                  embed_dim,
                  num_heads,
@@ -278,14 +272,14 @@ class EncoderLayer(nn.Layer):
         self.mlp = Mlp(embed_dim, mlp_ratio, dropout)
 
     def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
         h = x
         x = self.attn_norm(x)
-        x, attn = self.attn(x)
+        x = self.attn(x)
         x = self.drop_path(x)
         x = x + h
 
@@ -295,7 +289,7 @@ class EncoderLayer(nn.Layer):
         x = self.drop_path(x)
         x = x + h
 
-        return x, attn
+        return x
 
 
 class Encoder(nn.Layer):
@@ -316,7 +310,7 @@ class Encoder(nn.Layer):
                  dropout=0.,
                  attention_dropout=0.,
                  droppath=0.):
-        super(Encoder, self).__init__()
+        super().__init__()
         # stochatic depth decay
         depth_decay = [x.item() for x in paddle.linspace(0, droppath, depth)]
         layer_list = []
@@ -339,17 +333,15 @@ class Encoder(nn.Layer):
                                          epsilon=1e-6)
 
     def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
-        self_attn = []
         for layer in self.layers:
-            x, attn = layer(x)
-            self_attn.append(attn)
+            x = layer(x)
         out = self.encoder_norm(x)
-        return out, self_attn
+        return out
 
 
 class VisualTransformer(nn.Layer):
@@ -371,7 +363,6 @@ class VisualTransformer(nn.Layer):
         attention_dropout: float, dropout rate for attention layers default: 0.
         droppath: float, droppath rate for droppath layers, default: 0.
     """
-
     def __init__(self,
                  image_size=224,
                  patch_size=16,
@@ -386,9 +377,8 @@ class VisualTransformer(nn.Layer):
                  dropout=0.,
                  attention_dropout=0.,
                  droppath=0.,
-                 train_from_scratch=False,
-                 config=None):
-        super(VisualTransformer, self).__init__()
+                 train_from_scratch=False):
+        super().__init__()
         # create patch embedding with positional embedding
         self.patch_embedding = PatchEmbedding(image_size,
                                               patch_size,
@@ -411,17 +401,17 @@ class VisualTransformer(nn.Layer):
             w_attr_1, b_attr_1 = self._init_weights()
             w_attr_2, b_attr_2 = self._init_weights()
             self.classifier = nn.Sequential(
-                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                          config.MODEL.TRANS.HIDDEN_SIZE,
+                nn.Linear(embed_dim,
+                          embed_dim,
                           weight_attr=w_attr_1,
                           bias_attr=b_attr_1),
                 nn.ReLU(),
-                nn.Dropout(config.MODEL.DROPOUT),
-                nn.Linear(config.MODEL.TRANS.HIDDEN_SIZE,
-                          config.MODEL.NUM_CLASSES,
+                nn.Dropout(dropout),
+                nn.Linear(embed_dim,
+                          num_classes,
                           weight_attr=w_attr_2,
                           bias_attr=b_attr_2),
-                nn.Dropout(config.MODEL.DROPOUT),
+                nn.Dropout(dropout),
             )
         else:
             # classifier head (for finetuning)
@@ -433,22 +423,23 @@ class VisualTransformer(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.KaimingUniform())
+            initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
         bias_attr = paddle.ParamAttr(
-            initializer=paddle.nn.initializer.KaimingUniform())
+            initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
         x = self.patch_embedding(x)
-        x, attn = self.encoder(x)
+        x = self.encoder(x)
         logits = self.classifier(x[:, 0])  # take only cls_token as classifier
         return logits
 
 
 def build_vit(config):
+    """build vit model from config"""
     model = VisualTransformer(image_size=config.DATA.IMAGE_SIZE,
                               patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                              in_channels=3,
+                              in_channels=config.DATA.IMAGE_CHANNELS,
                               num_classes=config.MODEL.NUM_CLASSES,
                               embed_dim=config.MODEL.TRANS.EMBED_DIM,
                               depth=config.MODEL.TRANS.DEPTH,
@@ -459,6 +450,5 @@ def build_vit(config):
                               dropout=config.MODEL.DROPOUT,
                               attention_dropout=config.MODEL.ATTENTION_DROPOUT,
                               droppath=config.MODEL.DROPPATH,
-                              train_from_scratch=False,
-                              config=config)
+                              train_from_scratch=False)
     return model
