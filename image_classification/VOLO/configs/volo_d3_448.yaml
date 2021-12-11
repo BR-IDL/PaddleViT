@@ -1,0 +1,14 @@
+DATA:
+    IMAGE_SIZE: 448
+    CROP_PCT: 1.0
+MODEL:
+    TYPE: volo
+    NAME: volo_d3_448
+    TRANS:
+        LAYERS: [8, 8, 16, 4]
+        EMBED_DIMS: [256, 512, 512, 512]
+        NUM_HEADS: [8, 16, 16, 16]
+        MLP_RATIOS: [3, 3, 3, 3]
+        DOWNSAMPLES: [True, False, False, False]
+        OUTLOOK_ATTENTION: [True, False, False, False]
+    STEM_HIDDEN_DIM: 64

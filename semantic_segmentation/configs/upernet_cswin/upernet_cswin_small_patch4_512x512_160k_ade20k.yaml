@@ -1,0 +1,64 @@
+DATA:
+    BATCH_SIZE: 1  # per GPU [total bs is set to 8 or 16]
+    BATCH_SIZE_VAL: 1  # per GPU
+    DATASET: 'ADE20K' # dataset name
+    DATA_PATH: '/home/ssd3/wutianyi/datasets/ADEChallengeData2016'
+    CROP_SIZE: (512,512)  # input_size (training)
+    NUM_CLASSES: 150
+MODEL:
+    NAME: 'UperNet_CSwin'
+    DROPOUT: 0.0   # dropout rate for linear projection
+    ATTENTION_DROPOUT: 0.0  # dropout rate for attention
+    DROP_PATH: 0.2
+    ENCODER:
+        TYPE: 'CSwinTransformer'
+        OUT_INDICES: [0, 1, 2, 3]   # stage_i
+    PRETRAINED: './pretrain_models/backbones/cswin_small_224.pdparams'
+    DECODER_TYPE: 'UperHead'
+    UPERHEAD:
+        IN_CHANNELS: [64, 128, 256, 512]
+        IN_INDEX: [0, 1, 2, 3]
+        POOL_SCALES: [1, 2, 3, 6]
+        CHANNELS: 512
+        DROP_RATIO: 0.1
+        ALIGN_CORNERS: False
+    TRANS:
+        PATCH_SIZE: 4
+        IN_CHANNELS: 3
+        HIDDEN_SIZE: 64  # 64(tiny, small), 96(base), 144(large)
+        EMBED_DIM: 64
+        STAGE_DEPTHS: [2, 4, 32, 2]
+        NUM_HEADS: [2, 4, 8, 16]
+        SPLIT_SIZES: [1, 2, 7, 7]       # cswin
+        MLP_RATIO: 4
+        QKV_BIAS: True
+        QK_SCALE: None
+        APE: False  # absolute positional embeddings
+        PATCH_NORM: True
+    AUX:
+        AUXIHEAD: True
+    AUXFCN:
+        IN_CHANNELS: 256   # channel of the 1/16 resolution features
+        UP_RATIO: 16
+
+TRAIN:
+    BASE_LR: 0.00006
+    END_LR: 1e-4
+    DECODER_LR_COEF: 10.0
+    ITERS: 160000
+    POWER: 0.9
+    DECAY_STEPS: 160000
+    LR_SCHEDULER:
+        NAME: 'PolynomialDecay'
+    OPTIMIZER:
+        WEIGHT_DECAY: 0.0
+        GRAD_CLIP: 1.0
+        NAME: 'SGD'
+        MOMENTUM: 0.9
+VAL:
+    MULTI_SCALES_VAL: False
+    SCALE_RATIOS: [0.5, 0.75, 1.0]
+    IMAGE_BASE_SIZE: 512
+    CROP_SIZE: [512,512]
+    STRIDE_SIZE: [341,341]
+SAVE_DIR: "./output/UperNet_cswin_small_patch4_512x512_160k_ade20k"

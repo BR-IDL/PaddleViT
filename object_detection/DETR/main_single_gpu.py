@@ -40,6 +40,8 @@ parser.add_argument('-data_path', type=str, default='/dataset/coco/')
 parser.add_argument('-backbone', type=str, default=None)
 parser.add_argument('-ngpus', type=int, default=None)
 parser.add_argument('-pretrained', type=str, default=None)
+parser.add_argument('-resume', type=str, default=None)
+parser.add_argument('-last_epoch', type=int, default=None)
 parser.add_argument('-eval', action='store_true')
 args = parser.parse_args()
 
@@ -151,7 +153,8 @@ def validate(dataloader, model, criterion, postprocessors, base_ds, total_batch,
             # coco evaluate
             orig_target_sizes = paddle.stack([t['orig_size'] for t in targets], axis=0)
             results = postprocessors['bbox'](outputs, orig_target_sizes)
-            res = {target['image_id'].cpu().numpy()[0]: output for target, output in zip(targets, results)}
+            #res = {target['image_id'].cpu().numpy()[0]: output for target, output in zip(targets, results)}
+            res = {target['image_id']: output for target, output in zip(targets, results)}
             if coco_evaluator is not None:
                 coco_evaluator.update(res)
 

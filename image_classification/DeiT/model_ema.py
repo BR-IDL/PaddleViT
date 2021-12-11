@@ -56,3 +56,6 @@ class ModelEma:
     def set(self, model):
         self._update(model, update_fn=lambda e, m: m)
 
+    def state_dict(self):
+        return self.module.state_dict()
+

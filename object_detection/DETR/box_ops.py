@@ -1,4 +1,31 @@
+import numpy as np
 import paddle
+
+
+def box_xyxy_to_cxcywh_numpy(box):
+    """convert box from top-left/bottom-right format:
+    [x0, y0, x1, y1]
+    to center-size format:
+    [center_x, center_y, width, height]
+
+    Args:
+        box: numpy array, last_dim=4, stop-left/bottom-right format boxes
+    Return:
+        numpy array, last_dim=4, center-size format boxes
+    """
+
+    #x0, y0, x1, y1 = box.unbind(-1)
+    x0 = box[:, 0]
+    y0 = box[:, 1]
+    x1 = box[:, 2]
+    y1 = box[:, 3]
+    xc = x0 + (x1-x0)/2
+    yc = y0 + (y1-y0)/2
+    w = x1 - x0
+    h = y1 - y0
+    return np.stack([xc, yc, w, h], axis=-1)
+
+
 
 def box_cxcywh_to_xyxy(box):
     """convert box from center-size format:

@@ -1,0 +1,18 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: ViP
+    NAME: vip_l7
+    MIXER:
+        LAYER: [8, 8, 16, 4]
+        TRANSITIONS: [True, False, False, False]
+        SEGMENT_DIM: [32, 16, 16, 16]
+        EMBED_DIMS: [256, 512, 512, 512]
+    DROPPATH: 0.3
+    DROPOUT: 0.0
+    ATTENTION_DROPOUT: 0.0
+TRAIN:
+    BASE_LR: 1e-3
+    LINEAR_SCALED_LR: 1024
+    WEIGHT_DECAY: 5e-2

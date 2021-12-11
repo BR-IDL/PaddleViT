@@ -21,8 +21,14 @@ from transformer import build_vit
 from config import *
 
 
-config = get_config('./configs/vit_base_patch16_224.yaml')
-print(config)
+#model_name = 'vit_base_patch32_224'
+#model_name = 'vit_base_patch32_384'
+
+model_name = 'vit_large_patch32_384'
+#model_name = 'vit_large_patch16_384'
+sz = int(model_name[-3::])
+
+config = get_config(f'./configs/{model_name}.yaml')
 
 
 def print_model_named_params(model):
@@ -47,7 +53,13 @@ def torch_to_paddle_mapping():
         ('patch_embed.proj', f'{prefix}.patch_embedding'),
     ]
 
-    num_layers = 12
+    if 'large' in model_name:
+        num_layers = 24
+    elif 'base' in model_name:
+        num_layers = 12
+    else:
+        raise ValueError('now only support large and base model conversion')
+
     for idx in range(num_layers):
         pp_prefix = f'encoder.layers.{idx}'
         th_prefix = f'blocks.{idx}'
@@ -129,7 +141,8 @@ def main():
 
     print('+++++++++++++++++++++++++++++++++++')
     device = torch.device('cpu')
-    torch_model = timm.create_model('vit_base_patch16_224', pretrained=True)
+    torch_model = timm.create_model(model_name, pretrained=True)
+    #torch_model = timm.create_model('vit_base_patch16_224', pretrained=True)
     torch_model = torch_model.to(device)
     torch_model.eval()
     print_model_named_params(torch_model)
@@ -139,7 +152,8 @@ def main():
     paddle_model = convert(torch_model, paddle_model)
 
     # check correctness
-    x = np.random.randn(2, 3, 224, 224).astype('float32')
+    x = np.random.randn(2, 3, sz, sz).astype('float32')
+    #x = np.random.randn(2, 3, 224, 224).astype('float32')
     x_paddle = paddle.to_tensor(x)
     x_torch = torch.Tensor(x).to(device)
 
@@ -156,7 +170,8 @@ def main():
     assert np.allclose(out_torch, out_paddle, atol = 1e-5)
     
     # save weights for paddle model
-    model_path = os.path.join('./vit_base_patch16_224.pdparams')
+    model_path = os.path.join(f'./{model_name}.pdparams')
+    #model_path = os.path.join('./vit_base_patch16_224.pdparams')
     paddle.save(paddle_model.state_dict(), model_path)
     print('all done')
 

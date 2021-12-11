@@ -1,6 +1,6 @@
 DATA:
     BATCH_SIZE: 2  # per GPU [total bs is set to 8 or 16]
-    BATCH_SIZE_VAL: 1  # per GPU
+    BATCH_SIZE_VAL: 4  # per GPU
     DATASET: 'ADE20K' # dataset name
     DATA_PATH: '/home/ssd3/wutianyi/datasets/ADEChallengeData2016'
     CROP_SIZE: (512,512)  # input_size (training)
@@ -42,14 +42,14 @@ TRAIN:
     BASE_LR: 0.00006
     END_LR: 1e-4
     DECODER_LR_COEF: 10.0
-    GRAD_CLIP: 1.0
     ITERS: 160000
-    WEIGHT_DECAY: 0.0
     POWER: 0.9
     DECAY_STEPS: 160000
     LR_SCHEDULER:
         NAME: 'PolynomialDecay'
     OPTIMIZER:
+        WEIGHT_DECAY: 0.0
+        GRAD_CLIP: 1.0
         NAME: 'SGD'
         MOMENTUM: 0.9
 VAL:

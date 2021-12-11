@@ -4,7 +4,7 @@ DATA:
     
 MODEL:
     TYPE: cait
-    NAME: cait_s24_284
+    NAME: cait_s24_384
     TRANS:
         PATCH_SIZE: 16
         EMBED_DIM: 384

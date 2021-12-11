@@ -33,6 +33,7 @@ _C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
+_C.DATA.IMAGE_CHANNELS = 3 # input image channels
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 2 # number of data loading threads 
 
@@ -53,6 +54,7 @@ _C.MODEL.TRANS.PATCH_SIZE = 32
 _C.MODEL.TRANS.EMBED_DIM = 768
 _C.MODEL.TRANS.MLP_RATIO= 4.0
 _C.MODEL.TRANS.NUM_HEADS = 12
+_C.MODEL.TRANS.ATTN_HEAD_SIZE = None
 _C.MODEL.TRANS.DEPTH = 12
 _C.MODEL.TRANS.QKV_BIAS = True
 
@@ -88,6 +90,7 @@ _C.REPORT_FREQ = 100 # freq to logging info
 _C.VALIDATE_FREQ = 100 # freq to do validation
 _C.SEED = 0
 _C.EVAL = False # run evaluation only
+_C.AMP = False # mix precision training
 _C.LOCAL_RANK = 0
 _C.NGPUS = -1
 
@@ -104,6 +107,7 @@ def _update_config_from_file(config, cfg_file):
     print('merging config from {}'.format(cfg_file))
     config.merge_from_file(cfg_file)
     config.freeze()
+
 
 def update_config(config, args):
     """Update config by ArgumentParser
@@ -133,7 +137,12 @@ def update_config(config, args):
     if args.resume:
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
-        config.MODEL.LAST_EPOCH = args.last_epoch
+        config.TRAIN.LAST_EPOCH = args.last_epoch
+    if args.amp: # only during training
+        if config.EVAL is True:
+            config.AMP = False
+        else:
+            config.AMP = True
 
     #config.freeze()
     return config
