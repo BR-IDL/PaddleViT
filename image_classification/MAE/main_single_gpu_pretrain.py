@@ -46,6 +46,7 @@ def get_arguments():
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
     parser.add_argument('-eval', action='store_true')
+    parser.add_argument('-mae_pretrain', action='store_true')
     parser.add_argument('-amp', action='store_true')
     arguments = parser.parse_args()
     return arguments
@@ -71,12 +72,14 @@ def get_logger(filename, logger_name=None):
 
 
 def train(dataloader,
+          patch_size,
           model,
           criterion,
           optimizer,
           epoch,
           total_epochs,
           total_batch,
+          normalize_target=True,
           debug_steps=100,
           accum_iter=1,
           amp=False,
@@ -105,33 +108,54 @@ def train(dataloader,
     time_st = time.time()
 
     for batch_id, data in enumerate(dataloader):
-        image = data[0]
+        images = data[0]
+        masks = paddle.to_tensor(data[1], dtype='bool')
+
+        with paddle.no_grad():
+            mean = paddle.to_tensor([0.485, 0.456, 0.406]).reshape([1, 3, 1, 1])
+            std = paddle.to_tensor([0.229, 0.224, 0.225]).reshape([1, 3, 1, 1])
+            unnorm_images = images * std + mean
+            B, C, H, W = images.shape
+            if normalize_target:
+                images_patch = unnorm_images.reshape([B, C, H//patch_size, patch_size, W//patch_size, patch_size])
+                images_patch = images_patch.transpose([0, 2, 4, 3, 5, 1])
+                images_patch = unnorm_images.reshape([B, -1, patch_size * patch_size, C])
+                images_patch = (images_patch - images_patch.mean(axis=-2, keepdim=True)) / (
+                    images_patch.var(axis=-2, keepdim=True).sqrt() + 1e-6) 
+                images_patch = images_patch.flatten(-2)
+            else:
+                images_patch = unnorm_images.reshape([B, C, H//patch_size, patch_size, W//patch_size, patch_size])
+                images_patch = images_patch.transpose([0, 2, 4, 3, 5, 1])
+                images_patch = unnorm_images.reshape([B, -1, patch_size * patch_size, C])
+                images_patch = images_patch.flatten(-2)
+
+            B, _, C = images_patch.shape
+            labels = images_patch[masks[:, 1:]].reshape([B, -1, C])
 
         if amp is True:
             with paddle.amp.auto_cast():
-                reconstructed_image, masked_image = model(image)
-                loss = criterion(reconstructed_image, masked_image)
+                reconstructed_patches = model(images, masks)
+                loss = criterion(reconstructed_patches, labels)
             scaled = scaler.scale(loss)
             scaled.backward()
 
             if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 scaler.minimize(optimizer, scaled)
                 optimizer.clear_grad()
-
         else:
-            reconstructed_image, masked_image = model(image)
-            loss = criterion(reconstructed_image, masked_image)
+            reconstructed_patches = model(images, masks)
+            loss = criterion(reconstructed_patches, labels)
             # NOTE: division may be needed depending on the loss function
             # Here no division is needed:
             # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
             # loss =  loss / accum_iter
             loss.backward()
 
-            if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
+            if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 optimizer.step()
                 optimizer.clear_grad()
 
-        batch_size = image.shape[0]
+        batch_size = images.shape[0]
         train_loss_meter.update(loss.numpy()[0], batch_size)
 
         if logger and batch_id % debug_steps == 0:
@@ -249,16 +273,18 @@ def main():
         # train
         logging.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
         train_loss, train_time = train(dataloader=dataloader_train,
-                                                  model=model,
-                                                  criterion=criterion,
-                                                  optimizer=optimizer,
-                                                  epoch=epoch,
-                                                  total_epochs=config.TRAIN.NUM_EPOCHS,
-                                                  total_batch=len(dataloader_train),
-                                                  debug_steps=config.REPORT_FREQ,
-                                                  accum_iter=config.TRAIN.ACCUM_ITER,
-                                                  amp=config.AMP,
-                                                  logger=logger)
+                                       patch_size=config.MODEL.TRANS.PATCH_SIZE,
+                                       model=model,
+                                       criterion=criterion,
+                                       optimizer=optimizer,
+                                       epoch=epoch,
+                                       total_epochs=config.TRAIN.NUM_EPOCHS,
+                                       total_batch=len(dataloader_train),
+                                       normalize_target=config.TRAIN.NORMALIZE_TARGET,
+                                       debug_steps=config.REPORT_FREQ,
+                                       accum_iter=config.TRAIN.ACCUM_ITER,
+                                       amp=config.AMP,
+                                       logger=logger)
         scheduler.step()
 
         logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +

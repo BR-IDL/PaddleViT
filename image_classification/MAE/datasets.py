@@ -23,6 +23,7 @@ from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
 from rand_augment import rand_augment_policy_original
 from rand_augment import RandAugment
+from masking_generator import RandomMaskingGenerator
 
 class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
@@ -41,7 +42,15 @@ class ImageNet2012Dataset(Dataset):
         super(ImageNet2012Dataset, self).__init__()
         assert mode in ["train", "val"]
         self.file_folder = file_folder
-        self.transform = transform
+
+        if isinstance(transform, tuple):
+            # training: transform = [transform, mask_generator]
+            self.transform = transform[0]
+            self.mask_generator = transform[1] # if mae finetune, mask_generator is None
+        else:
+            # val: transform = transform
+            self.transform = transform
+            self.mask_generator = None
         self.img_path_list = []
         self.label_list = []
 
@@ -64,9 +73,16 @@ class ImageNet2012Dataset(Dataset):
     def __getitem__(self, index):
         data = image_load(self.img_path_list[index]).convert('RGB')
         data = self.transform(data)
-        label = self.label_list[index]
+        if self.mask_generator is not None:
+            mask = self.mask_generator()
+        else:
+            mask = None
 
-        return data, label
+        if mask is None:
+            label = self.label_list[index]
+            return data, label
+        else:
+            return data, mask
 
 
 def get_train_transforms(config):
@@ -86,14 +102,24 @@ def get_train_transforms(config):
     aug_op_list.append(transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
                                      scale=(0.05, 1.0)))
     # use RandAug (9, 0.5) only during finetuning
-    if config.TRAIN.RAND_AUGMENT:
-        policy = rand_augment_policy_original(config.TRAIN.RAND_AUGMENT_MAGNITUDE)
-        rand_augment = RandAugment(policy, config.TRAIN.RAND_AUGMENT_LAYERS)
-        aug_op_list.append(rand_augment)
+    if not config.MODEL.MAE_PRETRAIN:
+        if config.TRAIN.RAND_AUGMENT:
+            policy = rand_augment_policy_original(config.TRAIN.RAND_AUGMENT_MAGNITUDE)
+            rand_augment = RandAugment(policy, config.TRAIN.RAND_AUGMENT_LAYERS)
+            aug_op_list.append(rand_augment)
     aug_op_list.append(transforms.ToTensor())
     aug_op_list.append(transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
     transforms_train = transforms.Compose(aug_op_list)
-    return transforms_train
+
+    if config.MODEL.MAE_PRETRAIN:
+        # for MAE pretraining
+        mask_generator = RandomMaskingGenerator(
+            input_size=config.DATA.IMAGE_SIZE // config.MODEL.TRANS.PATCH_SIZE,
+            mask_ratio=config.MODEL.TRANS.MASK_RATIO)
+    else:
+        mask_generator = None
+
+    return (transforms_train, mask_generator)
 
 
 def get_val_transforms(config):

@@ -28,6 +28,8 @@ import paddle.distributed as dist
 from datasets import get_dataloader
 from datasets import get_dataset
 from transformer import build_mae_finetune as build_model
+from losses import LabelSmoothingCrossEntropyLoss
+from losses import SoftTargetCrossEntropyLoss
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from utils import get_exclude_from_weight_decay_fn
@@ -49,6 +51,7 @@ def get_arguments():
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
     parser.add_argument('-eval', action='store_true')
+    parser.add_argument('-mae_pretrain', action='store_true')
     parser.add_argument('-amp', action='store_true')
     arguments = parser.parse_args()
     return arguments

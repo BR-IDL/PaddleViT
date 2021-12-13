@@ -35,7 +35,7 @@ _C.DATA.DATASET = 'imagenet2012'  # dataset name
 _C.DATA.IMAGE_SIZE = 224  # input image size: 224 for pretrain, 384 for finetune
 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.CROP_PCT = 0.875
-_C.DATA.NUM_WORKERS = 2  # number of data loading threads
+_C.DATA.NUM_WORKERS = 4  # number of data loading threads
 
 # model settings
 _C.MODEL = CN()
@@ -47,6 +47,7 @@ _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.1
 _C.MODEL.DROPPATH = 0.1
 _C.MODEL.ATTENTION_DROPOUT = 0.1
+_C.MODEL.MAE_PRETRAIN = False
 
 # transformer settings
 _C.MODEL.TRANS = CN()
@@ -73,9 +74,10 @@ _C.TRAIN.WEIGHT_DECAY = 0.05  # 0.3 # 0.0 for finetune
 _C.TRAIN.BASE_LR = 1.5e-4  # 0.003 for pretrain # 0.03 for finetune
 _C.TRAIN.WARMUP_START_LR = 1e-6  # 0.0
 _C.TRAIN.END_LR = 5e-4
-_C.TRAIN.GRAD_CLIP = 1.0
+_C.TRAIN.GRAD_CLIP = None
 _C.TRAIN.ACCUM_ITER = 2  # 1
 _C.TRAIN.LINEAR_SCALED_LR = None
+_C.TRAIN.NORMALIZE_TARGET = True
 
 # train augmentation (only for finetune)
 _C.TRAIN.SMOOTHING = 0.1
@@ -154,6 +156,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE_EVAL = args.batch_size
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
+    if args.mae_pretrain:
+        config.MODEL.MAE_PRETRAIN = args.mae_pretrain
     if args.resume:
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
