@@ -5,6 +5,7 @@ MODEL:
     TYPE: MAE
     NAME: vit_base_patch16_224
     DROPPATH: 0.0
+    MAE_PRETRAIN: True
     TRANS:
         PATCH_SIZE: 16
         MLP_RATIO: 4.0

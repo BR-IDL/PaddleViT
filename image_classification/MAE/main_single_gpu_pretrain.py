@@ -117,16 +117,16 @@ def train(dataloader,
             unnorm_images = images * std + mean
             B, C, H, W = images.shape
             if normalize_target:
-                images_patch = unnorm_images.reshape([B, C, H//patch_size, patch_size, W//patch_size, patch_size])
+                images_patch = unnorm_images.reshape([B, C, H // patch_size, patch_size, W // patch_size, patch_size])
                 images_patch = images_patch.transpose([0, 2, 4, 3, 5, 1])
-                images_patch = unnorm_images.reshape([B, -1, patch_size * patch_size, C])
+                images_patch = images_patch.reshape([B, -1, patch_size * patch_size, C])
                 images_patch = (images_patch - images_patch.mean(axis=-2, keepdim=True)) / (
-                    images_patch.var(axis=-2, keepdim=True).sqrt() + 1e-6) 
+                        images_patch.var(axis=-2, keepdim=True).sqrt() + 1e-6)
                 images_patch = images_patch.flatten(-2)
             else:
                 images_patch = unnorm_images.reshape([B, C, H//patch_size, patch_size, W//patch_size, patch_size])
                 images_patch = images_patch.transpose([0, 2, 4, 3, 5, 1])
-                images_patch = unnorm_images.reshape([B, -1, patch_size * patch_size, C])
+                images_patch = images_patch.reshape([B, -1, patch_size * patch_size, C])
                 images_patch = images_patch.flatten(-2)
 
             B, _, C = images_patch.shape
