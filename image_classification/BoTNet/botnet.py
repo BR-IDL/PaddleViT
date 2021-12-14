@@ -1,40 +1,16 @@
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-"""
-Implement Transformer Class for BoTNet
-"""
-
 import paddle
 import paddle.nn as nn
-import paddlenlp
-from einops import rearrange
 from resnet import resnet50
+import numpy as np
+from einops import rearrange
 
 def expand_dim(t, dim, k):
-    """
-    Expand dims for t at dim to k
-    """
     t = t.unsqueeze(axis=dim)
     expand_shape = [-1] * len(t.shape)
     expand_shape[dim] = k
     return paddle.expand(t, expand_shape)
 
 def rel_to_abs(x):
-    """
-    x_tensor: [B, Nh * H, L, 2L - 1]
-    Convert relative position between the key and query to their absolute position respectively.
-    Tensowflow source code in the appendix of: https://arxiv.org/pdf/1904.09925.pdf
-    """
     B, Nh, L, _ = x.shape
     # pad to shift from relative to absolute indexing
     col_pad = paddle.zeros([B, Nh, L, 1])
@@ -47,14 +23,8 @@ def rel_to_abs(x):
     return final_x[:, :, :L, L - 1 :]
 
 def relative_logits_1d(q, rel_k):
-    """
-    q: [B, Nh, H, W, d]
-    rel_k: [2W - 1, d]
-    Computes relative logits along one dimension.
-    The details of relative position is explained in: https://arxiv.org/pdf/1803.02155.pdf
-    """
     B, Nh, H, W, _ = q.shape
-    rel_logits = paddlenlp.ops.einsum("b n h w d, m d -> b n h w m", q, rel_k)
+    rel_logits = paddle.matmul(q, rel_k.T)
     # Collapse height and heads
     rel_logits = paddle.reshape(rel_logits, [-1, Nh * H, W, 2 * W - 1])
     rel_logits = rel_to_abs(rel_logits)
@@ -63,13 +33,10 @@ def relative_logits_1d(q, rel_k):
     return rel_logits
 
 class RelPosEmb(nn.Layer):
-    """
-    relative position embedding
-    """
-    def __init__(self,
-                 height,
-                 width,
-                 dim_head):
+    def __init__(self, 
+                height, 
+                width, 
+                dim_head):
         super().__init__()
         scale = dim_head ** -0.5
         self.height = height
@@ -82,7 +49,7 @@ class RelPosEmb(nn.Layer):
         self.rel_width = paddle.create_parameter(
             tmp_w.shape, dtype='float32', default_initializer=paddle.nn.initializer.Assign(tmp_w)
         )
-
+    
     def forward(self, q):
         h = self.height
         w = self.width
@@ -98,22 +65,19 @@ class RelPosEmb(nn.Layer):
         tmp_h = rel_logits_h.numpy()
         rel_logits_h = paddle.to_tensor(rearrange(tmp_h, "b h x i y j -> b h (y x) (j i)"))
         return rel_logits_w + rel_logits_h
-
+    
 class BoTBlock(nn.Layer):
-    """
-    botblock
-    """
     def __init__(self,
-                 dim,
-                 fmap_size,
-                 dim_out,
-                 stride=1,
-                 heads=4,
-                 proj_factor=4,
-                 dim_qk=128,
-                 dim_v=128,
-                 rel_pos_emb=False,
-                 activation=nn.ReLU(),):
+                dim,
+                fmap_size,
+                dim_out,
+                stride=1,
+                heads=4,
+                proj_factor=4,
+                dim_qk=128,
+                dim_v=128,
+                rel_pos_emb=False,
+                activation=nn.ReLU(),):
         super().__init__()
         if dim != dim_out or stride != 1:
             self.shortcut = nn.Sequential(
@@ -155,16 +119,13 @@ class BoTBlock(nn.Layer):
         return self.activation(featuremap)
 
 class MHSA(nn.Layer):
-    """
-    The details of relative position is explained in: https://arxiv.org/abs/2101.11605v1
-    """
-    def __init__(self,
-                 dim,
-                 fmap_size,
-                 heads=4,
-                 dim_qk=128,
-                 dim_v=128,
-                 rel_pos_emb=False):
+    def __init__(self, 
+                dim, 
+                fmap_size, 
+                heads=4, 
+                dim_qk=128, 
+                dim_v=128, 
+                rel_pos_emb=False):
         super().__init__()
         self.scale = dim_qk ** -0.5
         self.heads = heads
@@ -185,37 +146,33 @@ class MHSA(nn.Layer):
         v = self.to_v(featuremap)
         tmp_q, tmp_k, tmp_v = q.numpy(), k.numpy(), v.numpy()
         q, k, v = map(
-            lambda x: paddle.to_tensor(rearrange(x, "B (h d) H W -> B h (H W) d", h=heads)),
-            (tmp_q, tmp_k, tmp_v)
+            lambda x: paddle.to_tensor(rearrange(x, "B (h d) H W -> B h (H W) d", h=heads)), (tmp_q, tmp_k, tmp_v)
         )
-
+        
         q *= self.scale
 
-        logits = paddlenlp.ops.einsum("b h x d, b h y d -> b h x y", q, k)
+        logits = paddle.matmul(q, paddle.transpose(k, perm=[0, 1, 3, 2]))
         logits += self.pos_emb(q)
-
+        
         weights = self.softmax(logits)
-        attn_out = paddlenlp.ops.einsum("b h x y, b h y d -> b h x d", weights, v)
+        attn_out = paddle.matmul(weights, v)
         tmp_out = attn_out.numpy()
         attn_out = paddle.to_tensor(rearrange(tmp_out, "B h (H W) d -> B (h d) H W", H=H))
         return attn_out
 
 class BoTStack(nn.Layer):
-    """
-    botstack
-    """
     def __init__(self,
-                 dim,
-                 fmap_size,
-                 dim_out=2048,
-                 heads=4,
-                 proj_factor=4,
-                 num_layers=3,
-                 stride=2,
-                 dim_qk=128,
-                 dim_v=128,
-                 rel_pos_emb=False,
-                 activation=nn.ReLU(),):
+                dim,
+                fmap_size,
+                dim_out=2048,
+                heads=4,
+                proj_factor=4,
+                num_layers=3,
+                stride=2,
+                dim_qk=128,
+                dim_v=128,
+                rel_pos_emb=False,
+                activation=nn.ReLU(),):
         super().__init__()
 
         self.dim = dim
@@ -253,13 +210,12 @@ class BoTStack(nn.Layer):
         assert h == self.fmap_size[0] and w == self.fmap_size[1]
         return self.net(x)
 
-def botnet50(
-        image_size=224,
-        fmap_size=(14, 14),
-        num_classes=1000,
-        embed_dim=2048,
-        pretrained=False,
-        **kwargs):
+def botnet50(pretrained=False, 
+            image_size=224, 
+            fmap_size=(14, 14), 
+            num_classes=1000, 
+            embed_dim=2048,
+            **kwargs):
     resnet = resnet50(pretrained=False, **kwargs)
     layer = BoTStack(dim=1024, dim_out=embed_dim, fmap_size=fmap_size, stride=1, rel_pos_emb=True)
     backbone = list(resnet.children())
@@ -281,6 +237,5 @@ def build_botnet50(config):
         fmap_size=config.DATA.FMAP_SIZE,
         num_classes=config.MODEL.NUM_CLASSES,
         embed_dim=config.MODEL.TRANS.EMBED_DIM,
-        pretrained=config.MODEL.PRETRAINED,
     )
     return model
