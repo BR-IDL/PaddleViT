@@ -18,7 +18,7 @@ English | [简体中文](./README_cn.md)
 
 :robot: PaddleViT provides models and tools for multiple vision tasks, such as classifications, object detection, semantic segmentation, GAN, and more. Each model architecture is defined in standalone python module and can be modified to enable quick research experiments. At the same time, pretrained weights can be downloaded and used to finetune on your own datasets. PaddleViT also integrates popular tools and modules for custimized dataset, data preprocessing, performance metrics, DDP and more.
 
-:robot: PaddleViT is backed by popular deep learning framework [PaddlePaddle](https://www.paddlepaddle.org/), we also provide tutorials and projects on [Paddle AI Studio](https://aistudio.baidu.com/aistudio/index). It's intuitive and straightforward to get started for new users.
+:robot: PaddleViT is backed by popular deep learning framework [PaddlePaddle](https://www.paddlepaddle.org/), we also provide tutorials and projects on [Paddle AI Studio](https://aistudio.baidu.com/aistudio/course/introduce/25102). It's intuitive and straightforward to get started for new users.
 
 
 ## Quick Links ##
@@ -30,7 +30,7 @@ PaddleViT implements model architectures and tools for multiple vision tasks, go
   
 We also provide tutorials:
 - Notebooks (coming soon)
-- Online Course (coming soon)
+- [Online Course](https://aistudio.baidu.com/aistudio/course/introduce/25102): on Paddle AIStudio (in chinese version)
 
 ## Features ##
 1. **State-of-the-art**
