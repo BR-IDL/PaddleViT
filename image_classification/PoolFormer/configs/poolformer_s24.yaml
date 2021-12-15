@@ -1,0 +1,10 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
+MODEL:
+    TYPE: poolformer
+    NAME: poolformer_s24
+    TRANS:
+        LAYERS: [4, 4, 12, 4]
+        EMBED_DIMS: [64, 128, 320, 512]
+
