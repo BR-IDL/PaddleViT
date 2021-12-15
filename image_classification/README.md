@@ -6,6 +6,7 @@ PaddlePaddle training/validation code and pretrained models for **Image Classifi
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
+* Update (2021-12-15): Add PoolFormer model.
 * Update (2021-12-09): Add HaloNet model.
 * Update (2021-12-08): Add PiT model.
 * Update (2021-12-08): Add XCiT model.
@@ -42,6 +43,7 @@ This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.g
 11. **[XCiT](./XCiT)**
 11. **[PiT](./PiT)**
 11. **[HaloNet](./HaloNet)**
+11. **[PoolFormer](./PoolFormer)**
 13. **[MLP-Mixer](./MLP-Mixer)**
 14. **[ResMLP](./ResMLP)**
 15. **[gMLP](./gMLP)**
@@ -133,7 +135,8 @@ PaddleViT now provides the following **transfomer based models**:
 14. **[ViP](./ViP)** (from Oxford/ByteDance), released with [Visual Parser: Representing Part-whole Hierarchies with Transformers](https://arxiv.org/abs/2107.05790), by Shuyang Sun, Xiaoyu Yue, Song Bai, Philip Torr.
 15. **[XCiT](./XCiT)** (from Facebook/Inria/Sorbonne), released with paper [XCiT: Cross-Covariance Image Transformers](https://arxiv.org/abs/2106.09681), by Alaaeldin El-Nouby, Hugo Touvron, Mathilde Caron, Piotr Bojanowski, Matthijs Douze, Armand Joulin, Ivan Laptev, Natalia Neverova, Gabriel Synnaeve, Jakob Verbeek, Hervé Jegou.
 16. **[PiT](./PiT)** (from NAVER/Sogan University), released with paper [Rethinking Spatial Dimensions of Vision Transformers](https://arxiv.org/abs/2103.16302), by Byeongho Heo, Sangdoo Yun, Dongyoon Han, Sanghyuk Chun, Junsuk Choe, Seong Joon Oh.
-17. **[HaloNet](./HaloNet)**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.11. **[PiT](./PiT)**
+17. **[HaloNet](./HaloNet)**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.11. 
+18. **[PoolFormer](./PoolFormer)**, (from Sea AI Lab/NUS), released with paper [MetaFormer is Actually What You Need for Vision](https://arxiv.org/abs/2111.11418), by Weihao Yu, Mi Luo, Pan Zhou, Chenyang Si, Yichen Zhou, Xinchao Wang, Jiashi Feng, Shuicheng Yan.
 
 
 PaddleViT now provides the following **MLP based models**:
