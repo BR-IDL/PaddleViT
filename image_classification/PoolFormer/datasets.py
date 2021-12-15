@@ -19,8 +19,12 @@ Cifar10, Cifar100 and ImageNet2012 are supported
 
 import os
 import math
+from PIL import Image
 from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
+from auto_augment import auto_augment_policy_original
+from auto_augment import AutoAugment
+from random_erasing import RandomErasing
 
 class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
@@ -60,7 +64,7 @@ class ImageNet2012Dataset(Dataset):
         return len(self.label_list)
 
     def __getitem__(self, index):
-        data = image_load(self.img_path_list[index]).convert('RGB')
+        data = Image.open(self.img_path_list[index]).convert('RGB')
         data = self.transform(data)
         label = self.label_list[index]
 
@@ -79,14 +83,32 @@ def get_train_transforms(config):
     Returns:
         transforms_train: training transforms
     """
-
-    transforms_train = transforms.Compose([
+    aug_op_list = []
+    # random crop and resize
+    aug_op_list.append(
         transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
-                                     scale=(0.05, 1.0)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+                                     scale=(0.05, 1.0)))
+    # auto_augment / color jitter
+    if config.TRAIN.AUTO_AUGMENT:
+        policy = auto_augment_policy_original()
+        auto_augment = AutoAugment(policy)
+        aug_op_list.append(auto_augment)
+    else:
+        jitter = (float(config.TRAIN.COLOR_JITTER),) * 3
+        aug_op_list.append(transforms.ColorJitter(jitter))
+    # other ops
+    aug_op_list.append(transforms.ToTensor())
+    aug_op_list.append(transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                            std=[0.229, 0.224, 0.225]))
+    # random erasing
+    if config.TRAIN.RANDOM_ERASE_PROB > 0.:
+        random_erasing = RandomErasing(prob=config.TRAIN.RANDOM_ERASE_PROB,
+                                       mode=config.TRAIN.RANDOM_ERASE_MODE,
+                                       max_count=config.TRAIN.RANDOM_ERASE_COUNT,
+                                       num_splits=config.TRAIN.RANDOM_ERASE_SPLIT)
+        aug_op_list.append(random_erasing)
+
+    transforms_train = transforms.Compose(aug_op_list)
     return transforms_train
 
 
@@ -109,8 +131,8 @@ def get_val_transforms(config):
         transforms.Resize(scale_size, 'bicubic'), # single int for resize shorter side of image
         transforms.CenterCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        #transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
     return transforms_val
 

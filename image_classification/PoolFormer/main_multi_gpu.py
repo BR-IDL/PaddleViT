@@ -29,14 +29,16 @@ from datasets import get_dataloader
 from datasets import get_dataset
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
+from mixup import Mixup
 from config import get_config
 from config import update_config
 from poolformer import build_poolformer as build_model
-
+from losses import LabelSmoothingCrossEntropyLoss
+from losses import SoftTargetCrossEntropyLoss
 
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('Swin')
+    parser = argparse.ArgumentParser('PoolFormer')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=None)
@@ -80,6 +82,7 @@ def train(dataloader,
           total_batch,
           debug_steps=100,
           accum_iter=1,
+          mixup_fn=None,
           amp=False,
           local_logger=None,
           master_logger=None):
@@ -93,6 +96,7 @@ def train(dataloader,
         total_batch: int, total num of batches for one epoch
         debug_steps: int, num of iters to log info, default: 100
         accum_iter: int, num of iters for accumulating gradients, default: 1
+        mixup_fn: Mixup, mixup instance, default: None
         amp: bool, if True, use mix precision training, default: False
         local_logger: logger for local process/gpu, default: None
         master_logger: logger for main process, default: None
@@ -116,8 +120,12 @@ def train(dataloader,
     for batch_id, data in enumerate(dataloader):
         image = data[0]
         label = data[1]
+        label_orig = label.clone()
 
-        if amp is True:
+        if mixup_fn is not None:
+            image, label = mixup_fn(image, label_orig)
+        
+        if amp is True: # mixed precision training
             with paddle.amp.auto_cast():
                 output = model(image)
                 loss = criterion(output, label)
@@ -140,7 +148,10 @@ def train(dataloader,
                 optimizer.clear_grad()
 
         pred = F.softmax(output)
-        acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
+        if mixup_fn:
+            acc = paddle.metric.accuracy(pred, label_orig)
+        else:
+            acc = paddle.metric.accuracy(pred, label_orig.unsqueeze(1))
 
         batch_size = paddle.to_tensor(image.shape[0])
 
@@ -321,10 +332,49 @@ def main_worker(*args):
     if local_rank == 0:
         master_logger.info(f'----- Total # of val batch (single gpu): {total_batch_val}')
 
-    # STEP 3: Define criterion
-    criterion = nn.CrossEntropyLoss()
+    # STEP 3: Define Mixup function
+    mixup_fn = None
+    if config.TRAIN.MIXUP_PROB > 0 or config.TRAIN.CUTMIX_ALPHA > 0 or config.TRAIN.CUTMIX_MINMAX is not None:
+        mixup_fn = Mixup(mixup_alpha=config.TRAIN.MIXUP_ALPHA,
+                         cutmix_alpha=config.TRAIN.CUTMIX_ALPHA,
+                         cutmix_minmax=config.TRAIN.CUTMIX_MINMAX,
+                         prob=config.TRAIN.MIXUP_PROB,
+                         switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
+                         mode=config.TRAIN.MIXUP_MODE,
+                         label_smoothing=config.TRAIN.SMOOTHING,
+                         num_classes=config.MODEL.NUM_CLASSES)
 
-    # STEP 4: Define optimizer and lr_scheduler
+    # STEP 4: Define criterion
+    if config.TRAIN.MIXUP_PROB > 0.:
+        criterion = SoftTargetCrossEntropyLoss()
+    elif config.TRAIN.SMOOTHING:
+        criterion = LabelSmoothingCrossEntropyLoss()
+    else:
+        criterion = nn.CrossEntropyLoss()
+    # only use cross entropy for val
+    criterion_val = nn.CrossEntropyLoss()
+
+
+
+    # STEP 5: Define optimizer and lr_scheduler
+    # set lr according to batch size and world size (hacked from Swin official code and modified for CSwin)
+    if config.TRAIN.LINEAR_SCALED_LR is not None:
+        linear_scaled_lr = (
+            config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_warmup_start_lr = (
+            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_end_lr = (
+            config.TRAIN.END_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+    
+        if config.TRAIN.ACCUM_ITER > 1:
+            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+        
+        config.TRAIN.BASE_LR = linear_scaled_lr
+        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+        config.TRAIN.END_LR = linear_scaled_end_lr
+
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
         scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
@@ -383,7 +433,7 @@ def main_worker(*args):
             master_logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
 
-    # STEP 5: Load pretrained model / load resumt model and optimizer states
+    # STEP 6: Load pretrained model / load resumt model and optimizer states
     if config.MODEL.PRETRAINED:
         if (config.MODEL.PRETRAINED).endswith('.pdparams'):
             raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
@@ -417,7 +467,7 @@ def main_worker(*args):
         val_loss, val_acc1, val_acc5, avg_loss, avg_acc1, avg_acc5, val_time = validate(
             dataloader=dataloader_val,
             model=model,
-            criterion=criterion,
+            criterion=criterion_val,
             total_batch=total_batch_val,
             debug_steps=config.REPORT_FREQ,
             local_logger=local_logger,
@@ -454,6 +504,7 @@ def main_worker(*args):
             total_batch=total_batch_train,
             debug_steps=config.REPORT_FREQ,
             accum_iter=config.TRAIN.ACCUM_ITER,
+            mixup_fn=mixup_fn,
             amp=config.AMP,
             local_logger=local_logger,
             master_logger=master_logger)
@@ -479,7 +530,7 @@ def main_worker(*args):
             val_loss, val_acc1, val_acc5, avg_loss, avg_acc1, avg_acc5, val_time = validate(
                 dataloader=dataloader_val,
                 model=model,
-                criterion=criterion,
+                criterion=criterion_val,
                 total_batch=total_batch_val,
                 debug_steps=config.REPORT_FREQ,
                 local_logger=local_logger,

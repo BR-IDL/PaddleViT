@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,12 +30,15 @@ from utils import AverageMeter
 from utils import WarmupCosineScheduler
 from config import get_config
 from config import update_config
+from mixup import Mixup
+from losses import LabelSmoothingCrossEntropyLoss
+from losses import SoftTargetCrossEntropyLoss
 from poolformer import build_poolformer as build_model
 
 
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('Swin')
+    parser = argparse.ArgumentParser('PoolFormer')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=None)
@@ -79,6 +82,7 @@ def train(dataloader,
           total_batch,
           debug_steps=100,
           accum_iter=1,
+          mixup_fn=None,
           amp=False,
           logger=None):
     """Training for one epoch
@@ -91,6 +95,7 @@ def train(dataloader,
         total_batch: int, total num of batches for one epoch
         debug_steps: int, num of iters to log info, default: 100
         accum_iter: int, num of iters for accumulating gradients, default: 1
+        mixup_fn: Mixup, mixup instance, default: None
         amp: bool, if True, use mix precision training, default: False
         logger: logger for logging, default: None
     Returns:
@@ -109,8 +114,12 @@ def train(dataloader,
     for batch_id, data in enumerate(dataloader):
         image = data[0]
         label = data[1]
+        label_orig = label.clone()
 
-        if amp is True:
+        if mixup_fn is not None:
+            image, label = mixup_fn(image, label_orig)
+        
+        if amp is True: # mixed precision training
             with paddle.amp.auto_cast():
                 output = model(image)
                 loss = criterion(output, label)
@@ -133,7 +142,10 @@ def train(dataloader,
                 optimizer.clear_grad()
 
         pred = F.softmax(output)
-        acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
+        if mixup_fn:
+            acc = paddle.metric.accuracy(pred, label_orig)
+        else:
+            acc = paddle.metric.accuracy(pred, label_orig.unsqueeze(1))
 
         batch_size = image.shape[0]
         train_loss_meter.update(loss.numpy()[0], batch_size)
@@ -230,9 +242,44 @@ def main():
     dataset_val = get_dataset(config, mode='val')
     dataloader_val = get_dataloader(config, dataset_val, 'val', False)
 
-    # 3. Define criterion
-    criterion = nn.CrossEntropyLoss()
-    # 4. Define lr_scheduler
+    # STEP 3: Define Mixup function
+    mixup_fn = None
+    if config.TRAIN.MIXUP_PROB > 0 or config.TRAIN.CUTMIX_ALPHA > 0 or config.TRAIN.CUTMIX_MINMAX is not None:
+        mixup_fn = Mixup(mixup_alpha=config.TRAIN.MIXUP_ALPHA,
+                         cutmix_alpha=config.TRAIN.CUTMIX_ALPHA,
+                         cutmix_minmax=config.TRAIN.CUTMIX_MINMAX,
+                         prob=config.TRAIN.MIXUP_PROB,
+                         switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
+                         mode=config.TRAIN.MIXUP_MODE,
+                         label_smoothing=config.TRAIN.SMOOTHING,
+                         num_classes=config.MODEL.NUM_CLASSES)
+
+    # STEP 4: Define criterion
+    if config.TRAIN.MIXUP_PROB > 0.:
+        criterion = SoftTargetCrossEntropyLoss()
+    elif config.TRAIN.SMOOTHING:
+        criterion = LabelSmoothingCrossEntropyLoss()
+    else:
+        criterion = nn.CrossEntropyLoss()
+    # only use cross entropy for val
+    criterion_val = nn.CrossEntropyLoss()
+
+    # STEP 5: Define optimizer and lr_scheduler
+    # set lr according to batch size and world size (hacked from official code)
+    if config.TRAIN.LINEAR_SCALED_LR:
+        linear_scaled_lr = (config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / 1024.0
+        linear_scaled_warmup_start_lr = (config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / 1024.0
+        linear_scaled_end_lr = (config.TRAIN.END_LR * config.DATA.BATCH_SIZE) / 1024.0
+    
+        if config.TRAIN.ACCUM_ITER > 1:
+            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+    
+        config.TRAIN.BASE_LR = linear_scaled_lr
+        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+        config.TRAIN.END_LR = linear_scaled_end_lr
+    
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
         scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
@@ -309,7 +356,7 @@ def main():
         val_loss, val_acc1, val_acc5, val_time = validate(
             dataloader=dataloader_val,
             model=model,
-            criterion=criterion,
+            criterion=criterion_val,
             total_batch=len(dataloader_val),
             debug_steps=config.REPORT_FREQ,
             logger=logger)
@@ -333,6 +380,7 @@ def main():
                                                   total_batch=len(dataloader_train),
                                                   debug_steps=config.REPORT_FREQ,
                                                   accum_iter=config.TRAIN.ACCUM_ITER,
+                                                  mixup_fn=mixup_fn,
                                                   amp=config.AMP,
                                                   logger=logger)
         scheduler.step()
@@ -346,7 +394,7 @@ def main():
             val_loss, val_acc1, val_acc5, val_time = validate(
                 dataloader=dataloader_val,
                 model=model,
-                criterion=criterion,
+                criterion=criterion_val,
                 total_batch=len(dataloader_val),
                 debug_steps=config.REPORT_FREQ,
                 logger=logger)
