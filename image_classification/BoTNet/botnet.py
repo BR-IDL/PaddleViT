@@ -19,7 +19,6 @@ Implement BoTNet
 import paddle
 import paddle.nn as nn
 from resnet import resnet50
-import numpy as np
 
 
 def expand_dim(t, dim, k):
@@ -74,9 +73,9 @@ def relative_logits_1d(q, rel_k):
 class RelPosEmb(nn.Layer):
     '''Relative position encoding'''
     def __init__(self,
-               height,
-               width,
-               dim_head):
+                 height,
+                 width,
+                 dim_head):
         super().__init__()
 
         scale = dim_head ** -0.5
@@ -116,15 +115,15 @@ class RelPosEmb(nn.Layer):
 class BoTBlock(nn.Layer):
     '''BoTBlock'''
     def __init__(self,
-               dim,
-               fmap_size,
-               dim_out,
-               stride=1,
-               heads=4,
-               proj_factor=4,
-               dim_qk=128,
-               dim_v=128,
-               activation=nn.ReLU()):
+                 dim,
+                 fmap_size,
+                 dim_out,
+                 stride=1,
+                 heads=4,
+                 proj_factor=4,
+                 dim_qk=128,
+                 dim_v=128,
+                 activation=nn.ReLU()):
         """
         dim: channels in feature map
         dim_out: output channels for feature map
@@ -173,11 +172,11 @@ class BoTBlock(nn.Layer):
 class MHSA(nn.Layer):
     '''Multi-Head Self-Attention'''
     def __init__(self,
-               dim,
-               fmap_size,
-               heads=4,
-               dim_qk=128,
-               dim_v=128):
+                 dim,
+                 fmap_size,
+                 heads=4,
+                 dim_qk=128,
+                 dim_v=128):
         """
         dim: number of channels of feature map
         fmap_size: [H, W]
@@ -231,16 +230,16 @@ class MHSA(nn.Layer):
 class BoTStack(nn.Layer):
     '''BoTStack'''
     def __init__(self,
-               dim,
-               fmap_size,
-               dim_out=2048,
-               heads=4,
-               proj_factor=4,
-               num_layers=3,
-               stride=2,
-               dim_qk=128,
-               dim_v=128,
-               activation=nn.ReLU()):
+                 dim,
+                 fmap_size,
+                 dim_out=2048,
+                 heads=4,
+                 proj_factor=4,
+                 num_layers=3,
+                 stride=2,
+                 dim_qk=128,
+                 dim_v=128,
+                 activation=nn.ReLU()):
         """
         dim: channels in feature map
         fmap_size: [H, W]
@@ -283,11 +282,11 @@ class BoTStack(nn.Layer):
 
 
 def botnet50(pretrained=False,
-           image_size=224,
-           fmap_size=(14, 14),
-           num_classes=1000,
-           embed_dim=2048,
-           **kwargs):
+             image_size=224,
+             fmap_size=(14, 14),
+             num_classes=1000,
+             embed_dim=2048,
+             **kwargs):
     """
     Bottleneck Transformers for Visual Recognition.
     """
