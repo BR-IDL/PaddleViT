@@ -39,7 +39,7 @@ def rel_to_abs(x):
 
     x: [B, Nh * H, L, 2L - 1]
     Convert relative position between the key and query to their absolute position respectively.
-    
+
     """
     B, Nh, L, _ = x.shape
     # pad to shift from relative to absolute indexing
@@ -72,10 +72,11 @@ def relative_logits_1d(q, rel_k):
 
 
 class RelPosEmb(nn.Layer):
-    def __init__(self, 
-                height, 
-                width, 
-                dim_head):
+    '''Relative position encoding'''
+    def __init__(self,
+               height,
+               width,
+               dim_head):
         super().__init__()
 
         scale = dim_head ** -0.5
@@ -106,24 +107,24 @@ class RelPosEmb(nn.Layer):
         q = q.transpose(perm=[0, 1, 3, 2, 4]) # "B N H W D -> B N W H D"
         rel_logits_h = relative_logits_1d(q, self.rel_height)
         rel_logits_h = rel_logits_h.transpose(perm=[0, 1, 4, 2, 5, 3])
-        B, N, X, I ,Y, J = rel_logits_h.shape
+        B, N, X, I, Y, J = rel_logits_h.shape
         rel_logits_h = rel_logits_h.reshape([B, N, Y*X, J*I]) # "B N X I Y J -> B N (Y X) (J I)"
 
         return rel_logits_w + rel_logits_h
 
 
 class BoTBlock(nn.Layer):
+    '''BoTBlock'''
     def __init__(self,
-                dim,
-                fmap_size,
-                dim_out,
-                stride=1,
-                heads=4,
-                proj_factor=4,
-                dim_qk=128,
-                dim_v=128,
-                rel_pos_emb=False,
-                activation=nn.ReLU()):
+               dim,
+               fmap_size,
+               dim_out,
+               stride=1,
+               heads=4,
+               proj_factor=4,
+               dim_qk=128,
+               dim_v=128,
+               activation=nn.ReLU()):
         """
         dim: channels in feature map
         dim_out: output channels for feature map
@@ -152,7 +153,6 @@ class BoTBlock(nn.Layer):
                 heads=heads,
                 dim_qk=dim_qk,
                 dim_v=dim_v,
-                rel_pos_emb=rel_pos_emb,
             ),
             nn.AvgPool2D(2) if stride == 2 else nn.Identity(),
             nn.BatchNorm2D(attn_dim_out),
@@ -172,13 +172,12 @@ class BoTBlock(nn.Layer):
 
 class MHSA(nn.Layer):
     '''Multi-Head Self-Attention'''
-    def __init__(self, 
-                dim, 
-                fmap_size, 
-                heads=4, 
-                dim_qk=128, 
-                dim_v=128, 
-                rel_pos_emb=False):
+    def __init__(self,
+               dim,
+               fmap_size,
+               heads=4,
+               dim_qk=128,
+               dim_v=128):
         """
         dim: number of channels of feature map
         fmap_size: [H, W]
@@ -230,18 +229,18 @@ class MHSA(nn.Layer):
 
 
 class BoTStack(nn.Layer):
+    '''BoTStack'''
     def __init__(self,
-                dim,
-                fmap_size,
-                dim_out=2048,
-                heads=4,
-                proj_factor=4,
-                num_layers=3,
-                stride=2,
-                dim_qk=128,
-                dim_v=128,
-                rel_pos_emb=False,
-                activation=nn.ReLU(),):
+               dim,
+               fmap_size,
+               dim_out=2048,
+               heads=4,
+               proj_factor=4,
+               num_layers=3,
+               stride=2,
+               dim_qk=128,
+               dim_v=128,
+               activation=nn.ReLU()):
         """
         dim: channels in feature map
         fmap_size: [H, W]
@@ -270,7 +269,6 @@ class BoTStack(nn.Layer):
                     proj_factor=proj_factor,
                     dim_qk=dim_qk,
                     dim_v=dim_v,
-                    rel_pos_emb=rel_pos_emb,
                     activation=activation,
                 )
             )
@@ -284,17 +282,17 @@ class BoTStack(nn.Layer):
         return self.net(x)
 
 
-def botnet50(pretrained=False, 
-            image_size=224, 
-            fmap_size=(14, 14), 
-            num_classes=1000, 
-            embed_dim=2048,
-            **kwargs):
+def botnet50(pretrained=False,
+           image_size=224,
+           fmap_size=(14, 14),
+           num_classes=1000,
+           embed_dim=2048,
+           **kwargs):
     """
     Bottleneck Transformers for Visual Recognition.
     """
     resnet = resnet50(pretrained=False, **kwargs)
-    layer = BoTStack(dim=1024, dim_out=embed_dim, fmap_size=fmap_size, stride=1, rel_pos_emb=True)
+    layer = BoTStack(dim=1024, dim_out=embed_dim, fmap_size=fmap_size, stride=1)
     backbone = list(resnet.children())
     model = nn.Sequential(
         *backbone[:-3],
