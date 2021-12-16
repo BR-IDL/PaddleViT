@@ -56,14 +56,16 @@ class RelPosEmb(nn.Layer):
         rel_logits_w = relative_logits_1d(q, self.rel_width)
         rel_logits_w = paddle.transpose(rel_logits_w, perm=[0, 1, 2, 4, 3, 5])
         rel_logits_w = paddle.reshape(
-            rel_logits_w, [rel_logits_w.shape[0], rel_logits_w.shape[1], rel_logits_w.shape[2]*rel_logits_w.shape[4], -1]
+            rel_logits_w,
+            [rel_logits_w.shape[0], rel_logits_w.shape[1], rel_logits_w.shape[2]*rel_logits_w.shape[4], -1]
         ) # "b h x i y j-> b h (x y) (i j)"
 
         q = paddle.transpose(q, perm=[0, 1, 3, 2, 4]) # "b h x y d -> b h y x d"
         rel_logits_h = relative_logits_1d(q, self.rel_height)
         rel_logits_h = paddle.transpose(rel_logits_h, perm=[0, 1, 4, 2, 5, 3])
         rel_logits_h = paddle.reshape(
-            rel_logits_h, [rel_logits_h.shape[0], rel_logits_h.shape[1], rel_logits_h.shape[2]*rel_logits_h.shape[4], -1]
+            rel_logits_h,
+            [rel_logits_h.shape[0], rel_logits_h.shape[1], rel_logits_h.shape[2]*rel_logits_h.shape[4], -1]
         ) # "b h x i y j -> b h (y x) (j i)"
         return rel_logits_w + rel_logits_h
     
