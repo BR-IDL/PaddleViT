@@ -2,7 +2,6 @@ import paddle
 import paddle.nn as nn
 from resnet import resnet50
 import numpy as np
-from einops import rearrange
 
 def expand_dim(t, dim, k):
     t = t.unsqueeze(axis=dim)
@@ -53,17 +52,15 @@ class RelPosEmb(nn.Layer):
     def forward(self, q):
         h = self.height
         w = self.width
-        tmp_q = q.numpy()
-        q = paddle.to_tensor(rearrange(tmp_q, "b h (x y) d -> b h x y d", x=h, y=w))
+        q = paddle.reshape(q, [q.shape[0], q.shape[1], h, w, q.shape[3]]) # "b h (x y) d -> b h x y d"
         rel_logits_w = relative_logits_1d(q, self.rel_width)
-        tmp_w = rel_logits_w.numpy()
-        rel_logits_w = paddle.to_tensor(rearrange(tmp_w, "b h x i y j-> b h (x y) (i j)"))
+        rel_logits_w = paddle.transpose(rel_logits_w, perm=[0, 1, 2, 4, 3, 5])
+        rel_logits_w = paddle.reshape(rel_logits_w, [rel_logits_w.shape[0], rel_logits_w.shape[1], rel_logits_w.shape[2]*rel_logits_w.shape[4], -1]) # "b h x i y j-> b h (x y) (i j)"
 
-        tmp_q = q.numpy()
-        q = paddle.to_tensor(rearrange(tmp_q, "b h x y d -> b h y x d"))
+        q = paddle.transpose(q, perm=[0, 1, 3, 2, 4]) # "b h x y d -> b h y x d"
         rel_logits_h = relative_logits_1d(q, self.rel_height)
-        tmp_h = rel_logits_h.numpy()
-        rel_logits_h = paddle.to_tensor(rearrange(tmp_h, "b h x i y j -> b h (y x) (j i)"))
+        rel_logits_h = paddle.transpose(rel_logits_h, perm=[0, 1, 4, 2, 5, 3])
+        rel_logits_h = paddle.reshape(rel_logits_h, [rel_logits_h.shape[0], rel_logits_h.shape[1], rel_logits_h.shape[2]*rel_logits_h.shape[4], -1]) # "b h x i y j -> b h (y x) (j i)"
         return rel_logits_w + rel_logits_h
     
 class BoTBlock(nn.Layer):
@@ -144,10 +141,16 @@ class MHSA(nn.Layer):
         B, C, H, W = featuremap.shape
         q, k = self.to_qk(featuremap).chunk(2, axis=1)
         v = self.to_v(featuremap)
-        tmp_q, tmp_k, tmp_v = q.numpy(), k.numpy(), v.numpy()
-        q, k, v = map(
-            lambda x: paddle.to_tensor(rearrange(x, "B (h d) H W -> B h (H W) d", h=heads)), (tmp_q, tmp_k, tmp_v)
-        )
+        
+        q = paddle.reshape(q, [q.shape[0], heads, -1, q.shape[2], q.shape[3]])
+        q = paddle.transpose(q, perm=[0, 1, 3, 4, 2])
+        q = paddle.reshape(q, [q.shape[0], q.shape[1], -1, q.shape[4]]) # "B (h d) H W -> B h (H W) d"
+        k = paddle.reshape(k, [k.shape[0], heads, -1, k.shape[2], k.shape[3]])
+        k = paddle.transpose(k, perm=[0, 1, 3, 4, 2])
+        k = paddle.reshape(k, [k.shape[0], k.shape[1], -1, k.shape[4]]) # "B (h d) H W -> B h (H W) d"
+        v = paddle.reshape(v, [v.shape[0], heads, -1, v.shape[2], v.shape[3]])
+        v = paddle.transpose(v, perm=[0, 1, 3, 4, 2])
+        v = paddle.reshape(v, [v.shape[0], v.shape[1], -1, v.shape[4]]) # "B (h d) H W -> B h (H W) d"
         
         q *= self.scale
 
@@ -156,8 +159,9 @@ class MHSA(nn.Layer):
         
         weights = self.softmax(logits)
         attn_out = paddle.matmul(weights, v)
-        tmp_out = attn_out.numpy()
-        attn_out = paddle.to_tensor(rearrange(tmp_out, "B h (H W) d -> B (h d) H W", H=H))
+        attn_out = paddle.reshape(attn_out, [attn_out.shape[0], attn_out.shape[1], H, -1, attn_out.shape[3]])
+        attn_out = paddle.transpose(attn_out, perm=[0, 1, 4, 2, 3])
+        attn_out = paddle.reshape(attn_out, [attn_out.shape[0], -1, attn_out.shape[3], attn_out.shape[4]]) # "B h (H W) d -> B (h d) H W"
         return attn_out
 
 class BoTStack(nn.Layer):
