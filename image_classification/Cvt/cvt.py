@@ -18,10 +18,9 @@ Implement Transformer Class for ViT
 
 import paddle
 import paddle.nn as nn
-
+from droppath import DropPath
 from numpy import repeat
 import os
-import logging
 
 
 def graph2vector(x: paddle.Tensor):
@@ -182,7 +181,6 @@ class Attention(nn.Layer):
     Attributes:
         num_heads: number of heads
         qkv: a nn.Linear for q, k, v mapping
-        method: method to calculate q,k,v
             dw_bn: nn.Conv2D -> nn.BatchNorm
             avg: nn.AvgPool2D
             linear: None
@@ -199,9 +197,8 @@ class Attention(nn.Layer):
                  qkv_bias=False,
                  attn_drop=0.,
                  proj_drop=0.,
-                 method='dw_bn',
                  kernel_size=3,
-                 stride_kv=1,
+                 stride_kv=2,
                  stride_q=1,
                  padding_kv=1,
                  padding_q=1,
@@ -220,15 +217,15 @@ class Attention(nn.Layer):
         # calculate q,k,v with conv
         self.conv_proj_q = self._build_projection(
             dim_in, dim_out, kernel_size, padding_q,
-            stride_q, 'linear' if method == 'avg' else method
+            stride_q, 
         )
         self.conv_proj_k = self._build_projection(
             dim_in, dim_out, kernel_size, padding_kv,
-            stride_kv, method
+            stride_kv, 
         )
         self.conv_proj_v = self._build_projection(
             dim_in, dim_out, kernel_size, padding_kv,
-            stride_kv, method
+            stride_kv,
         )
 
         # init parameters of q,k,v
@@ -247,35 +244,20 @@ class Attention(nn.Layer):
                           kernel_size,
                           padding,
                           stride,
-                          method):
-        if method == 'dw_bn':
-            proj = nn.Sequential(
-                (nn.Conv2D(
-                    dim_in,
-                    dim_in,
-                    kernel_size=kernel_size,
-                    padding=padding,
-                    stride=stride,
-                    bias_attr=False,
-                    groups=dim_in
-                )),
-                (nn.BatchNorm2D(dim_in)),
-                (RearrangeLayer()),
-            )
-        elif method == 'avg':
-            proj = nn.Sequential(
-                (nn.AvgPool2D(
-                    kernel_size=kernel_size,
-                    padding=padding,
-                    stride=stride,
-                    ceil_mode=True
-                )),
-                (RearrangeLayer()),
-            )
-        elif method == 'linear':
-            proj = None
-        else:
-            raise ValueError('Unknown method ({})'.format(method))
+                          ):
+        proj = nn.Sequential(
+            (nn.Conv2D(
+                dim_in,
+                dim_in,
+                kernel_size=kernel_size,
+                padding=padding,
+                stride=stride,
+                bias_attr=False,
+                groups=dim_in
+            )),
+            (nn.BatchNorm2D(dim_in)),
+            (RearrangeLayer()),
+        )
 
         return proj
 
@@ -321,8 +303,7 @@ class Attention(nn.Layer):
 
 
         # multi tensor with axis=3，then * scale，achieve the result of q*k/sqort(d_k),
-        attn_score = paddle.matmul( q,paddle.transpose( k,[0,1,3,2])) * self.scale#'bhlk,bhtk->bhlt',
-        #attn_score = paddle.matmul(q, k, transpose_y=True) * self.scale
+        attn_score = paddle.matmul(q, k, transpose_y=True) * self.scale#'bhlk,bhtk->bhlt',
         attn = nn.functional.softmax(attn_score, axis=-1)
         attn = self.attn_drop(attn)
 
@@ -362,7 +343,7 @@ class Block(nn.Layer):
             **kwargs
         )
         if drop_path > 0.:
-            self.drop_path = nn.Dropout(drop_path)
+            self.drop_path = Droppath(drop_path)
         else:
             self.drop_path = nn.Identity()
 
@@ -406,8 +387,6 @@ class VisionTransformer(nn.Layer):
                  drop_rate=0.,
                  attn_drop_rate=0.,
                  drop_path_rate=0.,
-                 act_layer=nn.GELU,
-                 norm_layer=nn.LayerNorm,
                  init='trunc_norm',
                  **kwargs):
         super().__init__()
@@ -420,7 +399,7 @@ class VisionTransformer(nn.Layer):
             stride=patch_stride,
             padding=patch_padding,
             embed_dim=embed_dim,
-            norm_layer=norm_layer
+            norm_layer=nn.LayerNorm
         )
 
         with_cls_token = kwargs['with_cls_token']
@@ -430,7 +409,6 @@ class VisionTransformer(nn.Layer):
                 shape=[1, 1, embed_dim],
                 dtype='float32',
                 default_initializer=nn.initializer.TruncatedNormal(std=.02))
-            #self.cls_token = paddle.zeros([1, 1, embed_dim])
         else:
             self.cls_token = None
 
@@ -449,8 +427,7 @@ class VisionTransformer(nn.Layer):
                     drop=drop_rate,
                     attn_drop=attn_drop_rate,
                     drop_path=dpr[j],
-                    act_layer=act_layer,
-                    norm_layer=norm_layer,
+                    norm_layer=nn.LayerNorm,
                     **kwargs
                 )
             )
@@ -463,11 +440,9 @@ class VisionTransformer(nn.Layer):
 
     def _init_weights_trunc_normal(self, m):
         if isinstance(m, nn.Linear):
-            #logging.info('=> init weight of Linear from trunc norm')
             trun_init = nn.initializer.TruncatedNormal(std=0.02)
             trun_init(m.weight)
             if m.bias is not None:
-                #logging.info('=> init bias of Linear to zeros')
                 zeros = nn.initializer.Constant(0.)
                 zeros(m.bias)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2D)):
@@ -478,11 +453,9 @@ class VisionTransformer(nn.Layer):
 
     def _init_weights_xavier(self, m):
         if isinstance(m, nn.Linear):
-            #logging.info('=> init weight of Linear from xavier uniform')
             xavier_init = nn.initializer.XavierNormal()
             xavier_init(m.weight)
             if m.bias is not None:
-                #logging.info('=> init bias of Linear to zeros')
                 zeros = nn.initializer.Constant(0.)
             zeros(m.bias)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2D)):
@@ -523,7 +496,7 @@ class ConvolutionalVisionTransformer(nn.Layer):
         depth: int[], number ot transformer blocks, default: [1, 2, 10]
         num_heads: int[], number of attention heads, default:[1, 3, 6]
         drop_rate: float[], Mlp layer's droppath rate for droppath layers, default: [0.0, 0.0, 0.0]
-        attn_drop_rate: float[], attrntion layer's droppath rate for droppath layers, default: [0.0, 0.0, 0.0]
+        attn_drop_rate: float[], attention layer's droppath rate for droppath layers, default: [0.0, 0.0, 0.0]
         drop_path_rate: float[],each block's droppath rate for droppath layers, default: [0.0, 0.0, 0.1]
         with_cls_token: bool[], if image have cls_token, default: [False, False, True]
     '''
@@ -548,33 +521,20 @@ class ConvolutionalVisionTransformer(nn.Layer):
 
         self.num_stages = num_stage
         for i in range(self.num_stages):
-            kwargs = {
-                'patch_size': patch_size[i],
-                'patch_stride': patch_stride[i],
-                'patch_padding': patch_padding[i],
-                'embed_dim': embed_dim[i],
-                'depth': depth[i],
-                'num_heads': num_heads[i],
-                'mlp_ratio': 4.0,
-                'qkv_bias': True,
-                'drop_rate': drop_rate[i],
-                'attn_drop_rate': attn_drop_rate[i],
-                'drop_path_rate': drop_path_rate[i],
-                'with_cls_token': with_cls_token[i],
-                'method': 'dw_bn',
-                'kernel_size': 3,
-                'padding_q': 1,
-                'padding_kv': 1,
-                'stride_kv': 2,
-                'stride_q': 1,
-            }
-
             stage = VisionTransformer(
                 in_chans=in_chans,
-                init='trunc_norm',
-                act_layer=QuickGELU,
-                norm_layer=nn.LayerNorm,
-                **kwargs
+                patch_size= patch_size[i],
+                patch_stride= patch_stride[i],
+                patch_padding= patch_padding[i],
+                embed_dim= embed_dim[i],
+                depth= depth[i],
+                num_heads= num_heads[i],
+                mlp_ratio= 4.0,
+                qkv_bias= True,
+                drop_rate= drop_rate[i],
+                attn_drop_rate= attn_drop_rate[i],
+                drop_path_rate= drop_path_rate[i],
+                with_cls_token= with_cls_token[i],
             )
             setattr(self, f'stage{i}', stage)
 
@@ -593,7 +553,6 @@ class ConvolutionalVisionTransformer(nn.Layer):
     def init_weights(self, pretrained='', pretrained_layers=[], verbose=True):
         if os.path.isfile(pretrained):
             pretrained_dict = paddle.load(pretrained, map_location='cpu')
-            #logging.info(f'=> loading pretrained model {pretrained}')
             model_dict = self.state_dict()
             pretrained_dict = {
                 k: v for k, v in pretrained_dict.items()
@@ -606,15 +565,9 @@ class ConvolutionalVisionTransformer(nn.Layer):
                     or pretrained_layers[0] is '*'
                 )
                 if need_init:
-                    #if verbose:
-                        #logging.info(f'=> init {k} from {pretrained}')
                     if 'pos_embed' in k and v.size() != model_dict[k].size():
                         size_pretrained = v.size()
                         size_new = model_dict[k].size()
-                        #logging.info(
-                        #    '=> load_pretrained: resized variant: {} to {}'
-                        #    .format(size_pretrained, size_new)
-                        #)
 
                         ntok_new = size_new[1]
                         ntok_new -= 1
@@ -624,10 +577,7 @@ class ConvolutionalVisionTransformer(nn.Layer):
                         gs_old = int(paddle.sqrt(len(posemb_grid)))
                         gs_new = int(paddle.sqrt(ntok_new))
 
-                        #logging.info(
-                        #    '=> load_pretrained: grid-size from {} to {}'
-                        #    .format(gs_old, gs_new)
-                        #)
+                      
 
                         posemb_grid = posemb_grid.reshape(gs_old, gs_old, -1)
                         zoom = (gs_new / gs_old, gs_new / gs_old, 1)
