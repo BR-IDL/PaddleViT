@@ -18,7 +18,7 @@ Implement Transformer Class for ViT
 
 import paddle
 import paddle.nn as nn
-from droppath import DropPath
+from drop import DropPath
 from numpy import repeat
 import os
 
