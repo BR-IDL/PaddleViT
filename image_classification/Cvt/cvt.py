@@ -309,7 +309,9 @@ class Attention(nn.Layer):
             or self.conv_proj_v is not None
         ):  # if not generate q,k,v with Linear param
             q, k, v = self.forward_conv(x, h, w)
+
         # now q,k,v is b (h w) c
+
         q = multitoken(self.proj_q(
             q), h=self.num_heads)
         k = multitoken(self.proj_k(
@@ -317,12 +319,14 @@ class Attention(nn.Layer):
         v = multitoken(self.proj_v(
             v),  h=self.num_heads)
 
+
         # multi tensor with axis=3，then * scale，achieve the result of q*k/sqort(d_k),
         attn_score = paddle.matmul( q,paddle.transpose( k,[0,1,3,2])) * self.scale#'bhlk,bhtk->bhlt',
+        #attn_score = paddle.matmul(q, k, transpose_y=True) * self.scale
         attn = nn.functional.softmax(attn_score, axis=-1)
         attn = self.attn_drop(attn)
 
-        x = paddlenlp.ops.einsum('bhlt,bhtv->bhlv', attn, v)
+        x = paddle.matmul(attn, v)
         x = paddle.transpose(x, [0, 2, 1, 3])
         x = paddle.reshape(x, [0, 0, -1])
 
@@ -364,7 +368,7 @@ class Block(nn.Layer):
 
         self.norm2 = norm_layer(dim_out)
         self.mlp = Mlp(
-            dim_in,
+            dim_out,
             mlp_ratio,
             act_layer=act_layer,
             dropout=drop
@@ -422,9 +426,11 @@ class VisionTransformer(nn.Layer):
         with_cls_token = kwargs['with_cls_token']
 
         if with_cls_token:
-            self.cls_token = paddle.zeros([1, 1, embed_dim])
-            trun_init = nn.initializer.TruncatedNormal(std=0.02)
-            trun_init(self.cls_token)
+            self.cls_token = paddle.create_parameter(
+                shape=[1, 1, embed_dim],
+                dtype='float32',
+                default_initializer=nn.initializer.TruncatedNormal(std=.02))
+            #self.cls_token = paddle.zeros([1, 1, embed_dim])
         else:
             self.cls_token = None
 
@@ -457,11 +463,11 @@ class VisionTransformer(nn.Layer):
 
     def _init_weights_trunc_normal(self, m):
         if isinstance(m, nn.Linear):
-            logging.info('=> init weight of Linear from trunc norm')
+            #logging.info('=> init weight of Linear from trunc norm')
             trun_init = nn.initializer.TruncatedNormal(std=0.02)
             trun_init(m.weight)
             if m.bias is not None:
-                logging.info('=> init bias of Linear to zeros')
+                #logging.info('=> init bias of Linear to zeros')
                 zeros = nn.initializer.Constant(0.)
                 zeros(m.bias)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2D)):
@@ -472,11 +478,11 @@ class VisionTransformer(nn.Layer):
 
     def _init_weights_xavier(self, m):
         if isinstance(m, nn.Linear):
-            logging.info('=> init weight of Linear from xavier uniform')
+            #logging.info('=> init weight of Linear from xavier uniform')
             xavier_init = nn.initializer.XavierNormal()
             xavier_init(m.weight)
             if m.bias is not None:
-                logging.info('=> init bias of Linear to zeros')
+                #logging.info('=> init bias of Linear to zeros')
                 zeros = nn.initializer.Constant(0.)
             zeros(m.bias)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2D)):
@@ -587,7 +593,7 @@ class ConvolutionalVisionTransformer(nn.Layer):
     def init_weights(self, pretrained='', pretrained_layers=[], verbose=True):
         if os.path.isfile(pretrained):
             pretrained_dict = paddle.load(pretrained, map_location='cpu')
-            logging.info(f'=> loading pretrained model {pretrained}')
+            #logging.info(f'=> loading pretrained model {pretrained}')
             model_dict = self.state_dict()
             pretrained_dict = {
                 k: v for k, v in pretrained_dict.items()
@@ -600,15 +606,15 @@ class ConvolutionalVisionTransformer(nn.Layer):
                     or pretrained_layers[0] is '*'
                 )
                 if need_init:
-                    if verbose:
-                        logging.info(f'=> init {k} from {pretrained}')
+                    #if verbose:
+                        #logging.info(f'=> init {k} from {pretrained}')
                     if 'pos_embed' in k and v.size() != model_dict[k].size():
                         size_pretrained = v.size()
                         size_new = model_dict[k].size()
-                        logging.info(
-                            '=> load_pretrained: resized variant: {} to {}'
-                            .format(size_pretrained, size_new)
-                        )
+                        #logging.info(
+                        #    '=> load_pretrained: resized variant: {} to {}'
+                        #    .format(size_pretrained, size_new)
+                        #)
 
                         ntok_new = size_new[1]
                         ntok_new -= 1
@@ -618,10 +624,10 @@ class ConvolutionalVisionTransformer(nn.Layer):
                         gs_old = int(paddle.sqrt(len(posemb_grid)))
                         gs_new = int(paddle.sqrt(ntok_new))
 
-                        logging.info(
-                            '=> load_pretrained: grid-size from {} to {}'
-                            .format(gs_old, gs_new)
-                        )
+                        #logging.info(
+                        #    '=> load_pretrained: grid-size from {} to {}'
+                        #    .format(gs_old, gs_new)
+                        #)
 
                         posemb_grid = posemb_grid.reshape(gs_old, gs_old, -1)
                         zoom = (gs_new / gs_old, gs_new / gs_old, 1)
@@ -671,10 +677,4 @@ def build_cvt(config):
         drop_path_rate=config.MODEL.DROP_PATH_RATE,
         with_cls_token=config.MODEL.CLS_TOKEN
     )
-    if config.MODEL.INIT_WEIGHTS:
-        model.init_weights(
-            config.MODEL.PRETRAINED,
-            config.MODEL.PRETRAINED_LAYERS,
-            config.VERBOSE
-        )
     return model

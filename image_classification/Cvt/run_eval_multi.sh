@@ -5,4 +5,4 @@ python main_multi_gpu.py \
     -batch_size=256 \
     -data_path='/dataset/imagenet' \
     -eval \
-    -pretrained='./CvT-13-224x224-IN-1k'
+    -pretrained='./cvt_13_new'

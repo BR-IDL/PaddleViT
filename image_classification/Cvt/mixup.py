@@ -1,4 +1,4 @@
-# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,413 +12,214 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Cvt training/validation using single GPU """
-
-import sys
-import os
-import time
-import logging
-import argparse
-import random
+"""mixup and cutmix for batch data"""
 import numpy as np
 import paddle
-import paddle.nn as nn
-import paddle.nn.functional as F
-from datasets import get_dataloader
-from datasets import get_dataset
-from utils import AverageMeter
-from utils import WarmupCosineScheduler
-from utils import get_exclude_from_weight_decay_fn
-from config import get_config
-from config import update_config
-from mixup import Mixup
-from losses import LabelSmoothingCrossEntropyLoss
-from losses import SoftTargetCrossEntropyLoss
-from cvt import build_cvt as build_model
 
 
-def get_arguments():
-    """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('Cvt')
-    parser.add_argument('-cfg', type=str, default=None)
-    parser.add_argument('-dataset', type=str, default=None)
-    parser.add_argument('-batch_size', type=int, default=None)
-    parser.add_argument('-image_size', type=int, default=None)
-    parser.add_argument('-data_path', type=str, default=None)
-    parser.add_argument('-ngpus', type=int, default=None)
-    parser.add_argument('-pretrained', type=str, default=None)
-    parser.add_argument('-resume', type=str, default=None)
-    parser.add_argument('-last_epoch', type=int, default=None)
-    parser.add_argument('-eval', action='store_true')
-    parser.add_argument('-amp', action='store_true')
-    arguments = parser.parse_args()
-    return arguments
+def rand_bbox(image_shape, lam, count=None):
+    """ CutMix bbox by lam value
+    Generate 1 random bbox by value lam. lam is the cut size rate.
+    The cut_size is computed by sqrt(1-lam) * image_size.
 
-
-def get_logger(filename, logger_name=None):
-    """set logging file and format
     Args:
-        filename: str, full path of the logger file to write
-        logger_name: str, the logger name, e.g., 'master_logger', 'local_logger'
-    Return:
-        logger: python logger
+        image_shape: tuple/list, image height and width
+        lam: float, cutmix lambda value
+        count: int, number of bbox to generate
     """
-    log_format = "%(asctime)s %(message)s"
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                        format=log_format, datefmt="%m%d %I:%M:%S %p")
-    # different name is needed when creating multiple logger in one process
-    logger = logging.getLogger(logger_name)
-    fh = logging.FileHandler(os.path.join(filename))
-    fh.setFormatter(logging.Formatter(log_format))
-    logger.addHandler(fh)
-    return logger
+    image_h, image_w = image_shape[-2:]
+    cut_rate = np.sqrt(1. - lam)
+    cut_h = int(cut_rate * image_h)
+    cut_w = int(cut_rate * image_w)
+
+    # get random bbox center
+    cy = np.random.randint(0, image_h, size=count)
+    cx = np.random.randint(0, image_w, size=count)
+
+    # get bbox coords
+    bbox_x1 = np.clip(cx - cut_w // 2, 0, image_w)
+    bbox_y1 = np.clip(cy - cut_h // 2, 0, image_h)
+    bbox_x2 = np.clip(cx + cut_w // 2, 0, image_w)
+    bbox_y2 = np.clip(cy + cut_h // 2, 0, image_h)
+
+    # NOTE: in paddle, tensor indexing e.g., a[x1:x2],
+    # if x1 == x2, paddle will raise ValueErros, 
+    # while in pytorch, it will return [] tensor
+    return bbox_x1, bbox_y1, bbox_x2, bbox_y2
 
 
-def train(dataloader,
-          model,
-          criterion,
-          optimizer,
-          epoch,
-          total_epochs,
-          total_batch,
-          debug_steps=100,
-          accum_iter=1,
-          mixup_fn=None,
-          amp=False,
-          logger=None):
-    """Training for one epoch
+def rand_bbox_minmax(image_shape, minmax, count=None):
+    """ CutMix bbox by min and max value
+    Generate 1 random bbox by min and max percentage values.
+    Minmax is a tuple/list of min and max percentage vlaues
+    applied to the image width and height.
+
     Args:
-        dataloader: paddle.io.DataLoader, dataloader instance
-        model: nn.Layer, a ViT model
-        criterion: nn.criterion
-        epoch: int, current epoch
-        total_epochs: int, total num of epochs
-        total_batch: int, total num of batches for one epoch
-        debug_steps: int, num of iters to log info, default: 100
-        accum_iter: int, num of iters for accumulating gradients, default: 1
-        mixup_fn: Mixup, mixup instance, default: None
-        amp: bool, if True, use mix precision training, default: False
-        logger: logger for logging, default: None
+        image_shape: tuple/list, image height and width
+        minmax: tuple/list, min and max percentage values of image size
+        count: int, number of bbox to generate
+    """
+    assert len(minmax) == 2
+    image_h, image_w = image_shape[-2:]
+    min_ratio = minmax[0]
+    max_ratio = minmax[1]
+    cut_h = np.random.randint(int(image_h * min_ratio), int(image_h * max_ratio), size=count) 
+    cut_w = np.random.randint(int(image_w * min_ratio), int(image_w * max_ratio), size=count) 
+
+    bbox_x1 = np.random.randint(0, image_w - cut_w, size=count)
+    bbox_y1 = np.random.randint(0, image_h - cut_h, size=count)
+    bbox_x2 = bbox_x1 + cut_w
+    bbox_y2 = bbox_y1 + cut_h
+
+    return bbox_x1, bbox_y1, bbox_x2, bbox_y2
+
+
+def cutmix_generate_bbox_adjust_lam(image_shape, lam, minmax=None, correct_lam=True, count=None):
+    """Generate bbox and apply correction for lambda
+    If the mimmax is None, apply the standard cutmix by lam value,
+    If the minmax is set, apply the cutmix by min and max percentage values.
+
+    Args:
+        image_shape: tuple/list, image height and width
+        lam: float, cutmix lambda value
+        minmax: tuple/list, min and max percentage values of image size
+        correct_lam: bool, if True, correct the lam value by the generated bbox
+        count: int, number of bbox to generate
+    """
+    if minmax is not None:
+        bbox_x1, bbox_y1, bbox_x2, bbox_y2 = rand_bbox_minmax(image_shape, minmax, count)
+    else:
+        bbox_x1, bbox_y1, bbox_x2, bbox_y2 = rand_bbox(image_shape, lam, count)
+
+    if correct_lam or minmax is not None:
+        image_h, image_w = image_shape[-2:]
+        bbox_area = (bbox_y2 - bbox_y1) * (bbox_x2 - bbox_x1)
+        lam = 1. - bbox_area / float(image_h * image_w)
+    return (bbox_x1, bbox_y1, bbox_x2, bbox_y2), lam
+
+
+def one_hot(x, num_classes, on_value=1., off_value=0.):
+    """ Generate one-hot vector for label smoothing
+    Args:
+        x: tensor, contains label/class indices
+        num_classes: int, num of classes (len of the one-hot vector)
+        on_value: float, the vector value at label index, default=1.
+        off_value: float, the vector value at non-label indices, default=0.
     Returns:
-        train_loss_meter.avg: float, average loss on current process/gpu
-        train_acc_meter.avg: float, average top1 accuracy on current process/gpu
-        train_time: float, training time
+        one_hot: tensor, tensor with on value at label index and off value
+                 at non-label indices.
     """
-    model.train()
-    train_loss_meter = AverageMeter()
-    train_acc_meter = AverageMeter()
-
-    if amp is True:
-        scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
-    time_st = time.time()
-
-    for batch_id, data in enumerate(dataloader):
-        image = data[0]
-        label = data[1]
-        label_orig = label.clone()
-
-        if mixup_fn is not None:
-            image, label = mixup_fn(image, label_orig)
-
-        if amp is True:  # mixed precision training
-            with paddle.amp.auto_cast():
-                output = model(image)
-                loss = criterion(output, label)
-            scaled = scaler.scale(loss)
-            scaled.backward()
-            if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-                scaler.minimize(optimizer, scaled)
-                optimizer.clear_grad()
-        else:  # full precision training
-            output = model(image)
-            loss = criterion(output, label)
-            # NOTE: division may be needed depending on the loss function
-            # Here no division is needed:
-            # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-            # loss =  loss / accum_iter
-            loss.backward()
-
-            if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-                optimizer.step()
-                optimizer.clear_grad()
-
-        pred = F.softmax(output)
-        if mixup_fn:
-            acc = paddle.metric.accuracy(pred, label_orig)
-        else:
-            acc = paddle.metric.accuracy(pred, label_orig.unsqueeze(1))
-
-        batch_size = image.shape[0]
-        train_loss_meter.update(loss.numpy()[0], batch_size)
-        train_acc_meter.update(acc.numpy()[0], batch_size)
-
-        if logger and batch_id % debug_steps == 0:
-            logger.info(
-                f"Epoch[{epoch:03d}/{total_epochs:03d}], " +
-                f"Step[{batch_id:04d}/{total_batch:04d}], " +
-                f"Avg Loss: {train_loss_meter.avg:.4f}, " +
-                f"Avg Acc: {train_acc_meter.avg:.4f}")
-
-    train_time = time.time() - time_st
-    return train_loss_meter.avg, train_acc_meter.avg, train_time
+    x = x.reshape_([-1, 1])
+    x_smoothed = paddle.full((x.shape[0], num_classes), fill_value=off_value)
+    for i in range(x.shape[0]):
+        x_smoothed[i, x[i]] = on_value
+    return x_smoothed
 
 
-def validate(dataloader, model, criterion, total_batch, debug_steps=100, logger=None):
-    """Validation for whole dataset
+def mixup_one_hot(label, num_classes, lam=1., smoothing=0.):
+    """ mixup and label smoothing in batch
+    label smoothing is firstly applied, then
+    mixup is applied by mixing the bacth and its flip,
+    with a mixup rate.
+
     Args:
-        dataloader: paddle.io.DataLoader, dataloader instance
-        model: nn.Layer, a ViT model
-        criterion: nn.criterion
-        total_batch: int, total num of batches for one epoch
-        debug_steps: int, num of iters to log info, default: 100
-        logger: logger for logging, default: None
-    Returns:
-        val_loss_meter.avg: float, average loss on current process/gpu
-        val_acc1_meter.avg: float, average top1 accuracy on current process/gpu
-        val_acc5_meter.avg: float, average top5 accuracy on current process/gpu
-        val_time: float, valitaion time
+        label: tensor, label tensor with shape [N], contains the class indices
+        num_classes: int, num of all classes
+        lam: float, mixup rate, default=1.0
+        smoothing: float, label smoothing rate
     """
-    model.eval()
-    val_loss_meter = AverageMeter()
-    val_acc1_meter = AverageMeter()
-    val_acc5_meter = AverageMeter()
-    time_st = time.time()
-
-    with paddle.no_grad():
-        for batch_id, data in enumerate(dataloader):
-            image = data[0]
-            label = data[1]
-
-            output = model(image)
-            loss = criterion(output, label)
-
-            pred = F.softmax(output)
-            acc1 = paddle.metric.accuracy(pred, label.unsqueeze(1))
-            acc5 = paddle.metric.accuracy(pred, label.unsqueeze(1), k=5)
-
-            batch_size = image.shape[0]
-            val_loss_meter.update(loss.numpy()[0], batch_size)
-            val_acc1_meter.update(acc1.numpy()[0], batch_size)
-            val_acc5_meter.update(acc5.numpy()[0], batch_size)
-
-            if logger and batch_id % debug_steps == 0:
-                logger.info(
-                    f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
-                    f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
-                    f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
-
-    val_time = time.time() - time_st
-    return val_loss_meter.avg, val_acc1_meter.avg, val_acc5_meter.avg, val_time
+    off_value = smoothing / num_classes
+    on_value = 1. - smoothing + off_value
+    y1 = one_hot(label, num_classes, on_value, off_value)
+    y2 = one_hot(label.flip(axis=[0]), num_classes, on_value, off_value)
+    return y2 * (1 - lam) + y1 * lam
 
 
-def main():
-    # STEP 0: Preparation
-    # config is updated by: (1) config.py, (2) yaml file, (3) arguments
-    arguments = get_arguments()
-    config = get_config()
-    config = update_config(config, arguments)
-    # set output folder
-    if not config.EVAL:
-        config.SAVE = '{}/train-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
-    else:
-        config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
-    if not os.path.exists(config.SAVE):
-        os.makedirs(config.SAVE, exist_ok=True)
-    last_epoch = config.TRAIN.LAST_EPOCH
-    seed = config.SEED
-    paddle.seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    logger = get_logger(filename=os.path.join(config.SAVE, 'log.txt'))
-    logger.info(f'\n{config}')
+class Mixup:
+    """Mixup class
+    Args:
+        mixup_alpha: float, mixup alpha for beta distribution, default=1.0,
+        cutmix_alpha: float, cutmix alpha for beta distribution, default=0.0,
+        cutmix_minmax: list/tuple, min and max value for cutmix ratio, default=None,
+        prob: float, if random prob < prob, do not use mixup, default=1.0,
+        switch_prob: float, prob of switching mixup and cutmix, default=0.5,
+        mode: string, mixup up, now only 'batch' is supported, default='batch',
+        correct_lam: bool, if True, apply correction of lam, default=True,
+        label_smoothing: float, label smoothing rate, default=0.1,
+        num_classes: int, num of classes, default=1000
+    """
+    def __init__(self,
+                 mixup_alpha=1.0,
+                 cutmix_alpha=0.0,
+                 cutmix_minmax=None,
+                 prob=1.0,
+                 switch_prob=0.5,
+                 mode='batch',
+                 correct_lam=True,
+                 label_smoothing=0.1,
+                 num_classes=1000):
+        self.mixup_alpha = mixup_alpha
+        self.cutmix_alpha = cutmix_alpha
+        self.cutmix_minmax = cutmix_minmax
+        if cutmix_minmax is not None:
+            assert len(cutmix_minmax) == 2
+            self.cutmix_alpha = 1.0
+        self.mix_prob = prob
+        self.switch_prob = switch_prob
+        self.label_smoothing = label_smoothing
+        self.num_classes = num_classes
+        self.mode = mode
+        self.correct_lam = correct_lam
+        assert mode == 'batch', 'Now only batch mode is supported!'
 
-    # STEP 1: Create model
-    model = build_model(config)
+    def __call__(self, x, target):
+        assert x.shape[0] % 2 == 0, "Batch size should be even"
+        lam = self._mix_batch(x)
+        target = mixup_one_hot(target, self.num_classes, lam, self.label_smoothing)
+        return x, target
 
-    # STEP 2: Create train and val dataloader
-    dataset_train = get_dataset(config, mode='train')
-    dataset_val = get_dataset(config, mode='val')
-    dataloader_train = get_dataloader(config, dataset_train, 'train', False)
-    dataloader_val = get_dataloader(config, dataset_val, 'val', False)
+    def get_params(self):
+        """Decide to use cutmix or regular mixup by sampling and
+           sample lambda for mixup
+        """
+        lam = 1.
+        use_cutmix = False
+        use_mixup = np.random.rand() < self.mix_prob
+        if use_mixup:
+            if self.mixup_alpha > 0. and self.cutmix_alpha > 0.:
+                use_cutmix = np.random.rand() < self.switch_prob
+                alpha = self.cutmix_alpha if use_cutmix else self.mixup_alpha
+                lam_mix = np.random.beta(alpha, alpha)
+            elif self.mixup_alpha == 0. and self.cutmix_alpha > 0.:
+                use_cutmix=True
+                lam_mix = np.random.beta(self.cutmix_alpha, self.cutmix_alpha)
+            elif self.mixup_alpha > 0. and self.cutmix_alpha == 0.:
+                lam_mix = np.random.beta(self.mixup_alpha, self.mixup_alpha)
+            else:
+                raise ValueError('mixup_alpha and cutmix_alpha cannot be all 0')
+            lam = float(lam_mix)
+        return lam, use_cutmix
 
-    # STEP 3: Define Mixup function
-    mixup_fn = None
-    if config.TRAIN.MIXUP_PROB > 0 or config.TRAIN.CUTMIX_ALPHA > 0 or config.TRAIN.CUTMIX_MINMAX is not None:
-        mixup_fn = Mixup(mixup_alpha=config.TRAIN.MIXUP_ALPHA,
-                         cutmix_alpha=config.TRAIN.CUTMIX_ALPHA,
-                         cutmix_minmax=config.TRAIN.CUTMIX_MINMAX,
-                         prob=config.TRAIN.MIXUP_PROB,
-                         switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
-                         mode=config.TRAIN.MIXUP_MODE,
-                         label_smoothing=config.TRAIN.SMOOTHING,
-                         num_classes=config.MODEL.NUM_CLASSES)
+    def _mix_batch(self, x):
+        """mixup/cutmix by adding batch data and its flipped version"""
+        lam, use_cutmix = self.get_params()
+        if lam == 1.:
+            return lam
+        if use_cutmix:
+            (bbox_x1, bbox_y1, bbox_x2, bbox_y2), lam = cutmix_generate_bbox_adjust_lam(
+                x.shape,
+                lam,
+                minmax=self.cutmix_minmax,
+                correct_lam=self.correct_lam)
 
-    # STEP 4: Define criterion
-    if config.TRAIN.MIXUP_PROB > 0.:
-        criterion = SoftTargetCrossEntropyLoss()
-    elif config.TRAIN.SMOOTHING:
-        criterion = LabelSmoothingCrossEntropyLoss()
-    else:
-        criterion = nn.CrossEntropyLoss()
-    # only use cross entropy for val
-    criterion_val = nn.CrossEntropyLoss()
-
-    # STEP 6: Define optimizer and lr_scheduler
-    # set lr according to batch size and world size (hacked from official code)
-    if config.TRAIN.LINEAR_SCALED_LR is not None:
-        linear_scaled_lr = (
-            config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
-        linear_scaled_warmup_start_lr = (
-            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
-        linear_scaled_end_lr = (
-            config.TRAIN.END_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
-    
-        if config.TRAIN.ACCUM_ITER > 1:
-            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
-            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
-            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
-        
-        config.TRAIN.BASE_LR = linear_scaled_lr
-        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
-        config.TRAIN.END_LR = linear_scaled_end_lr
-
-    scheduler = None
-    if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
-        scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
-                                          warmup_start_lr=config.TRAIN.WARMUP_START_LR,
-                                          start_lr=config.TRAIN.BASE_LR,
-                                          end_lr=config.TRAIN.END_LR,
-                                          warmup_epochs=config.TRAIN.WARMUP_EPOCHS,
-                                          total_epochs=config.TRAIN.NUM_EPOCHS,
-                                          last_epoch=config.TRAIN.LAST_EPOCH,
-                                          )
-    elif config.TRAIN.LR_SCHEDULER.NAME == "cosine":
-        scheduler = paddle.optimizer.lr.CosineAnnealingDecay(learning_rate=config.TRAIN.BASE_LR,
-                                                             T_max=config.TRAIN.NUM_EPOCHS,
-                                                             last_epoch=last_epoch)
-    elif config.scheduler == "multi-step":
-        milestones = [int(v.strip()) for v in config.TRAIN.LR_SCHEDULER.MILESTONES.split(",")]
-        scheduler = paddle.optimizer.lr.MultiStepDecay(learning_rate=config.TRAIN.BASE_LR,
-                                                       milestones=milestones,
-                                                       gamma=config.TRAIN.LR_SCHEDULER.DECAY_RATE,
-                                                       last_epoch=last_epoch)
-    else:
-        logger.fatal(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
-        raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
-
-    if config.TRAIN.OPTIMIZER.NAME == "SGD":
-        if config.TRAIN.GRAD_CLIP:
-            clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
+            # NOTE: in paddle, tensor indexing e.g., a[x1:x2],
+            # if x1 == x2, paddle will raise ValueErros, 
+            # but in pytorch, it will return [] tensor without errors
+            if int(bbox_x1) != int(bbox_x2) and int(bbox_y1) != int(bbox_y2):
+                x[:, :, int(bbox_x1): int(bbox_x2), int(bbox_y1): int(bbox_y2)] = x.flip(axis=[0])[
+                    :, :, int(bbox_x1): int(bbox_x2), int(bbox_y1): int(bbox_y2)]
         else:
-            clip = None
-        optimizer = paddle.optimizer.Momentum(
-            parameters=model.parameters(),
-            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-            weight_decay=config.TRAIN.WEIGHT_DECAY,
-            momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
-            grad_clip=clip)
-    elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
-        if config.TRAIN.GRAD_CLIP:
-            clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
-        else:
-            clip = None
-        optimizer = paddle.optimizer.AdamW(
-            parameters=model.parameters(),
-            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-            beta1=config.TRAIN.OPTIMIZER.BETAS[0],
-            beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-            weight_decay=config.TRAIN.WEIGHT_DECAY,
-            epsilon=config.TRAIN.OPTIMIZER.EPS,
-            grad_clip=clip,
-            apply_decay_param_fun=get_exclude_from_weight_decay_fn([
-                'absolute_pos_embed', 'relative_position_bias_table']),
-        )
-    else:
-        logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
-        raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
-
-    # STEP 6: Load pretrained model or load resume model and optimizer states
-    if config.MODEL.PRETRAINED:
-        if (config.MODEL.PRETRAINED).endswith('.pdparams'):
-            raise ValueError(f'{config.MODEL.PRETRAINED} should not contain .pdparams')
-        assert os.path.isfile(config.MODEL.PRETRAINED + '.pdparams') is True
-        model_state = paddle.load(config.MODEL.PRETRAINED + '.pdparams')
-        model.set_dict(model_state)
-        logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
-
-    if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
-        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
-        model.set_dict(model_state)
-        opt_state = paddle.load(config.MODEL.RESUME + '.pdopt')
-        optimizer.set_state_dict(opt_state)
-        logger.info(
-            f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")
-
-    # STEP 7: Validation (eval mode)
-    if config.EVAL:
-        logger.info('----- Start Validating')
-        val_loss, val_acc1, val_acc5, val_time = validate(
-            dataloader=dataloader_val,
-            model=model,
-            criterion=criterion_val,
-            total_batch=len(dataloader_val),
-            debug_steps=config.REPORT_FREQ,
-            logger=logger)
-        logger.info(f"Validation Loss: {val_loss:.4f}, " +
-                    f"Validation Acc@1: {val_acc1:.4f}, " +
-                    f"Validation Acc@5: {val_acc5:.4f}, " +
-                    f"time: {val_time:.2f}")
-        return
-
-    # STEP 8: Start training and validation (train mode)
-    logger.info(f"Start training from epoch {last_epoch + 1}.")
-    for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
-        # train
-        logger.info(f"Now training epoch {epoch}. LR={optimizer.get_lr():.6f}")
-        train_loss, train_acc, train_time = train(dataloader=dataloader_train,
-                                                  model=model,
-                                                  criterion=criterion,
-                                                  optimizer=optimizer,
-                                                  epoch=epoch,
-                                                  total_epochs=config.TRAIN.NUM_EPOCHS,
-                                                  total_batch=len(dataloader_train),
-                                                  debug_steps=config.REPORT_FREQ,
-                                                  accum_iter=config.TRAIN.ACCUM_ITER,
-                                                  mixup_fn=mixup_fn,
-                                                  amp=config.AMP,
-                                                  logger=logger)
-        scheduler.step()
-        logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                    f"Train Loss: {train_loss:.4f}, " +
-                    f"Train Acc: {train_acc:.4f}, " +
-                    f"time: {train_time:.2f}")
-        # validation
-        if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
-            logger.info(f'----- Validation after Epoch: {epoch}')
-            val_loss, val_acc1, val_acc5, val_time = validate(
-                dataloader=dataloader_val,
-                model=model,
-                criterion=criterion_val,
-                total_batch=len(dataloader_val),
-                debug_steps=config.REPORT_FREQ,
-                logger=logger)
-            logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                        f"Validation Loss: {val_loss:.4f}, " +
-                        f"Validation Acc@1: {val_acc1:.4f}, " +
-                        f"Validation Acc@5: {val_acc5:.4f}, " +
-                        f"time: {val_time:.2f}")
-        # model save
-        if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
-            model_path = os.path.join(
-                config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
-            paddle.save(model.state_dict(), model_path + '.pdparams')
-            paddle.save(optimizer.state_dict(), model_path + '.pdopt')
-            logger.info(f"----- Save model: {model_path}.pdparams")
-            logger.info(f"----- Save optim: {model_path}.pdopt")
-
-
-if __name__ == "__main__":
-    main()
+            x_flipped = x.flip(axis=[0])
+            x_flipped = x_flipped * (1 - lam)
+            x.set_value(x * (lam) + x_flipped)
+        return lam
