@@ -18,9 +18,10 @@ Implement Transformer Class for ViT
 
 import paddle
 import paddle.nn as nn
-from drop import DropPath
+
 from numpy import repeat
 import os
+from drop import DropPath
 
 
 def graph2vector(x: paddle.Tensor):
@@ -244,7 +245,8 @@ class Attention(nn.Layer):
                           kernel_size,
                           padding,
                           stride,
-                          ):
+                         ):
+        
         proj = nn.Sequential(
             (nn.Conv2D(
                 dim_in,
@@ -303,7 +305,7 @@ class Attention(nn.Layer):
 
 
         # multi tensor with axis=3，then * scale，achieve the result of q*k/sqort(d_k),
-        attn_score = paddle.matmul(q, k, transpose_y=True) * self.scale#'bhlk,bhtk->bhlt',
+        attn_score = paddle.matmul(q, k, transpose_y=True) * self.scale
         attn = nn.functional.softmax(attn_score, axis=-1)
         attn = self.attn_drop(attn)
 
@@ -343,7 +345,7 @@ class Block(nn.Layer):
             **kwargs
         )
         if drop_path > 0.:
-            self.drop_path = Droppath(drop_path)
+            self.drop_path = DropPath(drop_path)
         else:
             self.drop_path = nn.Identity()
 
@@ -387,6 +389,8 @@ class VisionTransformer(nn.Layer):
                  drop_rate=0.,
                  attn_drop_rate=0.,
                  drop_path_rate=0.,
+                 act_layer=QuickGELU,
+                 norm_layer=nn.LayerNorm,
                  init='trunc_norm',
                  **kwargs):
         super().__init__()
@@ -399,7 +403,7 @@ class VisionTransformer(nn.Layer):
             stride=patch_stride,
             padding=patch_padding,
             embed_dim=embed_dim,
-            norm_layer=nn.LayerNorm
+            norm_layer=norm_layer
         )
 
         with_cls_token = kwargs['with_cls_token']
@@ -409,6 +413,7 @@ class VisionTransformer(nn.Layer):
                 shape=[1, 1, embed_dim],
                 dtype='float32',
                 default_initializer=nn.initializer.TruncatedNormal(std=.02))
+            #self.cls_token = paddle.zeros([1, 1, embed_dim])
         else:
             self.cls_token = None
 
@@ -427,7 +432,8 @@ class VisionTransformer(nn.Layer):
                     drop=drop_rate,
                     attn_drop=attn_drop_rate,
                     drop_path=dpr[j],
-                    norm_layer=nn.LayerNorm,
+                    act_layer=act_layer,
+                    norm_layer=norm_layer,
                     **kwargs
                 )
             )
@@ -440,9 +446,11 @@ class VisionTransformer(nn.Layer):
 
     def _init_weights_trunc_normal(self, m):
         if isinstance(m, nn.Linear):
+            #logging.info('=> init weight of Linear from trunc norm')
             trun_init = nn.initializer.TruncatedNormal(std=0.02)
             trun_init(m.weight)
             if m.bias is not None:
+                #logging.info('=> init bias of Linear to zeros')
                 zeros = nn.initializer.Constant(0.)
                 zeros(m.bias)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2D)):
@@ -453,9 +461,11 @@ class VisionTransformer(nn.Layer):
 
     def _init_weights_xavier(self, m):
         if isinstance(m, nn.Linear):
+            #logging.info('=> init weight of Linear from xavier uniform')
             xavier_init = nn.initializer.XavierNormal()
             xavier_init(m.weight)
             if m.bias is not None:
+                #logging.info('=> init bias of Linear to zeros')
                 zeros = nn.initializer.Constant(0.)
             zeros(m.bias)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2D)):
@@ -521,6 +531,7 @@ class ConvolutionalVisionTransformer(nn.Layer):
 
         self.num_stages = num_stage
         for i in range(self.num_stages):
+
             stage = VisionTransformer(
                 in_chans=in_chans,
                 patch_size= patch_size[i],
@@ -553,6 +564,7 @@ class ConvolutionalVisionTransformer(nn.Layer):
     def init_weights(self, pretrained='', pretrained_layers=[], verbose=True):
         if os.path.isfile(pretrained):
             pretrained_dict = paddle.load(pretrained, map_location='cpu')
+            #logging.info(f'=> loading pretrained model {pretrained}')
             model_dict = self.state_dict()
             pretrained_dict = {
                 k: v for k, v in pretrained_dict.items()
@@ -565,9 +577,15 @@ class ConvolutionalVisionTransformer(nn.Layer):
                     or pretrained_layers[0] is '*'
                 )
                 if need_init:
+                    #if verbose:
+                        #logging.info(f'=> init {k} from {pretrained}')
                     if 'pos_embed' in k and v.size() != model_dict[k].size():
                         size_pretrained = v.size()
                         size_new = model_dict[k].size()
+                        #logging.info(
+                        #    '=> load_pretrained: resized variant: {} to {}'
+                        #    .format(size_pretrained, size_new)
+                        #)
 
                         ntok_new = size_new[1]
                         ntok_new -= 1
@@ -577,7 +595,10 @@ class ConvolutionalVisionTransformer(nn.Layer):
                         gs_old = int(paddle.sqrt(len(posemb_grid)))
                         gs_new = int(paddle.sqrt(ntok_new))
 
-                      
+                        #logging.info(
+                        #    '=> load_pretrained: grid-size from {} to {}'
+                        #    .format(gs_old, gs_new)
+                        #)
 
                         posemb_grid = posemb_grid.reshape(gs_old, gs_old, -1)
                         zoom = (gs_new / gs_old, gs_new / gs_old, 1)
