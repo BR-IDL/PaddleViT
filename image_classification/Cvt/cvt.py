@@ -132,12 +132,10 @@ class ConvEmbed(nn.Layer):
     def forward(self, x):
         x = self.proj(x)
         B, C, H, W = x.shape
-        # x = graph2vector(x)
         x = paddle.transpose(x, [0, 2, 3, 1])
         x = paddle.reshape(x, [B, H*W, C])
         if self.norm:
             x = self.norm(x)
-        # x=vector2graph(x)
         x = paddle.transpose(x, [0, 2, 1])
         x = paddle.reshape(x, [B, C, H, W])
         return x
@@ -234,7 +232,6 @@ class Attention(nn.Layer):
     def forward_conv(self, x, h, w):
         if self.with_cls_token:  # spilt token from x
             cls_token, x = paddle.split(x, [1, h*w], 1)
-        # x = vector2graph(x, h, w)
         B, L, C = x.shape  # L is length of tensor
         x = paddle.transpose(x, [0, 2, 1])
         x = paddle.reshape(x, [B, C, h, w])
@@ -244,7 +241,6 @@ class Attention(nn.Layer):
             q = paddle.transpose(q, [0, 2, 3, 1])
             q = paddle.reshape(q, [B, H*W, C])
         else:
-            # q = graph2vector(x)
             B, C, H, W = x.shape
             q = paddle.transpose(x, [0, 2, 3, 1])
             q = paddle.reshape(q, [B, H*W, C])
@@ -254,7 +250,6 @@ class Attention(nn.Layer):
             k = paddle.transpose(k, [0, 2, 3, 1])
             k = paddle.reshape(k, [B, H*W, C])
         else:
-            # k = graph2vector(x)
             B, C, H, W = x.shape
             k = paddle.transpose(x, [0, 2, 3, 1])
             k = paddle.reshape(k, [B, H*W, C])
@@ -285,17 +280,14 @@ class Attention(nn.Layer):
 
         # now q,k,v is b (h w) c
         h=self.num_heads
-        #q = multitoken(self.proj_q(q), h=self.num_heads)
         q=self.proj_q(q)
         B, T, L = q.shape
         q = paddle.reshape(q, [B, T, h, -1])
         q = paddle.transpose(q, [0, 2, 1, 3])
-        # k = multitoken(self.proj_k(k),  h=self.num_heads)
         k=self.proj_k(k)
         B, T, L = k.shape
         k = paddle.reshape(k, [B, T, h, -1])
         k = paddle.transpose(k, [0, 2, 1, 3])
-        # v = multitoken(self.proj_v(v),  h=self.num_heads)
         v=self.proj_v(v)
         B, T, L = v.shape
         v = paddle.reshape(v, [B, T, h, -1])
@@ -410,7 +402,6 @@ class VisionTransformer(nn.Layer):
                 shape=[1, 1, embed_dim],
                 dtype='float32',
                 default_initializer=nn.initializer.TruncatedNormal(std=.02))
-            #self.cls_token = paddle.zeros([1, 1, embed_dim])
         else:
             self.cls_token = None
 
@@ -443,11 +434,9 @@ class VisionTransformer(nn.Layer):
 
     def _init_weights_trunc_normal(self, m):
         if isinstance(m, nn.Linear):
-            #logging.info('=> init weight of Linear from trunc norm')
             trun_init = nn.initializer.TruncatedNormal(std=0.02)
             trun_init(m.weight)
             if m.bias is not None:
-                #logging.info('=> init bias of Linear to zeros')
                 zeros = nn.initializer.Constant(0.)
                 zeros(m.bias)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2D)):
@@ -458,11 +447,9 @@ class VisionTransformer(nn.Layer):
 
     def _init_weights_xavier(self, m):
         if isinstance(m, nn.Linear):
-            #logging.info('=> init weight of Linear from xavier uniform')
             xavier_init = nn.initializer.XavierNormal()
             xavier_init(m.weight)
             if m.bias is not None:
-                #logging.info('=> init bias of Linear to zeros')
                 zeros = nn.initializer.Constant(0.)
             zeros(m.bias)
         elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2D)):
@@ -474,7 +461,6 @@ class VisionTransformer(nn.Layer):
     def forward(self, x):
         x = self.patch_embed(x)
         B, C, H, W = x.shape
-        # x = graph2vector(x
         B, C, H, W = x.shape
         x = paddle.transpose(x, [0, 2, 3, 1])
         x = paddle.reshape(x, [B, H*W, C])
@@ -487,7 +473,6 @@ class VisionTransformer(nn.Layer):
             x = blk(x, H, W)
         if self.cls_token is not None:
             cls_tokens, x = paddle.split(x, [1, H*W], 1)
-        # x = vector2graph(x,  H, W)
         B, L, C = x.shape  # L is length of tensor
         x = paddle.transpose(x, [0, 2, 1])
         x = paddle.reshape(x, [B, C, H, W])
@@ -567,7 +552,6 @@ class ConvolutionalVisionTransformer(nn.Layer):
     def init_weights(self, pretrained='', pretrained_layers=[], verbose=True):
         if os.path.isfile(pretrained):
             pretrained_dict = paddle.load(pretrained, map_location='cpu')
-            #logging.info(f'=> loading pretrained model {pretrained}')
             model_dict = self.state_dict()
             pretrained_dict = {
                 k: v for k, v in pretrained_dict.items()
@@ -580,15 +564,9 @@ class ConvolutionalVisionTransformer(nn.Layer):
                     or pretrained_layers[0] is '*'
                 )
                 if need_init:
-                    #if verbose:
-                        #logging.info(f'=> init {k} from {pretrained}')
                     if 'pos_embed' in k and v.size() != model_dict[k].size():
                         size_pretrained = v.size()
                         size_new = model_dict[k].size()
-                        #logging.info(
-                        #    '=> load_pretrained: resized variant: {} to {}'
-                        #    .format(size_pretrained, size_new)
-                        #)
 
                         ntok_new = size_new[1]
                         ntok_new -= 1
@@ -597,11 +575,6 @@ class ConvolutionalVisionTransformer(nn.Layer):
 
                         gs_old = int(paddle.sqrt(len(posemb_grid)))
                         gs_new = int(paddle.sqrt(ntok_new))
-
-                        #logging.info(
-                        #    '=> load_pretrained: grid-size from {} to {}'
-                        #    .format(gs_old, gs_new)
-                        #)
 
                         posemb_grid = posemb_grid.reshape(gs_old, gs_old, -1)
                         zoom = (gs_new / gs_old, gs_new / gs_old, 1)
@@ -623,7 +596,7 @@ class ConvolutionalVisionTransformer(nn.Layer):
             x = self.norm(cls_tokens)
             x = paddle.squeeze(x)
         else:
-            # x = graph2vector(x) #'b c h w -> b (h w) c'
+            #'b c h w -> b (h w) c'
             B, C, H, W = x.shape
             x = paddle.transpose(x, [0, 2, 3, 1])
             x = paddle.reshape(x, [B, H*W, C])
