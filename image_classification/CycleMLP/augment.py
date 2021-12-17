@@ -11,7 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Auto Augmentation"""
+"""Augmentation"""
+""" Rand Augmentation """
+# reference: RandAugment: Practical automated data augmentation with a reduced search space
+# https://arxiv.org/abs/1909.13719
+
+""" Auto Augmentation """
+# reference: AutoAugment: Learning Augmentation Policies from Data
+# https://arxiv.org/abs/1805.09501
 
 import random
 import numpy as np
@@ -19,7 +26,7 @@ from PIL import Image, ImageEnhance, ImageOps
 
 
 def auto_augment_policy_original():
-    """ImageNet auto augment policy"""
+    """25 types of augment policies in original paper"""
     policy = [
         [('Posterize', 0.4, 8), ('Rotate', 0.6, 9)],        
         [('Solarize', 0.6, 5), ('AutoContrast', 0.6, 5)],        
@@ -51,10 +58,34 @@ def auto_augment_policy_original():
     return policy
 
 
+def rand_augment_policy_original(magnitude_idx):
+    """
+    14 types of augment policies in original paper
+    Args:
+        magnitude_idx: M
+    """
+    policy = [
+        ('Posterize', 1, magnitude_idx), ('Rotate', 1, magnitude_idx),
+        ('Solarize', 1, magnitude_idx), ('AutoContrast', 1, magnitude_idx),
+        ('Equalize', 1, magnitude_idx), ('Contrast', 1, magnitude_idx),
+        ('Color', 1, magnitude_idx), ('Invert', 1, magnitude_idx),
+        ('Sharpness', 1, magnitude_idx), ('Brightness', 1, magnitude_idx),
+        ('ShearX', 1, magnitude_idx), ('ShearY', 1, magnitude_idx),
+        ('TranslateX', 1, magnitude_idx), ('TranslateY', 1, magnitude_idx),
+    ]
+    policy = [SubPolicy(*args) for args in policy]
+    return policy
+
+
 class AutoAugment():
     """Auto Augment
     Randomly choose a tuple of augment ops from a list of policy
     Then apply the tuple of augment ops to input image
+
+    Examples:
+        policy = auto_augment_policy_original()
+        augment = AutoAugment(policy)
+        transformed_image = augment(image)
     """
     def __init__(self, policy):
         self.policy = policy
@@ -66,6 +97,35 @@ class AutoAugment():
         sub_policy = self.policy[policy_idx]
         for op in sub_policy:
             image = op(image)
+        return image
+
+
+class RandAugment():
+    """Rand Augment
+    Randomly choose N augment ops from a list of K policies
+    Then apply the N ops to input image
+
+    Examples:
+        policy = rand_augment_policy_original(magnitude_idx)
+        augment = RandAugment(policy)
+        transformed_image = augment(image)
+    """
+
+    def __init__(self, policy, num_layers):
+        """
+        Args:
+            policy: list of SubPolicy
+            num_layers: int
+        """
+        self.policy = policy
+        self.num_layers = num_layers
+
+    def __call__(self, image):
+        selected_idx = np.random.choice(len(self.policy), self.num_layers)
+
+        for policy_idx in selected_idx:
+            sub_policy = self.policy[policy_idx]
+            image = sub_policy(image)
         return image
 
 
