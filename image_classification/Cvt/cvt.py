@@ -37,42 +37,6 @@ def graph2vector(x: paddle.Tensor):
     return x
 
 
-def vector2graph(x: paddle.Tensor, h, w):
-    '''
-    handle the tensor's dimension, take tensor into images.
-    b (h w) c -> b c h w.
-    b c h w mean the quantity of picures is b,number of channels is c
-    each picture size is h*w.
-
-    '''
-    B, L, C = x.shape  # L is length of tensor
-    x = paddle.transpose(x, [0, 2, 1])
-    x = paddle.reshape(x, [B, C, h, w])
-    return x
-
-
-def multitoken(x, h):
-    '''
-    expand the dim of x.
-    handle the tensor's dimension, get multi-head token.
-    b t (h d) -> b h t d
-    '''
-    B, T, L = x.shape
-    x = paddle.reshape(x, [B, T, h, -1])
-    x = paddle.transpose(x, [0, 2, 1, 3])
-    return x
-
-
-class RearrangeLayer(nn.Layer):
-    '''rearrange layer module
-    b c h w -> b (h w) c
-    a layer to expand x:imgaes into tensors.
-    b c h w mean the quantity of picures is b,number of channels is c
-    each picture size is h*w.
-    '''
-
-    def forward(self, x: paddle.Tensor):
-        return graph2vector(x)
 
 
 class QuickGELU(nn.Layer):
@@ -168,10 +132,14 @@ class ConvEmbed(nn.Layer):
     def forward(self, x):
         x = self.proj(x)
         B, C, H, W = x.shape
-        x = graph2vector(x)
+        # x = graph2vector(x)
+        x = paddle.transpose(x, [0, 2, 3, 1])
+        x = paddle.reshape(x, [B, H*W, C])
         if self.norm:
             x = self.norm(x)
-        x = vector2graph(x, H, W)
+        # x=vector2graph(x)
+        x = paddle.transpose(x, [0, 2, 1])
+        x = paddle.reshape(x, [B, C, H, W])
         return x
 
 
@@ -258,7 +226,7 @@ class Attention(nn.Layer):
                 groups=dim_in
             )),
             (nn.BatchNorm2D(dim_in)),
-            (RearrangeLayer()),
+            
         )
 
         return proj
@@ -266,19 +234,40 @@ class Attention(nn.Layer):
     def forward_conv(self, x, h, w):
         if self.with_cls_token:  # spilt token from x
             cls_token, x = paddle.split(x, [1, h*w], 1)
-        x = vector2graph(x, h, w)
+        # x = vector2graph(x, h, w)
+        B, L, C = x.shape  # L is length of tensor
+        x = paddle.transpose(x, [0, 2, 1])
+        x = paddle.reshape(x, [B, C, h, w])
         if self.conv_proj_q is not None:
             q = self.conv_proj_q(x)
+            B, C, H, W = q.shape
+            q = paddle.transpose(q, [0, 2, 3, 1])
+            q = paddle.reshape(q, [B, H*W, C])
         else:
-            q = graph2vector(x)
+            # q = graph2vector(x)
+            B, C, H, W = x.shape
+            q = paddle.transpose(x, [0, 2, 3, 1])
+            q = paddle.reshape(q, [B, H*W, C])
         if self.conv_proj_k is not None:
             k = self.conv_proj_k(x)
+            B, C, H, W = k.shape
+            k = paddle.transpose(k, [0, 2, 3, 1])
+            k = paddle.reshape(k, [B, H*W, C])
         else:
-            k = graph2vector(x)
+            # k = graph2vector(x)
+            B, C, H, W = x.shape
+            k = paddle.transpose(x, [0, 2, 3, 1])
+            k = paddle.reshape(k, [B, H*W, C])
         if self.conv_proj_v is not None:
             v = self.conv_proj_v(x)
+            B, C, H, W = v.shape
+            v = paddle.transpose(v, [0, 2, 3, 1])
+            v = paddle.reshape(v, [B, H*W, C])
         else:
-            v = graph2vector(x)
+            # v = graph2vector(x)
+            B, C, H, W = x.shape
+            v = paddle.transpose(x, [0, 2, 3, 1])
+            v = paddle.reshape(v, [B, H*W, C])
         if self.with_cls_token:
             q = paddle.concat([cls_token, q], axis=1)
             k = paddle.concat([cls_token, k], axis=1)
@@ -295,14 +284,22 @@ class Attention(nn.Layer):
             q, k, v = self.forward_conv(x, h, w)
 
         # now q,k,v is b (h w) c
-
-        q = multitoken(self.proj_q(
-            q), h=self.num_heads)
-        k = multitoken(self.proj_k(
-            k),  h=self.num_heads)
-        v = multitoken(self.proj_v(
-            v),  h=self.num_heads)
-
+        h=self.num_heads
+        #q = multitoken(self.proj_q(q), h=self.num_heads)
+        q=self.proj_q(q)
+        B, T, L = q.shape
+        q = paddle.reshape(q, [B, T, h, -1])
+        q = paddle.transpose(q, [0, 2, 1, 3])
+        # k = multitoken(self.proj_k(k),  h=self.num_heads)
+        k=self.proj_k(k)
+        B, T, L = k.shape
+        k = paddle.reshape(k, [B, T, h, -1])
+        k = paddle.transpose(k, [0, 2, 1, 3])
+        # v = multitoken(self.proj_v(v),  h=self.num_heads)
+        v=self.proj_v(v)
+        B, T, L = v.shape
+        v = paddle.reshape(v, [B, T, h, -1])
+        v = paddle.transpose(v, [0, 2, 1, 3])
 
         # multi tensor with axis=3，then * scale，achieve the result of q*k/sqort(d_k),
         attn_score = paddle.matmul(q, k, transpose_y=True) * self.scale
@@ -477,7 +474,10 @@ class VisionTransformer(nn.Layer):
     def forward(self, x):
         x = self.patch_embed(x)
         B, C, H, W = x.shape
-        x = graph2vector(x)
+        # x = graph2vector(x
+        B, C, H, W = x.shape
+        x = paddle.transpose(x, [0, 2, 3, 1])
+        x = paddle.reshape(x, [B, H*W, C])
         cls_tokens = None
         if self.cls_token is not None:
             cls_tokens = paddle.expand(self.cls_token, [B, -1, -1])
@@ -487,7 +487,10 @@ class VisionTransformer(nn.Layer):
             x = blk(x, H, W)
         if self.cls_token is not None:
             cls_tokens, x = paddle.split(x, [1, H*W], 1)
-        x = vector2graph(x,  H, W)
+        # x = vector2graph(x,  H, W)
+        B, L, C = x.shape  # L is length of tensor
+        x = paddle.transpose(x, [0, 2, 1])
+        x = paddle.reshape(x, [B, C, H, W])
         return x, cls_tokens
 
 
@@ -620,7 +623,10 @@ class ConvolutionalVisionTransformer(nn.Layer):
             x = self.norm(cls_tokens)
             x = paddle.squeeze(x)
         else:
-            x = graph2vector(x, 'b c h w -> b (h w) c')
+            # x = graph2vector(x) #'b c h w -> b (h w) c'
+            B, C, H, W = x.shape
+            x = paddle.transpose(x, [0, 2, 3, 1])
+            x = paddle.reshape(x, [B, H*W, C])
             x = self.norm(x)
             x = paddle.mean(x, axis=1)
 
