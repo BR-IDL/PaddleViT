@@ -19,7 +19,7 @@ Implement transGAN_custom
 import paddle
 import paddle.nn as nn
 from utils import trunc_normal_
-from utils import gelu
+from utils import gelu, leakyrelu
 from utils import pixel_upsample
 from utils import drop_path
 
@@ -56,7 +56,7 @@ class PixelNorm(nn.Layer):
         super().__init__()
 
     def forward(self, input):
-        return input * paddle.rsqrt(paddle.mean(input ** 2, dim=2, keepdim=True) + 1e-8)
+        return input * paddle.rsqrt(paddle.mean(input ** 2, axis=2, keepdim=True) + 1e-8)
 
 class CustomNorm(nn.Layer):
     """ CustomNorm layer
