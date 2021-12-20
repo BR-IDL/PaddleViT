@@ -214,10 +214,12 @@ def main():
     # 1. Create model
     model = build_model(config)
     # 2. Create train and val dataloader
-    dataset_train = get_dataset(config, mode='train')
+    if not config.EVAL:
+        dataset_train = get_dataset(config, mode='train')
+        dataloader_train = get_dataloader(config, dataset_train, 'train', False)
     dataset_val = get_dataset(config, mode='val')
-    dataloader_train = get_dataloader(config, dataset_train, 'train', False)
     dataloader_val = get_dataloader(config, dataset_val, 'val', False)
+
     # 3. Define criterion
     criterion = nn.CrossEntropyLoss()
     # 4. Define lr_scheduler
