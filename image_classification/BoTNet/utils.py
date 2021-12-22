@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
 # limitations under the License.
 
 """utils for ViT
+
 Contains AverageMeter for monitoring, get_exclude_from_decay_fn for training
 and WarmupCosineScheduler for training
+
 """
 
 import math
@@ -42,11 +44,14 @@ class AverageMeter():
         self.avg = self.sum / self.cnt
 
 
+
 def get_exclude_from_weight_decay_fn(exclude_list=[]):
     """ Set params with no weight decay during the training
+
     For certain params, e.g., positional encoding in ViT, weight decay
     may not needed during the learning, this method is used to find
     these params.
+
     Args:
         exclude_list: a list of params names which need to exclude
                       from weight decay.
@@ -68,10 +73,12 @@ def get_exclude_from_weight_decay_fn(exclude_list=[]):
 
 class WarmupCosineScheduler(LRScheduler):
     """Warmup Cosine Scheduler
+
     First apply linear warmup, then apply cosine decay schedule.
     Linearly increase learning rate from "warmup_start_lr" to "start_lr" over "warmup_epochs"
     Cosinely decrease learning rate from "start_lr" to "end_lr" over remaining
     "total_epochs - warmup_epochs"
+
     Attributes:
         learning_rate: the starting learning rate (without warmup), not used here!
         warmup_start_lr: warmup starting learning rate
