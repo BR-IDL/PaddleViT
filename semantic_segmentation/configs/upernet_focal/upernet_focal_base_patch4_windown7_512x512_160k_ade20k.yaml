@@ -23,7 +23,7 @@ MODEL:
         PATCH_SIZE: 4
         WINDOW_SIZE: 7
         IN_CHANNELS: 3
-        HIDDEN_SIZE: 128  
+        HIDDEN_SIZE: 128
         EMBED_DIM: 128
         STAGE_DEPTHS: [2, 2, 18, 2]
         NUM_HEADS: [4, 8, 16, 32]
