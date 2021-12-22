@@ -46,7 +46,6 @@ class MixSoftmaxCrossEntropyLoss(nn.CrossEntropyLoss):
         inputs = tuple(list(preds) + [target])
         if self.aux:
             return self._aux_forward(*inputs)
-        elif len(preds) > 1:
+        if len(preds) > 1:
             return self._multiple_forward(*inputs)
-        else:
-            return super(MixSoftmaxCrossEntropyLoss, self).forward(*inputs)
+        return super(MixSoftmaxCrossEntropyLoss, self).forward(*inputs)

@@ -4,5 +4,5 @@ python main_single_gpu_finetune.py \
 -dataset='imagenet2012' \
 -batch_size=8 \
 -data_path='/dataset/imagenet' \
-#-amp \
-#-pretrained='./output/train-20211203-14-42-46/MAE-Epoch-10-Loss-0'
+-amp \
+-pretrained='./output/train-20211203-14-42-46/MAE-Epoch-10-Loss-0'

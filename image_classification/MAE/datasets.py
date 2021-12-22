@@ -81,8 +81,8 @@ class ImageNet2012Dataset(Dataset):
         if mask is None:
             label = self.label_list[index]
             return data, label
-        else:
-            return data, mask
+
+        return data, mask
 
 
 def get_train_transforms(config):

@@ -184,8 +184,7 @@ class DeiT(nn.Layer):
         x_distill = self.head_distill(x_distill)
         if self.training:
             return x, x_distill
-        else:
-            return (x + x_distill) / 2
+        return (x + x_distill) / 2
 
 
 def main():
@@ -195,4 +194,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

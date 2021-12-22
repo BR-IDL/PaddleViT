@@ -88,7 +88,3 @@ class UtilTest(unittest.TestCase):
                 self.assertTrue(fn(name))
             elif name.endswith('bias'):
                 self.assertFalse(fn(name))
-
-
-        
-

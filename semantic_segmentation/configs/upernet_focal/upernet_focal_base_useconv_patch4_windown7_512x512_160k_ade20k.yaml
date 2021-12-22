@@ -23,7 +23,7 @@ MODEL:
         PATCH_SIZE: 4
         WINDOW_SIZE: 7
         IN_CHANNELS: 3
-        HIDDEN_SIZE: 128  
+        HIDDEN_SIZE: 128
         EMBED_DIM: 128
         STAGE_DEPTHS: [2, 2, 18, 2]
         NUM_HEADS: [4, 8, 16, 32]
@@ -66,6 +66,3 @@ VAL:
     CROP_SIZE: [512,512]
     STRIDE_SIZE: [341,341]
 SAVE_DIR: "./output/UperNet_swin_base_patch4_windown7_512x512_160k_ade20k"
-
-        
-
