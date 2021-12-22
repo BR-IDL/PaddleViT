@@ -61,6 +61,15 @@ def gelu(x):
     return x * 0.5 * (1.0 + paddle.erf(x / math.sqrt(2.0)))
 
 
+def leakyrelu(x):
+    """ An activation function：
+        if x > 0, return x. else return negative_slope * x. the value of negative_slope
+        is 0.2. more information can see https://www.paddlepaddle.org.cn/documentation/
+        docs/zh/api/paddle/nn/functional/leaky_relu_cn.html#leaky-relu
+    """
+    return F.leaky_relu(x, 0.2)
+
+
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     # Cut & paste from PyTorch official master until it's in a few official releases - RW
     # Method based on https://people.sc.fsu.edu/~jburkardt/presentations/truncated_normal.pdf

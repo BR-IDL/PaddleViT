@@ -351,7 +351,7 @@ class SwinTransformerBlock(nn.Layer):
 
     Attributes:
         dim: int, input dimension (channels)
-        input_resolution: int, input resoultion
+        input_resolution: tuple, input resoultion
         num_heads: int, number of attention heads
         windos_size: int, window size, default: 7
         shift_size: int, shift size for SW-MSA, default: 0

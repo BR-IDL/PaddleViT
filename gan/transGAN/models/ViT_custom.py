@@ -19,7 +19,8 @@ Implement transGAN_custom
 import paddle
 import paddle.nn as nn
 from utils import trunc_normal_
-from utils import gelu, leakyrelu
+from utils import gelu
+from utils import leakyrelu
 from utils import pixel_upsample
 from utils import drop_path
 
