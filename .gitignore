@@ -140,6 +140,8 @@ dmypy.json
 /semantic_segmentation/job.sh
 /semantic_segmentation/run.sh
 
+.DS_Store
+*/.DS_Store
+
 # Pycharm
 .idea/
-*.DS_Store

@@ -27,5 +27,3 @@ def get_dataset(name='cifar10', mode='train'):
 def get_dataloader(dataset, batch_size=128, mode='train'):
     dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=2, shuffle=(mode == 'train'))
     return dataloader
-
-

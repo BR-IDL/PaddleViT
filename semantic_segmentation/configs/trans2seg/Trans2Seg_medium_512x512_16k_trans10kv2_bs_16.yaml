@@ -24,8 +24,8 @@ MODEL:
     NAME: "Trans2Seg"
     ENCODER:
         TYPE: "resnet50c"
-        MULTI_GRID: 
-        MULTI_DILATION: 
+        MULTI_GRID:
+        MULTI_DILATION:
     TRANS2SEG:
         EMBED_DIM: 256
         DEPTH: 4

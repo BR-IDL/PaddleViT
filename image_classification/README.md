@@ -6,6 +6,7 @@ PaddlePaddle training/validation code and pretrained models for **Image Classifi
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
+* Update (2021-12-23): Add BoTNet model.
 * Update (2021-12-15): Add PoolFormer model.
 * Update (2021-12-09): Add HaloNet model.
 * Update (2021-12-08): Add PiT model.
@@ -44,6 +45,7 @@ This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.g
 11. **[PiT](./PiT)**
 11. **[HaloNet](./HaloNet)**
 11. **[PoolFormer](./PoolFormer)**
+12. **[BoTNet](./BoTNet)**
 13. **[MLP-Mixer](./MLP-Mixer)**
 14. **[ResMLP](./ResMLP)**
 15. **[gMLP](./gMLP)**
@@ -137,6 +139,7 @@ PaddleViT now provides the following **transfomer based models**:
 16. **[PiT](./PiT)** (from NAVER/Sogan University), released with paper [Rethinking Spatial Dimensions of Vision Transformers](https://arxiv.org/abs/2103.16302), by Byeongho Heo, Sangdoo Yun, Dongyoon Han, Sanghyuk Chun, Junsuk Choe, Seong Joon Oh.
 17. **[HaloNet](./HaloNet)**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.11. 
 18. **[PoolFormer](./PoolFormer)**, (from Sea AI Lab/NUS), released with paper [MetaFormer is Actually What You Need for Vision](https://arxiv.org/abs/2111.11418), by Weihao Yu, Mi Luo, Pan Zhou, Chenyang Si, Yichen Zhou, Xinchao Wang, Jiashi Feng, Shuicheng Yan.
+19. **[BoTNet](./BoTNet)**, (from UC Berkeley/Google), released with paper [Bottleneck Transformers for Visual Recognition](https://arxiv.org/abs/2101.11605), by Aravind Srinivas, Tsung-Yi Lin, Niki Parmar, Jonathon Shlens, Pieter Abbeel, Ashish Vaswani.
 
 
 PaddleViT now provides the following **MLP based models**:

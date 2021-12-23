@@ -295,12 +295,12 @@ class Swin(nn.Layer):
         self.patch_resolution = [image_size // patch_size, image_size // patch_size] 
 
         self.stages = nn.LayerList()
-        for idx, (depth, num_heads) in enumerate(zip(self.depths, self.num_heads)):
+        for idx, (depth, n_heads) in enumerate(zip(self.depths, self.num_heads)):
             stage = SwinStage(
                 dim=int(self.embed_dim * 2**idx),
                 input_resolution=(self.patch_resolution[0] // (2**idx), self.patch_resolution[1] // (2**idx)),
                 depth=depth,
-                num_heads=num_heads,
+                num_heads=n_heads,
                 window_size=window_size,
                 patch_merging=PatchMerging if (idx < self.num_stages -1) else None)
             self.stages.append(stage)
