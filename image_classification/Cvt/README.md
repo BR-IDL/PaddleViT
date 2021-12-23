@@ -12,6 +12,22 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
     <h4 align="center">CvT Model Overview</h4>
 </p>
 
+# Main results
+## Models pre-trained on ImageNet-1k
+
+| Model  | Resolution | Param | GFLOPs | Top-1 |
+|--------|------------|-------|--------|-------|
+| CvT-13 | 224x224    | 20M   | 4.5    | 81.6  |
+| CvT-21 | 224x224    | 32M   | 7.1    | 82.5  |
+| CvT-13 | 384x384    | 20M   | 16.3   | 83.0  |
+| CvT-32 | 384x384    | 32M   | 24.9   | 83.3  |
+
+## Models pre-trained on ImageNet-22k
+| Model   | Resolution | Param | GFLOPs | Top-1 |
+|---------|------------|-------|--------|-------|
+| CvT-13  | 384x384    | 20M   | 16.3   | 83.3  |
+| CvT-32  | 384x384    | 32M   | 24.9   | 84.9  |
+| CvT-W24 | 384x384    | 277M  | 193.2  | 87.6  |
 
 
 
