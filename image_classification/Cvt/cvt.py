@@ -23,22 +23,6 @@ from numpy import repeat
 import os
 from drop import DropPath
 
-
-def graph2vector(x: paddle.Tensor):
-    '''
-    handle the tensor's dimension, expanding images into tensors.
-    b c h w -> b (h w) c.
-    b c h w mean the quantity of picures is b,number of channels is c.
-    each picture size is h*w.
-    '''
-    B, C, H, W = x.shape
-    x = paddle.transpose(x, [0, 2, 3, 1])
-    x = paddle.reshape(x, [B, H*W, C])
-    return x
-
-
-
-
 class QuickGELU(nn.Layer):
     '''
     Rewrite GELU function to increase processing speed
@@ -518,6 +502,7 @@ class ConvolutionalVisionTransformer(nn.Layer):
         self.num_classes = num_classes
 
         self.num_stages = num_stage
+        self.stages=nn.LayerList()
         for i in range(self.num_stages):
 
             stage = VisionTransformer(
@@ -535,8 +520,7 @@ class ConvolutionalVisionTransformer(nn.Layer):
                 drop_path_rate= drop_path_rate[i],
                 with_cls_token= with_cls_token[i],
             )
-            setattr(self, f'stage{i}', stage)
-
+            self.stages.append(stage)
             in_chans = embed_dim[i]
 
         dim_embed = embed_dim[-1]
@@ -591,7 +575,8 @@ class ConvolutionalVisionTransformer(nn.Layer):
 
     def forward_features(self, x):
         for i in range(self.num_stages):
-            x, cls_tokens = getattr(self, f'stage{i}')(x)
+            x, cls_tokens = self.stages[i](x)
+            
         if self.cls_token:
             x = self.norm(cls_tokens)
             x = paddle.squeeze(x)
