@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
 _C.DATA.CROP_PCT = 1.0 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 2 # number of data loading threads
+_C.DATA.IMAGENET_MEAN = [0.5, 0.5, 0.5] # [0.485, 0.456, 0.406]
+_C.DATA.IMAGENET_STD = [0.5, 0.5, 0.5] # [0.229, 0.224, 0.225]
 
 # model settings
 _C.MODEL = CN()

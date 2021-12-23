@@ -22,6 +22,7 @@ import math
 from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
 
+
 class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
 
@@ -84,8 +85,7 @@ def get_train_transforms(config):
         transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
                                      scale=(0.05, 1.0)),
         transforms.ToTensor(),
-        #transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Normalize(mean=config.DATA.IMAGENET_MEAN, std=config.DATA.IMAGENET_STD),
     ])
     return transforms_train
 
@@ -109,8 +109,7 @@ def get_val_transforms(config):
         transforms.Resize(scale_size, 'bicubic'), # single int for resize shorter side of image
         transforms.CenterCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)),
         transforms.ToTensor(),
-        #transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Normalize(mean=config.DATA.IMAGENET_MEAN, std=config.DATA.IMAGENET_STD),
     ])
     return transforms_val
 
