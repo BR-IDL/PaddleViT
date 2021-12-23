@@ -11,40 +11,113 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Rand Augmentation
+"""Augmentation"""
+""" Rand Augmentation """
+# reference: RandAugment: Practical automated data augmentation with a reduced search space
+# https://arxiv.org/abs/1909.13719
 
-reference: RandAugment: Practical automated data augmentation with a reduced search space
-https://arxiv.org/abs/1909.13719
-"""
-
+""" Auto Augmentation """
+# reference: AutoAugment: Learning Augmentation Policies from Data
+# https://arxiv.org/abs/1805.09501
 
 import random
 import numpy as np
 from PIL import Image, ImageEnhance, ImageOps
 
 
-def rand_augment_policy_original(magnitude_idx):
-    """14 types augment policy"""
+def auto_augment_policy_original():
+    """25 types of augment policies in original paper"""
     policy = [
-        ('Posterize', magnitude_idx), ('Rotate', magnitude_idx),
-        ('Solarize', magnitude_idx), ('AutoContrast', magnitude_idx),
-        ('Equalize', magnitude_idx), ('Contrast', magnitude_idx),
-        ('Color', magnitude_idx), ('Invert', magnitude_idx),
-        ('Sharpness', magnitude_idx), ('Brightness', magnitude_idx),
-        ('ShearX', magnitude_idx), ('ShearY', magnitude_idx),
-        ('TranslateX', magnitude_idx), ('TranslateY', magnitude_idx),
+        [('Posterize', 0.4, 8), ('Rotate', 0.6, 9)],
+        [('Solarize', 0.6, 5), ('AutoContrast', 0.6, 5)],
+        [('Equalize', 0.8, 8), ('Equalize', 0.6, 3)],
+        [('Posterize', 0.6, 7), ('Posterize', 0.6, 6)],
+        [('Equalize', 0.4, 7), ('Solarize', 0.2, 4)],
+        [('Equalize', 0.4, 4), ('Rotate', 0.8, 8)],
+        [('Solarize', 0.6, 3), ('Equalize', 0.6, 7)],
+        [('Posterize', 0.8, 5), ('Equalize', 1.0, 2)],
+        [('Rotate', 0.2, 3), ('Solarize', 0.6, 8)],
+        [('Equalize', 0.6, 8), ('Posterize', 0.4, 6)],
+        [('Rotate', 0.8, 8), ('Color', 0.4, 0)],
+        [('Rotate', 0.4, 9), ('Equalize', 0.6, 2)],
+        [('Equalize', 0.0, 7), ('Equalize', 0.8, 8)],
+        [('Invert', 0.6, 4), ('Equalize', 1.0, 8)],
+        [('Color', 0.6, 4), ('Contrast', 1.0, 8)],
+        [('Rotate', 0.8, 8), ('Color', 1.0, 2)],
+        [('Color', 0.8, 8), ('Solarize', 0.8, 7)],
+        [('Sharpness', 0.4, 7), ('Invert', 0.6, 8)],
+        [('ShearX', 0.6, 5), ('Equalize', 1.0, 9)],
+        [('Color', 0.4, 0), ('Equalize', 0.6, 3)],
+        [('Equalize', 0.4, 7), ('Solarize', 0.2, 4)],
+        [('Solarize', 0.6, 5), ('AutoContrast', 0.6, 5)],
+        [('Invert', 0.6, 4), ('Equalize', 1.0, 8)],
+        [('Color', 0.6, 4), ('Contrast', 1.0, 8)],
+        [('Equalize', 0.8, 8), ('Equalize', 0.6, 3)],
+    ]
+    policy = [[SubPolicy(*args) for args in subpolicy] for subpolicy in policy]
+    return policy
+
+
+def rand_augment_policy_original(magnitude_idx):
+    """
+    14 types of augment policies in original paper
+    Args:
+        magnitude_idx: M
+    """
+    policy = [
+        ('Posterize', 1, magnitude_idx), ('Rotate', 1, magnitude_idx),
+        ('Solarize', 1, magnitude_idx), ('AutoContrast', 1, magnitude_idx),
+        ('Equalize', 1, magnitude_idx), ('Contrast', 1, magnitude_idx),
+        ('Color', 1, magnitude_idx), ('Invert', 1, magnitude_idx),
+        ('Sharpness', 1, magnitude_idx), ('Brightness', 1, magnitude_idx),
+        ('ShearX', 1, magnitude_idx), ('ShearY', 1, magnitude_idx),
+        ('TranslateX', 1, magnitude_idx), ('TranslateY', 1, magnitude_idx),
     ]
     policy = [SubPolicy(*args) for args in policy]
     return policy
 
 
+class AutoAugment():
+    """Auto Augment
+    Randomly choose a tuple of augment ops from a list of policy
+    Then apply the tuple of augment ops to input image
+
+    Examples:
+        policy = auto_augment_policy_original()
+        augment = AutoAugment(policy)
+        transformed_image = augment(image)
+    """
+
+    def __init__(self, policy):
+        self.policy = policy
+
+    def __call__(self, image, policy_idx=None):
+        if policy_idx is None:
+            policy_idx = random.randint(0, len(self.policy) - 1)
+
+        sub_policy = self.policy[policy_idx]
+        for op in sub_policy:
+            image = op(image)
+        return image
+
+
 class RandAugment():
     """Rand Augment
-    Randomly choose N ('num_layers' arg) of augment ops from a list of K policies
+    Randomly choose N augment ops from a list of K policies
     Then apply the N ops to input image
+
+    Examples:
+        policy = rand_augment_policy_original(magnitude_idx)
+        augment = RandAugment(policy)
+        transformed_image = augment(image)
     """
 
     def __init__(self, policy, num_layers):
+        """
+        Args:
+            policy: list of SubPolicy
+            num_layers: int
+        """
         self.policy = policy
         self.num_layers = num_layers
 
@@ -59,13 +132,14 @@ class RandAugment():
 
 class SubPolicy:
     """Subpolicy
-    Read augment name and magnitude, apply augment
+    Read augment name and magnitude, apply augment with probability
     Args:
         op_name: str, augment operation name
+        prob: float, if prob > random prob, apply augment
         magnitude_idx: int, index of magnitude in preset magnitude ranges
     """
 
-    def __init__(self, op_name, magnitude_idx):
+    def __init__(self, op_name, prob, magnitude_idx):
         # ranges of operations' magnitude
         ranges = {
             'ShearX': np.linspace(0, 0.3, 10),  # [-0.3, 0.3] (by random negative)
@@ -84,23 +158,23 @@ class SubPolicy:
             'Invert': [0] * 10,  # no range
         }
 
-        # augmentation operations 
+        # augmentation operations
         # Lambda is not pickleable for DDP
         # image_ops = {
-        #    'ShearX': lambda image, magnitude: shear_x(image, magnitude),   
-        #    'ShearY': lambda image, magnitude: shear_y(image, magnitude),   
-        #    'TranslateX': lambda image, magnitude: translate_x(image, magnitude),   
-        #    'TranslateY': lambda image, magnitude: translate_y(image, magnitude),   
-        #    'Rotate': lambda image, magnitude: rotate(image, magnitude),   
-        #    'AutoContrast': lambda image, magnitude: auto_contrast(image, magnitude),   
-        #    'Invert': lambda image, magnitude: invert(image, magnitude),   
-        #    'Equalize': lambda image, magnitude: equalize(image, magnitude),   
-        #    'Solarize': lambda image, magnitude: solarize(image, magnitude),   
-        #    'Posterize': lambda image, magnitude: posterize(image, magnitude),   
-        #    'Contrast': lambda image, magnitude: contrast(image, magnitude),   
-        #    'Color': lambda image, magnitude: color(image, magnitude),   
-        #    'Brightness': lambda image, magnitude: brightness(image, magnitude),   
-        #    'Sharpness': lambda image, magnitude: sharpness(image, magnitude),   
+        #    'ShearX': lambda image, magnitude: shear_x(image, magnitude),
+        #    'ShearY': lambda image, magnitude: shear_y(image, magnitude),
+        #    'TranslateX': lambda image, magnitude: translate_x(image, magnitude),
+        #    'TranslateY': lambda image, magnitude: translate_y(image, magnitude),
+        #    'Rotate': lambda image, magnitude: rotate(image, magnitude),
+        #    'AutoContrast': lambda image, magnitude: auto_contrast(image, magnitude),
+        #    'Invert': lambda image, magnitude: invert(image, magnitude),
+        #    'Equalize': lambda image, magnitude: equalize(image, magnitude),
+        #    'Solarize': lambda image, magnitude: solarize(image, magnitude),
+        #    'Posterize': lambda image, magnitude: posterize(image, magnitude),
+        #    'Contrast': lambda image, magnitude: contrast(image, magnitude),
+        #    'Color': lambda image, magnitude: color(image, magnitude),
+        #    'Brightness': lambda image, magnitude: brightness(image, magnitude),
+        #    'Sharpness': lambda image, magnitude: sharpness(image, magnitude),
         # }
         image_ops = {
             'ShearX': shear_x,
@@ -119,11 +193,13 @@ class SubPolicy:
             'Sharpness': sharpness,
         }
 
+        self.prob = prob
         self.magnitude = ranges[op_name][magnitude_idx]
         self.op = image_ops[op_name]
 
     def __call__(self, image):
-        image = self.op(image, self.magnitude)
+        if self.prob > random.random():
+            image = self.op(image, self.magnitude)
         return image
 
 
@@ -206,3 +282,4 @@ def brightness(image, magnitude):
 def sharpness(image, magnitude):
     magnitude = magnitude * random.choice([-1, 1])  # random negative
     return ImageEnhance.Sharpness(image).enhance(1 + magnitude)
+

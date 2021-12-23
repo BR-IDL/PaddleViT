@@ -22,8 +22,8 @@ import math
 from PIL import Image
 from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
-from auto_augment import auto_augment_policy_original
-from auto_augment import AutoAugment
+from augment import auto_augment_policy_original
+from augment import AutoAugment
 from random_erasing import RandomErasing
 
 class ImageNet2012Dataset(Dataset):

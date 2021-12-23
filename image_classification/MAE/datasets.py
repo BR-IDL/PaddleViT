@@ -21,8 +21,8 @@ import os
 import math
 from paddle.io import Dataset, DataLoader, DistributedBatchSampler
 from paddle.vision import transforms, datasets, image_load
-from rand_augment import rand_augment_policy_original
-from rand_augment import RandAugment
+from augment import rand_augment_policy_original
+from augment import RandAugment
 from masking_generator import RandomMaskingGenerator
 
 class ImageNet2012Dataset(Dataset):
