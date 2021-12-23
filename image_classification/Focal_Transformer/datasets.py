@@ -24,8 +24,8 @@ from paddle.io import DistributedBatchSampler
 from paddle.vision import transforms
 from paddle.vision import datasets
 from paddle.vision import image_load
-from auto_augment import auto_augment_policy_original
-from auto_augment import AutoAugment
+from augment import auto_augment_policy_original
+from    augment import AutoAugment
 from transforms import RandomHorizontalFlip
 from random_erasing import RandomErasing
 
