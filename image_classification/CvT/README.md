@@ -8,7 +8,7 @@ The official pytorch implementation is [here](https://github.com/microsoft/CvT/)
 This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT.git).
 
 <p align="center">
-<img src="./Cvt.png" alt="drawing" width="80%" height="80%"/>
+<img src="./CvT.png" alt="drawing" width="80%" height="80%"/>
     <h4 align="center">CvT Model Overview</h4>
 </p>
 

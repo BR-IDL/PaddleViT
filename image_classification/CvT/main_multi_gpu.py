@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Cvt training/validation using multiple GPU """
+"""CvT training/validation using multiple GPU """
 
 import sys
 import os
@@ -40,7 +40,7 @@ from cvt import build_cvt as build_model
 
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('Cvt')
+    parser = argparse.ArgumentParser('CvT')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=None)

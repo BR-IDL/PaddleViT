@@ -464,22 +464,21 @@ class VisionTransformer(nn.Layer):
 
 
 class ConvolutionalVisionTransformer(nn.Layer):
-    '''Cvt moudule
-    using Convolutional Neural Network in attention moudule and embedding
+    '''CvT model
+    Introducing Convolutions to Vision Transformers
     Args:
-
         in_chans: int, input image channels, default: 3
         num_classes: int, number of classes for classification, default: 1000
         num_stage: int, numebr of stage, length of array of parameters should be given, default:3 
         patch_size: int[], patch size, default: [7, 3, 3]
         patch_stride: int[], patch_stride ,default: [4, 2, 2]
-        patch_padding: int[],patch padding,default: [2, 1, 1]
-        embed_dim: int[], mbedding dimension (patch embed out dim), default: [64, 192, 384]
+        patch_padding: int[], patch padding,default: [2, 1, 1]
+        embed_dim: int[], embedding dimension (patch embed out dim), default: [64, 192, 384]
         depth: int[], number ot transformer blocks, default: [1, 2, 10]
-        num_heads: int[], number of attention heads, default:[1, 3, 6]
+        num_heads: int[], number of attention heads, default: [1, 3, 6]
         drop_rate: float[], Mlp layer's droppath rate for droppath layers, default: [0.0, 0.0, 0.0]
         attn_drop_rate: float[], attention layer's droppath rate for droppath layers, default: [0.0, 0.0, 0.0]
-        drop_path_rate: float[],each block's droppath rate for droppath layers, default: [0.0, 0.0, 0.1]
+        drop_path_rate: float[], each block's droppath rate for droppath layers, default: [0.0, 0.0, 0.1]
         with_cls_token: bool[], if image have cls_token, default: [False, False, True]
     '''
 
