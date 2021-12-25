@@ -21,7 +21,7 @@ import paddle.nn as nn
 
 from numpy import repeat
 import os
-from drop import DropPath
+from droppath import DropPath
 
 class QuickGELU(nn.Layer):
     '''
