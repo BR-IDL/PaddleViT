@@ -40,7 +40,8 @@ _C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225] # [0.5, 0.5, 0.5]
 
 # model settings
 _C.MODEL = CN()
-_C.MODEL.NAME = 'cvt'
+_C.MODEL.TYPE = 'CvT'
+_C.MODEL.NAME = 'CvT'
 _C.MODEL.INIT_WEIGHTS = True
 _C.MODEL.PRETRAINED = ''
 _C.MODEL.RESUME = None

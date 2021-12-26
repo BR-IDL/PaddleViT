@@ -3,7 +3,8 @@ DATA:
     CROP_PCT: 1.0
 
 MODEL:
-    NAME: CvT_13
+    TYPE: CvT
+    NAME: CvT-13-384
     NUM_CLASSES: 1000
     NUM_STAGES: 3
     PATCH_SIZE: [7, 3, 3]
