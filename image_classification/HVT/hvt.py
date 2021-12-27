@@ -281,15 +281,16 @@ class HVT(nn.Layer):
                 downsample = nn.MaxPool1D(kernel_size=pool_kernel_size, stride=2)
             else:
                 downsample = None
-            self.layers.append(copy.deepcopy(EncoderLayer(
-                                       seq_len,
-                                       dim=embed_dim,
-                                       num_heads=num_heads,
-                                       mlp_ratio=mlp_ratio,
-                                       downsample=downsample,
-                                       qkv_bias=qkv_bias,
-                                       attention_dropout=attention_dropout,
-                                       droppath=droppath)))
+            self.layers.append(copy.deepcopy(
+                                    EncoderLayer(
+                                        seq_len,
+                                        dim=embed_dim,
+                                        num_heads=num_heads,
+                                        mlp_ratio=mlp_ratio,
+                                        downsample=downsample,
+                                        qkv_bias=qkv_bias,
+                                        attention_dropout=attention_dropout,
+                                        droppath=droppath)))
 
         self.norm = nn.LayerNorm(embed_dim, epsilon=1e-6)
 
@@ -317,19 +318,20 @@ class HVT(nn.Layer):
 
 def build_hvt(config):
     """build hvt model using config"""
-    model = HVT(image_size=config.DATA.IMAGE_SIZE,
-                 in_channels=config.MODEL.TRANS.IN_CHANNELS,
-                 num_classes=config.MODEL.NUM_CLASSES,
-                 patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                 embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                 num_heads=config.MODEL.TRANS.NUM_HEADS,
-                 depth=config.MODEL.TRANS.DEPTH,
-                 mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                 qkv_bias=config.MODEL.TRANS.QKV_BIAS,
-                 dropout=config.MODEL.DROPOUT,
-                 pool_block_width=config.MODEL.TRANS.POOL_BLOCK_WIDTH,
-                 pool_kernel_size=config.MODEL.TRANS.POOL_KERNEL_SIZE,
-                 attention_dropout=config.MODEL.ATTENTION_DROPOUT,
-                 droppath=config.MODEL.DROPPATH)
+    model = HVT(
+                image_size=config.DATA.IMAGE_SIZE,
+                in_channels=config.MODEL.TRANS.IN_CHANNELS,
+                num_classes=config.MODEL.NUM_CLASSES,
+                patch_size=config.MODEL.TRANS.PATCH_SIZE,
+                embed_dim=config.MODEL.TRANS.EMBED_DIM,
+                num_heads=config.MODEL.TRANS.NUM_HEADS,
+                depth=config.MODEL.TRANS.DEPTH,
+                mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+                qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                dropout=config.MODEL.DROPOUT,
+                pool_block_width=config.MODEL.TRANS.POOL_BLOCK_WIDTH,
+                pool_kernel_size=config.MODEL.TRANS.POOL_KERNEL_SIZE,
+                attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                droppath=config.MODEL.DROPPATH)
     return model
 
