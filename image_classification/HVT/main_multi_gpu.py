@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""DeiT training/validation using multiple GPU """
+"""HVT training/validation using multiple GPU """
 
 import sys
 import os
@@ -51,7 +51,6 @@ def get_arguments():
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
-    parser.add_argument('-teacher_model', type=str, default=None)
     parser.add_argument('-eval', action='store_true')
     parser.add_argument('-amp', action='store_true')
     arguments = parser.parse_args()
@@ -131,7 +130,8 @@ def train(dataloader,
         if mixup_fn is not None:
             image, label = mixup_fn(image, label_orig)
         
-        if amp is True: # mixed precision training
+        if amp is True:
+            # mixed precision training
             with paddle.amp.auto_cast():
                 output = model(image) # output[0]: class_token, output[1]: distill_token
                 loss = criterion(output, label)
@@ -140,13 +140,10 @@ def train(dataloader,
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 scaler.minimize(optimizer, scaled)
                 optimizer.clear_grad()
-        else: # full precision training
-            output = model(image) # output[0]: class_token, output[1]: distill_token
+        else:
+            # full precision training
+            output = model(image)
             loss = criterion(output, label)
-            #NOTE: division may be needed depending on the loss function
-            # Here no division is needed:
-            # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-            #loss =  loss / accum_iter
             loss.backward()
 
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
@@ -367,28 +364,23 @@ def main_worker(*args):
     # only use cross entropy for val
     criterion_val = nn.CrossEntropyLoss()
 
-
-    # 5. Create Teacher model
-    teacher_model = None
-
     # STEP 5: Define optimizer and lr_scheduler
     # set lr according to batch size and world size (hacked from Swin official code and modified for CSwin)
-    if config.TRAIN.LINEAR_SCALED_LR is not None:
-        linear_scaled_lr = (
-            config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
-        linear_scaled_warmup_start_lr = (
-            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
-        linear_scaled_end_lr = (
-            config.TRAIN.END_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
-    
-        if config.TRAIN.ACCUM_ITER > 1:
-            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
-            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
-            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
-        
-        config.TRAIN.BASE_LR = linear_scaled_lr
-        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
-        config.TRAIN.END_LR = linear_scaled_end_lr
+    linear_scaled_lr = (
+        config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+    linear_scaled_warmup_start_lr = (
+        config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+    linear_scaled_end_lr = (
+        config.TRAIN.END_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+
+    if config.TRAIN.ACCUM_ITER > 1:
+        linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
+        linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+        linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+
+    config.TRAIN.BASE_LR = linear_scaled_lr
+    config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+    config.TRAIN.END_LR = linear_scaled_end_lr
 
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":

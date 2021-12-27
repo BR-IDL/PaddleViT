@@ -33,6 +33,8 @@ _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 1 # number of data loading threads 
+_C.DATA.IMAGENET_MEAN = [0.485, 0.456, 0.406] 
+_C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225] # [0.5, 0.5, 0.5]
 
 # model settings
 _C.MODEL = CN()
@@ -42,17 +44,17 @@ _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
 _C.MODEL.DROPOUT = 0.0
-_C.MODEL.DROPPATH = 0.0
+_C.MODEL.DROPPATH = 0.1
 _C.MODEL.ATTENTION_DROPOUT = 0.0
 
 # transformer settings
 _C.MODEL.TRANS = CN()
 _C.MODEL.TRANS.PATCH_SIZE = 16
 _C.MODEL.TRANS.IN_CHANNELS = 3
-_C.MODEL.TRANS.EMBED_DIM = 192
+_C.MODEL.TRANS.EMBED_DIM = 384
 _C.MODEL.TRANS.DEPTH = 12
 _C.MODEL.TRANS.MLP_RATIO = 4.0
-_C.MODEL.TRANS.NUM_HEADS = 4
+_C.MODEL.TRANS.NUM_HEADS = 6
 _C.MODEL.TRANS.QKV_BIAS = True
 _C.MODEL.TRANS.INIT_VALUES = 1e-5
 _C.MODEL.TRANS.POOL_KERNEL_SIZE = 3
@@ -183,9 +185,7 @@ def update_config(config, args):
             config.AMP = False
         else:
             config.AMP = True
-    if args.teacher_model:
-        config.TRAIN.TEACHER_MODEL = args.teacher_model
-    #config.freeze()
+
     return config
 
 

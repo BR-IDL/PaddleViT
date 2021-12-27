@@ -13,29 +13,14 @@
 # limitations under the License.
 
 """
-Implement DeiT
+Implement HVT
 """
 
 import math
 import copy
-import numpy as np
 import paddle
 import paddle.nn as nn
 from droppath import DropPath
-
-
-def print_model_named_params(model):
-    print('----------------------------------')
-    for name, param in model.named_parameters():
-        print(name, param.shape)
-    print('----------------------------------')
-
-
-def print_model_named_buffers(model):
-    print('----------------------------------')
-    for name, param in model.named_buffers():
-        print(name, param.shape)
-    print('----------------------------------')
 
 
 class Identity(nn.Layer):
@@ -232,8 +217,6 @@ class EncoderLayer(nn.Layer):
                 shape=[1, seq_len, dim],
                 dtype='float32',
                 default_initializer=nn.initializer.TruncatedNormal(std=.02))
-            # self.pos_embed = nn.Parameter(torch.zeros(1, seq_len, dim))
-            # trunc_normal_(self.pos_embed, std=.02)
 
     def forward(self, x):
         h = x
@@ -291,7 +274,9 @@ class HVT(nn.Layer):
         self.layers = nn.LayerList([])
 
         for i in range(depth):
-            if i == 0 or i % pool_block_width == 0:
+            if pool_block_width == 0:
+                downsample = None
+            elif i == 0 or i % pool_block_width == 0:
                 seq_len = math.floor((seq_len - pool_kernel_size) / 2 + 1)
                 downsample = nn.MaxPool1D(kernel_size=pool_kernel_size, stride=2)
             else:
@@ -325,13 +310,13 @@ class HVT(nn.Layer):
 
     def forward(self, x):
         x = self.forward_features(x)
-        # x = self.head(x)
+        x = self.head(x)
         return x
 
 
 
 def build_hvt(config):
-    """build deit model using config"""
+    """build hvt model using config"""
     model = HVT(image_size=config.DATA.IMAGE_SIZE,
                  in_channels=config.MODEL.TRANS.IN_CHANNELS,
                  num_classes=config.MODEL.NUM_CLASSES,
@@ -347,15 +332,4 @@ def build_hvt(config):
                  attention_dropout=config.MODEL.ATTENTION_DROPOUT,
                  droppath=config.MODEL.DROPPATH)
     return model
-
-# from config import get_config
-#
-# model_name = 'hvt_base_patch16_224'
-# config = get_config(f'./configs/{model_name}.yaml')
-#
-# hvt_pd = build_hvt(config)
-# print_model_named_params(hvt_pd)
-# print_model_named_buffers(hvt_pd)
-# # print(hvt_pd)
-
 

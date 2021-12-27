@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""DeiT training/validation using single GPU """
+"""HVT training/validation using single GPU """
 
 import sys
 import os
 import time
 import logging
-import copy
 import argparse
 import random
 import numpy as np
@@ -29,7 +28,6 @@ from datasets import get_dataloader
 from datasets import get_dataset
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
-from utils import get_exclude_from_weight_decay_fn
 from config import get_config
 from config import update_config
 from mixup import Mixup
@@ -51,7 +49,6 @@ def get_arguments():
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
-    parser.add_argument('-teacher_model', type=str, default=None)
     parser.add_argument('-eval', action='store_true')
     parser.add_argument('-amp', action='store_true')
     arguments = parser.parse_args()
@@ -126,7 +123,8 @@ def train(dataloader,
         if mixup_fn is not None:
             image, label = mixup_fn(image, label_orig)
         
-        if amp is True: # mixed precision training
+        if amp is True:
+            # mixed precision training
             with paddle.amp.auto_cast():
                 output = model(image) # output[0]: class_token, output[1]: distill_token
                 loss = criterion(output, label)
@@ -135,13 +133,10 @@ def train(dataloader,
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 scaler.minimize(optimizer, scaled)
                 optimizer.clear_grad()
-        else: # full precision training
-            output = model(image) # output[0]: class_token, output[1]: distill_token
+        else:
+            # full precision training
+            output = model(image)
             loss = criterion(output, label)
-            #NOTE: division may be needed depending on the loss function
-            # Here no division is needed:
-            # default 'reduction' param in nn.CrossEntropyLoss is set to 'mean'
-            #loss =  loss / accum_iter
             loss.backward()
 
             if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
@@ -281,10 +276,7 @@ def main():
     # only use cross entropy for val
     criterion_val = nn.CrossEntropyLoss()
 
-    # STEP 5: Create Teacher model
-    teacher_model = None
-
-    # STEP 6: Define optimizer and lr_scheduler
+    # STEP 5: Define optimizer and lr_scheduler
     # set lr according to batch size and world size (hacked from official code)
     linear_scaled_lr = (config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / 512.0
     linear_scaled_warmup_start_lr = (config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / 512.0
@@ -346,9 +338,7 @@ def main():
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             weight_decay=config.TRAIN.WEIGHT_DECAY,
             epsilon=config.TRAIN.OPTIMIZER.EPS,
-            grad_clip=clip,
-            #apply_decay_param_fun=get_exclude_from_weight_decay_fn([
-            #    'absolute_pos_embed', 'relative_position_bias_table']),
+            grad_clip=clip
             )
     else:
         logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
