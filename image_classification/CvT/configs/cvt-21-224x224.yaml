@@ -1,7 +1,6 @@
 DATA:
     IMAGE_SIZE: 224
     CROP_PCT: 0.875
-
 MODEL:
     TYPE: CvT
     NAME: CvT-21-224
@@ -17,3 +16,11 @@ MODEL:
     DROP_RATE: [0.0, 0.0, 0.0]
     DROP_PATH_RATE: [0.0, 0.0, 0.1]
     CLS_TOKEN: [False, False, True]
+TRAIN:
+    NUM_EPOCHS: 300
+    WARMUP_EPOCHS: 5
+    WEIGHT_DECAY: 0.1
+    BASE_LR: 1.25e-4
+    WARMUP_START_LR: 1e-6
+    END_LR: 1e-5
+    LINEAR_SCALED_LR: 128
