@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Dataset related classes and methods for ViT training and validation
+Dataset related classes and methods for HVT training and validation
 Cifar10, Cifar100 and ImageNet2012 are supported
 """
 

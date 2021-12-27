@@ -120,7 +120,7 @@ python main_multi_gpu.py \
 To train the HVT Transformer model on ImageNet2012 with single GPU, run the following script using command line:
 
 ```shell
-sh run_train_single.sh
+sh run_train.sh
 ```
 or
 ```shell

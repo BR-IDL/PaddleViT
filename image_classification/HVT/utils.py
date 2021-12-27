@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""utils for ViT
+"""utils for HVT
 
 Contains AverageMeter for monitoring, get_exclude_from_decay_fn for training
 and WarmupCosineScheduler for training
