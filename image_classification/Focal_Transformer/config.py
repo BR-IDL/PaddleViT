@@ -204,7 +204,7 @@ def update_config(config, args):
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
         config.TRAIN.LAST_EPOCH = args.last_epoch
-    if args.output:
+    if args.output is not None:
         config.SAVE = args.output 
     if args.save_freq:
         config.SAVE_FREQ = args.save_freq

@@ -151,6 +151,8 @@ def update_config(config, args):
         config.DATA.IMAGE_SIZE = args.image_size
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
+    if args.output is not None:
+        config.SAVE = args.output
     if args.ngpus:
         config.NGPUS = args.ngpus
     if args.eval:

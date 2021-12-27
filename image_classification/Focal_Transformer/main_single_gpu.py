@@ -48,7 +48,7 @@ def get_arguments():
     parser.add_argument('-num_classes', type=int, default=1000)
     parser.add_argument('-data_path', type=str, default=None)
 
-    parser.add_argument('-output', type=str, default='./output')
+    parser.add_argument('-output', type=str, default=None)
 
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)

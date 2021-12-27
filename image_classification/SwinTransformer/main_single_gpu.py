@@ -47,6 +47,7 @@ def get_arguments():
     parser.add_argument('-batch_size', type=int, default=None)
     parser.add_argument('-image_size', type=int, default=None)
     parser.add_argument('-data_path', type=str, default=None)
+    parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
