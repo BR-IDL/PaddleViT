@@ -13,11 +13,12 @@
 # limitations under the License.
 
 """
-Implement HVT
+Implement DeiT
 """
 
 import math
 import copy
+import numpy as np
 import paddle
 import paddle.nn as nn
 from droppath import DropPath
@@ -25,16 +26,15 @@ from droppath import DropPath
 
 class Identity(nn.Layer):
     """ Identity layer
-
+    
     The output of this layer is the input without any change.
     Use this layer to avoid using 'if' condition in forward methods
     """
-
     def __init__(self):
         super(Identity, self).__init__()
-
     def forward(self, x):
         return x
+
 
 class PatchEmbedding(nn.Layer):
     """Patch Embeddings
@@ -47,20 +47,19 @@ class PatchEmbedding(nn.Layer):
         in_channels: int, input channels, default: 3
         embed_dim: int, output dimension of patch embedding, default: 384
     """
-
     def __init__(self,
                  image_size=224,
-                 patch_size=16,
+                 patch_size=8,
                  in_channels=3,
                  embed_dim=384):
         super().__init__()
         assert patch_size in [4, 8, 16]
-
+        
         # define patch embeddings
         self.proj = nn.Conv2D(in_channels,
                               embed_dim,
-                              kernel_size=patch_size,
-                              stride=patch_size)
+                              kernel_size = patch_size,
+                              stride = patch_size)
         # num patches
         self.num_patches = (image_size // patch_size) * (image_size // patch_size)
 
@@ -73,10 +72,10 @@ class PatchEmbedding(nn.Layer):
 
 class Mlp(nn.Layer):
     """ MLP module
-
+    
     Impl using nn.Linear and activation is GELU, dropout is applied.
     Ops: fc -> act -> dropout -> fc -> dropout
-
+    
     Attributes:
         fc1: nn.Linear
         fc2: nn.Linear
@@ -84,7 +83,7 @@ class Mlp(nn.Layer):
         dropout1: dropout after fc1
         dropout2: dropout after fc2
     """
-
+    
     def __init__(self, in_features, hidden_features, dropout=0.):
         super(Mlp, self).__init__()
         w_attr_1, b_attr_1 = self._init_weights()
@@ -92,7 +91,7 @@ class Mlp(nn.Layer):
                              hidden_features,
                              weight_attr=w_attr_1,
                              bias_attr=b_attr_1)
-
+    
         w_attr_2, b_attr_2 = self._init_weights()
         self.fc2 = nn.Linear(hidden_features,
                              in_features,
@@ -100,12 +99,12 @@ class Mlp(nn.Layer):
                              bias_attr=b_attr_2)
         self.act = nn.GELU()
         self.dropout = nn.Dropout(dropout)
-
+    
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.XavierUniform())
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Normal(std=1e-6))
         return weight_attr, bias_attr
-
+    
     def forward(self, x):
         x = self.fc1(x)
         x = self.act(x)
@@ -128,7 +127,6 @@ class Attention(nn.Layer):
         attention_dropout: float, dropout rate for attention dropout, default: 0.
         dropout: float, dropout rate for projection dropout, default: 0.
     """
-
     def __init__(self,
                  dim,
                  num_heads=8,
@@ -190,13 +188,11 @@ class EncoderLayer(nn.Layer):
     """
 
     def __init__(self,
-                 seq_len,
                  dim,
                  num_heads,
                  mlp_ratio=4.,
                  qkv_bias=False,
                  qk_scale=None,
-                 downsample=None,
                  attention_dropout=0,
                  droppath=0.):
         super().__init__()
@@ -210,14 +206,7 @@ class EncoderLayer(nn.Layer):
         self.norm2 = nn.LayerNorm(dim, epsilon=1e-6)
         self.mlp = Mlp(in_features=dim,
                        hidden_features=int(dim * mlp_ratio))
-        self.downsample = downsample
-
-        if self.downsample:
-            self.pos_embed = paddle.create_parameter(
-                shape=[1, seq_len, dim],
-                dtype='float32',
-                default_initializer=nn.initializer.TruncatedNormal(std=.02))
-
+    
     def forward(self, x):
         h = x
         x = self.norm1(x)
@@ -231,25 +220,19 @@ class EncoderLayer(nn.Layer):
         x = self.drop_path(x)
         x = h + x
 
-        if self.downsample is not None:
-            x = self.downsample(x.transpose([0, 2, 1])).transpose([0, 2, 1])
-            x = x + self.pos_embed
-
         return x
 
 
-class HVT(nn.Layer):
+class Deit(nn.Layer):
     def __init__(self,
                  image_size=224,
                  in_channels=3,
                  num_classes=1000,
                  patch_size=16,
-                 embed_dim=384,
+                 embed_dim=192,
                  num_heads=3,
                  depth=12,
                  mlp_ratio=4,
-                 pool_block_width=6,
-                 pool_kernel_size=3,
                  qkv_bias=True,
                  dropout=0.,
                  attention_dropout=0.,
@@ -261,75 +244,72 @@ class HVT(nn.Layer):
                                           patch_size=patch_size,
                                           in_channels=in_channels,
                                           embed_dim=embed_dim)
-        # positional embedding
-        self.pos_embed = paddle.create_parameter(
-            shape=[1, self.patch_embed.num_patches, embed_dim],
+        # class token
+        self.class_token = paddle.create_parameter(
+            shape=[1, 1, embed_dim],
+            dtype='float32',
+            default_initializer=nn.initializer.Constant(0.))
+        # distillation token
+        self.distill_token = paddle.create_parameter(
+            shape=[1, 1, embed_dim],
             dtype='float32',
             default_initializer=nn.initializer.TruncatedNormal(std=.02))
-
+        # positional embedding
+        self.pos_embed = paddle.create_parameter(
+            shape=[1, self.patch_embed.num_patches + 2, embed_dim],
+            dtype='float32',
+            default_initializer=nn.initializer.TruncatedNormal(std=.02))
         self.pos_dropout = nn.Dropout(dropout)
-        self.num_patches = (image_size//patch_size)*(image_size//patch_size)
-        seq_len = self.num_patches
 
-        self.layers = nn.LayerList([])
-
-        for i in range(depth):
-            if pool_block_width == 0:
-                downsample = None
-            elif i == 0 or i % pool_block_width == 0:
-                seq_len = math.floor((seq_len - pool_kernel_size) / 2 + 1)
-                downsample = nn.MaxPool1D(kernel_size=pool_kernel_size, stride=2)
-            else:
-                downsample = None
-            self.layers.append(
-                copy.deepcopy(EncoderLayer(seq_len,
-                                           dim=embed_dim,
-                                           num_heads=num_heads,
-                                           mlp_ratio=mlp_ratio,
-                                           downsample=downsample,
-                                           qkv_bias=qkv_bias,
-                                           attention_dropout=attention_dropout,
-                                           droppath=droppath)))
-
+        self.layers = nn.LayerList([
+            copy.deepcopy(EncoderLayer(dim=embed_dim,
+                                       num_heads=num_heads,
+                                       mlp_ratio=mlp_ratio,
+                                       qkv_bias=qkv_bias,
+                                       attention_dropout=attention_dropout,
+                                       droppath=droppath)) for _ in range(depth)])
         self.norm = nn.LayerNorm(embed_dim, epsilon=1e-6)
 
-        self.head = nn.Linear(embed_dim, num_classes, bias_attr=True)
+        self.head = nn.Linear(embed_dim, num_classes)
+        self.head_distill = nn.Linear(embed_dim, num_classes) 
 
     def forward_features(self, x):
         x = self.patch_embed(x)
+        class_tokens = self.class_token.expand([x.shape[0], -1, -1])
+        distill_tokens = self.distill_token.expand([x.shape[0], -1, -1])
+        x = paddle.concat((class_tokens, distill_tokens, x), axis=1)
+
         x = x + self.pos_embed
         x = self.pos_dropout(x)
 
         for layer in self.layers:
             x = layer(x)
-
         x = self.norm(x)
-        x = x.mean(axis=1)
 
-        return x
+        return x[:, 0], x[:, 1]
 
     def forward(self, x):
-        x = self.forward_features(x)
+        x, x_distill = self.forward_features(x)
         x = self.head(x)
-        return x
+        x_distill = self.head_distill(x_distill)
+        if self.training:
+            return x, x_distill
+        else:
+            return (x + x_distill) / 2
 
 
-
-def build_hvt(config):
-    """build hvt model using config"""
-    model = HVT(image_size=config.DATA.IMAGE_SIZE,
-                in_channels=config.MODEL.TRANS.IN_CHANNELS,
-                num_classes=config.MODEL.NUM_CLASSES,
-                patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                num_heads=config.MODEL.TRANS.NUM_HEADS,
-                depth=config.MODEL.TRANS.DEPTH,
-                mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                qkv_bias=config.MODEL.TRANS.QKV_BIAS,
-                dropout=config.MODEL.DROPOUT,
-                pool_block_width=config.MODEL.TRANS.POOL_BLOCK_WIDTH,
-                pool_kernel_size=config.MODEL.TRANS.POOL_KERNEL_SIZE,
-                attention_dropout=config.MODEL.ATTENTION_DROPOUT,
-                droppath=config.MODEL.DROPPATH)
+def build_deit(config):
+    """build deit model using config"""
+    model = Deit(image_size=config.DATA.IMAGE_SIZE,
+                 in_channels=config.MODEL.TRANS.IN_CHANNELS,
+                 num_classes=config.MODEL.NUM_CLASSES,
+                 patch_size=config.MODEL.TRANS.PATCH_SIZE,
+                 embed_dim=config.MODEL.TRANS.EMBED_DIM,
+                 num_heads=config.MODEL.TRANS.NUM_HEADS,
+                 depth=config.MODEL.TRANS.DEPTH,
+                 mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+                 qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                 dropout=config.MODEL.DROPOUT,
+                 attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                 droppath=config.MODEL.DROPPATH)
     return model
-
