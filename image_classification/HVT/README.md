@@ -2,9 +2,9 @@
 
 PaddlePaddle training/validation code and pretrained models for **HVT**.
 
-The official pytorch implementation is [here]().
+The official pytorch implementation is [here](https://github.com/zhuang-group/HVT).
 
-This implementation is developed by [PaddleViT](https://github.com/zhuang-group/HVT).
+This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT.git).
 
 
 <p align="center">
