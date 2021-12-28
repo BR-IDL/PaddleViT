@@ -28,8 +28,7 @@ from paddle.vision import datasets
 from paddle.vision import image_load
 from augment import auto_augment_policy_original
 from augment import AutoAugment
-from transforms import RandomHorizontalFlip
-from random_erasing import 
+from random_erasing import RandomErasing
 
 
 class ImageNet2012Dataset(Dataset):

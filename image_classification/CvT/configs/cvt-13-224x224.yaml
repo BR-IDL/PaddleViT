@@ -1,9 +1,9 @@
 DATA:
-    IMAGE_SIZE: 384
-    CROP_PCT: 1.0
-
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
 MODEL:
-    NAME: CvT_21
+    TYPE: CvT
+    NAME: CvT-13-224
     NUM_CLASSES: 1000
     NUM_STAGES: 3
     PATCH_SIZE: [7, 3, 3]
@@ -11,8 +11,16 @@ MODEL:
     PATCH_PADDING: [2, 1, 1]
     DIM_EMBED: [64, 192, 384]
     NUM_HEADS: [1, 3, 6]
-    DEPTH: [1, 4, 16]
+    DEPTH: [1, 2, 10]
     ATTN_DROP_RATE: [0.0, 0.0, 0.0]
     DROP_RATE: [0.0, 0.0, 0.0]
     DROP_PATH_RATE: [0.0, 0.0, 0.1]
     CLS_TOKEN: [False, False, True]
+TRAIN:
+    NUM_EPOCHS: 300
+    WARMUP_EPOCHS: 5
+    WEIGHT_DECAY: 0.05
+    BASE_LR: 2.5e-4
+    WARMUP_START_LR: 1e-6
+    END_LR: 1e-5
+    LINEAR_SCALED_LR: 256
