@@ -36,6 +36,7 @@ class Identity(nn.Layer):
     def forward(self, x):
         return x
 
+
 class PatchEmbedding(nn.Layer):
     """Patch Embeddings
 
@@ -102,8 +103,8 @@ class Mlp(nn.Layer):
         self.dropout = nn.Dropout(dropout)
 
     def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.XavierUniform())
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Normal(std=1e-6))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -142,11 +143,24 @@ class Attention(nn.Layer):
         self.dim_head = dim // num_heads
         self.scale = qk_scale or self.dim_head ** -0.5
 
-        self.qkv = nn.Linear(dim, dim * 3, bias_attr=qkv_bias)
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.qkv = nn.Linear(dim,
+                             dim * 3,
+                             weight_attr=w_attr_1,
+                             bias_attr=b_attr_1 if qkv_bias else None)
         self.attn_dropout = nn.Dropout(attention_dropout)
         self.softmax = nn.Softmax(axis=-1)
-        self.proj = nn.Linear(dim, dim)
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.proj = nn.Linear(dim,
+                              dim,
+                              weight_attr=w_attr_2,
+                              bias_attr=b_attr_2)
         self.proj_dropout = nn.Dropout(dropout)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def transpose_multihead(self, x):
         new_shape = x.shape[:-1] + [self.num_heads, self.dim_head]
@@ -200,14 +214,22 @@ class EncoderLayer(nn.Layer):
                  attention_dropout=0,
                  droppath=0.):
         super().__init__()
-        self.norm1 = nn.LayerNorm(dim, epsilon=1e-6)
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.norm1 = nn.LayerNorm(dim,
+                                  weight_attr=w_attr_1,
+                                  bias_attr=b_attr_1,
+                                  epsilon=1e-6)
         self.attn = Attention(dim,
                               num_heads=num_heads,
                               qkv_bias=qkv_bias,
                               qk_scale=qk_scale,
                               attention_dropout=attention_dropout)
         self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
-        self.norm2 = nn.LayerNorm(dim, epsilon=1e-6)
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.norm2 = nn.LayerNorm(dim,
+                                  weight_attr=w_attr_2,
+                                  bias_attr=b_attr_2,
+                                  epsilon=1e-6)
         self.mlp = Mlp(in_features=dim,
                        hidden_features=int(dim * mlp_ratio))
         self.downsample = downsample
@@ -217,6 +239,11 @@ class EncoderLayer(nn.Layer):
                 shape=[1, seq_len, dim],
                 dtype='float32',
                 default_initializer=nn.initializer.TruncatedNormal(std=.02))
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         h = x
@@ -312,7 +339,6 @@ class HVT(nn.Layer):
         x = self.forward_features(x)
         x = self.head(x)
         return x
-
 
 
 def build_hvt(config):
