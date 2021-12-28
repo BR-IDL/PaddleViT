@@ -6,6 +6,7 @@ PaddlePaddle training/validation code and pretrained models for **Image Classifi
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
+* Update (2021-12-28): Add HvT model.
 * Update (2021-12-24): Add CvT model.
 * Update (2021-12-23): Add BoTNet model.
 * Update (2021-12-15): Add PoolFormer model.
@@ -48,6 +49,7 @@ This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.g
 11. **[PoolFormer](./PoolFormer)**
 12. **[BoTNet](./BoTNet)**
 12. **[CvT](./Cvt)**
+12. **[HvT](./HVT)**
 13. **[MLP-Mixer](./MLP-Mixer)**
 14. **[ResMLP](./ResMLP)**
 15. **[gMLP](./gMLP)**
@@ -143,6 +145,7 @@ PaddleViT now provides the following **transfomer based models**:
 18. **[PoolFormer](./PoolFormer)**, (from Sea AI Lab/NUS), released with paper [MetaFormer is Actually What You Need for Vision](https://arxiv.org/abs/2111.11418), by Weihao Yu, Mi Luo, Pan Zhou, Chenyang Si, Yichen Zhou, Xinchao Wang, Jiashi Feng, Shuicheng Yan.
 19. **[BoTNet](./BoTNet)**, (from UC Berkeley/Google), released with paper [Bottleneck Transformers for Visual Recognition](https://arxiv.org/abs/2101.11605), by Aravind Srinivas, Tsung-Yi Lin, Niki Parmar, Jonathon Shlens, Pieter Abbeel, Ashish Vaswani.
 20. **[CvT](./Cvt)** (from McGill/Microsoft), released with paper [CvT: Introducing Convolutions to Vision Transformers](https://arxiv.org/abs/2103.15808), by Haiping Wu, Bin Xiao, Noel Codella, Mengchen Liu, Xiyang Dai, Lu Yuan, Lei Zhang
+21. **[HvT](./HVT)** (from Monash University), released with paper [Scalable Vision Transformers with Hierarchical Pooling](https://arxiv.org/abs/2103.10619), by Zizheng Pan, Bohan Zhuang, Jing Liu, Haoyu He, Jianfei Cai.
 
 
 PaddleViT now provides the following **MLP based models**:
@@ -156,8 +159,7 @@ PaddleViT now provides the following **MLP based models**:
 8. **[ConvMLP](./ConvMLP)** (from UO/UIUC/PAIR), released with [ConvMLP: Hierarchical Convolutional MLPs for Vision](https://arxiv.org/abs/2109.04454), by Jiachen Li, Ali Hassani, Steven Walton, Humphrey Shi.
 
 #### Coming Soon: ####
-1. **[HVT]()** (from Monash University), released with paper [Scalable Vision Transformers with Hierarchical Pooling](https://arxiv.org/abs/2103.10619), by Zizheng Pan, Bohan Zhuang, Jing Liu, Haoyu He, Jianfei Cai.
-3. **[DynamicViT]()** (from Tsinghua/UCLA/UW), released with paper [DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification](https://arxiv.org/abs/2106.02034), by Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, Cho-Jui Hsieh.
+1. **[DynamicViT]()** (from Tsinghua/UCLA/UW), released with paper [DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification](https://arxiv.org/abs/2106.02034), by Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, Cho-Jui Hsieh.
 
 
 ## Contact
