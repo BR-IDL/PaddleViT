@@ -78,8 +78,8 @@ from swin import build_swin as build_model
 config = get_config('./configs/swin_base_patch4_window7_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./swin_base_patch4_window7_224')
+# load pretrained weights
+model_state_dict = paddle.load('./swin_base_patch4_window7_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -92,12 +92,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/swin_base_patch4_window7_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/swin_base_patch4_window7_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./swin_base_patch4_window7_224'
+    -pretrained=/path/to/pretrained/model/swin_base_patch4_window7_224  # .pdparams is NOT needed
 ```
 
 <details>
@@ -114,12 +114,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/swin_base_patch4_window7_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/swin_base_patch4_window7_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./swin_base_patch4_window7_224'
+    -pretrained=/path/to/pretrained/model/swin_base_patch4_window7_224  # .pdparams is NOT needed
 ```
 
 </details>
@@ -134,10 +134,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_singel_gpu.py \
-  -cfg='./configs/swin_base_patch4_window7_224.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/swin_base_patch4_window7_224.yaml \
+  -dataset=imagenet2012 \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/path/to/dataset/imagenet/train
 ```
 
 <details>
@@ -154,10 +154,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/swin_base_patch4_window7_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/swin_base_patch4_window7_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>

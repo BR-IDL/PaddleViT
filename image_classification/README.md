@@ -105,8 +105,8 @@ from visual_transformer import build_vit as build_model
 config = get_config('./configs/vit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./vit_base_patch16_224')
+# load pretrained weights
+model_state_dict = paddle.load('./vit_base_patch16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 > :robot: See the README file in each model folder for detailed usages.

@@ -73,8 +73,8 @@ from focal_transformer import build_focal as build_model
 config = get_config('./configs/focal_tiny_patch4_window7_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./focal_tiny_patch4_window7_224')
+# load pretrained weights
+model_state_dict = paddle.load('./focal_tiny_patch4_window7_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -90,14 +90,14 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/focal_tiny_patch4_window7_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/focal_tiny_patch4_window7_224.yaml \
+    -dataset=imagenet2012 \
     -num_classes=1000 \
     -batch_size=64 \
     -image_size=224 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./focal_tiny_patch4_window7_224'
+    -pretrained=/path/to/pretrained/model/focal_tiny_patch4_window7_224  # .pdparams is NOT needed
 ```
 
 <details>
@@ -114,14 +114,14 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/focal_tiny_patch4_window7_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/focal_tiny_patch4_window7_224.yaml \
+    -dataset=imagenet2012 \
     -num_classes=1000 \
     -batch_size=32 \
     -image_size=224 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./focal_tiny_patch4_window7_224'
+    -pretrained=/path/to/pretrained/model/focal_tiny_patch4_window7_224  # .pdparams is NOT needed
 ```
 
 </details>
@@ -135,13 +135,13 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/focal_tiny_patch4_window7_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/focal_tiny_patch4_window7_224.yaml \
+    -dataset=imagenet2012 \
     -num_classes=1000 \
     -batch_size=32 \
     -image_size=224 \
-    -data_path='/dataset/imagenet' \
-    -output='./output'
+    -data_path=/path/to/dataset/imagenet/train \
+    -output=./output
 ```
 
 <details>
@@ -158,13 +158,13 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_single_gpu.py \
-    -cfg='./configs/focal_tiny_patch4_window7_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/focal_tiny_patch4_window7_224.yaml \
+    -dataset=imagenet2012 \
     -num_classes=1000 \
     -batch_size=4 \
     -image_size=224 \
-    -data_path='/dataset/imagenet' \
-    -output='./output'
+    -data_path=/path/to/dataset/imagenet/train \
+    -output=./output
 ```
 
 </details>

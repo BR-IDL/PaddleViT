@@ -74,8 +74,8 @@ from resmlp import build_res_mlp as build_model
 config = get_config('./configs/ff_base.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./linear_base')
+# load pretrained weights
+model_state_dict = paddle.load('./linear_base.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -88,12 +88,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/ff_base.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/ff_base.yaml \
+    -dataset=imagenet2012 \
     -batch_size=8 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./linear_base'
+    -pretrained=/path/to/pretrained/model/linear_base  # .pdparams is NOT needed
 ```
 
 <details>
@@ -110,12 +110,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg='./configs/ff_base.yaml' \
+    -cfg=./configs/ff_base.yaml \
     -dataset='imagenet2012' \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./linear_base'
+    -pretrained=/path/to/pretrained/model/linear_base  # .pdparams is NOT needed
 ```
 
 </details>
@@ -129,10 +129,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/ff_base.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/ff_base.yaml \
+    -dataset=imagenet2012 \
     -batch_size=32 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 <details>
@@ -148,10 +148,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/ff_base.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/ff_base.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \ 
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>

@@ -72,8 +72,8 @@ from visual_transformer import build_vit as build_model
 config = get_config('./configs/vit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./vit_base_patch16_224')
+# load pretrained weights
+model_state_dict = paddle.load('./vit_base_patch16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -89,9 +89,9 @@ python main_single_gpu.py \
     -cfg='./configs/vit_base_patch16_224.yaml' \
     -dataset='imagenet2012' \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained=/path/to/pretrained/model/vit_base_patch16_224  # .pdparams is NOT needed
 ```
 
 <details>
@@ -111,9 +111,9 @@ python main_multi_gpu.py \
     -cfg='./configs/vit_base_patch16_224.yaml' \
     -dataset='imagenet2012' \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained=/path/to/pretrained/model/vit_base_patch16_224  # .pdparams is NOT needed
 ```
 
 </details>
@@ -131,7 +131,7 @@ python main_single_gpu.py \
   -cfg='./configs/vit_base_patch16_224.yaml' \
   -dataset='imagenet2012' \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/path/to/dataset/imagenet/train
 ```
 
 
@@ -152,7 +152,7 @@ python main_multi_gpu.py \
     -cfg='./configs/vit_base_patch16_224.yaml' \
     -dataset='imagenet2012' \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>
