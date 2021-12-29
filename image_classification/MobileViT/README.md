@@ -67,7 +67,8 @@ To use the model with pretrained weights, download the `.pdparam` weight file an
 For example, assume the downloaded weight file is stored in `./mobilevit_xxs.pdparams`, to use the `mobilevit_xxs` model in python:
 ```python
 from config import get_config
-from swin import build_mobile_vit as build_model
+from mobile_vit import build_mobile_vit as build_model
+import paddle
 # config files in ./configs/
 config = get_config('./configs/mobilevit_xxs.yaml')
 # build model
