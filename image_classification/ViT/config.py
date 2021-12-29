@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,8 +33,11 @@ _C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
+_C.DATA.IMAGE_CHANNELS = 3 # input image channels
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 2 # number of data loading threads 
+_C.DATA.NUM_WORKERS = 2 # number of data loading threads
+_C.DATA.IMAGENET_MEAN = [0.5, 0.5, 0.5] # [0.485, 0.456, 0.406]
+_C.DATA.IMAGENET_STD = [0.5, 0.5, 0.5] # [0.229, 0.224, 0.225]
 
 # model settings
 _C.MODEL = CN()
@@ -107,6 +110,7 @@ def _update_config_from_file(config, cfg_file):
     config.merge_from_file(cfg_file)
     config.freeze()
 
+
 def update_config(config, args):
     """Update config by ArgumentParser
     Args:
@@ -125,6 +129,8 @@ def update_config(config, args):
         config.DATA.IMAGE_SIZE = args.image_size
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
+    if args.output is not None:
+        config.SAVE = args.output
     if args.ngpus:
         config.NGPUS = args.ngpus
     if args.eval:

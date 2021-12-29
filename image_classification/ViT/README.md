@@ -67,7 +67,7 @@ To use the model with pretrained weights, download the `.pdparam` weight file an
 For example, assume the downloaded weight file is stored in `./vit_base_patch16_224.pdparams`, to use the `vit_base_patch16_224` model in python:
 ```python
 from config import get_config
-from transformer import build_vit as build_model
+from visual_transformer import build_vit as build_model
 # config files in ./configs/
 config = get_config('./configs/vit_base_patch16_224.yaml')
 # build model
@@ -86,8 +86,8 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg=./configs/vit_base_patch16_224.yaml \
-    -dataset=imagenet2012 \
+    -cfg='./configs/vit_base_patch16_224.yaml' \
+    -dataset='imagenet2012' \
     -batch_size=16 \
     -data_path=/path/to/dataset/imagenet/val \
     -eval \
@@ -108,8 +108,8 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg=./configs/vit_base_patch16_224.yaml \
-    -dataset=imagenet2012 \
+    -cfg='./configs/vit_base_patch16_224.yaml' \
+    -dataset='imagenet2012' \
     -batch_size=16 \
     -data_path=/path/to/dataset/imagenet/val \
     -eval \
@@ -128,8 +128,8 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg=./configs/vit_base_patch16_224.yaml \
-  -dataset=imagenet2012 \
+  -cfg='./configs/vit_base_patch16_224.yaml' \
+  -dataset='imagenet2012' \
   -batch_size=32 \
   -data_path=/path/to/dataset/imagenet/train
 ```
@@ -149,8 +149,8 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg=./configs/vit_base_patch16_224.yaml \
-    -dataset=imagenet2012 \
+    -cfg='./configs/vit_base_patch16_224.yaml' \
+    -dataset='imagenet2012' \
     -batch_size=16 \
     -data_path=/path/to/dataset/imagenet/train
 ```

@@ -310,7 +310,7 @@ def main():
         model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
-        optimizer.set_dict(opt_state)
+        optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume Training: Load model and optmizer states from {config.MODEL.RESUME}")
     

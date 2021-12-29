@@ -18,7 +18,7 @@ English | [简体中文](./README_cn.md)
 
 :robot: PaddleViT provides models and tools for multiple vision tasks, such as classifications, object detection, semantic segmentation, GAN, and more. Each model architecture is defined in standalone python module and can be modified to enable quick research experiments. At the same time, pretrained weights can be downloaded and used to finetune on your own datasets. PaddleViT also integrates popular tools and modules for custimized dataset, data preprocessing, performance metrics, DDP and more.
 
-:robot: PaddleViT is backed by popular deep learning framework [PaddlePaddle](https://www.paddlepaddle.org/), we also provide tutorials and projects on [Paddle AI Studio](https://aistudio.baidu.com/aistudio/index). It's intuitive and straightforward to get started for new users.
+:robot: PaddleViT is backed by popular deep learning framework [PaddlePaddle](https://www.paddlepaddle.org/), we also provide tutorials and projects on [Paddle AI Studio](https://aistudio.baidu.com/aistudio/course/introduce/25102). It's intuitive and straightforward to get started for new users.
 
 
 ## Quick Links ##
@@ -30,7 +30,7 @@ PaddleViT implements model architectures and tools for multiple vision tasks, go
   
 We also provide tutorials:
 - Notebooks (coming soon)
-- Online Course (coming soon)
+- [Online Course](https://aistudio.baidu.com/aistudio/course/introduce/25102): on Paddle AIStudio (in chinese version)
 
 ## Features ##
 1. **State-of-the-art**
@@ -58,42 +58,44 @@ We also provide tutorials:
 ## Model architectures ##
 
 ### Image Classification (Transformers) ###
-1. **[ViT](./ViT)** (from Google), released with paper [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929), by Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, Neil Houlsby.
-2. **[DeiT](./DeiT)** (from Facebook and Sorbonne), released with paper [Training data-efficient image transformers & distillation through attention](https://arxiv.org/abs/2012.12877), by Hugo Touvron, Matthieu Cord, Matthijs Douze, Francisco Massa, Alexandre Sablayrolles, Hervé Jégou.
-3. **[Swin Transformer](./SwinTransformer)** (from Microsoft), released with paper [Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030), by Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, Baining Guo.
-4. **[VOLO](./VOLO)** (from Sea AI Lab and NUS), released with paper [VOLO: Vision Outlooker for Visual Recognition](https://arxiv.org/abs/2106.13112), by Li Yuan, Qibin Hou, Zihang Jiang, Jiashi Feng, Shuicheng Yan.
-5. **[CSwin Transformer](./CSwin)** (from USTC and Microsoft), released with paper [CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows
+1. **[ViT](./image_classification/ViT)** (from Google), released with paper [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929), by Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, Neil Houlsby.
+2. **[DeiT](./image_classification/DeiT)** (from Facebook and Sorbonne), released with paper [Training data-efficient image transformers & distillation through attention](https://arxiv.org/abs/2012.12877), by Hugo Touvron, Matthieu Cord, Matthijs Douze, Francisco Massa, Alexandre Sablayrolles, Hervé Jégou.
+3. **[Swin Transformer](./image_classification/SwinTransformer)** (from Microsoft), released with paper [Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030), by Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, Baining Guo.
+4. **[VOLO](./image_classification/VOLO)** (from Sea AI Lab and NUS), released with paper [VOLO: Vision Outlooker for Visual Recognition](https://arxiv.org/abs/2106.13112), by Li Yuan, Qibin Hou, Zihang Jiang, Jiashi Feng, Shuicheng Yan.
+5. **[CSwin Transformer](./image_classification/CSwin)** (from USTC and Microsoft), released with paper [CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows
 ](https://arxiv.org/abs/2107.00652), by Xiaoyi Dong, Jianmin Bao, Dongdong Chen, Weiming Zhang, Nenghai Yu, Lu Yuan, Dong Chen, Baining Guo.
-6. **[CaiT](./CaiT)** (from Facebook and Sorbonne), released with paper [Going deeper with Image Transformers](https://arxiv.org/abs/2103.17239), by Hugo Touvron, Matthieu Cord, Alexandre Sablayrolles, Gabriel Synnaeve, Hervé Jégou.
-7. **[PVTv2](./PVTv2)** (from NJU/HKU/NJUST/IIAI/SenseTime), released with paper [PVTv2: Improved Baselines with Pyramid Vision Transformer](https://arxiv.org/abs/2106.13797), by Wenhai Wang, Enze Xie, Xiang Li, Deng-Ping Fan, Kaitao Song, Ding Liang, Tong Lu, Ping Luo, Ling Shao.
-8. **[Shuffle Transformer](./Shuffle_Transformer)** (from Tencent), released with paper [Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/abs/2106.03650), by Zilong Huang, Youcheng Ben, Guozhong Luo, Pei Cheng, Gang Yu, Bin Fu.
-9. **[T2T-ViT](./T2T_ViT)** (from NUS and YITU), released with paper [Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet
+6. **[CaiT](./image_classification/CaiT)** (from Facebook and Sorbonne), released with paper [Going deeper with Image Transformers](https://arxiv.org/abs/2103.17239), by Hugo Touvron, Matthieu Cord, Alexandre Sablayrolles, Gabriel Synnaeve, Hervé Jégou.
+7. **[PVTv2](./image_classification/PVTv2)** (from NJU/HKU/NJUST/IIAI/SenseTime), released with paper [PVTv2: Improved Baselines with Pyramid Vision Transformer](https://arxiv.org/abs/2106.13797), by Wenhai Wang, Enze Xie, Xiang Li, Deng-Ping Fan, Kaitao Song, Ding Liang, Tong Lu, Ping Luo, Ling Shao.
+8. **[Shuffle Transformer](./image_classification/Shuffle_Transformer)** (from Tencent), released with paper [Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/abs/2106.03650), by Zilong Huang, Youcheng Ben, Guozhong Luo, Pei Cheng, Gang Yu, Bin Fu.
+9. **[T2T-ViT](./image_classification/T2T_ViT)** (from NUS and YITU), released with paper [Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet
 ](https://arxiv.org/abs/2101.11986), by Li Yuan, Yunpeng Chen, Tao Wang, Weihao Yu, Yujun Shi, Zihang Jiang, Francis EH Tay, Jiashi Feng, Shuicheng Yan.
-10. **[CrossViT](./CrossViT)** (from IBM), released with paper [CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899), by Chun-Fu Chen, Quanfu Fan, Rameswar Panda.
-11. **[BEiT](./BEiT)** (from Microsoft Research), released with paper [BEiT: BERT Pre-Training of Image Transformers](https://arxiv.org/abs/2106.08254), by Hangbo Bao, Li Dong, Furu Wei.
-12. **[Focal Transformer](./Focal_Transformer)** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
-13. **[Mobile-ViT]()** (from Apple), released with paper [MobileViT: Light-weight, General-purpose, and Mobile-friendly Vision Transformer](https://arxiv.org/abs/2110.02178), by Sachin Mehta, Mohammad Rastegari.
-
+10. **[CrossViT](./image_classification/CrossViT)** (from IBM), released with paper [CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899), by Chun-Fu Chen, Quanfu Fan, Rameswar Panda.
+11. **[BEiT](./image_classification/BEiT)** (from Microsoft Research), released with paper [BEiT: BERT Pre-Training of Image Transformers](https://arxiv.org/abs/2106.08254), by Hangbo Bao, Li Dong, Furu Wei.
+12. **[Focal Transformer](./image_classification/Focal_Transformer)** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
+13. **[Mobile-ViT](./image_classification/MobileViT)** (from Apple), released with paper [MobileViT: Light-weight, General-purpose, and Mobile-friendly Vision Transformer](https://arxiv.org/abs/2110.02178), by Sachin Mehta, Mohammad Rastegari.
+14. **[ViP](./image_classification/ViP)** (from National University of Singapore), released with [Vision Permutator: A Permutable MLP-Like Architecture for Visual Recognition](https://arxiv.org/abs/2106.12368), by Qibin Hou and Zihang Jiang and Li Yuan and Ming-Ming Cheng and Shuicheng Yan and Jiashi Feng.
+15. **[XCiT](./image_classification/XCiT)** (from Facebook/Inria/Sorbonne), released with paper [XCiT: Cross-Covariance Image Transformers](https://arxiv.org/abs/2106.09681), by Alaaeldin El-Nouby, Hugo Touvron, Mathilde Caron, Piotr Bojanowski, Matthijs Douze, Armand Joulin, Ivan Laptev, Natalia Neverova, Gabriel Synnaeve, Jakob Verbeek, Hervé Jegou.
+16. **[PiT](./image_classification/PiT)** (from NAVER/Sogan University), released with paper [Rethinking Spatial Dimensions of Vision Transformers](https://arxiv.org/abs/2103.16302), by Byeongho Heo, Sangdoo Yun, Dongyoon Han, Sanghyuk Chun, Junsuk Choe, Seong Joon Oh.
+17. **[HaloNet](./image_classification/HaloNet)**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.
+18. **[PoolFormer](./image_classification/PoolFormer)**, (from Sea AI Lab/NUS), released with paper [MetaFormer is Actually What You Need for Vision](https://arxiv.org/abs/2111.11418), by Weihao Yu, Mi Luo, Pan Zhou, Chenyang Si, Yichen Zhou, Xinchao Wang, Jiashi Feng, Shuicheng Yan.
+19. **[BoTNet](./image_classification/BoTNet)**, (from UC Berkeley/Google), released with paper [Bottleneck Transformers for Visual Recognition](https://arxiv.org/abs/2101.11605), by Aravind Srinivas, Tsung-Yi Lin, Niki Parmar, Jonathon Shlens, Pieter Abbeel, Ashish Vaswani.
+20. **[CvT](./image_classification/CvT)** (from McGill/Microsoft), released with paper [CvT: Introducing Convolutions to Vision Transformers](https://arxiv.org/abs/2103.15808), by Haiping Wu, Bin Xiao, Noel Codella, Mengchen Liu, Xiyang Dai, Lu Yuan, Lei Zhang
+21. **[HvT](./image_classification/HVT)** (from Monash University), released with paper [Scalable Vision Transformers with Hierarchical Pooling](https://arxiv.org/abs/2103.10619), by Zizheng Pan, Bohan Zhuang, Jing Liu, Haoyu He, Jianfei Cai.
 
 
 ### Image Classification (MLP & others) ###
-1. **[MLP-Mixer](./MLP-Mixer)** (from Google), released with paper [MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601), by Ilya Tolstikhin, Neil Houlsby, Alexander Kolesnikov, Lucas Beyer, Xiaohua Zhai, Thomas Unterthiner, Jessica Yung, Andreas Steiner, Daniel Keysers, Jakob Uszkoreit, Mario Lucic, Alexey Dosovitskiy
-2. **[ResMLP](./ResMLP)** (from Facebook/Sorbonne/Inria/Valeo), released with paper [ResMLP: Feedforward networks for image classification with data-efficient training](https://arxiv.org/abs/2105.03404), by Hugo Touvron, Piotr Bojanowski, Mathilde Caron, Matthieu Cord, Alaaeldin El-Nouby, Edouard Grave, Gautier Izacard, Armand Joulin, Gabriel Synnaeve, Jakob Verbeek, Hervé Jégou.
-3. **[gMLP](./gMLP)** (from Google), released with paper [Pay Attention to MLPs](https://arxiv.org/abs/2105.08050), by Hanxiao Liu, Zihang Dai, David R. So, Quoc V. Le.
-4. **[FF Only](./FF_Only)** (from Oxford), released with paper [Do You Even Need Attention? A Stack of Feed-Forward Layers Does Surprisingly Well on ImageNet](https://arxiv.org/abs/2105.02723), by Luke Melas-Kyriazi.
-5. **[RepMLP](./RepMLP)** (from BNRist/Tsinghua/MEGVII/Aberystwyth), released with paper [RepMLP: Re-parameterizing Convolutions into Fully-connected Layers for Image Recognition](https://arxiv.org/abs/2105.01883), by Xiaohan Ding, Chunlong Xia, Xiangyu Zhang, Xiaojie Chu, Jungong Han, Guiguang Ding.
-6. **[CycleMLP](./CycleMLP)** (from HKU/SenseTime), released with paper [CycleMLP: A MLP-like Architecture for Dense Prediction](https://arxiv.org/abs/2107.10224), by Shoufa Chen, Enze Xie, Chongjian Ge, Ding Liang, Ping Luo.
-7. **[ConvMixer](./ConvMixer)** (from Anonymous), released with [Patches Are All You Need?](https://openreview.net/forum?id=TVHS5Y4dNvM), by Anonymous.
-8. **[ConvMLP](./ConvMLP)** (from UO/UIUC/PAIR), released with [ConvMLP: Hierarchical Convolutional MLPs for Vision](https://arxiv.org/abs/2109.04454), by Jiachen Li, Ali Hassani, Steven Walton, Humphrey Shi.
-9. **[ViP](./ViP)** (from National University of Singapore), released with [Vision Permutator: A Permutable MLP-Like Architecture for Visual Recognition](https://arxiv.org/abs/2106.12368), by Qibin Hou and Zihang Jiang and Li Yuan and Ming-Ming Cheng and Shuicheng Yan and Jiashi Feng.
+1. **[MLP-Mixer](./image_classification/MLP-Mixer)** (from Google), released with paper [MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601), by Ilya Tolstikhin, Neil Houlsby, Alexander Kolesnikov, Lucas Beyer, Xiaohua Zhai, Thomas Unterthiner, Jessica Yung, Andreas Steiner, Daniel Keysers, Jakob Uszkoreit, Mario Lucic, Alexey Dosovitskiy
+2. **[ResMLP](./image_classification/ResMLP)** (from Facebook/Sorbonne/Inria/Valeo), released with paper [ResMLP: Feedforward networks for image classification with data-efficient training](https://arxiv.org/abs/2105.03404), by Hugo Touvron, Piotr Bojanowski, Mathilde Caron, Matthieu Cord, Alaaeldin El-Nouby, Edouard Grave, Gautier Izacard, Armand Joulin, Gabriel Synnaeve, Jakob Verbeek, Hervé Jégou.
+3. **[gMLP](./image_classification/gMLP)** (from Google), released with paper [Pay Attention to MLPs](https://arxiv.org/abs/2105.08050), by Hanxiao Liu, Zihang Dai, David R. So, Quoc V. Le.
+4. **[FF Only](./image_classification/FF_Only)** (from Oxford), released with paper [Do You Even Need Attention? A Stack of Feed-Forward Layers Does Surprisingly Well on ImageNet](https://arxiv.org/abs/2105.02723), by Luke Melas-Kyriazi.
+5. **[RepMLP](./image_classification/RepMLP)** (from BNRist/Tsinghua/MEGVII/Aberystwyth), released with paper [RepMLP: Re-parameterizing Convolutions into Fully-connected Layers for Image Recognition](https://arxiv.org/abs/2105.01883), by Xiaohan Ding, Chunlong Xia, Xiangyu Zhang, Xiaojie Chu, Jungong Han, Guiguang Ding.
+6. **[CycleMLP](./image_classification/CycleMLP)** (from HKU/SenseTime), released with paper [CycleMLP: A MLP-like Architecture for Dense Prediction](https://arxiv.org/abs/2107.10224), by Shoufa Chen, Enze Xie, Chongjian Ge, Ding Liang, Ping Luo.
+7. **[ConvMixer](./image_classification/ConvMixer)** (from Anonymous), released with [Patches Are All You Need?](https://openreview.net/forum?id=TVHS5Y4dNvM), by Anonymous.
+8. **[ConvMLP](./image_classification/ConvMLP)** (from UO/UIUC/PAIR), released with [ConvMLP: Hierarchical Convolutional MLPs for Vision](https://arxiv.org/abs/2109.04454), by Jiachen Li, Ali Hassani, Steven Walton, Humphrey Shi.
+
 
 #### *Coming Soon:* ####
-1. **[HaloNet]()**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.
-5. **[XCiT]()** (from Facebook/Inria/Sorbonne), released with paper [XCiT: Cross-Covariance Image Transformers](https://arxiv.org/abs/2106.09681), by Alaaeldin El-Nouby, Hugo Touvron, Mathilde Caron, Piotr Bojanowski, Matthijs Douze, Armand Joulin, Ivan Laptev, Natalia Neverova, Gabriel Synnaeve, Jakob Verbeek, Hervé Jegou.
-6. **[CvT]()** (from McGill/Microsoft), released with paper [CvT: Introducing Convolutions to Vision Transformers](https://arxiv.org/abs/2103.15808), by Haiping Wu, Bin Xiao, Noel Codella, Mengchen Liu, Xiyang Dai, Lu Yuan, Lei Zhang
-7. **[PiT]()** (from NAVER/Sogan University), released with paper [Rethinking Spatial Dimensions of Vision Transformers](https://arxiv.org/abs/2103.16302), by Byeongho Heo, Sangdoo Yun, Dongyoon Han, Sanghyuk Chun, Junsuk Choe, Seong Joon Oh.
-8. **[HVT]()** (from Monash University), released with paper [Scalable Vision Transformers with Hierarchical Pooling](https://arxiv.org/abs/2103.10619), by Zizheng Pan, Bohan Zhuang, Jing Liu, Haoyu He, Jianfei Cai.
-9. **[DynamicViT]()** (from Tsinghua/UCLA/UW), released with paper [DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification](https://arxiv.org/abs/2106.02034), by Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, Cho-Jui Hsieh.
+1. **[DynamicViT]()** (from Tsinghua/UCLA/UW), released with paper [DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification](https://arxiv.org/abs/2106.02034), by Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, Cho-Jui Hsieh.
 
 
 
@@ -156,7 +158,7 @@ We also provide tutorials:
 3. Install dependency packages
     * General dependencies:
         ```
-        pip install yacs, pyyaml
+        pip install yacs pyyaml
         ```
     * Packages for Segmentation:
         ```
@@ -291,6 +293,50 @@ We also provide tutorials:
 | vip_m7  						| 82.75 | 96.05 | 55.3M   | 16.4G  |    224     | 0.875    | bicubic       | [google](https://drive.google.com/file/d/11lvT2OXW0CVGPZdF9dNjY_uaEIMYrmNu/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1j3V0Q40iSqOY15bTKlFFRw)(hvm8) |
 | vip_l7  						| 83.18 | 96.37 | 87.8M   | 24.5G  |    224     | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1bK08JorLPMjYUep_TnFPKGs0e1j0UBKJ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1I5hnv3wHWEaG3vpDqaNL-w)(tjvh) |
 | | | | | | | | | | 
+| xcit_nano_12_p16_224_dist   | 72.32  | 90.86  | 0.6G    | 3.1M      | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/14FsYtm48JB-rQFF9CanJsJaPESniWD7q/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15kdY4vzwU2QiBSU5127AYA)(7qvz)     |
+| xcit_nano_12_p16_384_dist   | 75.46  | 92.70  | 1.6G    | 3.1M      | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1zR-hFQryocF9muG-erzcxFuJme5y_e9f/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1449qtQzEMg6lqdtClyiCRQ)(1y2j)     |
+| xcit_large_24_p16_224_dist  | 84.92  | 97.13  | 35.9G   | 189.1M    | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1lAtko_KwOagjwaFvUkeXirVClXCV8gt-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Gs401mXqG1bifi1hBdXtig)(kfv8)     |
+| xcit_large_24_p16_384_dist  | 85.76  | 97.54  | 105.5G  | 189.1M    | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/15djnKz_-eooncvyZp_UTwOiHIm1Hxo_G/view?usp=sharing)/[baidu](https://pan.baidu.com/s/14583hbtIVbZ_2ifZepQItQ)(ffq3)     |
+| xcit_nano_12_p8_224_dist    | 76.33  | 93.10  | 2.2G    | 3.0M      | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1XxRNjskLvSVp6lvhlsnylq6g7vd_5MsI/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1DZJxuahFJyz-rEEsCqhhrA)(jjs7)     |
+| xcit_nano_12_p8_384_dist    | 77.82  | 94.04  | 6.3G    | 3.0M      | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1P3ln8JqLzMKbJAhCanRbu7i5NMPVFNec/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ECY9-PVDMNSup8NMQiqBrw)(dmc1)     |
+| xcit_large_24_p8_224_dist   | 85.40  | 97.40  | 141.4G  | 188.9M    | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/14ZoDxEez5NKVNAsbgjTPisjOQEAA30Wy/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1D_zyvjzIVFp6iqx1s7IEbA)(y7gw)     |
+| xcit_large_24_p8_384_dist   | 85.99  | 97.69  | 415.5G  | 188.9M    | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1stcUwwFNJ38mdaFsNXq24CBMmDenJ_e4/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1lwbBk7GFuqnnP_iU2OuDRw)(9xww)     |
+| | | | | | | | | |
+| pit_ti 	     | 72.91	| 91.40	| 4.8M    | 0.5G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1bbeqzlR_CFB8CAyTUN52p2q6ii8rt0AW/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Yrq5Q16MolPYHQsT_9P1mw)(ydmi)  |
+| pit_ti_distill | 74.54	| 92.10 | 5.1M    | 0.5G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1m4L0OVI0sYh8vCv37WhqCumRSHJaizqX/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RIM9NGq6pwfNN7GJ5WZg2w)(7k4s)  |
+| pit_xs 	     | 78.18    | 94.16 | 10.5M   | 1.1G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1qoMQ-pmqLRQmvAwZurIbpvgMK8MOEgqJ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15d7ep05vI2UoKvL09Zf_wg)(gytu)  |
+| pit_xs_distill | 79.31 	| 94.36 | 10.9M   | 1.1G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1EfHOIiTJOR-nRWE5AsnJMsPCncPHEgl8/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1DqlgVF7U5qHfGD3QJAad4A)(ie7s)  |
+| pit_s  		 | 81.08 	| 95.33 | 23.4M   | 2.4G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1TDSybTrwQpcFf9PgCIhGX1t-f_oak66W/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Vk-W1INskQq7J5Qs4yphCg)(kt1n)  |
+| pit_s_distill  | 81.99 	| 95.79 | 24.0M   | 2.5G   | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1U3VPP6We1vIaX-M3sZuHmFhCQBI9g_dL/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1L7rdWmMW8tiGkduqmak9Fw)(hhyc)  |
+| pit_b   		 | 82.44 	| 95.71 | 73.5M	  | 10.6G  | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/1-NBZ9-83nZ52jQ4DNZAIj8Xv6oh54nx-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1XRDPY4OxFlDfl8RMQ56rEg)(uh2v)  |
+| pit_b_distill  | 84.14 	| 96.86 | 74.5M   | 10.7G  | 224        | 0.9      | bicubic       |[google](https://drive.google.com/file/d/12Yi4eWDQxArhgQb96RXkNWjRoCsDyNo9/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1vJOUGXPtvC0abg-jnS4Krw)(3e6g)  |
+| | | | | | | | | |
+| halonet26t 	 | 79.10	| 94.31	| 12.5M    | 3.2G   | 256        | 0.95     | bicubic       |[google](https://drive.google.com/file/d/1F_a1brftXXnPM39c30NYe32La9YZQ0mW/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1FSlSTuYMpwPJpi4Yz2nCTA)(ednv)  |
+| halonet50ts 	 | 81.65	| 95.61	| 22.8M    | 5.1G   | 256        | 0.94     | bicubic       |[google](https://drive.google.com/file/d/12t85kJcPA377XePw6smch--ELMBo6p0Y/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1X4LM-sqoTKG7CrM5BNjcdA)(3j9e)  |
+| | | | | | | | | |
+| poolformer_s12 | 77.24 | 93.51 | 11.9M   | 1.8G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/15EBfTTU6coLCsDNiLgAWYiWeMpp3uYH4/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1n6TUxQGlssTu4lyLrBOXEw)(zcv4)             |
+| poolformer_s24 | 80.33 | 95.05 | 21.3M   | 3.4G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1JxqJluDpp1wwe7XtpTi1aWaVvlq0Q3xF/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1d2uyHB5R6ZWPzXWhdtm6fw)(nedr)             |
+| poolformer_s36 | 81.43 | 95.45 | 30.8M   | 5.0G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1ka3VeupDRFBSzzrcw4wHXKGqoKv6sB_Y/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1de6ZJkmYEmVI7zKUCMB_xw)(fvpm)             |
+| poolformer_m36 | 82.11 | 95.69 | 56.1M   | 8.9G   | 224        | 0.95     | bicubic       | [google](https://drive.google.com/file/d/1LTZ8wNRb_GSrJ9H3qt5-iGiGlwa4dGAK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1qNTYLw4vyuoH1EKDXEcSvw)(whfp)             |
+| poolformer_m48 | 82.46 | 95.96 | 73.4M   | 11.8G  | 224        | 0.95     | bicubic       | [google](https://drive.google.com/file/d/1YhXEVjWtI4bZB_Qwama8G4RBanq2K15L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1VJXANTseTUEA0E6HYf-XyA)(374f)             |
+| | | | | | | | | |
+| botnet50 	 | 77.38	| 93.56	| 20.9M    | 5.3G   | 224        | 0.875     | bicubic       |[google](https://drive.google.com/file/d/1S4nxgRkElT3K4lMx2JclPevmP3YUHNLw/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1CW40ShBJQYeFgdBIZZLSjg)(wh13)
+| | | | | | | | | |
+| CvT-13-224      | 81.59 | 95.67 | 20M    | 4.5G    | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1r0fnHn1bRPmN0mi8RwAPXmD4utDyOxEf/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13xNwCGpdJ5MVUi369OGl5Q)(vev9) |
+| CvT-21-224      | 82.46 | 96.00 | 32M    | 7.1G    | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/18s7nRfvcmNdbRuEpTQe02AQE3Y9UWVQC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1mOjbMNoQb7X3VJD3LV0Hhg)(t2rv) |
+| CvT-13-384   	  | 83.00 | 96.36 | 20M    | 16.3G   | 384        | 1.0        | bicubic       | [google](https://drive.google.com/file/d/1J0YYPUsiXSqyExBPtOPrOLL9c16syllg/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1upITRr5lNHLjbBJtIr-jdg)(wswt) |
+| CvT-21-384   	  | 83.27 | 96.16 | 32M    | 24.9G   | 384        | 1.0        | bicubic       | [google](https://drive.google.com/file/d/1tpXv_yYXtvyArlYi7AFcHUOqemhyMWHW/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1hXKi3Kb7mNxPFVmR6cdkMg)(hcem) |
+| CvT-13-384-22k  | 83.26 | 97.09 | 20M    | 16.3G   | 384        | 1.0        | bicubic       | [google](https://drive.google.com/file/d/18djrvq422u1pGLPxNfWAp6d17F7C5lbP/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YYv5rKPmroxKCnzkesUr0g)(c7m9) |
+| CvT-21-384-22k  | 84.91 | 97.62 | 32M    | 24.9G   | 384        | 1.0        | bicubic       | [google](https://drive.google.com/file/d/1NVXd7vxVoRpL-21GN7nGn0-Ut0L0Owp8/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1N3xNU6XFHb1CdEOrnjKuoA)(9jxe) |
+| CvT-w24-384-22k | 87.58 | 98.47 | 277M   | 193.2G  | 384        | 1.0        | bicubic       | [google](https://drive.google.com/file/d/1M3bg46N4SGtupK8FcvAOE0jltOwP5yja/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1MNJurm8juHRGG9SAw3IOkg)(bbj2) |
+| | | | | | | | | |
+| HVT-Ti-1       | 69.45 | 89.28 | 5.7M    | 0.6G   | 224        |  0.875   |  bicubic      |  [google](https://drive.google.com/file/d/11BW-qLBMu_1TDAavlrAbfVlXB53dgm42/view?usp=sharing)/[baidu](https://pan.baidu.com/s/16rZvJqL-UVuWFsCDuxFDqg?pwd=egds)(egds) |
+| HVT-S-0        | 80.30 | 95.15 | 22.0M   | 4.6G   | 224        |  0.875   |  bicubic      |  [google](https://drive.google.com/file/d/1GlJ2j2QVFye1tAQoUJlgKTR_KELq3mSa/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1L-tjDxkQx00jg7BsDClabA?pwd=hj7a)(hj7a) |
+| HVT-S-2        | 77.41 | 93.48 | 22.1M   | 1.9G   | 224        |  0.875   |  bicubic      |  [google](https://drive.google.com/file/d/1U14LA7SXJtFep_SdUCjAV-cDOQ9A_OFk/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nooWTBzaXyBtEgadn9VDmw?pwd=bajp)(bajp) |
+| HVT-S-3        | 76.30 | 92.88 | 22.1M   | 1.6G   | 224        |  0.875   |  bicubic      |  [google](https://drive.google.com/file/d/1m1CjOcZfPMLDRyX4QBgMhHV1m6rtu44v/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15sAOmQN6Hx0GLelYDuMQXw?pwd=rjch)(rjch) |
+| HVT-S-4        | 75.21 | 92.34 | 22.1M   | 1.6G   | 224        |  0.875   |  bicubic      |  [google](https://drive.google.com/file/d/14comGo9lO12dUeGGL52MuIJWZPSit7I0/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1o31hMRWR7FTCjUk7_fAOgA?pwd=ki4j)(ki4j) |
+| | | | | | | | | |
+| | | | | | | | | |
 | mlp_mixer_b16_224            	| 76.60 | 92.23 | 60.0M   | 12.7G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
 | mlp_mixer_l16_224           	| 72.06 | 87.67 | 208.2M  | 44.9G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1mkmvqo5K7JuvqGm92a-AdycXIcsv1rdg/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1AmSVpwCaGR9Vjsj_boL7GA)(8q7r) |
 | | | | | | | | | |
@@ -404,7 +450,7 @@ We also provide tutorials:
 #### Trans10kV2 ####
 |Model      | Backbone  | Batch_size | Iteration | mIoU (ss) | mIoU (ms+flip) | Backbone_checkpoint | Model_checkpoint     |     ConfigFile  |
 |-----------|-----------|------------|-----------|-----------|----------------|-----------------------------------------------|-----------------------------------------------------------------------|------------|
-|Trans2seg_Medium | Resnet50c |     16      |    80k    |  72.25  |      -        |   [google](https://drive.google.com/file/d/1C6nMg6DgQ73wzF21UwDVxmkcRTeKngnK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1hs0tbSGIeMLLGMq05NN--w)(4dd5)    | [google](https://drive.google.com/file/d/1zGEBEN27CQMgZBYqqAg_agJE6CPLOpYW/view?usp=sharing)/[baidu](https://pan.baidu.com/s/102GUBeoEPMqMEqF3smgyCA)(qcb0)   | [config](semantic_segmentation/configs/trans2seg/Trans2Seg_medium_512x512_80k_trans10kv2_bs_16.yaml)| 
+|Trans2seg_Medium | Resnet50c |     16      |    16k    |  75.97  |      -        |   [google](https://drive.google.com/file/d/1C6nMg6DgQ73wzF21UwDVxmkcRTeKngnK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1hs0tbSGIeMLLGMq05NN--w)(4dd5)    | [google](https://drive.google.com/file/d/1C6nMg6DgQ73wzF21UwDVxmkcRTeKngnK/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1wdOUD6S8QGqD6S-98Yb37w)(w25r)   | [config](semantic_segmentation/configs/trans2seg/Trans2Seg_medium_512x512_16k_trans10kv2_bs_16.yaml)| 
 
 ### GAN ###
 | Model                          | FID | Image Size | Crop_pct | Interpolation | Model        |

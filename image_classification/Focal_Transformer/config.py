@@ -37,6 +37,8 @@ _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 4 # number of data loading threads
+_C.DATA.IMAGENET_MEAN = [0.485, 0.456, 0.406] # [0.5, 0.5, 0.5]
+_C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225] # [0.5, 0.5, 0.5]
 
 
 # -----------------------------------------------------------------------------
@@ -202,7 +204,7 @@ def update_config(config, args):
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
         config.TRAIN.LAST_EPOCH = args.last_epoch
-    if args.output:
+    if args.output is not None:
         config.SAVE = args.output 
     if args.save_freq:
         config.SAVE_FREQ = args.save_freq
@@ -217,6 +219,8 @@ def update_config(config, args):
     if args.amp: # only during training
         if config.EVAL is True:
             config.AMP = False
+        else:
+            config.AMP = True
     
     # output folder
     config.SAVE = os.path.join(config.SAVE, config.MODEL.NAME, config.TAG)

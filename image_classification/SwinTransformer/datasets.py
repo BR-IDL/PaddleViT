@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ from paddle.io import DistributedBatchSampler
 from paddle.vision import transforms
 from paddle.vision import datasets
 from paddle.vision import image_load
-from auto_augment import auto_augment_policy_original
-from auto_augment import AutoAugment
+from augment import auto_augment_policy_original
+from augment import AutoAugment
 from transforms import RandomHorizontalFlip
 from random_erasing import RandomErasing
+
 
 class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
@@ -103,7 +104,8 @@ def get_train_transforms(config):
         aug_op_list.append(transforms.ColorJitter(*jitter))
     # STEP3: other ops
     aug_op_list.append(transforms.ToTensor())
-    aug_op_list.append(transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
+    aug_op_list.append(transforms.Normalize(mean=config.DATA.IMAGENET_MEAN,
+                                            std=config.DATA.IMAGENET_STD))
     # STEP4: random erasing
     if config.TRAIN.RANDOM_ERASE_PROB > 0.:
         random_erasing = RandomErasing(prob=config.TRAIN.RANDOM_ERASE_PROB,
@@ -135,8 +137,7 @@ def get_val_transforms(config):
         transforms.Resize(scale_size, interpolation='bicubic'),
         transforms.CenterCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)),
         transforms.ToTensor(),
-        #transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Normalize(mean=config.DATA.IMAGENET_MEAN, std=config.DATA.IMAGENET_STD),
     ])
     return transforms_val
 
@@ -157,11 +158,13 @@ def get_dataset(config, mode='train'):
         if mode == 'train':
             dataset = datasets.Cifar10(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar10(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "cifar100":
         if mode == 'train':
             dataset = datasets.Cifar100(mode=mode, transform=get_train_transforms(config))
         else:
+            mode = 'test'
             dataset = datasets.Cifar100(mode=mode, transform=get_val_transforms(config))
     elif config.DATA.DATASET == "imagenet2012":
         if mode == 'train':

@@ -5,4 +5,4 @@ python main_multi_gpu.py \
 -batch_size=32 \
 -data_path='/dataset/imagenet' \
 -eval \
--pretrained='./vit_base_patch32_384.pdparams'
+-pretrained='./vit_base_patch32_384'

@@ -128,14 +128,27 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# segmentation
+# Paddle checkpoints
+*.pdparams
+*.pdopt
+
+# Segmentation
 /semantic_segmentation/output
 /semantic_segmentation/log
 /semantic_segmentation/data
 /semantic_segmentation/tmp
-*.pdparams
-*.pdopt
 /semantic_segmentation/pytorch_2_paddle.py
 /semantic_segmentation/config.ini
 /semantic_segmentation/job.sh
 /semantic_segmentation/run.sh
+
+# Image Classification
+output/
+
+# macOS
+.DS_Store
+*/.DS_Store
+
+# Editor Config
+.idea/
+.vscode/

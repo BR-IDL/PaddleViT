@@ -49,7 +49,7 @@ def get_arguments():
     parser.add_argument('-num_classes', type=int, default=1000)
     parser.add_argument('-data_path', type=str, default=None)
 
-    parser.add_argument('-output', type=str, default='./output')
+    parser.add_argument('-output', type=str, default=None)
 
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
@@ -250,9 +250,10 @@ def main():
     model = build_model(config)
 
     # STEP 2: Create train and val dataloader
-    dataset_train = get_dataset(config, mode='train')
+    if not config.EVAL:
+        dataset_train = get_dataset(config, mode='train')
+        dataloader_train = get_dataloader(config, dataset_train, 'train', False)
     dataset_val = get_dataset(config, mode='val')
-    dataloader_train = get_dataloader(config, dataset_train, 'train', False)
     dataloader_val = get_dataloader(config, dataset_val, 'val', False)
 
     # STEP 3: Define Mixup function

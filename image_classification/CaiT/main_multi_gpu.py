@@ -40,6 +40,7 @@ parser.add_argument('-dataset', type=str, default=None)
 parser.add_argument('-batch_size', type=int, default=None)
 parser.add_argument('-image_size', type=int, default=None)
 parser.add_argument('-data_path', type=str, default=None)
+parser.add_argument('-output', type=str, default=None)
 parser.add_argument('-ngpus', type=int, default=None)
 parser.add_argument('-pretrained', type=str, default=None)
 parser.add_argument('-resume', type=str, default=None)
@@ -225,12 +226,19 @@ def main_worker(*args):
     model = paddle.DataParallel(model)
     # 2. Create train and val dataloader
     dataset_train, dataset_val = args[0], args[1]
-    dataloader_train = get_dataloader(config, dataset_train, 'train', True)
+    # Create training dataloader
+    if not config.EVAL:
+        dataloader_train = get_dataloader(config, dataset_train, 'train', True)
+        total_batch_train = len(dataloader_train)
+        logging.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
+        if local_rank == 0:
+            logging.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
+    # Create validation dataloader
     dataloader_val = get_dataloader(config, dataset_val, 'test', True)
-    total_batch_train = len(dataloader_train)
     total_batch_val = len(dataloader_val)
-    logging.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
     logging.info(f'----- Total # of val batch (single gpu): {total_batch_val}')
+    if local_rank == 0:
+        logging.info(f'----- Total # of val batch (single gpu): {total_batch_val}')
     # 3. Define criterion
     criterion = nn.CrossEntropyLoss()
     # 4. Define optimizer and lr_scheduler
@@ -368,7 +376,10 @@ def main_worker(*args):
 
 
 def main():
-    dataset_train = get_dataset(config, mode='train')
+    if not config.EVAL:
+        dataset_train = get_dataset(config, mode='train')
+    else:
+        dataset_train = None
     dataset_val = get_dataset(config, mode='val')
     config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS
     dist.spawn(main_worker, args=(dataset_train, dataset_val, ), nprocs=config.NGPUS)

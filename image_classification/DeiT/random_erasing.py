@@ -22,10 +22,9 @@ import paddle
 def _get_pixels(per_pixel, rand_color, patch_size, dtype="float32"):
     if per_pixel:
         return paddle.normal(shape=patch_size).astype(dtype)
-    elif rand_color:
+    if rand_color:
         return paddle.normal(shape=(patch_size[0], 1, 1)).astype(dtype)
-    else:
-        return paddle.zeros((patch_size[0], 1, 1)).astype(dtype)
+    return paddle.zeros((patch_size[0], 1, 1)).astype(dtype)
 
 
 class RandomErasing(object):
