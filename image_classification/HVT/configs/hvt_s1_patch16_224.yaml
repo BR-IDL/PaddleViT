@@ -13,7 +13,7 @@ MODEL:
         QKV_BIAS: True
         POOL_KERNEL_SIZE: 3
         POOL_STRIDE: 2
-        POOL_BLOCK_WIDTH: 4
+        POOL_BLOCK_WIDTH: 12
 TRAIN:
     NUM_EPOCHS: 300
     WARMUP_EPOCHS: 5
