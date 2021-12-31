@@ -6,6 +6,7 @@ PaddlePaddle用于图像分类的训练/评估代码和预训练模型。
 此实现是 [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) 项目的一部分.
 
 ## 更新 
+* 更新 (2021-12-30): 添加 MobileViT 模型和 multi scale sampler.
 * 更新 (2021-12-28): 添加 HvT 模型.
 * 更新 (2021-12-24): 添加 CvT 模型.
 * 更新 (2021-12-23): 添加 BoTNet 模型.

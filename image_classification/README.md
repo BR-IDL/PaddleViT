@@ -6,6 +6,7 @@ PaddlePaddle training/validation code and pretrained models for **Image Classifi
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
+* Update (2021-12-30): Add MobileViT model and multi scale sampler.
 * Update (2021-12-28): Add HvT model.
 * Update (2021-12-24): Add CvT model.
 * Update (2021-12-23): Add BoTNet model.

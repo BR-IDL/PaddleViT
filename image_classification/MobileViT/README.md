@@ -2,7 +2,7 @@
 
 PaddlePaddle training/validation code and pretrained models for **MobileViT**.
 
-The official pytorch implementation is N/A.
+The official apple implementation is [here](https://github.com/apple/ml-cvnets).
 
 This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT.git).
 
@@ -13,6 +13,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
+* Update (2021-12-30): Add multi scale sampler DDP and update mobilevit_s model weights.
 * Update (2021-11-02): Pretrained model weights (mobilevit_s) is released.
 * Update (2021-11-02): Pretrained model weights (mobilevit_xs) is released.
 * Update (2021-10-29): Pretrained model weights (mobilevit_xxs) is released.
@@ -24,11 +25,15 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 | mobilevit_xxs   				| 70.31| 89.68 | 1.32M   | 0.44G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1l3L-_TxS3QisRUIb8ohcv318vrnrHnWA/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1KFZ5G834_-XXN33W67k8eg)(axpc) |
 | mobilevit_xs   				| 74.47| 92.02 | 2.33M   | 0.95G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1oRMA4pNs2Ba0LYDbPufC842tO4OFcgwq/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1IP8S-S6ZAkiL0OEsiBWNkw)(hfhm) |
 | mobilevit_s   				| 76.74| 93.08 | 5.59M   | 1.88G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1ibkhsswGYWvZwIRjwfgNA4-Oo2stKi0m/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1-rI6hiCHZaI7os2siFASNg)(34bg) |
+| mobilevit_s $\dag$  			| 77.83| 93.83 | 5.59M   | 1.88G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1BztBJ5jzmqgDWfQk-FB_ywDWqyZYu2yG/view?usp=sharing)/[baidu](https://pan.baidu.com/s/19YepMAO-sveBOLA4aSjIEQ?pwd=92ic)(92ic) |
 
 
-> *The results are evaluated on ImageNet2012 validation set.
+
+> The results are evaluated on ImageNet2012 validation set.
 > 
-> *This model is trained from scratch using PaddleViT without multi scale batch sampler.
+> All models are trained from scratch using PaddleViT.
+>
+> $\dag$ means model is trained from scratch using PaddleViT using multi scale sampler DDP.
 
 
 ## Notebooks
