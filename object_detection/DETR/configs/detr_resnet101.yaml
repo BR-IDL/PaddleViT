@@ -1,8 +1,8 @@
 DATA:
-    BATCH_SIZE: 2
+    BATCH_SIZE: 2 
 MODEL:
     DROPOUT: 0.1
-    BACKBONE: "resnet50"
+    BACKBONE: "resnet101"
     NUM_QUERIES: 100
     TRANS:
         NUM_ENCODERS: 6

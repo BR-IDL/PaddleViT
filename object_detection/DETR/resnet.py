@@ -16,6 +16,7 @@
 Mostly refered: https://github.com/PaddlePaddle/Paddle/blob/release/2.1/python/paddle/vision/models/resnet.py
 """
 
+from functools import partial
 import paddle
 import paddle.nn as nn
 
@@ -39,6 +40,11 @@ model_urls = {
 }
 
 
+def init_weights(lr):
+    weight_attr = paddle.ParamAttr(learning_rate=lr)
+    bias_attr = paddle.ParamAttr(learning_rate=lr)
+    return weight_attr, bias_attr
+
 
 class BasicBlock(nn.Layer):
     expansion = 1
@@ -50,18 +56,22 @@ class BasicBlock(nn.Layer):
                  groups=1,
                  base_width=64,
                  dilation=1,
-                 norm_layer=None):
+                 norm_layer=None,
+                 backbone_lr=1.0):
         super(BasicBlock, self).__init__()
         if dilation > 1:
             raise ValueError('Basic block does not support dilation')
         if norm_layer is None:
-            norm_layer = nn.BatchNorm2D
+            w_attr_1, b_attr_1 = init_weights(backbone_lr)
+            norm_layer = partial(nn.BatchNorm2D, weight_attr=w_attr_1, bias_attr=b_attr_1)
+        w_attr_2, b_attr_2 = init_weights(backbone_lr)
         self.conv1 = nn.Conv2D(
-            inplanes, planes, 3, padding=1, stride=stride, bias_attr=False)
+            inplanes, planes, 3, padding=1, stride=stride, weight_attr=w_attr_2, bias_attr=False)
         self.bn1 = norm_layer(planes)
         self.relu = nn.ReLU()
+        w_attr_3, b_attr_3 = init_weights(backbone_lr)
         self.conv2 = nn.Conv2D(
-            planes, planes, 3, padding=1, bias_attr=False)
+            planes, planes, 3, padding=1, weight_attr=w_attr_3, bias_attr=False)
         self.bn2 = norm_layer(planes)
         self.downsample = downsample
         self.stride = stride
@@ -90,14 +100,18 @@ class BottleneckBlock(nn.Layer):
                  groups=1,
                  base_width=64,
                  dilation=1,
-                 norm_layer=None):
+                 norm_layer=None,
+                 backbone_lr=1.0):
         super(BottleneckBlock, self).__init__()
         if norm_layer is None:
-            norm_layer = nn.BatchNorm2D
+            w_attr_1, b_attr_1 = init_weights(backbone_lr)
+            norm_layer = partial(nn.BatchNorm2D, weight_attr=w_attr_1, bias_attr=b_attr_1)
         width = int(planes * (base_width / 64.)) * groups
-        self.conv1 = nn.Conv2D(inplanes, width, 1, bias_attr=False)
+        w_attr_2, b_attr_2 = init_weights(backbone_lr)
+        self.conv1 = nn.Conv2D(inplanes, width, 1, weight_attr=w_attr_2, bias_attr=False)
         self.bn1 = norm_layer(width)
 
+        w_attr_3, b_attr_3 = init_weights(backbone_lr)
         self.conv2 = nn.Conv2D(width,
                                width,
                                3,
@@ -105,9 +119,11 @@ class BottleneckBlock(nn.Layer):
                                stride=stride,
                                groups=groups,
                                dilation=dilation,
+                               weight_attr=w_attr_3,
                                bias_attr=False)
         self.bn2 = norm_layer(width)
-        self.conv3 = nn.Conv2D(width, planes * self.expansion, 1, bias_attr=False)
+        w_attr_4, b_attr_4 = init_weights(backbone_lr)
+        self.conv3 = nn.Conv2D(width, planes * self.expansion, 1, weight_attr=w_attr_4, bias_attr=False)
         self.bn3 = norm_layer(planes * self.expansion)
         self.relu = nn.ReLU()
         self.downsample = downsample
@@ -144,7 +160,8 @@ class ResNet(nn.Layer):
                  with_pool=True,
                  norm_layer=None,
                  replace_stride_with_dilation=None,
-                 dilation=1):
+                 dilation=1,
+                 backbone_lr=1.0):
         super(ResNet, self).__init__()
         layer_cfg = {
             18: [2, 2, 2, 2],
@@ -164,36 +181,40 @@ class ResNet(nn.Layer):
         self.with_pool = with_pool
 
         if norm_layer is None:
-            norm_layer = nn.BatchNorm2D
+            w_attr_1, b_attr_1 = init_weights(backbone_lr)
+            norm_layer = partial(nn.BatchNorm2D, weight_attr=w_attr_1, bias_attr=b_attr_1)
         self._norm_layer = norm_layer
 
 
         self.inplanes = 64
         self.dilation = dilation
 
+        w_attr_2, b_attr_2 = init_weights(backbone_lr)
         self.conv1 = nn.Conv2D(
             3,
             self.inplanes,
             kernel_size=7,
             stride=2,
             padding=3,
+            weight_attr=w_attr_2,
             bias_attr=False)
         self.bn1 = self._norm_layer(self.inplanes)
         self.relu = nn.ReLU()
         self.maxpool = nn.MaxPool2D(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer1 = self._make_layer(block, 64, layers[0], backbone_lr=backbone_lr)
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
-                                       dilate=replace_stride_with_dilation[0])
+                                       dilate=replace_stride_with_dilation[0], backbone_lr=backbone_lr)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
-                                       dilate=replace_stride_with_dilation[1])
+                                       dilate=replace_stride_with_dilation[1], backbone_lr=backbone_lr)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
-                                       dilate=replace_stride_with_dilation[2])
+                                       dilate=replace_stride_with_dilation[2], backbone_lr=backbone_lr)
         if with_pool:
             self.avgpool = nn.AdaptiveAvgPool2D((1,1))
         if num_classes > 0:
-            self.fc = nn.Linear(512 * block.expansion, num_classes)
+            w_attr_3, b_attr_3 = init_weights(backbone_lr)
+            self.fc = nn.Linear(512 * block.expansion, num_classes, weight_attr=w_attr_3, bias_attr=b_attr_3)
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
+    def _make_layer(self, block, planes, blocks, stride=1, dilate=False, backbone_lr=1.0):
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -201,11 +222,13 @@ class ResNet(nn.Layer):
             self.dilation *= stride
             stride =1
         if stride !=1 or self.inplanes != planes * block.expansion:
+            w_attr_1, b_attr_1 = init_weights(backbone_lr)
             downsample = nn.Sequential(
                 nn.Conv2D(self.inplanes,
                           planes*block.expansion,
                           1,
                           stride=stride,
+                          weight_attr=w_attr_1,
                           bias_attr=False),
                 norm_layer(planes * block.expansion),
             )
@@ -213,10 +236,10 @@ class ResNet(nn.Layer):
         layers = []
         layers.append(
             block(self.inplanes, planes, stride, downsample, 1, 64,
-                  previous_dilation, norm_layer))
+                  previous_dilation, norm_layer, backbone_lr=backbone_lr))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
-            layers.append(block(self.inplanes, planes, norm_layer=norm_layer))
+            layers.append(block(self.inplanes, planes, norm_layer=norm_layer, backbone_lr=backbone_lr))
 
         return nn.Sequential(*layers) 
 
@@ -238,8 +261,8 @@ class ResNet(nn.Layer):
 
         return x
 
-def _resnet(arch, Block, depth, pretrained, **kwargs):
-    model = ResNet(Block, depth, **kwargs)
+def _resnet(arch, Block, depth, pretrained, backbone_lr=1.0, **kwargs):
+    model = ResNet(Block, depth, backbone_lr=1.0, **kwargs)
     if pretrained:
         assert arch in model_urls, f"{arch} model do not have a pretrained model now"
         weight_path = get_weights_path_from_url(model_urls[arch][0],
@@ -249,17 +272,17 @@ def _resnet(arch, Block, depth, pretrained, **kwargs):
     return model
 
 
-def resnet18(pretrained=False, **kwargs):
-    return _resnet('resnet18', BasicBlock, 18, pretrained, **kwargs)
+def resnet18(pretrained=False, backbone_lr=1.0, **kwargs):
+    return _resnet('resnet18', BasicBlock, 18, pretrained, backbone_lr, **kwargs)
 
-def resnet34(pretrained=False, **kwargs):
-    return _resnet('resnet34', BasicBlock, 34, pretrained, **kwargs)
+def resnet34(pretrained=False, backbone_lr=1.0, **kwargs):
+    return _resnet('resnet34', BasicBlock, 34, pretrained, backbone_lr, **kwargs)
 
-def resnet50(pretrained=False, **kwargs):
-    return _resnet('resnet50', BottleneckBlock, 50, pretrained, **kwargs)
+def resnet50(pretrained=False, backbone_lr=1.0, **kwargs):
+    return _resnet('resnet50', BottleneckBlock, 50, pretrained, backbone_lr, **kwargs)
         
-def resnet101(pretrained=False, **kwargs):
-    return _resnet('resnet101', BottleneckBlock, 101, pretrained, **kwargs)
+def resnet101(pretrained=False, backbone_lr=1.0, **kwargs):
+    return _resnet('resnet101', BottleneckBlock, 101, pretrained, backbone_lr, **kwargs)
 
-def resnet152(pretrained=False, **kwargs):
-    return _resnet('resnet152', BottleneckBlock, 152, pretrained, **kwargs)
+def resnet152(pretrained=False, bakcbone_lr=1.0, **kwargs):
+    return _resnet('resnet152', BottleneckBlock, 152, pretrained, backbone_lr, **kwargs)

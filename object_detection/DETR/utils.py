@@ -1,4 +1,4 @@
-#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utilities"""
 
+"""Utilities for DETR"""
 import copy
 import pickle
 import numpy as np
@@ -45,38 +45,28 @@ class AverageMeter():
 
 def collate_fn(batch):
     """Collate function for batching samples
-    
     Samples varies in sizes, here convert samples to NestedTensor which pads the tensor,
     and generate the corresponding mask, so that the whole batch is of the same size.
-
     """
     # eliminate invalid data (where boxes is [] tensor)
     old_batch_len = len(batch)
     batch = [x for x in batch if x[1]['boxes'].shape[0] != 0]
-    # try refill empty sample by other sample in current batch
-    #print('batch len = ', old_batch_len)
-    #print('new batch len = ', len(batch))
+    # try to refill empty samples by other samples in current batch
     new_batch_len = len(batch)
+    if new_batch_len == 0: # if all samples in batch have no box, return None
+        return (None, None)
     for i in range(new_batch_len, old_batch_len):
         batch.append(copy.deepcopy(batch[i%new_batch_len]))
-    #print('batch = ', batch)
-    #print('filled batch len = ', len(batch))
-    batch = list(zip(*batch)) # batch[0]: data tensor, batch[1]: targets dict
 
+    batch = list(zip(*batch)) # batch[0]: data tensor, batch[1]: target dicts
+    # data tensor convert to NestedTensor with paddings
     batch[0] = nested_tensor_from_tensor_list(batch[0])
+
     return tuple(batch)
 
 
-def _max_by_axis(the_list):
-    maxes = the_list[0]
-    for sublist in the_list[1:]:
-        for idx, item in enumerate(sublist):
-            maxes[idx] = max(maxes[idx], item)
-    return maxes
-
-
 class NestedTensor():
-    """Each NestedTensor has .tensor and .mask attributes, which are paddle.Tensors"""
+    """Each NestedTensor has .tensor and .mask attributes, which are of type paddle.Tensor"""
     def __init__(self, tensors, mask):
         self.tensors = tensors
         self.mask = mask
@@ -88,14 +78,22 @@ class NestedTensor():
         return str(self.tensors)
 
 
+def _max_by_axis(the_list):
+    """get max value from list of list"""
+    maxes = the_list[0]
+    for sublist in the_list[1:]:
+        for idx, item in enumerate(sublist):
+            maxes[idx] = max(maxes[idx], item)
+    return maxes
+
+
 def nested_tensor_from_tensor_list(tensor_list):
-    """make the batch handle different image sizes
+    """Generate batch data with different image sizes
     
     This method take a list of tensors with different sizes,
     then max size is selected as the final batch size,
     smaller samples are padded with zeros(bottom-right),
-    and corresponding masks are generated.
-
+    corresponding masks are also generated.
     """
     max_size = _max_by_axis([list(img.shape) for img in tensor_list])
     batch_shape = [len(tensor_list)] + max_size # len is the num of images in this batch
@@ -103,17 +101,17 @@ def nested_tensor_from_tensor_list(tensor_list):
     dtype = tensor_list[0].dtype
     data_tensor = paddle.zeros(batch_shape, dtype=dtype)
     mask = paddle.ones((b, h, w), dtype='int32')
-    # zip has broadcast for tensor and mask
-    #print('===== inside nested_tensor_from_tensor_list')
-    # zip cannot used in paddle, which will create a new tensor. in pytorch it works well
+
+    #NOTE: zip cannot used in paddle, which will create a new tensor. in pytorch it works well
     #for img, pad_img, m in zip(tensor_list, tensor, mask):
     #    pad_img[: img.shape[0], : img.shape[1], : img.shape[2]] = img
     #    m[: img.shape[0], :img.shape[1]] = 0
+    # So here use for loop
     for idx in range(b):
         s0 = tensor_list[idx].shape[0]
         s1 = tensor_list[idx].shape[1]
         s2 = tensor_list[idx].shape[2]
-        # direct set value raise error in current env, we use numpy to bypass
+        #NOTE: No problem now: direct set value raise error in current env, we use numpy to bypass
         #data_tensor[idx, : s0, : s1, : s2] = tensor_list[idx].cpu().numpy()
         data_tensor[idx, : s0, : s1, : s2] = tensor_list[idx]
         mask[idx, : s1, : s2] = 0

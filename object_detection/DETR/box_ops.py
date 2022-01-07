@@ -152,9 +152,8 @@ def masks_to_boxes(masks):
 
     x_mask = (masks * x.unsqueeze(0))
     x_max = x_mask.flatten(1).max(-1)[0]
-
     #x_min = x_mask.masked_fill(~(masks.bool()), 1e8).flatten(1).min(-1)
-    x_min = paddle.where(masks == 0, paddle.ones_like(x_mask)*float(1e8), x_mask)
+    x_min = paddle.where(masks == 0, paddle.ones_like(x_mask) * float(1e8), x_mask)
     x_min = x_min.flatten(1).min(-1)[0]
 
     y_mask = (masks * y.unsqueeze(0))

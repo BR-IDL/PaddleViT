@@ -40,7 +40,7 @@ class CocoDetection(paddle.io.Dataset):
     """
 
     def __init__(self, img_folder, anno_file, transforms, return_masks):
-        super(CocoDetection, self).__init__()
+        super().__init__()
         self.coco = COCO(anno_file)
         # coco all image ids
         ids = list(sorted(self.coco.imgs.keys()))
@@ -119,15 +119,15 @@ class ConvertCocoPolysToMasks():
     def __call__(self, image, target):
         w, h = image.size
         image_id = target['image_id']
-        # Cuda may raise error, use cpu tensor instead
-        #image_id = paddle.to_tensor([image_id]).cpu()
+        # may raise cuda error, use cpu instead
+        # image_id = paddle.to_tensor([image_id]).cpu()
 
         anno = target['annotations']
         anno = [obj for obj in anno if 'iscrowd' not in obj or obj['iscrowd'] == 0]
 
         boxes = [obj['bbox'] for obj in anno]
 
-        ## Temp Fix: do it in numpy to skip paddle cuda error
+        # use numpy to skip paddle cuda error
         boxes = np.array(boxes, dtype='float32')
         boxes = boxes.reshape([-1, 4])
         boxes[:, 2:] += boxes[:, :2] # (n, (x1, y1, x2, y2))
@@ -150,7 +150,6 @@ class ConvertCocoPolysToMasks():
             if num_keypoints:
                 keypoints = keypoints.reshape((num_keypoints, -1, 3))
 
-        #TODO: should be replaced with paddle buildin logical ops in the future
         boxes_tmp = boxes
         keep = (boxes_tmp[:, 3] > boxes_tmp[:, 1]) & (boxes_tmp[:, 2] > boxes_tmp[:, 0])
         keep_idx = np.where(keep)[0].astype('int32')

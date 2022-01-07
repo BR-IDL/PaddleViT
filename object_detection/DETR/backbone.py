@@ -61,8 +61,6 @@ class IntermediateLayerGetter(nn.LayerDict):
         out = OrderedDict()
         for name, module in self.named_children():
             x = module(x)
-            #print(f'--------{name}-------------')
-            #print(x)
             if name in self.return_layers:
                 out_name = self.return_layers[name]
                 out[out_name] = x
@@ -132,10 +130,11 @@ class BackboneBase(nn.Layer):
 
 class Backbone(BackboneBase):
     """Get resnet backbone from resnet.py with multiple settings and return BackboneBase instance"""
-    def __init__(self, name, train_backbone, return_interm_layers, dilation):
+    def __init__(self, name, train_backbone, return_interm_layers, dilation, backbone_lr):
         backbone = getattr(resnet, name)(pretrained=paddle.distributed.get_rank() == 0,
                                          norm_layer=FrozenBatchNorm2D,
-                                         replace_stride_with_dilation=[False, False, dilation])
+                                         replace_stride_with_dilation=[False, False, dilation],
+                                         backbone_lr=backbone_lr)
         num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
         super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
 
@@ -158,8 +157,6 @@ class Joiner(nn.Sequential):
         for name, xx in xs.items():
             out.append(xx)
             pos.append(self[1](xx).astype(xx.tensors.dtype))
-            #print(f'----- {name} pos: ---------')
-            #print(pos[-1])
         return out, pos
 
 
@@ -170,9 +167,10 @@ def build_backbone(config):
     dilation = False
     train_backbone = not config.EVAL
     return_interm_layers = False #TODO: impl case True for segmentation
+    backbone_lr = config.MODEL.BACKBONE_LR
 
-    position_embedding = build_position_encoding(config.MODEL.TRANS.HIDDEN_SIZE)
-    backbone = Backbone(backbone_name, train_backbone, return_interm_layers, dilation)
+    position_embedding = build_position_encoding(config.MODEL.TRANS.EMBED_DIM)
+    backbone = Backbone(backbone_name, train_backbone, return_interm_layers, dilation, backbone_lr)
     model = Joiner(backbone, position_embedding)
     model.num_channels = backbone.num_channels
 
