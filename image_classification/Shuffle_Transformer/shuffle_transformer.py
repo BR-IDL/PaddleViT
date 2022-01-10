@@ -70,8 +70,8 @@ class PatchEmbedding(nn.Layer):
         self.num_patches = (image_size // 4) * (image_size // 4)
 
     def _init_weights_batchnorm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, inputs):
@@ -527,6 +527,7 @@ def build_shuffle_transformer(config):
     """ build shuffle transformer using config"""
     model = ShuffleTransformer(image_size=config.DATA.IMAGE_SIZE,
                                embed_dim=config.MODEL.TRANS.EMBED_DIM,
+                               num_classes=config.MODEL.NUM_CLASSES,
                                mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
                                layers=config.MODEL.TRANS.DEPTHS,
                                num_heads=config.MODEL.TRANS.NUM_HEADS,

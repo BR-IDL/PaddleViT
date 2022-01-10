@@ -1,4 +1,4 @@
-#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,13 +29,11 @@ from datasets import get_dataloader
 from datasets import get_dataset
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
-from utils import get_exclude_from_weight_decay_fn
 from config import get_config
 from config import update_config
 from mixup import Mixup
 from losses import LabelSmoothingCrossEntropyLoss
 from losses import SoftTargetCrossEntropyLoss
-from losses import DistillationLoss
 from convmixer import build_convmixer as build_model
 
 
@@ -49,6 +47,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -105,11 +104,9 @@ def train(dataloader,
         local_logger: logger for local process/gpu, default: None
         master_logger: logger for main process, default: None
     Returns:
-        train_loss_meter.avg: float, average loss on current process/gpu
-        train_acc_meter.avg: float, average top1 accuracy on current process/gpu
-        master_train_loss_meter.avg: float, average loss on all processes/gpus
-        master_train_acc_meter.avg: float, average top1 accuracy on all processes/gpus
-        train_time: float, training time
+        train_loss_meter.avg
+        train_acc_meter.avg
+        train_time
     """
     model.train()
     train_loss_meter = AverageMeter()
@@ -426,8 +423,8 @@ def main_worker(*args):
             weight_decay=config.TRAIN.WEIGHT_DECAY,
             epsilon=config.TRAIN.OPTIMIZER.EPS,
             grad_clip=clip,
-            apply_decay_param_fun=get_exclude_from_weight_decay_fn([
-                'absolute_pos_embed', 'relative_position_bias_table']),
+            #apply_decay_param_fun=get_exclude_from_weight_decay_fn([
+            #    'absolute_pos_embed', 'relative_position_bias_table']),
             )
     else:
         local_logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")

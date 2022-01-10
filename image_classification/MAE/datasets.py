@@ -19,12 +19,20 @@ Cifar10, Cifar100 and ImageNet2012 are supported
 
 import os
 import math
-from paddle.io import Dataset, DataLoader, DistributedBatchSampler
-from paddle.vision import transforms, datasets, image_load
+from PIL import Image
+from paddle.io import Dataset
+from paddle.io import DataLoader
+from paddle.io import DistributedBatchSampler
+from paddle.vision import transforms
+from paddle.vision import datasets
+from paddle.vision import image_load
+from augment import auto_augment_policy_original
+from augment import AutoAugment
 from augment import rand_augment_policy_original
 from augment import RandAugment
 from masking_generator import RandomMaskingGenerator
-
+from transforms import RandomHorizontalFlip
+from random_erasing import RandomErasing
 
 class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
@@ -100,17 +108,34 @@ def get_train_transforms(config):
     """
 
     aug_op_list = []
-    aug_op_list.append(transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
-                                     scale=(0.05, 1.0)))
-    # use RandAug (9, 0.5) only during finetuning
-    if not config.MODEL.MAE_PRETRAIN:
-        if config.TRAIN.RAND_AUGMENT:
-            policy = rand_augment_policy_original(config.TRAIN.RAND_AUGMENT_MAGNITUDE)
-            rand_augment = RandAugment(policy, config.TRAIN.RAND_AUGMENT_LAYERS)
-            aug_op_list.append(rand_augment)
+    # STEP1: random crop and resize
+    aug_op_list.append(
+        transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
+                                     scale=(0.05, 1.0), interpolation='bicubic'))
+    # STEP2: auto_augment or color jitter
+    if config.TRAIN.AUTO_AUGMENT:
+        policy = auto_augment_policy_original()
+        auto_augment = AutoAugment(policy)
+        aug_op_list.append(auto_augment)
+    elif config.TRAIN.RAND_AUGMENT:
+        policy = rand_augment_policy_original()
+        rand_augment = RandAugment(policy)
+        aug_op_list.append(rand_augment)
+    else:
+        jitter = (float(config.TRAIN.COLOR_JITTER), ) * 3
+        aug_op_list.append(transforms.ColorJitter(*jitter))
+    # STEP3: other ops
     aug_op_list.append(transforms.ToTensor())
     aug_op_list.append(transforms.Normalize(mean=config.DATA.IMAGENET_MEAN,
                                             std=config.DATA.IMAGENET_STD))
+    # STEP4: random erasing
+    if config.TRAIN.RANDOM_ERASE_PROB > 0.:
+        random_erasing = RandomErasing(prob=config.TRAIN.RANDOM_ERASE_PROB,
+                                       mode=config.TRAIN.RANDOM_ERASE_MODE,
+                                       max_count=config.TRAIN.RANDOM_ERASE_COUNT,
+                                       num_splits=config.TRAIN.RANDOM_ERASE_SPLIT)
+        aug_op_list.append(random_erasing)
+    # Final: compose transforms and return
     transforms_train = transforms.Compose(aug_op_list)
 
     if config.MODEL.MAE_PRETRAIN:

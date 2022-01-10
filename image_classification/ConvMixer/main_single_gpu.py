@@ -1,5 +1,4 @@
-
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +34,6 @@ from config import update_config
 from mixup import Mixup
 from losses import LabelSmoothingCrossEntropyLoss
 from losses import SoftTargetCrossEntropyLoss
-from losses import DistillationLoss
 from convmixer import build_convmixer as build_model
 
 
@@ -49,6 +47,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -333,10 +332,7 @@ def main():
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             weight_decay=config.TRAIN.WEIGHT_DECAY,
             epsilon=config.TRAIN.OPTIMIZER.EPS,
-            grad_clip=clip,
-            apply_decay_param_fun=get_exclude_from_weight_decay_fn([
-                'absolute_pos_embed', 'relative_position_bias_table']),
-            )
+            grad_clip=clip)
     else:
         logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
         raise NotImplementedError(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
@@ -355,7 +351,7 @@ def main():
         assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
         model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
-        opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
+        opt_state = paddle.load(config.MODEL.RESUME + '.pdopt')
         optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")

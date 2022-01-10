@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@ import numpy as np
 import paddle
 import paddle.nn as nn
 from crossvit_utils import DropPath, Identity, to_2tuple
-import paddlenlp
-
 
 def get_sinusoid_encoding(n_position, d_hid):
     ''' Sinusoid position encoding table '''
@@ -37,18 +35,24 @@ class Token_performer(nn.Layer):
         # def __init__(self, dim, in_dim, head_cnt=1, kernel_ratio=0.5, dp1=0.0, dp2=0.0):
         super().__init__()
         self.emb = in_dim * head_cnt  # we use 1, so it is no need here
-        self.kqv = nn.Linear(dim, 3 * self.emb)
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.kqv = nn.Linear(dim, 3 * self.emb, weight_attr=w_attr_1, bias_attr=b_attr_1)
         self.dp = nn.Dropout(dp1)
-        self.proj = nn.Linear(self.emb, self.emb)
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.proj = nn.Linear(self.emb, self.emb, weight_attr=w_attr_2, bias_attr=b_attr_2)
         self.head_cnt = head_cnt
-        self.norm1 = nn.LayerNorm(dim)
-        self.norm2 = nn.LayerNorm(self.emb)
+        w_attr_3, b_attr_3 = self._init_weights_norm()
+        w_attr_4, b_attr_4 = self._init_weights_norm()
+        self.norm1 = nn.LayerNorm(dim, weight_attr=w_attr_3, bias_attr=b_attr_3)
+        self.norm2 = nn.LayerNorm(self.emb, weight_attr=w_attr_4, bias_attr=b_attr_4)
         self.epsilon = 1e-8  # for stable in division
 
+        w_attr_5, b_attr_5 = self._init_weights()
+        w_attr_6, b_attr_6 = self._init_weights()
         self.mlp = nn.Sequential(
-            nn.Linear(self.emb, 1 * self.emb),
+            nn.Linear(self.emb, 1 * self.emb, weight_attr=w_attr_5, bias_attr=b_attr_5),
             nn.GELU(),
-            nn.Linear(1 * self.emb, self.emb),
+            nn.Linear(1 * self.emb, self.emb, weight_attr=w_attr_6, bias_attr=b_attr_6),
             nn.Dropout(dp2),
         )
 
@@ -57,18 +61,32 @@ class Token_performer(nn.Layer):
         # todo wait implement
         # self.w = nn.Parameter(nn.init.orthogonal_(self.w) * math.sqrt(self.m), requires_grad=False)
 
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
+
+    def _init_weights_norm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
+
     def prm_exp(self, x):
         xd = ((x * x).sum(dim=-1, keepdim=True)).repeat(1, 1, self.m) / 2
-        wtx = paddlenlp.ops.einsum('bti,mi->btm', x.float(), self.w)
+        wtx = paddle.matmul(x.float(), self.w, transpose_y=True)
+        #wtx = paddlenlp.ops.einsum('bti,mi->btm', x.float(), self.w)
 
         return paddle.exp(wtx - xd) / math.sqrt(self.m)
 
     def single_attn(self, x):
         k, q, v = paddle.split(self.kqv(x), self.emb, axis=-1)
         kp, qp = self.prm_exp(k), self.prm_exp(q)
-        D = paddlenlp.ops.einsum('bti,bi->bt', qp, kp.sum(dim=1)).unsqueeze(dim=2)
-        kptv = paddlenlp.ops.einsum('bin,bim->bnm', v.float(), kp)  # (B, emb, m)
-        y = paddlenlp.ops.einsum('bti,bni->btn', qp, kptv) / (D.repeat(1, 1, self.emb) + self.epsilon)
+        D = paddle.matmul(qp, kp.sum(dim=1)).unsqueeze(dim=2)
+        #D = paddlenlp.ops.einsum('bti,bi->bt', qp, kp.sum(dim=1)).unsqueeze(dim=2)
+        kptv = paddle.matmul(v.float(), kp, transpose_x=True)
+        #kptv = paddlenlp.ops.einsum('bin,bim->bnm', v.float(), kp)  # (B, emb, m)
+        y = paddle.matmul(qp, kptv, transpose_y=True) / (D.repeat(1, 1, self.emb) + self.epsilon)
+        #y = paddlenlp.ops.einsum('bti,bni->btn', qp, kptv) / (D.repeat(1, 1, self.emb) + self.epsilon)
         # skip connection
         y = v + self.dp(self.proj(y))
 
@@ -85,10 +103,17 @@ class Mlp(nn.Layer):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
-        self.fc1 = nn.Linear(in_features, hidden_features)
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.fc1 = nn.Linear(in_features, hidden_features, weight_attr=w_attr_1, bias_attr=b_attr_1)
         self.act = act_layer()
-        self.fc2 = nn.Linear(hidden_features, out_features)
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.fc2 = nn.Linear(hidden_features, out_features, weight_attr=w_attr_2, bias_attr=b_attr_2)
         self.drop = nn.Dropout(drop)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         x = self.fc1(x)
@@ -107,10 +132,19 @@ class Attention(nn.Layer):
         head_dim = dim // num_heads
         self.scale = qk_scale or head_dim ** -0.5
 
-        self.qkv = nn.Linear(dim, in_dim * 3)
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.qkv = nn.Linear(dim, in_dim * 3, weight_attr=w_attr_1, bias_attr=b_attr_1)
+
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(in_dim, in_dim)
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.proj = nn.Linear(in_dim, in_dim, weight_attr=w_attr_2, bias_attr=b_attr_2)
+
         self.proj_drop = nn.Dropout(proj_drop)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         B, N, C = x.shape
@@ -137,13 +171,19 @@ class Token_transformer(nn.Layer):
     def __init__(self, dim, in_dim, num_heads, mlp_ratio=1., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm):
         super().__init__()
-        self.norm1 = norm_layer(dim)
+        w_attr_1, b_attr_1 = self._init_weights_norm()
+        self.norm1 = norm_layer(dim, weight_attr=w_attr_1, bias_attr=b_attr_1)
         self.attn = Attention(dim, in_dim=in_dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale,
                               attn_drop=attn_drop, proj_drop=drop)
         self.drop_path = DropPath(drop_path) if drop_path > 0. else Identity()
         self.norm2 = norm_layer(in_dim)
         self.mlp = Mlp(in_features=in_dim, hidden_features=int(in_dim * mlp_ratio), out_features=in_dim,
                        act_layer=act_layer, drop=drop)
+
+    def _init_weights_norm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         x = self.attn(self.norm1(x))
@@ -179,18 +219,31 @@ class T2T(nn.Layer):
                                                 mlp_ratio=1.0)
             self.attention2 = Token_transformer(dim=token_dim * (kernel_size[1][0] ** 2), in_dim=token_dim, num_heads=1,
                                                 mlp_ratio=1.0)
-            self.project = nn.Linear(token_dim * (kernel_size[2][0] ** 2), embed_dim)
+            w_attr_1, b_attr_1 = self._init_weights()
+            self.project = nn.Linear(token_dim * (kernel_size[2][0] ** 2),
+                                     embed_dim,
+                                     weight_attr=w_attr_1,
+                                     bias_attr=b_attr_1)
 
         elif tokens_type == 'performer':
             self.attention1 = Token_performer(dim=in_chans * (kernel_size[0][0] ** 2), in_dim=token_dim,
                                               kernel_ratio=0.5)
             self.attention2 = Token_performer(dim=token_dim * (kernel_size[1][0] ** 2), in_dim=token_dim,
                                               kernel_ratio=0.5)
-            self.project = nn.Linear(token_dim * (kernel_size[2][0] ** 2), embed_dim)
+            w_attr_1, b_attr_1 = self._init_weights()
+            self.project = nn.Linear(token_dim * (kernel_size[2][0] ** 2),
+                                     embed_dim,
+                                     weight_attr=w_attr_1,
+                                     bias_attr=b_attr_1)
 
         self.num_patches = (img_size // (kernel_size[0][1] * kernel_size[1][1] * kernel_size[2][1])) * (img_size // (
                 kernel_size[0][1] * kernel_size[1][1] * kernel_size[2][
             1]))  # there are 3 sfot split, stride are 4,2,2 seperately
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         # step0: soft split
@@ -244,10 +297,19 @@ class SharedT2T(nn.Layer):
                                                 mlp_ratio=1.0)
             self.attention2 = Token_transformer(dim=token_dim * (kernel_size[1][0] ** 2), in_dim=token_dim, num_heads=1,
                                                 mlp_ratio=1.0)
-            self.project = nn.Linear(token_dim * (kernel_size[2][0] ** 2), embed_dim)
+            w_attr_1, b_attr_1 = self._init_weights()
+            self.project = nn.Linear(token_dim * (kernel_size[2][0] ** 2),
+                                     embed_dim,
+                                     weight_attr=w_attr_1,
+                                     bias_attr=b_attr_1)
 
         self.num_patches = (img_size // (kernel_size[0][1] * kernel_size[1][1] * kernel_size[2][1])) * (img_size // (
                 kernel_size[0][1] * kernel_size[1][1] * kernel_size[2][1]))
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         # step0: soft split

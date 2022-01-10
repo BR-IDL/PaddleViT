@@ -18,6 +18,7 @@ import sys
 import os
 import time
 import logging
+import copy
 import argparse
 import random
 import numpy as np

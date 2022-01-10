@@ -25,7 +25,9 @@ from paddle.vision import transforms
 from paddle.vision import datasets
 from paddle.vision import image_load
 from augment import auto_augment_policy_original
-from    augment import AutoAugment
+from augment import AutoAugment
+from augment import rand_augment_policy_original
+from augment import RandAugment
 from transforms import RandomHorizontalFlip
 from random_erasing import RandomErasing
 
@@ -94,6 +96,10 @@ def get_train_transforms(config):
         policy = auto_augment_policy_original()
         auto_augment = AutoAugment(policy)
         aug_op_list.append(auto_augment)
+    elif config.TRAIN.RAND_AUGMENT:
+        policy = rand_augment_policy_original()
+        rand_augment = RandAugment(policy)
+        aug_op_list.append(rand_augment)
     else:
         jitter = (float(config.TRAIN.COLOR_JITTER), ) * 3
         aug_op_list.append(transforms.ColorJitter(*jitter))

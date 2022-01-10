@@ -1,3 +1,4 @@
+import random
 import paddle
 import paddle.nn
 import paddle.vision.transforms as T

@@ -1,4 +1,4 @@
-#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""FF_only training/validation using multiple GPU """
+"""FFOnly training/validation using multiple GPU """
 
 import sys
 import os
@@ -29,19 +29,17 @@ from datasets import get_dataloader
 from datasets import get_dataset
 from utils import AverageMeter
 from utils import WarmupCosineScheduler
-from utils import get_exclude_from_weight_decay_fn
 from config import get_config
 from config import update_config
 from mixup import Mixup
 from losses import LabelSmoothingCrossEntropyLoss
 from losses import SoftTargetCrossEntropyLoss
-from losses import DistillationLoss
 from ffonly import build_ffonly as build_model
 
 
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('Swin')
+    parser = argparse.ArgumentParser('FFOnly')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=None)
@@ -49,6 +47,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -105,11 +104,9 @@ def train(dataloader,
         local_logger: logger for local process/gpu, default: None
         master_logger: logger for main process, default: None
     Returns:
-        train_loss_meter.avg: float, average loss on current process/gpu
-        train_acc_meter.avg: float, average top1 accuracy on current process/gpu
-        master_train_loss_meter.avg: float, average loss on all processes/gpus
-        master_train_acc_meter.avg: float, average top1 accuracy on all processes/gpus
-        train_time: float, training time
+        train_loss_meter.avg
+        train_acc_meter.avg
+        train_time
     """
     model.train()
     train_loss_meter = AverageMeter()
@@ -132,7 +129,7 @@ def train(dataloader,
         if amp is True: # mixed precision training
             with paddle.amp.auto_cast():
                 output = model(image)
-                loss = criterion(image, output, label)
+                loss = criterion(output, label)
             scaled = scaler.scale(loss)
             scaled.backward()
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
@@ -358,22 +355,23 @@ def main_worker(*args):
     criterion_val = nn.CrossEntropyLoss()
 
     # STEP 5: Define optimizer and lr_scheduler
-    # set lr according to batch size and world size (hacked from official code)
-    linear_scaled_lr = (config.TRAIN.BASE_LR *
-        config.DATA.BATCH_SIZE * dist.get_world_size()) / 512.0
-    linear_scaled_warmup_start_lr = (config.TRAIN.WARMUP_START_LR *
-        config.DATA.BATCH_SIZE * dist.get_world_size()) / 512.0
-    linear_scaled_end_lr = (config.TRAIN.END_LR *
-        config.DATA.BATCH_SIZE * dist.get_world_size()) / 512.0
-
-    if config.TRAIN.ACCUM_ITER > 1:
-        linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+    # set lr according to batch size and world size (hacked from Swin official code and modified for CSwin)
+    if config.TRAIN.LINEAR_SCALED_LR is not None:
+        linear_scaled_lr = (
+            config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_warmup_start_lr = (
+            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_end_lr = (
+            config.TRAIN.END_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
     
-    config.TRAIN.BASE_LR = linear_scaled_lr
-    config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
-    config.TRAIN.END_LR = linear_scaled_end_lr
+        if config.TRAIN.ACCUM_ITER > 1:
+            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+        
+        config.TRAIN.BASE_LR = linear_scaled_lr
+        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+        config.TRAIN.END_LR = linear_scaled_end_lr
 
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
@@ -425,8 +423,8 @@ def main_worker(*args):
             weight_decay=config.TRAIN.WEIGHT_DECAY,
             epsilon=config.TRAIN.OPTIMIZER.EPS,
             grad_clip=clip,
-            apply_decay_param_fun=get_exclude_from_weight_decay_fn([
-                'absolute_pos_embed', 'relative_position_bias_table']),
+            #apply_decay_param_fun=get_exclude_from_weight_decay_fn([
+            #    'absolute_pos_embed', 'relative_position_bias_table']),
             )
     else:
         local_logger.fatal(f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}.")
@@ -447,9 +445,9 @@ def main_worker(*args):
                 f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
-        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
+        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
+        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
         optimizer.set_state_dict(opt_state)

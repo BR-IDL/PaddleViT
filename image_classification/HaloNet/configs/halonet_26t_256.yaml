@@ -4,7 +4,7 @@ DATA:
 MODEL:
     TYPE: halo
     NAME: halonet_26t
-    PRETRAINED: halonet_26t_256
+    #PRETRAINED: halonet_26t_256
     ACT: relu
     BLOCK_SIZE: 8
     HALO_SIZE: 2

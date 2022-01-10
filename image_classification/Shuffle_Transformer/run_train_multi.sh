@@ -4,4 +4,4 @@ python main_multi_gpu.py \
 -dataset='imagenet2012' \
 -batch_size=8 \
 -data_path='/dataset/imagenet' \
--amp
+#-amp

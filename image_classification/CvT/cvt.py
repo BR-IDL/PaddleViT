@@ -67,9 +67,9 @@ class Mlp(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
-            initializer=nn.initializer.XavierUniform())
+            initializer=nn.initializer.TruncatedNormal(std=.02))
         bias_attr = paddle.ParamAttr(
-            initializer=nn.initializer.Normal(std=1e-6))
+            initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -180,14 +180,23 @@ class Attention(nn.Layer):
         )
 
         # init parameters of q,k,v
-        self.proj_q = nn.Linear(dim_in, dim_out, bias_attr=qkv_bias)
-        self.proj_k = nn.Linear(dim_in, dim_out, bias_attr=qkv_bias)
-        self.proj_v = nn.Linear(dim_in, dim_out, bias_attr=qkv_bias)
+        w_attr_1, b_attr_1 = self._init_weights()
+        w_attr_2, b_attr_2 = self._init_weights()
+        w_attr_3, b_attr_3 = self._init_weights()
+        self.proj_q = nn.Linear(dim_in, dim_out, weight_attr=w_attr_1, bias_attr=b_attr_1 if qkv_bias else False)
+        self.proj_k = nn.Linear(dim_in, dim_out, weight_attr=w_attr_2, bias_attr=b_attr_2 if qkv_bias else False)
+        self.proj_v = nn.Linear(dim_in, dim_out, weight_attr=w_attr_3, bias_attr=b_attr_3 if qkv_bias else False)
 
         # init project other parameters
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(dim_out, dim_out)
+        w_attr_4, b_attr_4 = self._init_weights()
+        self.proj = nn.Linear(dim_out, dim_out, weight_attr=w_attr_4, bias_attr=b_attr_4)
         self.proj_drop = nn.Dropout(proj_drop)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def _build_projection(self,
                           dim_in,

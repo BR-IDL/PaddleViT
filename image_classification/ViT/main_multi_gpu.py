@@ -36,7 +36,7 @@ from transformer import build_vit as build_model
 
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('Swin')
+    parser = argparse.ArgumentParser('ViT')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=None)

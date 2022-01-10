@@ -20,7 +20,6 @@ and WarmupCosineScheduler for training
 """
 
 import math
-import numpy as np
 from paddle.optimizer.lr import LRScheduler
 
 
@@ -119,50 +118,3 @@ class WarmupCosineScheduler(LRScheduler):
         val = max(0.0, 0.5 * (1. + math.cos(math.pi * float(self.cycles) * 2.0 * progress)))
         val = max(0.0, val * (self.start_lr - self.end_lr) + self.end_lr)
         return val
-
-class OneCycleLRScheduler(LRScheduler):
-    """One Cycle Learning Rate Scheduler
-
-    The scheduler adjusts learning rate in 3 stages.
-    First apply warmup from "max_lr/div_factor" to "max_lr",
-    than decrease lr from "max_lr" to "max_lr/div_factor".
-    Note that the two stages are symmetric.
-    In the third stage, decrease lr from "max_lr/div_factor" to "min_lr"
-
-    Attributes:
-        learning_rate: the starting learning rate (without warmup), not used here!
-        max_lr: the maximum learning rate during training
-        total_steps: the total number of steps in the cycle
-        div_factor: determines the initial learning rate
-        via initial_lr = max_lr/div_factor (Default: 20)
-        min_lr: the learning rate after stage 3 (Default: 0)
-        pct_start: determines the step when stage 2 begins
-        via warm_up_steps = total_steps * pct_start
-        (Default: 0.4)
-
-    Noted: Scheduler with default value is the same as original code
-    from https://github.com/tmp-iclr/convmixer
-    """
-    def __init__(self,
-                 learning_rate,
-                 max_lr,
-                 total_steps,
-                 div_factor=20,
-                 min_lr=0,
-                 pct_start=0.4,
-                 last_epoch=-1,
-                 verbose=False
-                 ):
-        self.max_lr = max_lr
-        self.min_lr = min_lr
-        self.initial_lr = max_lr / div_factor
-        self.total_steps = total_steps
-        self.warm_up_steps = int(total_steps * pct_start)
-        super().__init__(learning_rate, last_epoch, verbose)
-
-
-    def get_lr(self):
-        learning_rate = np.interp(self.last_epoch,
-                                  [0, self.warm_up_steps, self.warm_up_steps * 2, self.total_steps],
-                                  [self.initial_lr, self.max_lr, self.initial_lr, self.min_lr])
-        return learning_rate

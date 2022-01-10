@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""CSwin training/validation using multiple GPU """
+"""MobileViT training/validation using multiple GPU """
 
 import sys
 import os
@@ -42,7 +42,7 @@ from mobile_vit import build_mobile_vit as build_model
 
 def get_arguments():
     """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('CSwin')
+    parser = argparse.ArgumentParser('MobileViT')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-batch_size', type=int, default=None)

@@ -13,12 +13,10 @@
 # limitations under the License.
 
 """Configuration
-
 Configuration for data, model archtecture, and training, etc.
 Config can be set by .yaml file or by argparser(limited usage)
-
-
 """
+
 import os
 from yacs.config import CfgNode as CN
 import yaml
@@ -43,12 +41,12 @@ _C.DATA.IMAGENET_STD = [0.5, 0.5, 0.5] # [0.229, 0.224, 0.225]
 _C.MODEL = CN()
 _C.MODEL.TYPE = 'ViT'
 _C.MODEL.NAME = 'ViT'
-_C.MODEL.RESUME = None
-_C.MODEL.PRETRAINED = None
-_C.MODEL.NUM_CLASSES = 1000
-_C.MODEL.DROPOUT = 0.1
-_C.MODEL.DROPPATH = 0.1
-_C.MODEL.ATTENTION_DROPOUT = 0.1
+_C.MODEL.RESUME = None # model path for resume training
+_C.MODEL.PRETRAINED = None # model path for loading pretrained weights
+_C.MODEL.NUM_CLASSES = 1000 # num of classes
+_C.MODEL.DROPOUT = 0.1 # dropout rate
+_C.MODEL.DROPPATH = 0.1 # drop path rate
+_C.MODEL.ATTENTION_DROPOUT = 0.1 # dropout rate for attention
 
 # transformer settings
 _C.MODEL.TRANS = CN()
@@ -62,15 +60,15 @@ _C.MODEL.TRANS.QKV_BIAS = True
 
 # training settings
 _C.TRAIN = CN()
-_C.TRAIN.LAST_EPOCH = 0
-_C.TRAIN.NUM_EPOCHS = 300
+_C.TRAIN.LAST_EPOCH = 0 # set this for resuming training
+_C.TRAIN.NUM_EPOCHS = 300 # total num of epochs
 _C.TRAIN.WARMUP_EPOCHS = 3 #34 # ~ 10k steps for 4096 batch size
 _C.TRAIN.WEIGHT_DECAY = 0.05 #0.3 # 0.0 for finetune
-_C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
+_C.TRAIN.BASE_LR = 0.003 #0.003 for pretrain # 0.03 for finetune
 _C.TRAIN.WARMUP_START_LR = 1e-6 #0.0
-_C.TRAIN.END_LR = 5e-4
+_C.TRAIN.END_LR = 5e-4 # ending lr
 _C.TRAIN.GRAD_CLIP = 1.0
-_C.TRAIN.ACCUM_ITER = 2 #1
+_C.TRAIN.ACCUM_ITER = 1
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -90,11 +88,11 @@ _C.TAG = "default"
 _C.SAVE_FREQ = 10 # freq to save chpt
 _C.REPORT_FREQ = 100 # freq to logging info
 _C.VALIDATE_FREQ = 100 # freq to do validation
-_C.SEED = 0
+_C.SEED = 0 # random seed for paddle, numpy and python
 _C.EVAL = False # run evaluation only
 _C.AMP = False # mix precision training
 _C.LOCAL_RANK = 0
-_C.NGPUS = -1
+_C.NGPUS = -1 # usually set to -1, use CUDA_VISIBLE_DEVICES for GPU selections 
 
 
 def _update_config_from_file(config, cfg_file):
@@ -147,7 +145,6 @@ def update_config(config, args):
             config.AMP = False
         else:
             config.AMP = True
-
     #config.freeze()
     return config
 

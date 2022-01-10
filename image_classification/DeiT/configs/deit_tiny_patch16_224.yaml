@@ -19,5 +19,6 @@ TRAIN:
     WARMUP_START_LR: 1e-6
     END_LR: 1e-5
     ACCUM_ITER: 1
+    LINEAR_SCALED_LR: 512
 
 
