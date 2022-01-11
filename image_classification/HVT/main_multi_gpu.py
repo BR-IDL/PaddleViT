@@ -47,7 +47,9 @@ def get_arguments():
     parser.add_argument('-batch_size', type=int, default=None)
     parser.add_argument('-image_size', type=int, default=None)
     parser.add_argument('-data_path', type=str, default=None)
+    parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -154,7 +156,7 @@ def train(dataloader,
             model_ema.update(model)
 
         # average of output and kd_output, like model eval mode
-        pred = F.softmax((output[0] + output[1]) / 2)
+        pred = F.softmax(output)
         if mixup_fn:
             acc = paddle.metric.accuracy(pred, label_orig)
         else:

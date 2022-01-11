@@ -51,6 +51,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -357,7 +358,8 @@ def main_worker(*args):
                          prob=config.TRAIN.MIXUP_PROB,
                          switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
                          mode=config.TRAIN.MIXUP_MODE,
-                         label_smoothing=config.TRAIN.SMOOTHING)
+                         label_smoothing=config.TRAIN.SMOOTHING,
+                         num_classes=config.MODEL.NUM_CLASSES)
 
     # STEP 4: Define criterion
     if config.TRAIN.MIXUP_PROB > 0.:

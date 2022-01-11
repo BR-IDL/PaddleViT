@@ -58,7 +58,7 @@ def auto_augment_policy_original():
     return policy
 
 
-def rand_augment_policy_original(magnitude_idx):
+def rand_augment_policy_original(magnitude_idx=9):
     """
     14 types of augment policies in original paper
     Args:
@@ -112,7 +112,7 @@ class RandAugment():
         transformed_image = augment(image)
     """
 
-    def __init__(self, policy, num_layers):
+    def __init__(self, policy, num_layers=2):
         """
         Args:
             policy: list of SubPolicy
@@ -282,3 +282,4 @@ def brightness(image, magnitude):
 def sharpness(image, magnitude):
     magnitude = magnitude * random.choice([-1, 1])  # random negative
     return ImageEnhance.Sharpness(image).enhance(1 + magnitude)
+

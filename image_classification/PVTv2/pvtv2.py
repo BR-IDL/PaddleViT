@@ -97,11 +97,13 @@ class OverlapPatchEmbedding(nn.Layer):
                                      kernel_size=patch_size, 
                                      stride=stride,
                                      padding=(patch_size[0] // 2, patch_size[1] // 2))
-        self.norm = nn.LayerNorm(embed_dim, epsilon=1e-6)
+
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.norm = nn.LayerNorm(embed_dim, weight_attr=w_attr_1, bias_attr=b_attr_1, epsilon=1e-6)
 
     def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=nn.initializer.KaimingUniform())
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.KaimingUniform())
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -254,12 +256,12 @@ class Attention(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
         
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def _init_weights_conv(self):
@@ -335,15 +337,15 @@ class PvTv2Block(nn.Layer):
 
         self.drop_path = DropPath(drop_path) if drop_path > 0. else Identity()
         w_attr_2, b_attr_2 = self._init_weights_layernorm() # init for layernorm
-        self.norm2 = nn.LayerNorm(dim, epsilon=1e-6, weight_attr=w_attr_2, bias_atrr=b_attr_2)
+        self.norm2 = nn.LayerNorm(dim, epsilon=1e-6, weight_attr=w_attr_2, bias_attr=b_attr_2)
         self.mlp = Mlp(in_features=dim, 
                        hidden_features=int(dim*mlp_ratio), 
                        dropout=dropout, 
                        linear=linear)
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x, H, W):
@@ -456,12 +458,12 @@ class PyramidVisionTransformerV2(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
         
     def freeze_patch_embedding(self):
@@ -506,6 +508,6 @@ def build_pvtv2(config):
         qk_scale=config.MODEL.TRANS.QK_SCALE,
         dropout=config.MODEL.DROPOUT,
         attention_dropout=config.MODEL.ATTENTION_DROPOUT,
-        drop_path=config.MODEL.DROP_PATH,
+        drop_path=config.MODEL.DROPPATH,
         linear=config.MODEL.TRANS.LINEAR)
     return model

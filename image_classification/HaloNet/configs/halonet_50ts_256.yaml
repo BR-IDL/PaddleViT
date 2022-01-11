@@ -7,7 +7,7 @@ MODEL:
     ACT: silu
     BLOCK_SIZE: 8
     HALO_SIZE: 3
-    PRETRAINED: halonet_50ts_256
+    #PRETRAINED: halonet_50ts_256
     STAGE1_BLOCK: ['bottle','bottle','bottle']
     STAGE2_BLOCK: ['bottle','bottle','bottle','attn']
     STAGE3_BLOCK: ['bottle','attn','bottle','attn','bottle','attn']

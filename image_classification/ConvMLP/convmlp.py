@@ -311,7 +311,7 @@ def build_convmlp(config):
         n_conv_blocks=config.MODEL.MIXER.N_CONV_BLOCKS,
         classifier_head=True,
         num_classes=config.MODEL.NUM_CLASSES,
-        droppath=config.MODEL.DROPPATH,
+        droppath=config.MODEL.DROP_PATH,
     )
     return model
 

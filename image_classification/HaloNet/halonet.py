@@ -663,8 +663,7 @@ def build_halonet(config):
     :param config: config instance contains setting options
     :return: HaloNet model
     """
-    model = HaloNet(
-                    depth_list=config.MODEL.DEPTH,
+    model = HaloNet(depth_list=config.MODEL.DEPTH,
                     stage1_block=config.MODEL.STAGE1_BLOCK,
                     stage2_block=config.MODEL.STAGE2_BLOCK,
                     stage3_block=config.MODEL.STAGE3_BLOCK,

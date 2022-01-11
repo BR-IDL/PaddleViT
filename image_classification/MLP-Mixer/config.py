@@ -45,8 +45,9 @@ _C.MODEL.NAME = 'MLP-Mixer'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
-_C.MODEL.DROPOUT = 0.1
-_C.MODEL.DROPPATH = 0.1
+_C.MODEL.DROPOUT = 0.0
+_C.MODEL.ATTENTION_DROPOUT = 0.0
+_C.MODEL.DROP_PATH = 0.1
 
 # transformer settings
 _C.MODEL.MIXER = CN()
@@ -58,13 +59,14 @@ _C.MODEL.MIXER.NUM_LAYERS = 12
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 300
-_C.TRAIN.WARMUP_EPOCHS = 3 #34 # ~ 10k steps for 4096 batch size
-_C.TRAIN.WEIGHT_DECAY = 0.01 #0.3 # 0.0 for finetune
-_C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
-_C.TRAIN.WARMUP_START_LR = 1e-6 #0.0
-_C.TRAIN.END_LR = 1e-5
-_C.TRAIN.GRAD_CLIP = 1.0
-_C.TRAIN.ACCUM_ITER = 2 #1
+_C.TRAIN.WARMUP_EPOCHS = 20
+_C.TRAIN.WEIGHT_DECAY = 0.05
+_C.TRAIN.BASE_LR = 0.001
+_C.TRAIN.WARMUP_START_LR = 5e-7
+_C.TRAIN.END_LR = 5e-6
+_C.TRAIN.GRAD_CLIP = 5.0
+_C.TRAIN.ACCUM_ITER = 1
+_C.TRAIN.LINEAR_SCALED_LR = None
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -77,6 +79,24 @@ _C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
 _C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
+
+# train augmentation
+_C.TRAIN.MIXUP_ALPHA = 0.8
+_C.TRAIN.CUTMIX_ALPHA = 1.0
+_C.TRAIN.CUTMIX_MINMAX = None
+_C.TRAIN.MIXUP_PROB = 1.0
+_C.TRAIN.MIXUP_SWITCH_PROB = 0.5
+_C.TRAIN.MIXUP_MODE = 'batch'
+
+_C.TRAIN.SMOOTHING = 0.1
+_C.TRAIN.COLOR_JITTER = 0.4
+_C.TRAIN.AUTO_AUGMENT = False #'rand-m9-mstd0.5-inc1'
+_C.TRAIN.RAND_AUGMENT = False
+
+_C.TRAIN.RANDOM_ERASE_PROB = 0.25
+_C.TRAIN.RANDOM_ERASE_MODE = 'pixel'
+_C.TRAIN.RANDOM_ERASE_COUNT = 1
+_C.TRAIN.RANDOM_ERASE_SPLIT = False
 
 # misc
 _C.SAVE = "./output"
@@ -120,6 +140,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
+    if args.num_classes:
+        config.MODEL.NUM_CLASSES = args.num_classes
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
     if args.output is not None:

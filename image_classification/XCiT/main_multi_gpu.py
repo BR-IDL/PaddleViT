@@ -35,7 +35,6 @@ from config import update_config
 from mixup import Mixup
 from losses import LabelSmoothingCrossEntropyLoss
 from losses import SoftTargetCrossEntropyLoss
-from losses import DistillationLoss
 from xcit import build_xcit as build_model
 
 
@@ -49,6 +48,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -344,7 +344,8 @@ def main_worker(*args):
                          prob=config.TRAIN.MIXUP_PROB,
                          switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
                          mode=config.TRAIN.MIXUP_MODE,
-                         label_smoothing=config.TRAIN.SMOOTHING)
+                         label_smoothing=config.TRAIN.SMOOTHING,
+                         num_classes=config.MODEL.NUM_CLASSES)
 
     # STEP 4: Define criterion
     if config.TRAIN.MIXUP_PROB > 0.:
@@ -550,11 +551,8 @@ def main_worker(*args):
                     config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
                 paddle.save(model.state_dict(), model_path + '.pdparams')
                 paddle.save(optimizer.state_dict(), model_path + '.pdopt')
-                local_logger.info(f"----- Save model: {model_path}.pdparams")
-                local_logger.info(f"----- Save optim: {model_path}.pdopt")
-                if local_rank == 0:
-                    master_logger.info(f"----- Save model: {model_path}.pdparams")
-                    master_logger.info(f"----- Save optim: {model_path}.pdopt")
+                master_logger.info(f"----- Save model: {model_path}.pdparams")
+                master_logger.info(f"----- Save optim: {model_path}.pdopt")
 
 
 def main():

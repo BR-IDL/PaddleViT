@@ -48,6 +48,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -324,9 +325,9 @@ def main_worker(*args):
     if not config.EVAL:
         dataloader_train = get_dataloader(config, dataset_train, 'train', True)
         total_batch_train = len(dataloader_train)
-        logging.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
+        local_logger.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
         if local_rank == 0:
-            logging.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
+            master_logger.info(f'----- Total # of train batch (single gpu): {total_batch_train}')
     # Create validation dataloader
     dataloader_val = get_dataloader(config, dataset_val, 'test', True)
     total_batch_val = len(dataloader_val)

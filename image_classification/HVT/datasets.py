@@ -25,8 +25,11 @@ from paddle.io import DataLoader
 from paddle.io import DistributedBatchSampler
 from paddle.vision import transforms
 from paddle.vision import datasets
+from paddle.vision import image_load
 from augment import auto_augment_policy_original
 from augment import AutoAugment
+from augment import rand_augment_policy_original
+from augment import RandAugment
 from random_erasing import RandomErasing
 
 
@@ -68,7 +71,7 @@ class ImageNet2012Dataset(Dataset):
         return len(self.label_list)
 
     def __getitem__(self, index):
-        data = Image.open(self.img_path_list[index]).convert('RGB')
+        data = image_load(self.img_path_list[index]).convert('RGB')
         data = self.transform(data)
         label = self.label_list[index]
 
@@ -89,7 +92,6 @@ def get_train_transforms(config):
     """
     aug_op_list = []
     # STEP1: random crop and resize
-    aug_op_list.append(RandomHorizontalFlip(0.5))
     aug_op_list.append(
         transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
                                      scale=(0.05, 1.0), interpolation='bicubic'))
@@ -98,6 +100,10 @@ def get_train_transforms(config):
         policy = auto_augment_policy_original()
         auto_augment = AutoAugment(policy)
         aug_op_list.append(auto_augment)
+    elif config.TRAIN.RAND_AUGMENT:
+        policy = rand_augment_policy_original()
+        rand_augment = RandAugment(policy)
+        aug_op_list.append(rand_augment)
     else:
         jitter = (float(config.TRAIN.COLOR_JITTER), ) * 3
         aug_op_list.append(transforms.ColorJitter(*jitter))

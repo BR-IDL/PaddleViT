@@ -130,7 +130,7 @@ class PatchEmbedding(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -196,7 +196,7 @@ class Mlp(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -256,7 +256,7 @@ class Attention(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def transpose_multihead(self, x):
@@ -335,8 +335,8 @@ class Block(nn.Layer):
                        dropout=dropout)
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -411,13 +411,13 @@ class TokenPerformer(nn.Layer):
             default_initializer=nn.initializer.Assign(self.w / math.sqrt(self.m)))
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     # paddle version 2.1 does not support einsum
@@ -512,8 +512,8 @@ class TokenTransformer(nn.Layer):
                        dropout=dropout)
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -641,11 +641,17 @@ class T2TViT(nn.Layer):
 def build_t2t_vit(config):
     """build t2t-vit model using config"""
     model = T2TViT(image_size=config.DATA.IMAGE_SIZE,
+                   in_channels=3,
+                   num_classes=config.MODEL.NUM_CLASSES,
                    token_type=config.MODEL.TRANS.TOKEN_TYPE,
                    embed_dim=config.MODEL.TRANS.EMBED_DIM,
                    depth=config.MODEL.TRANS.DEPTH,
                    num_heads=config.MODEL.TRANS.NUM_HEADS,
                    mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
                    qk_scale=config.MODEL.TRANS.QK_SCALE,
-                   qkv_bias=config.MODEL.TRANS.QKV_BIAS)
+                   qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                   dropout=config.MODEL.DROPOUT,
+                   attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                   droppath=config.MODEL.DROPPATH,
+                   token_dim=64)
     return model

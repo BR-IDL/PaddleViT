@@ -1,5 +1,4 @@
-
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +18,7 @@ import sys
 import os
 import time
 import logging
+import copy
 import argparse
 import random
 import numpy as np
@@ -49,6 +49,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -286,16 +287,6 @@ def main():
         config.TRAIN.BASE_LR = linear_scaled_lr
         config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
         config.TRAIN.END_LR = linear_scaled_end_lr
-
-    if config.TRAIN.ACCUM_ITER > 1:
-        linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
-
-    config.TRAIN.BASE_LR = linear_scaled_lr
-    config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
-    config.TRAIN.END_LR = linear_scaled_end_lr
-
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
         scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
@@ -361,11 +352,11 @@ def main():
         logger.info(f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
-        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
+        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
+        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
-        opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
+        opt_state = paddle.load(config.MODEL.RESUME + '.pdopt')
         optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume: Load model and optmizer from {config.MODEL.RESUME}")

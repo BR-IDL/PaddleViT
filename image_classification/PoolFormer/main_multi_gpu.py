@@ -46,6 +46,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -555,11 +556,8 @@ def main_worker(*args):
                     config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
                 paddle.save(model.state_dict(), model_path + '.pdparams')
                 paddle.save(optimizer.state_dict(), model_path + '.pdopt')
-                local_logger.info(f"----- Save model: {model_path}.pdparams")
-                local_logger.info(f"----- Save optim: {model_path}.pdopt")
-                if local_rank == 0:
-                    master_logger.info(f"----- Save model: {model_path}.pdparams")
-                    master_logger.info(f"----- Save optim: {model_path}.pdopt")
+                master_logger.info(f"----- Save model: {model_path}.pdparams")
+                master_logger.info(f"----- Save optim: {model_path}.pdopt")
 
 
 def main():

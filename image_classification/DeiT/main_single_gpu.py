@@ -51,6 +51,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -306,19 +307,23 @@ def main():
 
     # STEP 6: Define optimizer and lr_scheduler
     # set lr according to batch size and world size (hacked from official code)
-    linear_scaled_lr = (config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / 512.0
-    linear_scaled_warmup_start_lr = (config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / 512.0
-    linear_scaled_end_lr = (config.TRAIN.END_LR * config.DATA.BATCH_SIZE) / 512.0
-
-    if config.TRAIN.ACCUM_ITER > 1:
-        linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
-
-    config.TRAIN.BASE_LR = linear_scaled_lr
-    config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
-    config.TRAIN.END_LR = linear_scaled_end_lr
     
+    if config.TRAIN.LINEAR_SCALED_LR is not None:
+        linear_scaled_lr = (
+            config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_warmup_start_lr = (
+            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+        linear_scaled_end_lr = (
+            config.TRAIN.END_LR * config.DATA.BATCH_SIZE) / config.TRAIN.LINEAR_SCALED_LR
+    
+        if config.TRAIN.ACCUM_ITER > 1:
+            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+        
+        config.TRAIN.BASE_LR = linear_scaled_lr
+        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+        config.TRAIN.END_LR = linear_scaled_end_lr
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
         scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
@@ -388,12 +393,12 @@ def main():
         assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
         model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
-        opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
+        opt_state = paddle.load(config.MODEL.RESUME + '.pdopt')
         optimizer.set_state_dict(opt_state)
         logger.info(
             f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}")
         # load ema model
-        if model_ema is not None and os.path.isfidile(config.MODEL.RESUME + '-EMA.pdparams'):
+        if model_ema is not None and os.path.isfile(config.MODEL.RESUME + '-EMA.pdparams'):
             model_ema_state = paddle.load(config.MODEL.RESUME + '-EMA.pdparams')
             model_ema.module.set_state_dict(model_ema_state)
             logger.info(f'----- Load model ema from {config.MODEL.RESUME}-EMA.pdparams')

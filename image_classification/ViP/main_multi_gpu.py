@@ -49,6 +49,7 @@ def get_arguments():
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
     parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-num_classes', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
@@ -132,7 +133,7 @@ def train(dataloader,
         if amp is True: # mixed precision training
             with paddle.amp.auto_cast():
                 output = model(image)
-                loss = criterion(image, output, label)
+                loss = criterion(output, label)
             scaled = scaler.scale(loss)
             scaled.backward()
             if ((batch_id +1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
@@ -376,15 +377,6 @@ def main_worker(*args):
         config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
         config.TRAIN.END_LR = linear_scaled_end_lr
 
-    if config.TRAIN.ACCUM_ITER > 1:
-        linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
-        linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
-    
-    config.TRAIN.BASE_LR = linear_scaled_lr
-    config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
-    config.TRAIN.END_LR = linear_scaled_end_lr
-
     scheduler = None
     if config.TRAIN.LR_SCHEDULER.NAME == "warmupcosine":
         scheduler = WarmupCosineScheduler(learning_rate=config.TRAIN.BASE_LR,
@@ -457,9 +449,9 @@ def main_worker(*args):
                 f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}")
 
     if config.MODEL.RESUME:
-        assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
-        assert os.path.isfile(config.MODEL.RESUME+'.pdopt') is True
-        model_state = paddle.load(config.MODEL.RESUME+'.pdparams')
+        assert os.path.isfile(config.MODEL.RESUME + '.pdparams') is True
+        assert os.path.isfile(config.MODEL.RESUME + '.pdopt') is True
+        model_state = paddle.load(config.MODEL.RESUME + '.pdparams')
         model.set_dict(model_state)
         opt_state = paddle.load(config.MODEL.RESUME+'.pdopt')
         optimizer.set_state_dict(opt_state)

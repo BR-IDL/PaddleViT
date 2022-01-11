@@ -227,5 +227,5 @@ def build_res_mlp(config):
                    embed_dim=config.MODEL.MIXER.HIDDEN_SIZE,
                    mlp_ratio=4,
                    dropout=config.MODEL.DROPOUT,
-                   droppath=config.MODEL.DROPPATH)
+                   droppath=config.MODEL.DROP_PATH)
     return model

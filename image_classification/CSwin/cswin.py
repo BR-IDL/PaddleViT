@@ -62,13 +62,13 @@ class PatchEmbedding(nn.Layer):
                                  bias_attr=b_attr)
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
  
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -110,7 +110,7 @@ class Mlp(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -337,13 +337,13 @@ class CSwinBlock(nn.Layer):
                        dropout=dropout)
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
  
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
 
     def chunk_qkv(self, x, chunks=1, axis=-1):
@@ -393,8 +393,8 @@ class MergeBlock(nn.Layer):
                                  bias_attr=b_attr_1)
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -543,13 +543,13 @@ class CSwinTransformer(nn.Layer):
                               bias_attr=b_attr_2)
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
  
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
 
     def forward_features(self, x):

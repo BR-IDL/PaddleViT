@@ -62,14 +62,14 @@ _C.MODEL.TRANS.TOKENS_NORM = False
 # training settings
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
-_C.TRAIN.NUM_EPOCHS = 300
+_C.TRAIN.NUM_EPOCHS = 400
 _C.TRAIN.WARMUP_EPOCHS = 20
 _C.TRAIN.WEIGHT_DECAY = 0.05
 _C.TRAIN.BASE_LR = 0.001
 _C.TRAIN.WARMUP_START_LR = 0.0
 _C.TRAIN.END_LR = 0.0
 _C.TRAIN.GRAD_CLIP = 1.0
-_C.TRAIN.ACCUM_ITER = 2
+_C.TRAIN.ACCUM_ITER = 1
 _C.TRAIN.LINEAR_SCALED_LR = None
 
 _C.TRAIN.LR_SCHEDULER = CN()
@@ -93,27 +93,15 @@ _C.TRAIN.MIXUP_SWITCH_PROB = 0.5
 _C.TRAIN.MIXUP_MODE = 'batch'
 
 _C.TRAIN.SMOOTHING = 0.1
-_C.TRAIN.COLOR_JITTER = 0.4
-_C.TRAIN.AUTO_AUGMENT = True #'rand-m9-mstd0.5-inc1'
+_C.TRAIN.COLOR_JITTER = 0.4 # color jitter factor
+_C.TRAIN.AUTO_AUGMENT = False #'rand-m9-mstd0.5-inc1'
+_C.TRAIN.RAND_AUGMENT = True
 
-_C.TRAIN.RANDOM_ERASE_PROB = 0.25
-_C.TRAIN.RANDOM_ERASE_MODE = 'pixel'
-_C.TRAIN.RANDOM_ERASE_COUNT = 1
+_C.TRAIN.RANDOM_ERASE_PROB = 0.25 # random erase prob
+_C.TRAIN.RANDOM_ERASE_MODE = 'pixel' # random erase mode
+_C.TRAIN.RANDOM_ERASE_COUNT = 1 # random erase count
 _C.TRAIN.RANDOM_ERASE_SPLIT = False
 
-# augmentation
-_C.AUG = CN()
-_C.AUG.COLOR_JITTER = 0.4 # color jitter factor
-_C.AUG.AUTO_AUGMENT = 'rand-m9-mstd0.5-inc1'
-_C.AUG.RE_PROB = 0.25 # random earse prob
-_C.AUG.RE_MODE = 'pixel' # random earse mode
-_C.AUG.RE_COUNT = 1 # random earse count
-_C.AUG.MIXUP = 0.8 # mixup alpha, enabled if >0
-_C.AUG.CUTMIX = 1.0 # cutmix alpha, enabled if >0
-_C.AUG.CUTMIX_MINMAX = None # cutmix min/max ratio, overrides alpha
-_C.AUG.MIXUP_PROB = 1.0 # prob of mixup or cutmix when either/both is enabled
-_C.AUG.MIXUP_SWITCH_PROB = 0.5 # prob of switching cutmix when both mixup and cutmix enabled
-_C.AUG.MIXUP_MODE = 'batch' #how to apply mixup/curmix params, per 'batch', 'pair', or 'elem'
 
 # misc
 _C.SAVE = "./output"
@@ -157,6 +145,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
+    if args.num_classes:
+        config.MODEL.NUM_CLASSES = args.num_classes
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
     if args.output is not None:

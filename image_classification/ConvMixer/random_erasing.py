@@ -83,15 +83,15 @@ class RandomErasing(object):
                                 dtype=dtype)
                     break
     
-    def __call__(self, inputs):
-        if len(inputs.shape) == 3:
-            self._erase(inputs, *inputs.shape, inputs.dtype)
+    def __call__(self, input):
+        if len(input.shape) == 3:
+            self._erase(input, *input.shape, input.dtype)
         else:
-            batch_size, chan, img_h, img_w = inputs.shape
+            batch_size, chan, img_h, img_w = input.shape
             batch_start = batch_size // self.num_splits if self.num_splits > 1 else 0
             for i in range(batch_start, batch_size):
-                self._erase(inputs[i], chan, img_h, img_w, inputs.dtype)
-        return inputs
+                self._erase(input[i], chan, img_h, img_w, input.dtype)
+        return input
 
 
 

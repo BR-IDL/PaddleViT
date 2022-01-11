@@ -128,7 +128,8 @@ def orthogonal(t, gain=1.):
     
     gain  = paddle.to_tensor(gain)
     rows = t.shape[0]
-    cols = t.numel() // rows
+    cols = np.size(t) // rows
+    #cols = paddle.numel(t) // rows
     flattened = paddle.normal(0, 1, [rows, cols])
 
     if rows < cols:
