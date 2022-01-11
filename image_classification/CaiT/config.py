@@ -59,7 +59,7 @@ _C.MODEL.TRANS.DEPTH_TOKEN_ONLY = 2
 _C.MODEL.TRANS.MLP_RATIO = 4.0
 _C.MODEL.TRANS.NUM_HEADS = 4
 _C.MODEL.TRANS.QKV_BIAS = True
-_C.MODEL.TRANS.INIT_VALUES = 1e-5
+_C.MODEL.TRANS.INIT_VALUES = 1e-4
 
 
 # training settings
@@ -154,6 +154,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
+    if args.num_classes:
+        config.MODEL.NUM_CLASSES = args.num_classes
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
     if args.output is not None:

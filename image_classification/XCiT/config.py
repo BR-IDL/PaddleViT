@@ -69,7 +69,7 @@ _C.TRAIN.BASE_LR = 0.001
 _C.TRAIN.WARMUP_START_LR = 0.0
 _C.TRAIN.END_LR = 0.0
 _C.TRAIN.GRAD_CLIP = 1.0
-_C.TRAIN.ACCUM_ITER = 2
+_C.TRAIN.ACCUM_ITER = 1
 _C.TRAIN.LINEAR_SCALED_LR = None
 
 _C.TRAIN.LR_SCHEDULER = CN()
@@ -145,6 +145,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
+    if args.num_classes:
+        config.MODEL.NUM_CLASSES = args.num_classes
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
     if args.output is not None:

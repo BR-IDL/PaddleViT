@@ -126,6 +126,7 @@ def _update_config_from_file(config, cfg_file):
     config.merge_from_file(cfg_file)
     config.freeze()
 
+
 def update_config(config, args):
     """Update config by ArgumentParser
     Args:

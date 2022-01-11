@@ -545,10 +545,18 @@ class Cait(nn.Layer):
 def build_cait(config):
     """build cait model using config"""
     model = Cait(image_size=config.DATA.IMAGE_SIZE,
+                 num_classes=config.MODEL.NUM_CLASSES,
+                 in_channels=config.MODEL.TRANS.IN_CHANNELS,
                  patch_size=config.MODEL.TRANS.PATCH_SIZE,
                  embed_dim=config.MODEL.TRANS.EMBED_DIM,
                  depth=config.MODEL.TRANS.DEPTH,
                  num_heads=config.MODEL.TRANS.NUM_HEADS,
                  mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                 qkv_bias=config.MODEL.TRANS.QKV_BIAS)
+                 qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                 dropout=config.MODEL.DROPOUT,
+                 attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                 droppath=config.MODEL.DROPPATH,
+                 init_values=config.MODEL.TRANS.INIT_VALUES,
+                 mlp_ratio_class_token=config.MODEL.TRANS.MLP_RATIO,
+                 depth_token_only=config.MODEL.TRANS.DEPTH_TOKEN_ONLY):
     return model

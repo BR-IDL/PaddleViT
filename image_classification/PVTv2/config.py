@@ -61,7 +61,7 @@ _C.MODEL.TRANS.MLP_RATIO = [8, 8, 4, 4]
 _C.MODEL.TRANS.SR_RATIO = [8, 4, 2, 1]
 _C.MODEL.TRANS.QKV_BIAS = True
 _C.MODEL.TRANS.QK_SCALE = None
-_C.MODEL.TRANS.LINEAR = False
+_C.MODEL.TRANS.LINEAR = None
 
 # training settings
 _C.TRAIN = CN()
@@ -150,6 +150,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
+    if args.num_classes:
+        config.MODEL.NUM_CLASSES = args.num_classes
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
     if args.output is not None:

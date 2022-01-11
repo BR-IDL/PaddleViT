@@ -152,6 +152,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
+    if args.num_classes:
+        config.MODEL.NUM_CLASSES = args.num_classes
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
     if args.output is not None:

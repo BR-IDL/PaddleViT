@@ -85,9 +85,9 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 10 # freq to save chpt
-_C.REPORT_FREQ = 100 # freq to logging info
-_C.VALIDATE_FREQ = 100 # freq to do validation
+_C.SAVE_FREQ = 1 # freq to save chpt
+_C.REPORT_FREQ = 20 # freq to logging info
+_C.VALIDATE_FREQ = 20 # freq to do validation
 _C.SEED = 0 # random seed for paddle, numpy and python
 _C.EVAL = False # run evaluation only
 _C.AMP = False # mix precision training
@@ -125,6 +125,8 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
+    if args.num_classes:
+        config.MODEL.NUM_CLASSES = args.num_classes
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
     if args.output is not None:
@@ -145,6 +147,7 @@ def update_config(config, args):
             config.AMP = False
         else:
             config.AMP = True
+
     #config.freeze()
     return config
 
