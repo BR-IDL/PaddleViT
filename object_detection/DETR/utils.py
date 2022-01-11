@@ -114,8 +114,8 @@ def nested_tensor_from_tensor_list(tensor_list):
         s1 = tensor_list[idx].shape[1]
         s2 = tensor_list[idx].shape[2]
         # direct set value raise error in current env, we use numpy to bypass
-        data_tensor[idx, : s0, : s1, : s2] = tensor_list[idx].cpu().numpy()
-        #data_tensor[idx, : s0, : s1, : s2] = tensor_list[idx]
+        #data_tensor[idx, : s0, : s1, : s2] = tensor_list[idx].cpu().numpy()
+        data_tensor[idx, : s0, : s1, : s2] = tensor_list[idx]
         mask[idx, : s1, : s2] = 0
     return NestedTensor(data_tensor, mask)
 

@@ -1,0 +1,23 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+    BATCH_SIZE: 128
+MODEL:
+    TYPE: ConvMLP
+    NAME: convmlp_s
+    MIXER:
+        BLOCKS: [2, 4, 2]
+        DIMS: [128, 256, 512]
+        MLP_RATIOS: [2, 2, 2]
+        CHANNELS: 64
+        N_CONV_BLOCKS: 2
+    DROP_PATH: 0.1
+TRAIN:
+    NUM_EPOCHS: 300
+    WARMUP_EPOCHS: 5
+    WEIGHT_DECAY: 0.05
+    BASE_LR: 4e-5
+    WARMUP_START_LR: 1e-6
+    END_LR: 1e-5
+    LINEAR_SCALED_LR: 512
+

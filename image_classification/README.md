@@ -1,10 +1,31 @@
+English | [简体中文](./README_cn.md)
+
 # PaddleViT-Classification: Visual Transformer and MLP Models for Image Classification
 PaddlePaddle training/validation code and pretrained models for **Image Classification**.
 
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
-Update (2021-08-25): Init readme uploaded.
+* Update (2021-12-30): Add MobileViT model and multi scale sampler.
+* Update (2021-12-28): Add HvT model.
+* Update (2021-12-24): Add CvT model.
+* Update (2021-12-23): Add BoTNet model.
+* Update (2021-12-15): Add PoolFormer model.
+* Update (2021-12-09): Add HaloNet model.
+* Update (2021-12-08): Add PiT model.
+* Update (2021-12-08): Add XCiT model.
+* Update (2021-11-05): Update ConvMLP models.
+* Update (2021-11-04): Update ConvMixer models.
+* Update (2021-11-03): Update ViP models.
+* Update (2021-10-28): Add MobileViT model.
+* Update (2021-10-28): Add FocalTransformer model.
+* Update (2021-10-28): Add CycleMLP model.
+* Update (2021-10-19): Add BEiT model.
+* Update (2021-10-12): Update code for training from scratch in Swin Transformer.
+* Update (2021-09-28): Add AMP training.
+* Update (2021-09-27): Add more ported model weights.
+* Update (2021-09-09): Add FF-Only, RepMLP models.
+* Update (2021-08-25): Init readme uploaded.
 
 ## Quick Start
 
@@ -18,21 +39,39 @@ Update (2021-08-25): Init readme uploaded.
 7. **[PVTv2](./PVTv2)**
 8. **[Shuffle Transformer](./Shuffle_Transformer)**
 9. **[T2T-ViT](./T2T_ViT)**
-10. **[MLP-Mixer](./MLP-Mixer)**
-11. **[ResMLP](./ResMLP)**
-12. **[gMLP](./gMLP)**
+10. **[CrossViT](./CrossViT)**
+10. **[Focal Transformer](./Focal_Transformer)**
+11. **[BEiT](./BEiT)**
+11. **[MobileViT](./MobileViT)**
+11. **[ViP](./ViP)**
+11. **[XCiT](./XCiT)**
+11. **[PiT](./PiT)**
+11. **[HaloNet](./HaloNet)**
+11. **[PoolFormer](./PoolFormer)**
+12. **[BoTNet](./BoTNet)**
+12. **[CvT](./Cvt)**
+12. **[HvT](./HVT)**
+13. **[MLP-Mixer](./MLP-Mixer)**
+14. **[ResMLP](./ResMLP)**
+15. **[gMLP](./gMLP)**
+16. **[FF_Only](./FF_Only)**
+17. **[RepMLP](./RepMLP)**
+17. **[CycleMLP](./CycleMLP)**
+17. **[ConvMixer](./ConvMixer)**
+17. **[ConvMLP](./ConvMLP)**
 
 
 ## Installation
 This module is tested on Python3.6+, and PaddlePaddle 2.1.0+. Most dependencies are installed by PaddlePaddle installation. You only need to install the following packages:
 ```shell
-pip install yacs yaml
+pip install yacs pyyaml
 ```
 Then download the github repo:
 ```shell
 git clone https://github.com/BR-IDL/PaddleViT.git
 cd PaddleViT/image_classification
 ```
+> Note: It is recommended to install the latest version of PaddlePaddle to avoid some CUDA errors for  PaddleViT training. For PaddlePaddle, please refer to this [link](https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/linux-pip.html) for stable version installation and this [link](https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/develop/install/pip/linux-pip.html#gpu) for develop version installation. 
 
 ## Basic Usage
 ### Data Preparation
@@ -63,8 +102,8 @@ from visual_transformer import build_vit as build_model
 config = get_config('./configs/vit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./vit_base_patch16_224')
+# load pretrained weights
+model_state_dict = paddle.load('./vit_base_patch16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 > :robot: See the README file in each model folder for detailed usages.
@@ -96,16 +135,32 @@ PaddleViT now provides the following **transfomer based models**:
 8. **[Shuffle Transformer](./Shuffle_Transformer)** (from Tencent), released with paper [Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer](https://arxiv.org/abs/2106.03650), by Zilong Huang, Youcheng Ben, Guozhong Luo, Pei Cheng, Gang Yu, Bin Fu.
 9. **[T2T-ViT](./T2T_ViT)** (from NUS and YITU), released with paper [Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet
 ](https://arxiv.org/abs/2101.11986), by Li Yuan, Yunpeng Chen, Tao Wang, Weihao Yu, Yujun Shi, Zihang Jiang, Francis EH Tay, Jiashi Feng, Shuicheng Yan.
+10. **[CrossViT](./CrossViT)** (from IBM), released with paper [CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899), by Chun-Fu Chen, Quanfu Fan, Rameswar Panda.
+11. **[BEiT](./BEiT)** (from Microsoft Research), released with paper [BEiT: BERT Pre-Training of Image Transformers](https://arxiv.org/abs/2106.08254), by Hangbo Bao, Li Dong, Furu Wei.
+12. **[Focal Transformer](./Focal_Transformer)** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
+13. **[Mobile-ViT](./MobileViT)** (from Apple), released with paper [MobileViT: Light-weight, General-purpose, and Mobile-friendly Vision Transformer](https://arxiv.org/abs/2110.02178), by Sachin Mehta, Mohammad Rastegari.
+14. **[ViP](./ViP)** (from Oxford/ByteDance), released with [Visual Parser: Representing Part-whole Hierarchies with Transformers](https://arxiv.org/abs/2107.05790), by Shuyang Sun, Xiaoyu Yue, Song Bai, Philip Torr.
+15. **[XCiT](./XCiT)** (from Facebook/Inria/Sorbonne), released with paper [XCiT: Cross-Covariance Image Transformers](https://arxiv.org/abs/2106.09681), by Alaaeldin El-Nouby, Hugo Touvron, Mathilde Caron, Piotr Bojanowski, Matthijs Douze, Armand Joulin, Ivan Laptev, Natalia Neverova, Gabriel Synnaeve, Jakob Verbeek, Hervé Jegou.
+16. **[PiT](./PiT)** (from NAVER/Sogan University), released with paper [Rethinking Spatial Dimensions of Vision Transformers](https://arxiv.org/abs/2103.16302), by Byeongho Heo, Sangdoo Yun, Dongyoon Han, Sanghyuk Chun, Junsuk Choe, Seong Joon Oh.
+17. **[HaloNet](./HaloNet)**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.11. 
+18. **[PoolFormer](./PoolFormer)**, (from Sea AI Lab/NUS), released with paper [MetaFormer is Actually What You Need for Vision](https://arxiv.org/abs/2111.11418), by Weihao Yu, Mi Luo, Pan Zhou, Chenyang Si, Yichen Zhou, Xinchao Wang, Jiashi Feng, Shuicheng Yan.
+19. **[BoTNet](./BoTNet)**, (from UC Berkeley/Google), released with paper [Bottleneck Transformers for Visual Recognition](https://arxiv.org/abs/2101.11605), by Aravind Srinivas, Tsung-Yi Lin, Niki Parmar, Jonathon Shlens, Pieter Abbeel, Ashish Vaswani.
+20. **[CvT](./Cvt)** (from McGill/Microsoft), released with paper [CvT: Introducing Convolutions to Vision Transformers](https://arxiv.org/abs/2103.15808), by Haiping Wu, Bin Xiao, Noel Codella, Mengchen Liu, Xiyang Dai, Lu Yuan, Lei Zhang
+21. **[HvT](./HVT)** (from Monash University), released with paper [Scalable Vision Transformers with Hierarchical Pooling](https://arxiv.org/abs/2103.10619), by Zizheng Pan, Bohan Zhuang, Jing Liu, Haoyu He, Jianfei Cai.
+
 
 PaddleViT now provides the following **MLP based models**:
 1. **[MLP-Mixer](./MLP-Mixer)** (from Google), released with paper [MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601), by Ilya Tolstikhin, Neil Houlsby, Alexander Kolesnikov, Lucas Beyer, Xiaohua Zhai, Thomas Unterthiner, Jessica Yung, Andreas Steiner, Daniel Keysers, Jakob Uszkoreit, Mario Lucic, Alexey Dosovitskiy
 2. **[ResMLP](./ResMLP)** (from Facebook/Sorbonne/Inria/Valeo), released with paper [ResMLP: Feedforward networks for image classification with data-efficient training](https://arxiv.org/abs/2105.03404), by Hugo Touvron, Piotr Bojanowski, Mathilde Caron, Matthieu Cord, Alaaeldin El-Nouby, Edouard Grave, Gautier Izacard, Armand Joulin, Gabriel Synnaeve, Jakob Verbeek, Hervé Jégou.
 3. **[gMLP](./gMLP)** (from Google), released with paper [Pay Attention to MLPs](https://arxiv.org/abs/2105.08050), by Hanxiao Liu, Zihang Dai, David R. So, Quoc V. Le.
+4. **[FF Only](./FF_Only)** (from Oxford), released with paper [Do You Even Need Attention? A Stack of Feed-Forward Layers Does Surprisingly Well on ImageNet](https://arxiv.org/abs/2105.02723), by Luke Melas-Kyriazi.
+5. **[RepMLP](./RepMLP)** (from BNRist/Tsinghua/MEGVII/Aberystwyth), released with paper [RepMLP: Re-parameterizing Convolutions into Fully-connected Layers for Image Recognition](https://arxiv.org/abs/2105.01883), by Xiaohan Ding, Chunlong Xia, Xiangyu Zhang, Xiaojie Chu, Jungong Han, Guiguang Ding.
+6. **[CycleMLP](./CycleMLP)** (from HKU/SenseTime), released with paper [CycleMLP: A MLP-like Architecture for Dense Prediction](https://arxiv.org/abs/2107.10224), by Shoufa Chen, Enze Xie, Chongjian Ge, Ding Liang, Ping Luo.
+7. **[ConvMixer](./ConvMixer)** (from Anonymous), released with [Patches Are All You Need?](https://openreview.net/forum?id=TVHS5Y4dNvM), by Anonymous.
+8. **[ConvMLP](./ConvMLP)** (from UO/UIUC/PAIR), released with [ConvMLP: Hierarchical Convolutional MLPs for Vision](https://arxiv.org/abs/2109.04454), by Jiachen Li, Ali Hassani, Steven Walton, Humphrey Shi.
 
 #### Coming Soon: ####
-1. **[CrossViT]()** (from IBM), released with paper [CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification](https://arxiv.org/abs/2103.14899), by Chun-Fu Chen, Quanfu Fan, Rameswar Panda.
-2. **[Focal Transformer]()** (from Microsoft), released with paper [Focal Self-attention for Local-Global Interactions in Vision Transformers](https://arxiv.org/abs/2107.00641), by Jianwei Yang, Chunyuan Li, Pengchuan Zhang, Xiyang Dai, Bin Xiao, Lu Yuan and Jianfeng Gao.
-3. **[HaloNet]()**, (from Google), released with paper [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/abs/2103.12731), by Ashish Vaswani, Prajit Ramachandran, Aravind Srinivas, Niki Parmar, Blake Hechtman, Jonathon Shlens.
+1. **[DynamicViT]()** (from Tsinghua/UCLA/UW), released with paper [DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification](https://arxiv.org/abs/2106.02034), by Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, Cho-Jui Hsieh.
 
 
 ## Contact

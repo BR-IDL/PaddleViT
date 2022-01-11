@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ _C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 2 # number of data loading threads 
+_C.DATA.NUM_WORKERS = 2 # number of data loading threads
+_C.DATA.IMAGENET_MEAN = [0.485, 0.456, 0.406] # [0.5, 0.5, 0.5]
+_C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225] # [0.5, 0.5, 0.5]
 
 # model settings
 _C.MODEL = CN()
@@ -43,7 +45,8 @@ _C.MODEL.NAME = 'CaiT'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
-_C.MODEL.DROPOUT = 0.1
+_C.MODEL.DROPOUT = 0.0
+_C.MODEL.DROPPATH = 0.1
 _C.MODEL.ATTENTION_DROPOUT = 0.0
 
 # transformer settings
@@ -56,20 +59,23 @@ _C.MODEL.TRANS.DEPTH_TOKEN_ONLY = 2
 _C.MODEL.TRANS.MLP_RATIO = 4.0
 _C.MODEL.TRANS.NUM_HEADS = 4
 _C.MODEL.TRANS.QKV_BIAS = True
-_C.MODEL.TRANS.INIT_VALUES = 1e-5
+_C.MODEL.TRANS.INIT_VALUES = 1e-4
 
 
 # training settings
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 300
-_C.TRAIN.WARMUP_EPOCHS = 3 #34 # ~ 10k steps for 4096 batch size
-_C.TRAIN.WEIGHT_DECAY = 0.05 #0.3 # 0.0 for finetune
-_C.TRAIN.BASE_LR = 0.001 #0.003 for pretrain # 0.03 for finetune
-_C.TRAIN.WARMUP_START_LR = 1e-6 #0.0
-_C.TRAIN.END_LR = 5e-4
-_C.TRAIN.GRAD_CLIP = 1.0
-_C.TRAIN.ACCUM_ITER = 2 #1
+_C.TRAIN.WARMUP_EPOCHS = 5
+_C.TRAIN.WEIGHT_DECAY = 0.05
+_C.TRAIN.BASE_LR = 0.0005
+_C.TRAIN.WARMUP_START_LR = 1e-6
+_C.TRAIN.END_LR = 1e-5
+_C.TRAIN.GRAD_CLIP = None
+_C.TRAIN.ACCUM_ITER = 1
+_C.TRAIN.MODEL_EMA = True
+_C.TRAIN.MODEL_EMA_DECAY = 0.99996
+_C.TRAIN.LINEAR_SCALED_LR = None
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -83,14 +89,38 @@ _C.TRAIN.OPTIMIZER.EPS = 1e-8
 _C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 
+# train augmentation
+_C.TRAIN.MIXUP_ALPHA = 0.8 # mixup alpha, enabled if >0
+_C.TRAIN.CUTMIX_ALPHA = 1.0 # cutmix alpha, enabled if >0
+_C.TRAIN.CUTMIX_MINMAX = None # cutmix min/max ratio, overrides alpha
+_C.TRAIN.MIXUP_PROB = 1.0 # prob of mixup or cutmix when either/both is enabled
+_C.TRAIN.MIXUP_SWITCH_PROB = 0.5 # prob of switching cutmix when both mixup and cutmix enabled
+_C.TRAIN.MIXUP_MODE = 'batch' # how to apply mixup/cutmix params, per 'batch', 'pair' or 'elem'
+
+_C.TRAIN.SMOOTHING = 0.1
+_C.TRAIN.COLOR_JITTER = 0.4 # color jitter factor
+_C.TRAIN.AUTO_AUGMENT = False #'rand-m9-mstd0.5-inc1'
+_C.TRAIN.RAND_AUGMENT = True
+
+_C.TRAIN.RANDOM_ERASE_PROB = 0.25 # random erase prob
+_C.TRAIN.RANDOM_ERASE_MODE = 'pixel' # random erase mode
+_C.TRAIN.RANDOM_ERASE_COUNT = 1 # random erase count
+_C.TRAIN.RANDOM_ERASE_SPLIT = False
+
+_C.TRAIN.DISTILLATION_TYPE = 'hard' # hard, soft, none 
+_C.TRAIN.DISTILLATION_ALPHA = 0.5
+_C.TRAIN.DISTILLATION_TAU = 1.0
+
+
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 5 # freq to save chpt
-_C.REPORT_FREQ = 100 # freq to logging info
-_C.VALIDATE_FREQ = 100 # freq to do validation
-_C.SEED = 0
+_C.SAVE_FREQ = 1 # freq to save chpt
+_C.REPORT_FREQ = 50 # freq to logging info
+_C.VALIDATE_FREQ = 10 # freq to do validation
+_C.SEED = 42
 _C.EVAL = False # run evaluation only
+_C.AMP = False # mix precision training
 _C.LOCAL_RANK = 0
 _C.NGPUS = -1
 
@@ -124,8 +154,12 @@ def update_config(config, args):
         config.DATA.BATCH_SIZE = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
+    if args.num_classes:
+        config.MODEL.NUM_CLASSES = args.num_classes
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
+    if args.output is not None:
+        config.SAVE = args.output
     if args.ngpus:
         config.NGPUS = args.ngpus
     if args.eval:
@@ -137,6 +171,11 @@ def update_config(config, args):
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
         config.TRAIN.LAST_EPOCH = args.last_epoch
+    if args.amp: # only during training
+        if config.EVAL is True:
+            config.AMP = False
+        else:
+            config.AMP = True
 
     #config.freeze()
     return config

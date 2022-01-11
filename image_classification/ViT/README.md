@@ -14,14 +14,20 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 ### Update 
-Update (2021-08-11): Code is released and ported weights are uploaded.
+- Update (2021-09-27): More weights are uploaded.
+- Update (2021-08-11): Code is released and ported weights are uploaded.
 
 ## Models Zoo
-| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
-|--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| vit_base_patch16_224           | 84.58 | 97.30 | 224        | 0.875    | bicubic      | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ms3o2fHMQpIoVqnEHitRtA)(qv4n) |
-| vit_base_patch16_384           | 85.99 | 98.00 | 384        | 1.0      | bicubic      | [google](https://drive.google.com/file/d/1kWKaAgneDx0QsECxtf7EnUdUZej6vSFT/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15ggLdiL98RPcz__SXorrXA)(wsum) |
-| vit_large_patch16_224          | 85.81 | 97.82 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1HRxUJAwEiKgrWnJSjHyU0A)(1bgk) |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| vit_base_patch32_224          | 80.68 | 95.61 | 88.2M   | 4.4G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1DPEhEuu9sDdcmOPukQbR7ZcHq2bxx9cr/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ppOLj5SWlJmA-NjoLCoYIw)(ubyr) |
+| vit_base_patch32_384          | 83.35 | 96.84 | 88.2M   | 12.7G  | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1nCOSwrDiFBFmTkLEThYwjL9SfyzkKoaf/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1jxnL00ocpmdiPM4fOu4lpg)(3c2f) |
+| vit_base_patch16_224          | 84.58 | 97.30 | 86.4M   | 17.0G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/13D9FqU4ISsGxWXURgKW9eLOBV-pYPr-L/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ms3o2fHMQpIoVqnEHitRtA)(qv4n) |
+| vit_base_patch16_384          | 85.99 | 98.00 | 86.4M   | 49.8G  | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1kWKaAgneDx0QsECxtf7EnUdUZej6vSFT/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15ggLdiL98RPcz__SXorrXA)(wsum) |
+| vit_large_patch16_224         | 85.81 | 97.82 | 304.1M  | 59.9G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1jgwtmtp_cDWEhZE-FuWhs7lCdpqhAMft/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1HRxUJAwEiKgrWnJSjHyU0A)(1bgk) |
+| vit_large_patch16_384         | 87.08 | 98.30 | 304.1M  | 175.9G | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1zfw5mdiIm-mPxxQddBFxt0xX-IR-PF2U/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1KvxfIpMeitgXAUZGr5HV8A)(5t91) |
+| vit_large_patch32_384         | 81.51 | 96.09 | 306.5M  | 44.4G  | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1Py1EX3E35jL7DComW-29Usg9788BB26j/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1W8sUs0pObOGpohP4vsT05w)(ieg3) |
+| | | | | | | | | |
 
 > *The results are evaluated on ImageNet2012 validation set.
 
@@ -66,8 +72,8 @@ from visual_transformer import build_vit as build_model
 config = get_config('./configs/vit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./vit_base_patch16_224')
+# load pretrained weights
+model_state_dict = paddle.load('./vit_base_patch16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -83,9 +89,9 @@ python main_single_gpu.py \
     -cfg='./configs/vit_base_patch16_224.yaml' \
     -dataset='imagenet2012' \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained=/path/to/pretrained/model/vit_base_patch16_224  # .pdparams is NOT needed
 ```
 
 <details>
@@ -105,9 +111,9 @@ python main_multi_gpu.py \
     -cfg='./configs/vit_base_patch16_224.yaml' \
     -dataset='imagenet2012' \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./vit_base_patch16_224'
+    -pretrained=/path/to/pretrained/model/vit_base_patch16_224  # .pdparams is NOT needed
 ```
 
 </details>
@@ -125,7 +131,7 @@ python main_single_gpu.py \
   -cfg='./configs/vit_base_patch16_224.yaml' \
   -dataset='imagenet2012' \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/path/to/dataset/imagenet/train
 ```
 
 
@@ -146,7 +152,7 @@ python main_multi_gpu.py \
     -cfg='./configs/vit_base_patch16_224.yaml' \
     -dataset='imagenet2012' \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>

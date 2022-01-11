@@ -1,0 +1,68 @@
+DATA:
+    BATCH_SIZE: 4  # per GPU [total bs is set to 8 or 16]
+    BATCH_SIZE_VAL: 1  # per GPU
+    DATASET: 'ADE20K' # dataset name
+    DATA_PATH: 'E:/ADEChallengeData2016'
+    CROP_SIZE: (512,512)  # input_size (training)
+    NUM_CLASSES: 150
+MODEL:
+    NAME: 'UperNet_Focal'
+    ENCODER:
+        TYPE: 'FocalTransformer'
+        OUT_INDICES: [0, 1, 2, 3]   # stage_i
+    PRETRAINED: None
+    DECODER_TYPE: 'UperHead'
+    UPERHEAD:
+        IN_CHANNELS: [128, 256, 512, 1024]
+        IN_INDEX: [0, 1, 2, 3]
+        POOL_SCALES: [1, 2, 3, 6]
+        CHANNELS: 512
+        DROP_RATIO: 0.1
+        ALIGN_CORNERS: False
+    TRANS:
+        PATCH_SIZE: 4
+        WINDOW_SIZE: 7
+        IN_CHANNELS: 3
+        HIDDEN_SIZE: 128
+        EMBED_DIM: 128
+        STAGE_DEPTHS: [2, 2, 18, 2]
+        NUM_HEADS: [4, 8, 16, 32]
+        FOCAL_STAGES: [0, 1, 2, 3]
+        FOCAL_LEVELS: [2, 2, 2, 2]
+        FOCAL_WINDOWS: [7, 5, 3, 1]
+        EXPAND_STAGES: [0, 1, 2, 3]
+        EXPAND_SIZES: [3, 3, 3, 3]
+        MLP_RATIO: 4
+        QKV_BIAS: True
+        QK_SCALE: None
+        APE: False  # absolute positional embeddings
+        PATCH_NORM: True
+    AUX:
+        AUXIHEAD: True
+    AUXFCN:
+        IN_CHANNELS: 512
+        UP_RATIO: 16
+
+TRAIN:
+    BASE_LR: 0.00006
+    END_LR: 1e-4
+    DECODER_LR_COEF: 10.0
+    ITERS: 160000
+    POWER: 0.9
+    DECAY_STEPS: 160000
+    LR_SCHEDULER:
+        NAME: 'PolynomialDecay'
+    OPTIMIZER:
+        NAME: 'SGD'
+        MOMENTUM: 0.9
+        GRAD_CLIP: 1.0
+        WEIGHT_DECAY: 0.0
+VAL:
+    MULTI_SCALES_VAL: False
+    SCALE_RATIOS: [0.5, 0.75, 1.0]
+    IMAGE_BASE_SIZE: 576
+    KEEP_ORI_SIZE: False
+    RESCALE_FROM_ORI: False
+    CROP_SIZE: [512,512]
+    STRIDE_SIZE: [341,341]
+SAVE_DIR: "./output/UperNet_swin_base_patch4_windown7_512x512_160k_ade20k"

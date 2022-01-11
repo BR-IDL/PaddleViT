@@ -32,6 +32,7 @@ def drop_path(inputs, drop_prob=0., training=False):
     if drop_prob == 0. or not training:
         return inputs
     keep_prob = 1 - drop_prob
+    keep_prob = paddle.to_tensor(keep_prob)
     shape = (inputs.shape[0], ) + (1, ) * (inputs.ndim - 1)  # shape=(N, 1, 1, 1)
     random_tensor = keep_prob + paddle.rand(shape, dtype=inputs.dtype)
     random_tensor = random_tensor.floor() # mask

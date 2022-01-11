@@ -52,20 +52,27 @@ class PatchEmbedding(nn.Layer):
                  embed_dim=48,
                  in_channels=3):
         super().__init__()
+        w_attr_1, b_attr_1 = self._init_weights_batchnorm()
         self.conv1 = nn.Sequential(
             nn.Conv2D(in_channels, inter_dim, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2D(inter_dim),
+            nn.BatchNorm2D(inter_dim, weight_attr=w_attr_1, bias_attr=b_attr_1),
             nn.ReLU6())
 
+        w_attr_2, b_attr_2 = self._init_weights_batchnorm()
         self.conv2 = nn.Sequential(
             nn.Conv2D(inter_dim, embed_dim, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2D(embed_dim),
+            nn.BatchNorm2D(embed_dim, weight_attr=w_attr_2, bias_attr=b_attr_2),
             nn.ReLU6())
 
         self.conv3 = nn.Conv2D(embed_dim, embed_dim, kernel_size=1, stride=1, padding=0)
 
         # 4 = stride * stride
         self.num_patches = (image_size // 4) * (image_size // 4)
+
+    def _init_weights_batchnorm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, inputs):
         out = self.conv1(inputs)
@@ -291,7 +298,8 @@ class ShuffleBlock(nn.Layer):
                  attention_dropout=0.,
                  droppath=0.):
         super().__init__()
-        self.norm1 = nn.BatchNorm2D(dim)
+        w_attr_1, b_attr_1 = self._init_weights_batchnorm()
+        self.norm1 = nn.BatchNorm2D(dim, weight_attr=w_attr_1, bias_attr=b_attr_1)
         self.attn = WindowAttention(dim,
                                     num_heads=num_heads,
                                     window_size=window_size,
@@ -308,10 +316,17 @@ class ShuffleBlock(nn.Layer):
                                padding=window_size // 2,
                                groups=dim)
         self.drop_path = DropPath(droppath)
-        self.norm2 = nn.BatchNorm2D(dim)
+        w_attr_2, b_attr_2 = self._init_weights_batchnorm()
+        self.norm2 = nn.BatchNorm2D(dim, weight_attr=w_attr_2, bias_attr=b_attr_2)
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = MLP(dim, mlp_hidden_dim, out_dim, dropout)
-        self.norm3 = nn.BatchNorm2D(dim)
+        w_attr_3, b_attr_3 = self._init_weights_batchnorm()
+        self.norm3 = nn.BatchNorm2D(dim, weight_attr=w_attr_3, bias_attr=b_attr_3)
+
+    def _init_weights_batchnorm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         # attention
@@ -341,13 +356,19 @@ class PatchMerging(nn.Layer):
     """
     def __init__(self, in_dim=32, out_dim=64):
         super().__init__()
-        self.norm = nn.BatchNorm2D(in_dim)
+        w_attr_1, b_attr_1 = self._init_weights_batchnorm()
+        self.norm = nn.BatchNorm2D(in_dim, weight_attr=w_attr_1, bias_attr=b_attr_1)
         self.reduction = nn.Conv2D(in_dim,
                                    out_dim,
                                    kernel_size=2,
                                    stride=2,
                                    padding=0,
                                    bias_attr=False)
+
+    def _init_weights_batchnorm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        return weight_attr, bias_attr
 
     def forward(self, inputs):
         out = self.norm(inputs)
@@ -477,7 +498,13 @@ class ShuffleTransformer(nn.Layer):
                                            dropout=dropout,
                                            droppath=dprs[i]))
         self.avgpool = nn.AdaptiveAvgPool2D(1)
-        self.head = nn.Linear(dims[-1], num_classes)
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.head = nn.Linear(dims[-1], num_classes, weight_attr=w_attr_1, bias_attr=b_attr_1)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        return weight_attr, bias_attr
 
     def forward_features(self, inputs):
         out = self.patch_embedding(inputs)
@@ -500,6 +527,7 @@ def build_shuffle_transformer(config):
     """ build shuffle transformer using config"""
     model = ShuffleTransformer(image_size=config.DATA.IMAGE_SIZE,
                                embed_dim=config.MODEL.TRANS.EMBED_DIM,
+                               num_classes=config.MODEL.NUM_CLASSES,
                                mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
                                layers=config.MODEL.TRANS.DEPTHS,
                                num_heads=config.MODEL.TRANS.NUM_HEADS,

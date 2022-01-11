@@ -21,6 +21,7 @@ import copy
 import numpy as np
 import paddle
 import paddle.nn as nn
+from droppath import DropPath
 
 
 class Identity(nn.Layer):
@@ -100,8 +101,8 @@ class Mlp(nn.Layer):
         self.dropout = nn.Dropout(dropout)
     
     def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.XavierUniform())
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Normal(std=1e-6))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
     
     def forward(self, x):
@@ -139,11 +140,24 @@ class Attention(nn.Layer):
         self.dim_head = dim // num_heads
         self.scale = qk_scale or self.dim_head ** -0.5
 
-        self.qkv = nn.Linear(dim, dim * 3, bias_attr=qkv_bias)
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.qkv = nn.Linear(dim,
+                             dim * 3,
+                             weight_attr=w_attr_1,
+                             bias_attr=b_attr_1 if qkv_bias else False)
         self.attn_dropout = nn.Dropout(attention_dropout)
         self.softmax = nn.Softmax(axis=-1)
-        self.proj = nn.Linear(dim, dim)
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.proj = nn.Linear(dim,
+                              dim,
+                              weight_attr=w_attr_2,
+                              bias_attr=b_attr_2)
         self.proj_dropout = nn.Dropout(dropout)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def transpose_multihead(self, x):
         new_shape = x.shape[:-1] + [self.num_heads, self.dim_head]
@@ -195,17 +209,30 @@ class EncoderLayer(nn.Layer):
                  attention_dropout=0,
                  droppath=0.):
         super().__init__()
-        self.norm1 = nn.LayerNorm(dim, epsilon=1e-6)
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.norm1 = nn.LayerNorm(dim,
+                                  weight_attr=w_attr_1,
+                                  bias_attr=b_attr_1,
+                                  epsilon=1e-6)
         self.attn = Attention(dim,
                               num_heads=num_heads,
                               qkv_bias=qkv_bias,
                               qk_scale=qk_scale,
                               attention_dropout=attention_dropout)
         self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
-        self.norm2 = nn.LayerNorm(dim, epsilon=1e-6)
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.norm2 = nn.LayerNorm(dim,
+                                  weight_attr=w_attr_2,
+                                  bias_attr=b_attr_2,
+                                  epsilon=1e-6)
         self.mlp = Mlp(in_features=dim,
                        hidden_features=int(dim * mlp_ratio))
     
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
+
     def forward(self, x):
         h = x
         x = self.norm1(x)
@@ -267,10 +294,32 @@ class Deit(nn.Layer):
                                        qkv_bias=qkv_bias,
                                        attention_dropout=attention_dropout,
                                        droppath=droppath)) for _ in range(depth)])
-        self.norm = nn.LayerNorm(embed_dim, epsilon=1e-6)
+        w_attr_1, b_attr_1 = self._init_weights_norm()
+        self.norm = nn.LayerNorm(embed_dim,
+                                 weight_attr=w_attr_1,
+                                 bias_attr=b_attr_1,
+                                 epsilon=1e-6)
 
-        self.head = nn.Linear(embed_dim, num_classes)
-        self.head_distill = nn.Linear(embed_dim, num_classes) 
+        w_attr_2, b_attr_2 = self._init_weights_linear()
+        self.head = nn.Linear(embed_dim,
+                              num_classes,
+                              weight_attr=w_attr_2,
+                              bias_attr=b_attr_2)
+        w_attr_3, b_attr_3 = self._init_weights_linear()
+        self.head_distill = nn.Linear(embed_dim,
+                                      num_classes, 
+                                      weight_attr=w_attr_3,
+                                      bias_attr=b_attr_3)
+
+    def _init_weights_linear(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
+
+    def _init_weights_norm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward_features(self, x):
         x = self.patch_embed(x)
@@ -300,9 +349,15 @@ class Deit(nn.Layer):
 def build_deit(config):
     """build deit model using config"""
     model = Deit(image_size=config.DATA.IMAGE_SIZE,
-                 depth=config.MODEL.TRANS.DEPTH,
+                 in_channels=config.MODEL.TRANS.IN_CHANNELS,
+                 num_classes=config.MODEL.NUM_CLASSES,
+                 patch_size=config.MODEL.TRANS.PATCH_SIZE,
                  embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                 mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
                  num_heads=config.MODEL.TRANS.NUM_HEADS,
-                 qkv_bias=config.MODEL.TRANS.QKV_BIAS)
+                 depth=config.MODEL.TRANS.DEPTH,
+                 mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+                 qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                 dropout=config.MODEL.DROPOUT,
+                 attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                 droppath=config.MODEL.DROPPATH)
     return model

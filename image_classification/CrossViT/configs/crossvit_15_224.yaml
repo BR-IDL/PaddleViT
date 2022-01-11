@@ -1,0 +1,15 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: CrossViT
+    NAME: crossvit_vit_15_224
+    TRANS:
+        IMG_SIZE: [240, 224]
+        PATCH_SIZE: [12, 16]
+        EMBED_DIM: [192, 384]
+        DEPTH: [[1, 5, 0], [1, 5, 0], [1, 5, 0]]
+        NUM_HEADS: [6, 6]
+        MLP_RATIO: [3, 3, 1]
+        QKV_BIAS: True
+        MULTI_CONV: False

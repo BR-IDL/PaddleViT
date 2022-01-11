@@ -27,14 +27,14 @@ TRAIN:
     BASE_LR: 0.00006
     END_LR: 0.0
     DECODER_LR_COEF: 10.0
-    GRAD_CLIP: 1.0
     ITERS: 20000
-    WEIGHT_DECAY: 0.01
     POWER: 1.0
     DECAY_STEPS: 20000
     LR_SCHEDULER:
         NAME: 'PolynomialDecay'
     OPTIMIZER:
+        GRAD_CLIP: 1.0
+        WEIGHT_DECAY: 0.01
         NAME: 'AdamW'
         MOMENTUM: 0.9
 VAL:

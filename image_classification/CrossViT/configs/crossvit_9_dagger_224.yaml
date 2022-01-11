@@ -1,0 +1,15 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: CrossViT
+    NAME: crossvit_vit_9_dagger_224
+    TRANS:
+        IMG_SIZE: [240, 224]
+        PATCH_SIZE: [12, 16]
+        EMBED_DIM: [128, 256]
+        DEPTH: [[1, 3, 0], [1, 3, 0], [1, 3, 0]]
+        NUM_HEADS: [4, 4]
+        MLP_RATIO: [3, 3, 1]
+        QKV_BIAS: True
+        MULTI_CONV: True

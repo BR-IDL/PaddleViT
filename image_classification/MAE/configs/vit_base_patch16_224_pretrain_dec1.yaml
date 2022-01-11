@@ -1,0 +1,37 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: MAE
+    NAME: vit_base_patch16_224_dec1
+    DROPPATH: 0.0
+    MAE_PRETRAIN: True
+    TRANS:
+        PATCH_SIZE: 16
+        MLP_RATIO: 4.0
+        QKV_BIAS: true
+        MASK_RATIO: 0.75
+        ENCODER:
+            EMBED_DIM: 768
+            DEPTH: 12
+            NUM_HEADS: 12
+        DECODER:
+            EMBED_DIM: 512
+            DEPTH: 1
+            NUM_HEADS: 8
+TRAIN:
+    NUM_EPOCHS: 800
+    WARMUP_EPOCHS: 40
+    WEIGHT_DECAY: 0.05
+    BASE_LR: 1.5e-4
+    WARMUP_START_LR: 1e-6
+    GRAD_CLIP: None
+    ACCUM_ITER: 2 # 8gpus only have 2048 batch size, the total batch size should be 4096
+    LINEAR_SCALED_LR: None
+
+    LR_SCHEDULER:
+        NAME: 'warmupcosine'
+
+    OPTIMIZER:
+        NAME: 'AdamW'
+        BETAS: (0.9, 0.95)

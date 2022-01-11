@@ -20,6 +20,8 @@ and WarmupCosineScheduler for training
 """
 
 import math
+import numpy as np
+import paddle
 from paddle.optimizer.lr import LRScheduler
 
 
@@ -118,3 +120,34 @@ class WarmupCosineScheduler(LRScheduler):
         val = max(0.0, 0.5 * (1. + math.cos(math.pi * float(self.cycles) * 2.0 * progress)))
         val = max(0.0, val * (self.start_lr - self.end_lr) + self.end_lr)
         return val
+
+
+def orthogonal(t, gain=1.):
+    if t.ndim < 2:
+        raise ValueError("Only tensors with 2 or more dimensions are supported")
+    
+    gain  = paddle.to_tensor(gain)
+    rows = t.shape[0]
+    cols = np.size(t) // rows
+    #cols = paddle.numel(t) // rows
+    flattened = paddle.normal(0, 1, [rows, cols])
+
+    if rows < cols:
+        flattened = flattened.transpose([1, 0])
+    
+    # Compute the qr factorization
+    q, r = np.linalg.qr(flattened.cpu().numpy())
+    q = paddle.to_tensor(q) 
+    r = paddle.to_tensor(r) 
+    d = paddle.diag(r, 0)
+    ph = d.sign()
+    q *= ph
+    
+    if rows < cols:
+        q = q.transpose([1, 0])
+    
+    with paddle.no_grad():
+        t = q
+        #t.view_as(q).copy_(q)
+        t = t.multiply(gain)
+    return t

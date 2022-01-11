@@ -1,0 +1,39 @@
+DATA:
+    DATASET: "Trans10kV2"
+    BATCH_SIZE: 16
+    BATCH_SIZE_VAL: 1
+    DATA_PATH: "E:/Trans10K_cls12"
+    CROP_SIZE: (512, 512)
+    NUM_CLASSES: 12
+TRAIN:
+    BASE_LR: 0.0001
+    END_LR: 0.0
+    ITERS: 16000
+    IGNORE_INDEX: -1
+    LOSS: "MixSoftmaxCrossEntropyLoss"
+    LR_SCHEDULER:
+        NAME: "WarmupPolyLR"
+    OPTIMIZER:
+        NAME: 'ADAM'
+        WEIGHT_DECAY: 1e-4
+VAL:
+    MULTI_SCALES_VAL: False
+    IMAGE_BASE_SIZE: 512
+    CROP_SIZE: [512, 512]
+MODEL:
+    NAME: "Trans2Seg"
+    ENCODER:
+        TYPE: "resnet50c"
+        MULTI_GRID:
+        MULTI_DILATION:
+    TRANS2SEG:
+        EMBED_DIM: 256
+        DEPTH: 4
+        NUM_HEADS: 8
+        MLP_RATIO: 3.
+        HID_DIM: 64
+    AUX:
+        AUXIHEAD: False
+        AUXHEAD_ALIGN_CORNERS: False
+    PRETRAINED: "E:/resnet50c.pdparams"
+SAVE_DIR: "./output/trans10kv2/Trans2Seg_medium_512x512_16k_trans10kv2_bs_16"

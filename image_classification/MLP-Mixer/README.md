@@ -13,13 +13,14 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
-Update (2021-08-11): Code is released and ported weights are uploaded.
+- Update (2021-08-11): Model FLOPs and # params are uploaded.
+- Update (2021-08-11): Code is released and ported weights are uploaded.
 
 ## Models Zoo
-| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
-|--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| mlp_mixer_b16_224                  | 76.60 | 92.23 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
-| mlp_mixer_l16_224           | 72.06 | 87.67 | 224        | 0.875      | bicubic      | [google](https://drive.google.com/file/d/1mkmvqo5K7JuvqGm92a-AdycXIcsv1rdg/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1AmSVpwCaGR9Vjsj_boL7GA)(8q7r) |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| mlp_mixer_b16_224            	| 76.60 | 92.23 | 60.0M   | 12.7G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ZcQEH92sEPvYuDc6eYZgssK5UjYomzUD/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12nZaWGMOXwrCMOIBfUuUMA)(xh8x) |
+| mlp_mixer_l16_224           	| 72.06 | 87.67 | 208.2M  | 44.9G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1mkmvqo5K7JuvqGm92a-AdycXIcsv1rdg/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1AmSVpwCaGR9Vjsj_boL7GA)(8q7r) |
 
 > *The results are evaluated on ImageNet2012 validation set.
 
@@ -68,8 +69,8 @@ from mlp_mixer import build_mlp_mixer as build_model
 config = get_config('./configs/mixer_b16_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./mixer_b16_224')
+# load pretrained weights
+model_state_dict = paddle.load('./mixer_b16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -82,12 +83,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/mixer_b16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/mixer_b16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./mixer_b16_224'
+    -pretrained=/path/to/pretrained/model/mixer_b16_224  # .pdparams is NOT needed
 ```
 
 <details>
@@ -104,12 +105,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/mixer_b16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/mixer_b16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./mixer_b16_224'
+    -pretrained=/path/to/pretrained/model/mixer_b16_224  # .pdparams is NOT needed
 ```
 
 </details>
@@ -123,10 +124,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg='./configs/mixer_b16_224.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/mixer_b16_224.yaml \
+  -dataset=imagenet2012 \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/path/to/dataset/imagenet/train
 ```
 
 <details>
@@ -143,10 +144,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/mixer_b16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/mixer_b16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>

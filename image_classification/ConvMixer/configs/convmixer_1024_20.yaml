@@ -1,0 +1,22 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.96
+MODEL:
+    TYPE: convmixer
+    NAME: convmixer_1024_20
+    CNN:
+        DIM: 1024
+        DEPTH: 20
+        KERNEL_SIZE: 9
+        PATCH_SIZE: 14
+        ACTIVATION: 'GELU'
+TRAIN:
+    BASE_LR: 0.01
+    WARMUP_EPOCHS: 0
+    CUTMIX_ALPHA: 0.5
+    MIXUP_ALPHA: 0.5
+    RANDOM_ERASE_PROB: 0.25
+    GRAD_CLIP: 1.0
+    OPTIMIZER:
+        EPS: 1e-3
+    AUTO_AUGMENT: True

@@ -1,0 +1,22 @@
+DATA:
+    IMAGE_SIZE: 256
+    CROP_PCT: 1.0
+MODEL:
+    TYPE: MobileViT
+    NAME: mobilevit_s
+    DIMS: [16, 32, 64, 64, 64, 96, 128, 160, 640] # conv3x3 + mobile v2 block output channels
+    HIDDEN_DIMS: [144, 192, 240] # mobile vit block hidden dim
+TRAIN:
+    NUM_EPOCHS: 300
+    WARMUP_EPOCHS: 30
+    BASE_LR: 0.002
+    WARMUP_START_LR: 0.0002
+    END_LR: 0.0002
+    WEIGHT_DECAY: 0.01
+    RANDOM_ERASE_PROB: 0.0
+    AUTO_AUGMENT: False
+    MIXUP_PROB: 0.0
+    CUTMIX_ALPHA: 0.0
+    CUTMIX_MINMAX: None
+    LINEAR_SCALED_LR: None
+    ACCUM_ITER: 4

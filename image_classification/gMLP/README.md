@@ -14,12 +14,13 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 ### Update 
-Update (2021-08-11): Code is released and ported weights are uploaded.
+- Update (2021-09-27): Model FLOPs and # params are uploaded.
+- Update (2021-08-11): Code is released and ported weights are uploaded.
 
 ## Models Zoo
-| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
-|--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| gmlp_s16_224                   | 79.64 | 94.63 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1TLypFly7aW0oXzEHfeDSz2Va4RHPRqe5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13UUz1eGIKyqyhtwedKLUMA)(bcth) |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| gmlp_s16_224                 	| 79.64 | 94.63 | 19.4M   | 4.5G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1TLypFly7aW0oXzEHfeDSz2Va4RHPRqe5/view?usp=sharing)/[baidu](https://pan.baidu.com/s/13UUz1eGIKyqyhtwedKLUMA)(bcth) |
 
 > *The results are evaluated on ImageNet2012 validation set.
 > 
@@ -65,8 +66,8 @@ from gmlp import build_gated_mlp as build_model
 config = get_config('./configs/gmlp_s16_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./gmlp_s16_224')
+# load pretrained weights
+model_state_dict = paddle.load('./gmlp_s16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -79,12 +80,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/gmlp_s16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/gmlp_s16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./gmlp_s16_224'
+    -pretrained=/path/to/pretrained/model/gmlp_s16_224  # .pdparams is NOT needed
 ```
 
 <details>
@@ -101,12 +102,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/gmlp_s16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/gmlp_s16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./gmlp_s16_224'
+    -pretrained=/path/to/pretrained/model/gmlp_s16_224  # .pdparams is NOT needed
 ```
 
 </details>
@@ -120,10 +121,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg='./configs/gmlp_s16_224.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/gmlp_s16_224.yaml \
+  -dataset=imagenet2012 \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
+  -data_path=/path/to/dataset/imagenet/train
 ```
 
 <details>
@@ -140,10 +141,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/gmlp_s16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/gmlp_s16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>

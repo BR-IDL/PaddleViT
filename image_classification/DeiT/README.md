@@ -13,13 +13,17 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
-Update (2021-08-11): Code is released and ported weights are uploaded.
+- Update (2021-09-27): More weights are uploaded.
+- Update (2021-08-11): Code is released and ported weights are uploaded.
 
 ## Models Zoo
-| Model                          | Acc@1 | Acc@5 | Image Size | Crop_pct | Interpolation | Link        |
-|--------------------------------|-------|-------|------------|----------|---------------|--------------|
-| deit_base_distilled_patch16_224| 83.32  | 96.49 | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/12_x6-NN3Jde2BFUih4OM9NlTwe9-Xlkw/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ZnmAWgT6ewe7Vl3Xw_csuA)(5f2g) |
-| deit_base_distilled_patch16_384| 85.43  | 97.33 | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1i5H_zjSdHfM-Znv89DHTv9ChykWrIt8I/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1PQsQIci4VCHY7l2tCzMklg)(qgj2) |
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
+| deit_tiny_distilled_224   	| 74.52 | 91.90 | 5.9M    | 1.1G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1fku9-11O_gQI7UpZTjagVeND-pcHbV0C/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1hAQ_85wWkqQ7sIGO1CmO9g)(rhda) |
+| deit_small_distilled_224  	| 81.17 | 95.41 | 22.4M   | 4.3G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1RIeWTdf5o6pwkjqN4NbW91GZSOCalI5t/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1wCVrukvwxISAGGjorPw3iw)(pv28) |
+| deit_base_distilled_224  		| 83.32 | 96.49 | 87.2M   | 17.0G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/12_x6-NN3Jde2BFUih4OM9NlTwe9-Xlkw/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ZnmAWgT6ewe7Vl3Xw_csuA)(5f2g) |
+| deit_base_distilled_384  		| 85.43 | 97.33 | 87.2M   | 49.9G  | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1i5H_zjSdHfM-Znv89DHTv9ChykWrIt8I/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1PQsQIci4VCHY7l2tCzMklg)(qgj2) |
+
 
 | Teacher Model | Link |
 | -- | -- |
@@ -69,8 +73,8 @@ from deit import build_deit as build_model
 config = get_config('./configs/deit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./deit_base_patch16_224')
+# load pretrained weights
+model_state_dict = paddle.load('./deit_base_patch16_224.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -83,12 +87,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-    -cfg='./configs/deit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/deit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/imagenet/val/dataset/val \
     -eval \
-    -pretrained='./deit_base_patch16_224'
+    -pretrained=/path/to/pretrained/model/deit_base_patch16_224  # .pdparams is NOT needed
 ```
 
 <details>
@@ -105,12 +109,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/deit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/deit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./deit_base_patch16_224'
+    -pretrained=/path/to/pretrained/model/deit_base_patch16_224  # .pdparams is NOT needed
 ```
 
 </details>
@@ -127,11 +131,11 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg='./configs/deit_base_patch16_224.yaml' \
-  -dataset='imagenet2012' \
+  -cfg=./configs/deit_base_patch16_224.yaml \
+  -dataset=imagenet2012 \
   -batch_size=32 \
-  -data_path='/dataset/imagenet' \
-  -teacher_model='./regnety_160'
+  -data_path=/path/to/dataset/imagenet/train \
+  -teacher_model=/path/to/pretrained/model/regnety_160  # .pdparams is NOT needed
 ```
 
 <details>
@@ -148,11 +152,11 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/deit_base_patch16_224.yaml' \
-    -dataset='imagenet2012' \
+    -cfg=./configs/deit_base_patch16_224.yaml \
+    -dataset=imagenet2012 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
-    -teacher_model='./regnety_160'
+    -data_path=/path/to/dataset/imagenet/train \
+    -teacher_model=/path/to/pretrained/model/regnety_160  # .pdparams is NOT needed
 ```
 
 </details>

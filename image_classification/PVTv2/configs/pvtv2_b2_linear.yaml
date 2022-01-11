@@ -13,7 +13,7 @@ MODEL:
         SR_RATIO: [8, 4, 2, 1]
         LINEAR: True
         QKV_BIAS: True
-    DROP_PATH: 0.1
+    DROPPATH: 0.1
 TRAIN:
     GRAD_CLIP: None
 

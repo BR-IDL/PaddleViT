@@ -12,7 +12,7 @@ MODEL:
         MLP_RATIO: [4, 4, 4, 4]
         SR_RATIO: [8, 4, 2, 1]
         QKV_BIAS: True
-    DROP_PATH: 0.3
+    DROPPATH: 0.3
 TRAIN:
     GRAD_CLIP: 1.0
 

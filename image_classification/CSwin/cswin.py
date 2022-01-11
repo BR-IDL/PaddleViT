@@ -55,7 +55,21 @@ class PatchEmbedding(nn.Layer):
                                      kernel_size=7,
                                      stride=patch_stride,
                                      padding=2)
-        self.norm = nn.LayerNorm(embed_dim)
+
+        w_attr, b_attr = self._init_weights_layernorm()
+        self.norm = nn.LayerNorm(embed_dim,
+                                 weight_attr=w_attr,
+                                 bias_attr=b_attr)
+
+    def _init_weights_layernorm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
+        return weight_attr, bias_attr
+ 
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         x = self.patch_embed(x) # [batch, embed_dim, h, w], h = w = image_size / 4
@@ -95,8 +109,8 @@ class Mlp(nn.Layer):
         self.dropout = nn.Dropout(dropout)
 
     def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.XavierUniform())
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Normal(std=1e-6))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -276,8 +290,15 @@ class CSwinBlock(nn.Layer):
         self.dim_head = dim // num_heads
         self.mlp_ratio = mlp_ratio
         self.split_size = split_size
-        self.norm1 = nn.LayerNorm(dim)
-        self.qkv = nn.Linear(dim, dim * 3, bias_attr=qkv_bias)
+        w_attr_1, b_attr_1 = self._init_weights_layernorm()
+        self.norm1 = nn.LayerNorm(dim,
+                                  weight_attr=w_attr_1,
+                                  bias_attr=b_attr_1)
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.qkv = nn.Linear(dim,
+                             dim * 3,
+                             weight_attr=w_attr_2,
+                             bias_attr=b_attr_2 if qkv_bias else False)
         self.attns = nn.LayerList()
         self.split_heads = split_heads
 
@@ -300,12 +321,30 @@ class CSwinBlock(nn.Layer):
             # NOTE: may need to change for different H and W
             splits[0], splits[1] = splits[1], splits[0]
 
-        self.proj = nn.Linear(dim, dim)
+        w_attr_3, b_attr_3 = self._init_weights()
+        self.proj = nn.Linear(dim,
+                             dim,
+                             weight_attr=w_attr_3,
+                             bias_attr=b_attr_3)
         self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
-        self.norm2 = nn.LayerNorm(dim)
+
+        w_attr_4, b_attr_4 = self._init_weights_layernorm()
+        self.norm2 = nn.LayerNorm(dim,
+                                  weight_attr=w_attr_4,
+                                  bias_attr=b_attr_4)
         self.mlp = Mlp(in_features=dim,
                        hidden_features=int(dim * mlp_ratio),
                        dropout=dropout)
+
+    def _init_weights_layernorm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
+        return weight_attr, bias_attr
+ 
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
+        return weight_attr, bias_attr
 
     def chunk_qkv(self, x, chunks=1, axis=-1):
         x = x.chunk(chunks, axis=axis)
@@ -347,7 +386,16 @@ class MergeBlock(nn.Layer):
                               kernel_size=3,
                               stride=2,
                               padding=1)
-        self.norm = nn.LayerNorm(dim_out)
+
+        w_attr_1, b_attr_1 = self._init_weights_layernorm()
+        self.norm = nn.LayerNorm(dim_out,
+                                 weight_attr=w_attr_1,
+                                 bias_attr=b_attr_1)
+
+    def _init_weights_layernorm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         B, HW, C = x.shape
@@ -484,8 +532,25 @@ class CSwinTransformer(nn.Layer):
                 dim = dim * 2
                 resolution = resolution // 2
         # last norm and classification head layers
-        self.norm = nn.LayerNorm(dim)
-        self.head = nn.Linear(dim, num_classes)
+        w_attr_1, b_attr_1 = self._init_weights_layernorm()
+        self.norm = nn.LayerNorm(dim,
+                                 weight_attr=w_attr_1,
+                                 bias_attr=b_attr_1)
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.head = nn.Linear(dim,
+                              num_classes,
+                              weight_attr=w_attr_2,
+                              bias_attr=b_attr_2)
+
+    def _init_weights_layernorm(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
+        return weight_attr, bias_attr
+ 
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
+        return weight_attr, bias_attr
 
     def forward_features(self, x):
         x = self.patch_embedding(x)
@@ -515,5 +580,5 @@ def build_cswin(config):
                              qk_scale=config.MODEL.TRANS.QK_SCALE,
                              dropout=config.MODEL.DROPOUT,
                              attention_dropout=config.MODEL.ATTENTION_DROPOUT,
-                             droppath=config.MODEL.DROP_PATH)
+                             droppath=config.MODEL.DROPPATH)
     return model

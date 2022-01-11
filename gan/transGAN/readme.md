@@ -46,8 +46,8 @@ from models.ViT_custom import Generator
 config = get_config('./configs/transgan_cifar10.yaml')
 # build model
 model = Generator(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./transgan_cifar10')
+# load pretrained weights
+model_state_dict = paddle.load('./transgan_cifar10.pdparams')
 model.set_dict(model_state_dict)
 ```
 
@@ -59,10 +59,10 @@ sh run_generate.sh
 or 
 ```shell
 python generate.py \
-  -cfg='./configs/transgan_cifar10.yaml' \
+  -cfg=./configs/transgan_cifar10.yaml \
   -num_out_images=16 \
-  -out_folder='./images_cifar10' \
-  -pretrained='./transgan_cifar10.pdparams'
+  -out_folder=./images_cifar10 \
+  -pretrained=/path/to/pretrained/model/transgan_cifar10  # .pdparams is NOT needed
 ```
 The output images are stored in `-out_folder` path.
 
@@ -76,11 +76,11 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg="./configs/transgan_cifar10.yaml" \
-  -dataset='cifar10' \
+  -cfg=./configs/transgan_cifar10.yaml \
+  -dataset=cifar10 \
   -batch_size=32 \
   -eval \
-  -pretrained='./transgan_cifar10'
+  -pretrained=/path/to/pretrained/model/transgan_cifar10.pdparams  # .pdparams is NOT needed
 ```
 <details>
 
@@ -96,12 +96,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/transgan_cifar10.yaml' \
-    -dataset='cifar10' \
+    -cfg=./configs/transgan_cifar10.yaml \
+    -dataset=cifar10 \
     -batch_size=32 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/val \
     -eval \
-    -pretrained='./transgan_cifar10'
+    -pretrained=/path/to/pretrained/model/transgan_cifar10  # .pdparams is NOT needed
 ```
 
 </details>
@@ -117,8 +117,8 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python main_single_gpu.py \
-  -cfg="./configs/transgan_cifar10.yaml" \
-  -dataset='cifar10' \
+  -cfg=./configs/transgan_cifar10.yaml \
+  -dataset=cifar10 \
   -batch_size=32 \
 ```
 <details>
@@ -135,10 +135,10 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python main_multi_gpu.py \
-    -cfg='./configs/transgan_cifar10.yaml' \
-    -dataset='cifar10' \
+    -cfg=./configs/transgan_cifar10.yaml \
+    -dataset=cifar10 \
     -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+    -data_path=/path/to/dataset/imagenet/train
 ```
 
 </details>

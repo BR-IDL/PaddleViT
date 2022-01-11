@@ -198,7 +198,7 @@ def build_gated_mlp(config):
                      in_channels=3,
                      num_mixer_layers=config.MODEL.MIXER.NUM_LAYERS,
                      embed_dim=config.MODEL.MIXER.HIDDEN_SIZE,
-                     mlp_ratio=6,
+                     mlp_ratio=config.MODEL.MIXER.MLP_RATIO,
                      dropout=config.MODEL.DROPOUT,
-                     droppath=config.MODEL.DROPPATH)
+                     droppath=config.MODEL.DROP_PATH)
     return model
