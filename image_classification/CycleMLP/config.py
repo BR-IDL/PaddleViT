@@ -139,8 +139,12 @@ def update_config(config, args):
     config.defrost()
     if args.dataset:
         config.DATA.DATASET = args.dataset
+    if args.eval:
+        config.EVAL = True
     if args.batch_size:
         config.DATA.BATCH_SIZE = args.batch_size
+        if config.EVAL:
+            config.DATA.BATCH_SIZE_EVAL = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
     if args.num_classes:
@@ -151,9 +155,6 @@ def update_config(config, args):
         config.SAVE = args.output
     if args.ngpus:
         config.NGPUS = args.ngpus
-    if args.eval:
-        config.EVAL = True
-        config.DATA.BATCH_SIZE_EVAL = args.batch_size
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
     if args.resume:
