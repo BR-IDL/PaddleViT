@@ -33,3 +33,11 @@ TRAIN:
     ACCUM_ITER: 1
     MOMENTUM_TEACHER: 0.996
     USE_BN_IN_HEAD: False
+
+
+
+
+
+
+
+    

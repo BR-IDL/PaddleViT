@@ -1,4 +1,4 @@
-#Noni Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,6 +78,25 @@ def get_logger(filename, logger_name=None):
     return logger
 
 
+def write_log(local_logger, master_logger, msg_local, msg_master=None, level='info'):
+    if local_logger:
+        if level == 'info':
+            local_logger.info(msg_local)
+        elif level == 'fatal':
+            local_logger.fatal(msg_local)
+        else:
+            raise ValueError("level must in ['info', 'fatal']")
+    if master_logger and dist.get_rank() == 0:
+        if msg_master is None:
+            msg_master = msg_local
+        if level == 'info':
+            master_logger.info(msg_master)
+        elif level == 'fatal':
+            master_logger.fatal(msg_master)
+        else:
+            raise ValueError("level must in ['info', 'fatal']")
+
+
 def train(dataloader,
           student_model,
           teacher_model,
@@ -111,21 +130,22 @@ def train(dataloader,
         train_acc_meter.avg: float, average top1 accuracy on current process/gpu
         train_time: float, training time
     """
-    student_model.train()
-    teacher_model.eval()
     train_loss_meter = AverageMeter()
     train_acc_meter = AverageMeter()
 
     if amp is True:
-        scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
+        scaler = paddle.amp.GradScaler() # default init_loss_scaling=32768
     time_st = time.time()
 
     for batch_id, data in enumerate(dataloader):
         images = data[0]
-        label = data[1]
+        #label = data[1]
 
-        # TODO: set wd schedule
-        optimizer.set_lr(lr_schedule[batch_id])
+        # set lr using scheduler
+        global_train_iter = len(dataloader) * (epoch-1) + batch_id # epoch starts from 1
+        optimizer.set_lr(lr_schedule[global_train_iter])
+        # set wd using scheduler
+        optimizer.regularization = paddle.regularizer.L2Decay(wd_schedule[global_train_iter])
 
         with paddle.amp.auto_cast(amp is True):
             teacher_output = teacher_model(images[:2]) # only the 2 global views pass the teacher
@@ -133,7 +153,8 @@ def train(dataloader,
             loss = criterion(student_output, teacher_output, epoch)
 
         if not math.isfinite(loss.item()):
-            print(f'Loss is {loss.item()}, stopping training')
+            message = f'Loss is {loss.item()}, stopping training'
+            write_log(local_logger, None, message, 'fatal')
             sys.exit(1)
 
         # student update
@@ -151,7 +172,7 @@ def train(dataloader,
 
         # EMA update for the teacher
         with paddle.no_grad():
-            m = momentum_schedule[batch_id] # momemtum parameter
+            m = momentum_schedule[global_train_iter] # momemtum parameter
             for param_q, param_k in zip(student_model.parameters(), teacher_model.parameters()):
                 new_w = (param_k * m) + (1 - m) * param_q.detach()
                 param_k.set_value(new_w)
@@ -169,54 +190,53 @@ def train(dataloader,
     return train_loss_meter.avg, train_time
 
 
-def validate(dataloader, model, criterion, total_batch, debug_steps=100, logger=None):
-    """Validation for whole dataset
-    Args:
-        dataloader: paddle.io.DataLoader, dataloader instance
-        model: nn.Layer, a ViT model
-        criterion: nn.criterion
-        total_batch: int, total num of batches for one epoch
-        debug_steps: int, num of iters to log info, default: 100
-        logger: logger for logging, default: None
-    Returns:
-        val_loss_meter.avg: float, average loss on current process/gpu
-        val_acc1_meter.avg: float, average top1 accuracy on current process/gpu
-        val_acc5_meter.avg: float, average top5 accuracy on current process/gpu
-        val_time: float, valitaion time
-    """
-    model.eval()
-    val_loss_meter = AverageMeter()
-    val_acc1_meter = AverageMeter()
-    val_acc5_meter = AverageMeter()
-    time_st = time.time()
-
-    with paddle.no_grad():
-        for batch_id, data in enumerate(dataloader):
-            image = data[0]
-            label = data[1]
-
-            output = model(image)
-            loss = criterion(output, label)
-
-            pred = F.softmax(output)
-            acc1 = paddle.metric.accuracy(pred, label.unsqueeze(1))
-            acc5 = paddle.metric.accuracy(pred, label.unsqueeze(1), k=5)
-
-            batch_size = image.shape[0]
-            val_loss_meter.update(loss.numpy()[0], batch_size)
-            val_acc1_meter.update(acc1.numpy()[0], batch_size)
-            val_acc5_meter.update(acc5.numpy()[0], batch_size)
-
-            if logger and batch_id % debug_steps == 0:
-                logger.info(
-                    f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
-                    f"Avg Loss: {val_loss_meter.avg:.4f}, " +
-                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
-                    f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
-
-    val_time = time.time() - time_st
-    return val_loss_meter.avg, val_acc1_meter.avg, val_acc5_meter.avg, val_time
-
+#def validate(dataloader, model, criterion, total_batch, debug_steps=100, logger=None):
+#    """Validation for whole dataset
+#    Args:
+#        dataloader: paddle.io.DataLoader, dataloader instance
+#        model: nn.Layer, a ViT model
+#        criterion: nn.criterion
+#        total_batch: int, total num of batches for one epoch
+#        debug_steps: int, num of iters to log info, default: 100
+#        logger: logger for logging, default: None
+#    Returns:
+#        val_loss_meter.avg: float, average loss on current process/gpu
+#        val_acc1_meter.avg: float, average top1 accuracy on current process/gpu
+#        val_acc5_meter.avg: float, average top5 accuracy on current process/gpu
+#        val_time: float, valitaion time
+#    """
+#    model.eval()
+#    val_loss_meter = AverageMeter()
+#    val_acc1_meter = AverageMeter()
+#    val_acc5_meter = AverageMeter()
+#    time_st = time.time()
+#
+#    with paddle.no_grad():
+#        for batch_id, data in enumerate(dataloader):
+#            image = data[0]
+#            label = data[1]
+#
+#            output = model(image)
+#            loss = criterion(output, label)
+#
+#            pred = F.softmax(output)
+#            acc1 = paddle.metric.accuracy(pred, label.unsqueeze(1))
+#            acc5 = paddle.metric.accuracy(pred, label.unsqueeze(1), k=5)
+#
+#            batch_size = image.shape[0]
+#            val_loss_meter.update(loss.numpy()[0], batch_size)
+#            val_acc1_meter.update(acc1.numpy()[0], batch_size)
+#            val_acc5_meter.update(acc5.numpy()[0], batch_size)
+#
+#            if logger and batch_id % debug_steps == 0:
+#                logger.info(
+#                    f"Val Step[{batch_id:04d}/{total_batch:04d}], " +
+#                    f"Avg Loss: {val_loss_meter.avg:.4f}, " +
+#                    f"Avg Acc@1: {val_acc1_meter.avg:.4f}, " +
+#                    f"Avg Acc@5: {val_acc5_meter.avg:.4f}")
+#
+#    val_time = time.time() - time_st
+#    return val_loss_meter.avg, val_acc1_meter.avg, val_acc5_meter.avg, val_time
 
 
 class DINOLoss(nn.Layer):
@@ -235,7 +255,6 @@ class DINOLoss(nn.Layer):
 
     def forward(self, student_output, teacher_output, epoch):
         student_out = student_output / self.student_temp
-        #student_out = student_out.chunk(student_out.shape[0] // self.ncrops)
         student_out = student_out.chunk(self.ncrops)
 
         # teacher centering and sharpening
@@ -324,13 +343,9 @@ def main():
     for p in teacher_model.parameters():
         p.stop_gradient = True
 
-    # STEP 2: Create train and val dataloader
-    if not config.EVAL:
-        dataset_train = get_dataset(config, mode='train')
-        dataloader_train = get_dataloader(config, dataset_train, 'train', False)
-    else:
-        dataset_val = get_dataset(config, mode='val')
-        dataloader_val = get_dataloader(config, dataset_val, 'val', False)
+    # STEP 2: Create train dataloader
+    dataset_train = get_dataset(config, mode='train')
+    dataloader_train = get_dataloader(config, dataset_train, 'train', False)
 
     # 3. Define criterion
     #criterion = nn.CrossEntropyLoss()

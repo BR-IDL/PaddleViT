@@ -78,19 +78,21 @@ def get_logger(filename, logger_name=None):
     return logger
 
 
-def write_log(local_logger, master_logger, message, level='info'):
+def write_log(local_logger, master_logger, msg_local, msg_master=None, level='info'):
     if local_logger:
         if level == 'info':
-            local_logger.info(message)
+            local_logger.info(msg_local)
         elif level == 'fatal':
-            local_logger.fatal(message)
+            local_logger.fatal(msg_local)
         else:
             raise ValueError("level must in ['info', 'fatal']")
     if master_logger and dist.get_rank() == 0:
+        if msg_master is None:
+            msg_master = msg_local
         if level == 'info':
-            master_logger.info(message)
+            master_logger.info(msg_master)
         elif level == 'fatal':
-            master_logger.fatal(message)
+            master_logger.fatal(msg_master)
         else:
             raise ValueError("level must in ['info', 'fatal']")
 
@@ -129,21 +131,22 @@ def train(dataloader,
         train_acc_meter.avg: float, average top1 accuracy on current process/gpu
         train_time: float, training time
     """
-    #student_model.train()
-    #teacher_model.eval()
     train_loss_meter = AverageMeter()
     master_loss_meter = AverageMeter()
 
     if amp is True:
-        scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
+        scaler = paddle.amp.GradScaler() # default init_loss_scaling=32768
     time_st = time.time()
 
     for batch_id, data in enumerate(dataloader):
         images = data[0]
         #label = data[1]
 
-        # TODO: set wd schedule: current paddle version does not support wd scheduler
-        optimizer.set_lr(lr_schedule[batch_id])
+        # set lr using scheduler
+        global_train_iter = len(dataloader) * (epoch-1) + batch_id # epoch starts from 1
+        optimizer.set_lr(lr_schedule[global_train_iter])
+        # set wd using scheduler
+        optimizer.regularization = paddle.regularizer.L2Decay(wd_schedule[global_train_iter])
 
         with paddle.amp.auto_cast(amp is True):
             teacher_output = teacher_model(images[:2]) # only the 2 global views pass the teacher
@@ -170,7 +173,7 @@ def train(dataloader,
 
         # EMA update for the teacher
         with paddle.no_grad():
-            m = momentum_schedule[batch_id] # momemtum parameter
+            m = momentum_schedule[global_train_iter] # momemtum parameter
             for param_q, param_k in zip(student_model.parameters(), teacher_model.parameters()):
                 new_w = (param_k * m) + (1 - m) * param_q.detach()
                 param_k.set_value(new_w)
@@ -182,16 +185,17 @@ def train(dataloader,
             dist.barrier()
             dist.all_reduce(master_loss)
             dist.all_reduce(master_batch_size)
-        master_loss = master_loss / dist.get_world_size()
-        master_loss_meter.update(master_loss.numpy()[0], master_batch_size.numpy()[0])
-        train_loss_meter.update(loss.numpy()[0], batch_size.numpy()[0])
+            master_loss = master_loss / dist.get_world_size()
+            master_loss_meter.update(master_loss.numpy()[0], master_batch_size.numpy()[0])
+            train_loss_meter.update(loss.numpy()[0], batch_size.numpy()[0])
 
         if batch_id % debug_steps == 0:
             message = (f"Epoch[{epoch:03d}/{total_epochs:03d}], " +
                       f"LR={optimizer.get_lr():.04E}, " + 
-                      f"Step[{batch_id:04d}/{total_batch:04d}], " +
-                      f"Avg Loss: {train_loss_meter.avg:.4f}")
-            write_log(local_logger, master_logger, message)
+                      f"Step[{batch_id:04d}/{total_batch:04d}], ")
+            local_message = message + f"Avg Loss: {train_loss_meter.avg:.4f}"
+            master_message = message + f"Avg Loss: {master_loss_meter.avg:.4f}"
+            write_log(local_logger, master_logger, local_message, master_message)
 
     train_time = time.time() - time_st
     return train_loss_meter.avg, master_loss_meter.avg, train_time
@@ -336,8 +340,7 @@ def main_worker(*args):
         optimizer = paddle.optimizer.Momentum(
             parameters=params_gropus,
             learning_rate=0., # set by scheduler
-            weight_decay=config.TRAIN.WEIGHT_DECAY_END,
-            #weight_decay=0., # set by scheduler
+            weight_decay=0., # set by scheduler
             momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
             grad_clip=clip)
     elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
@@ -346,8 +349,7 @@ def main_worker(*args):
             learning_rate=0., # set by scheduler
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-            #weight_decay=0., # set by scheduler
-            weight_decay=config.TRAIN.WEIGHT_DECAY_END,
+            weight_decay=0., # set by scheduler
             epsilon=config.TRAIN.OPTIMIZER.EPS,
             grad_clip=clip)
     else:
@@ -386,27 +388,32 @@ def main_worker(*args):
         message = f"Now training epoch {epoch}. LR={optimizer.get_lr():.6E}"
         write_log(local_logger, master_logger, message)
 
-        train_loss, train_time = train(dataloader=dataloader_train,
-                                       student_model=student_model,
-                                       teacher_model=teacher_model,
-                                       criterion=criterion,
-                                       optimizer=optimizer,
-                                       lr_schedule=lr_schedule,
-                                       wd_schedule=wd_schedule,
-                                       momentum_schedule=momentum_schedule,
-                                       freeze_last_layer=config.TRAIN.FREEZE_LAST_LAYER,
-                                       epoch=epoch,
-                                       total_epochs=config.TRAIN.NUM_EPOCHS,
-                                       total_batch=len(dataloader_train),
-                                       debug_steps=config.REPORT_FREQ,
-                                       accum_iter=config.TRAIN.ACCUM_ITER,
-                                       amp=config.AMP,
-                                       local_logger=local_logger,
-                                       master_logger=master_logger)
-        message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
-                   f"Train Loss: {train_loss:.4f}, " +
-                   f"time: {train_time:.2f}")
-        write_log(local_logger, master_logger, message)
+        train_loss, master_loss, train_time = train(
+            dataloader=dataloader_train,
+            student_model=student_model,
+            teacher_model=teacher_model,
+            criterion=criterion,
+            optimizer=optimizer,
+            lr_schedule=lr_schedule,
+            wd_schedule=wd_schedule,
+            momentum_schedule=momentum_schedule,
+            freeze_last_layer=config.TRAIN.FREEZE_LAST_LAYER,
+            epoch=epoch,
+            total_epochs=config.TRAIN.NUM_EPOCHS,
+            total_batch=len(dataloader_train),
+            debug_steps=config.REPORT_FREQ,
+            accum_iter=config.TRAIN.ACCUM_ITER,
+            amp=config.AMP,
+            local_logger=local_logger,
+            master_logger=master_logger)
+        local_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+                         f"Train Loss: {train_loss:.4f}, " +
+                         f"time: {train_time:.2f}")
+
+        master_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+                         f"Train Loss: {master_loss:.4f}, " +
+                         f"time: {train_time:.2f}")
+        write_log(local_logger, master_logger, local_message, master_message)
         # model save
         if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             model_path = os.path.join(
