@@ -309,7 +309,7 @@ def main_worker(*args):
     else:
         master_logger = None
     local_logger.info(f'----- world_size = {world_size}, local_rank = {local_rank}')
-    if local_rank == 0:
+    if not local_rank:
         master_logger.info(f'----- world_size = {world_size}, local_rank = {local_rank}')
     
     # STEP 1: Create model
