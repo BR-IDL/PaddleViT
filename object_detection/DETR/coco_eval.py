@@ -7,7 +7,6 @@ import paddle
 from pycocotools.cocoeval import COCOeval
 from pycocotools.coco import COCO
 import pycocotools.mask as mask_util
-
 from utils import all_gather
 
 class CocoEvaluator():

@@ -26,6 +26,7 @@ import torch
 #from config import *
 from detr import build_detr
 from utils import NestedTensor
+from config import get_config
 
 import misc as th_utils
 #config = get_config()
@@ -65,7 +66,7 @@ def torch_to_paddle_mapping():
 def torch_to_paddle_mapping_bn_from_buffer():
     mapping = [('backbone.0.body.bn1','backbone.0.body.bn1')]
 
-    block_depth = [3, 4, 6, 3]
+    block_depth = [3, 4, 23, 3]
     for block_idx in range(1,5):
         th_block_prefix = f'backbone.0.body.layer{block_idx}'
         pp_block_prefix = f'backbone.0.body.layer{block_idx}'
@@ -86,7 +87,7 @@ def torch_to_paddle_mapping_bn_from_buffer():
 def torch_to_paddle_mapping_backbone():
     mapping = [('backbone.0.body.conv1','backbone.0.body.conv1')]
 
-    block_depth = [3, 4, 6, 3]
+    block_depth = [3, 4, 23, 3]
     for block_idx in range(1,5):
         th_block_prefix = f'backbone.0.body.layer{block_idx}'
         pp_block_prefix = f'backbone.0.body.layer{block_idx}'
@@ -113,28 +114,47 @@ def torch_to_paddle_mapping_transformer():
         ('bbox_embed.layers.0', 'bbox_embed.layers.0'),
         ('bbox_embed.layers.1', 'bbox_embed.layers.1'),
         ('bbox_embed.layers.2', 'bbox_embed.layers.2'),
-        ('transformer.decoder.norm', 'transformer.decoder.norm'),
+        ('transformer.decoder.norm', 'transformer.decoder_norm'),
     ]
 
     num_layers = 6
+    # encoder
     for idx in range(num_layers):
-        for module in ['encoder', 'decoder']:
-            pp_prefix = f'transformer.{module}.layers.{idx}'
-            th_prefix = f'transformer.{module}.layers.{idx}'
-            layer_mapping = [
-                (f'{th_prefix}.norm1', f'{pp_prefix}.norm1'),
-                (f'{th_prefix}.norm2', f'{pp_prefix}.norm2'),
-                (f'{th_prefix}.norm3', f'{pp_prefix}.norm3'),
-                (f'{th_prefix}.linear1', f'{pp_prefix}.mlp.linear1'), 
-                (f'{th_prefix}.linear2', f'{pp_prefix}.mlp.linear2'), 
-                (f'{th_prefix}.self_attn.in_proj_weight', f'{pp_prefix}.self_attn'),
-                (f'{th_prefix}.self_attn.in_proj_bias', f'{pp_prefix}.self_attn'),
-                (f'{th_prefix}.self_attn.out_proj', f'{pp_prefix}.self_attn.fc'),
-                (f'{th_prefix}.multihead_attn.in_proj_weight', f'{pp_prefix}.dec_enc_attn'),
-                (f'{th_prefix}.multihead_attn.in_proj_bias', f'{pp_prefix}.dec_enc_attn'),
-                (f'{th_prefix}.multihead_attn.out_proj', f'{pp_prefix}.dec_enc_attn.fc'),
-            ]
-            mapping.extend(layer_mapping)
+        # torch weights prefix
+        th_prefix = f'transformer.encoder.layers.{idx}'
+        # paddle weights prefix
+        pp_prefix = f'transformer.encoder.{idx}'
+        layer_mapping = [
+                (f'{th_prefix}.norm1', f'{pp_prefix}.attn_norm'),
+                (f'{th_prefix}.norm2', f'{pp_prefix}.mlp_norm'),
+                (f'{th_prefix}.linear1', f'{pp_prefix}.mlp.fc1'), 
+                (f'{th_prefix}.linear2', f'{pp_prefix}.mlp.fc2'), 
+                (f'{th_prefix}.self_attn.in_proj_weight', f'{pp_prefix}.attn'),
+                (f'{th_prefix}.self_attn.in_proj_bias', f'{pp_prefix}.attn'),
+                (f'{th_prefix}.self_attn.out_proj', f'{pp_prefix}.attn.proj'),
+        ]
+        mapping.extend(layer_mapping)
+
+    # decoder
+    for idx in range(num_layers):
+        # torch weights prefix
+        th_prefix = f'transformer.decoder.layers.{idx}'
+        # paddle weights prefix
+        pp_prefix = f'transformer.decoder.{idx}'
+        layer_mapping = [
+                (f'{th_prefix}.norm1', f'{pp_prefix}.attn_norm'),
+                (f'{th_prefix}.norm2', f'{pp_prefix}.enc_dec_attn_norm'),
+                (f'{th_prefix}.norm3', f'{pp_prefix}.mlp_norm'),
+                (f'{th_prefix}.linear1', f'{pp_prefix}.mlp.fc1'), 
+                (f'{th_prefix}.linear2', f'{pp_prefix}.mlp.fc2'), 
+                (f'{th_prefix}.self_attn.in_proj_weight', f'{pp_prefix}.attn'),
+                (f'{th_prefix}.self_attn.in_proj_bias', f'{pp_prefix}.attn'),
+                (f'{th_prefix}.self_attn.out_proj', f'{pp_prefix}.attn.proj'),
+                (f'{th_prefix}.multihead_attn.in_proj_weight', f'{pp_prefix}.enc_dec_attn'),
+                (f'{th_prefix}.multihead_attn.in_proj_bias', f'{pp_prefix}.enc_dec_attn'),
+                (f'{th_prefix}.multihead_attn.out_proj', f'{pp_prefix}.enc_dec_attn.proj'),
+        ]
+        mapping.extend(layer_mapping)
     return mapping
 
 
@@ -239,8 +259,8 @@ def get_nested_tensors():
         m = np.load(infile)
         gts = np.load(infile, allow_pickle=True)
 
-    print(t.shape)
-    print(m.shape)
+    #print(t.shape)
+    #print(m.shape)
 
     tt = torch.Tensor(t)
     mm = torch.Tensor(m)
@@ -250,8 +270,8 @@ def get_nested_tensors():
     mmm = paddle.to_tensor(m)
     pp_in = NestedTensor(ttt, mmm)
 
-    print(th_in, th_in.tensors.shape)
-    print(pp_in, pp_in.tensors.shape)
+    #print(th_in, th_in.tensors.shape)
+    #print(pp_in, pp_in.tensors.shape)
 
     targets = []
     for gt in gts:
@@ -310,30 +330,29 @@ def main():
     paddle.set_device('gpu')
 
     #th_in, th_target, pp_in, pp_target = get_nested_tensors()
-    
-    paddle_model, paddle_criterion, paddle_postprocessors = build_detr()
+    config = get_config('./configs/detr_resnet101.yaml') 
+    paddle_model, paddle_criterion, paddle_postprocessors = build_detr(config)
     paddle_model.eval()
 
     #print_model_named_params(paddle_model)
     #print_model_named_buffers(paddle_model)
-    print('------------paddle model finish ----------------------')
+    #print('------------paddle model finish ----------------------')
 
     device = torch.device('cpu')
-    torch_model = torch.hub.load('facebookresearch/detr', 'detr_resnet50', pretrained=True)
+    torch_model = torch.hub.load('facebookresearch/detr', 'detr_resnet101', pretrained=True)
     torch_model = torch_model.to(device)
     torch_model.eval()
 
     #print_model_named_params(torch_model)
     #print_model_named_buffers(torch_model)
-    print('----------torch model finish------------------------')
+    #print('----------torch model finish------------------------')
      
 
-
     # convert weights
-    #paddle_model = convert(torch_model, paddle_model)
+    paddle_model = convert(torch_model, paddle_model)
 
-    model_dict = paddle.load('./detr_resnet50.pdparams')
-    paddle_model.set_dict(model_dict)
+    #model_dict = paddle.load('./detr_resnet50.pdparams')
+    #paddle_model.set_dict(model_dict)
 
 
     # check correctness
@@ -349,7 +368,7 @@ def main():
     #print(pp_in.tensors)
     #print(pp_in.mask)
     #print('-------- pp in finish ------------------')
-    
+    #
 
     #print(th_in.tensors, th_in.tensors.shape)
     #print(th_in.mask, th_in.mask.shape)
@@ -357,19 +376,29 @@ def main():
     
 
     out_paddle = paddle_model(pp_in)
-    loss = paddle_criterion(out_paddle, pp_gt)
-    print('=============== loss =============')
-    for key, val in loss.items():
-        print(key, val.cpu().numpy())
+    #loss = paddle_criterion(out_paddle, pp_gt)
+    #print('=============== loss =============')
+    #for key, val in loss.items():
+    #    print(key, val.cpu().numpy())
 
-    #print(out_paddle['pred_logits'], out_paddle['pred_logits'].shape)
-    #print(out_paddle['pred_boxes'], out_paddle['pred_boxes'].shape)
-    #print('---------- paddle out finish ------------------------')
+    print(out_paddle['pred_logits'], out_paddle['pred_logits'].shape)
+    print(out_paddle['pred_boxes'], out_paddle['pred_boxes'].shape)
+    print('---------- paddle out finish ------------------------')
 
-    #out_torch = torch_model(th_in)
-    #print(out_torch['pred_logits'], out_torch['pred_logits'].shape)
-    #print(out_torch['pred_boxes'], out_torch['pred_boxes'].shape)
-    #print('---------- torch out finish ------------------------')
+    out_torch = torch_model(th_in)
+    print('---------- torch out start ------------------------')
+    print(out_torch['pred_logits'], out_torch['pred_logits'].shape)
+    print(out_torch['pred_boxes'], out_torch['pred_boxes'].shape)
+    print('---------- torch out finish ------------------------')
+
+    
+    out_paddle_logits = out_paddle['pred_logits'].cpu().numpy()
+    out_paddle_boxes = out_paddle['pred_boxes'].cpu().numpy()
+    out_torch_logits = out_torch['pred_logits'].detach().cpu().numpy()
+    out_torch_boxes = out_torch['pred_boxes'].detach().cpu().numpy()
+    assert np.allclose(out_torch_logits, out_paddle_logits, atol = 1e-3)
+    assert np.allclose(out_torch_boxes, out_paddle_boxes, atol = 1e-3)
+
 
     #out_torch = out_torch.data.cpu().numpy()
     #out_paddle = out_paddle.cpu().numpy()
@@ -380,8 +409,8 @@ def main():
     #assert np.allclose(out_torch, out_paddle, atol = 1e-5)
 #    
     # save weights for paddle model
-    #model_path = os.path.join('./detr_resnet50.pdparams')
-    #paddle.save(paddle_model.state_dict(), model_path)
+    model_path = os.path.join('./detr_resnet101.pdparams')
+    paddle.save(paddle_model.state_dict(), model_path)
 
 
 if __name__ == "__main__":

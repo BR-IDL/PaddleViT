@@ -33,6 +33,8 @@ _C.DATA.BATCH_SIZE_EVAL = 8 #64 # val batch_size for single GPU
 _C.DATA.DATA_PATH = '/dataset/coco/' # path to dataset
 _C.DATA.DATASET = 'coco' # dataset name
 _C.DATA.NUM_WORKERS = 2 # number of data loading threads
+_C.DATA.IMAGENET_MEAN = [0.485, 0.456, 0.406] # [0.5, 0.5, 0.5]
+_C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225] # [0.5, 0.5, 0.5]
 
 # model settings
 _C.MODEL = CN()
@@ -41,20 +43,24 @@ _C.MODEL.NAME = 'DETR'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 91
-_C.MODEL.DROPOUT = 0.1
+_C.MODEL.DROPOUT = 0.0
 _C.MODEL.ATTENTION_DROPOUT = 0.0
 _C.MODEL.NUM_QUERIES = 100
 
 _C.MODEL.BACKBONE = 'resnet50'
+_C.MODEL.BACKBONE_LR = 0.1  # this lr is actually lr_mult
+
 
 # transformer settings
 _C.MODEL.TRANS = CN()
-_C.MODEL.TRANS.HIDDEN_SIZE = 256
-_C.MODEL.TRANS.MLP_DIM = 2048
+_C.MODEL.TRANS.EMBED_DIM = 512
+_C.MODEL.TRANS.MLP_RATIO = 8.0
 _C.MODEL.TRANS.NUM_HEADS = 8
-_C.MODEL.TRANS.NUM_ENCODER_LAYERS = 6
-_C.MODEL.TRANS.NUM_DECODER_LAYERS = 6
-_C.MODEL.TRANS.QKV_BIAS = True
+_C.MODEL.TRANS.NUM_ENCODERS = 6
+_C.MODEL.TRANS.NUM_DECODERS = 6
+_C.MODEL.TRANS.PRE_NORM = False
+_C.MODEL.TRANS.RETURN_INTERMEDIATE_DEC = True
+
 
 # training settings
 _C.TRAIN = CN()
@@ -69,9 +75,9 @@ _C.TRAIN.GRAD_CLIP = 1.0
 _C.TRAIN.ACCUM_ITER = 1 #1
 
 _C.TRAIN.LR_SCHEDULER = CN()
-_C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
+_C.TRAIN.LR_SCHEDULER.NAME = 'step' #'warmupcosine'
 _C.TRAIN.LR_SCHEDULER.MILESTONES = "30, 60, 90" # only used in StepLRScheduler
-_C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
+_C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 200 # only used in StepLRScheduler
 _C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
 
 _C.TRAIN.OPTIMIZER = CN()
@@ -83,10 +89,10 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 20 # freq to save chpt
+_C.SAVE_FREQ = 1 # freq to save chpt
 _C.REPORT_FREQ = 10 # freq to logging info
 _C.VALIDATE_FREQ = 20 # freq to do validation
-_C.SEED = 42
+_C.SEED = 0
 _C.EVAL = False # run evaluation only
 _C.LOCAL_RANK = 0
 _C.NGPUS = -1
@@ -104,6 +110,7 @@ def _update_config_from_file(config, cfg_file):
     print('merging config from {}'.format(cfg_file))
     config.merge_from_file(cfg_file)
     config.freeze()
+
 
 def update_config(config, args):
     """Update config by ArgumentParser

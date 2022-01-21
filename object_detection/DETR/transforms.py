@@ -1,4 +1,4 @@
-#  Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Transforms for image data and detection targets"""
+""" Transforms for image data and detection targets,
+    Implemneted on CPU, since GPU ops may cause error"""
 
 import random
 import numpy as np
@@ -26,20 +27,25 @@ from box_ops import box_xyxy_to_cxcywh_numpy
 
 
 def crop(image, target, region):
+    """crop image and target with region
+    Args:
+        image: np.array
+        target: label dict contains labels, boxes, or masks fields, see coco.py for details
+        regtion: list, crop region [top, left, height, width]
+    Returns:
+        cropped_image: cropped image
+        target: corresponding targets
+    """
     cropped_image = T.crop(image, *region)
     target = target.copy()
     i, j, h, w = region
-    #target['size'] = paddle.to_tensor([h, w]).cpu()
     target['size'] = np.array([h, w], dtype='float32')
     fields = ['labels', 'area', 'iscrowd']
 
     if 'boxes' in target:
         boxes = target['boxes']
-        #max_size = paddle.to_tensor([h, w], dtype='float32').cpu()
         max_size = np.array([h, w], dtype='float32')
-        #cropped_boxes = boxes - paddle.to_tensor([j, i, j, i], dtype='float32').cpu() # box are (x1, y1, x2, y2)
         cropped_boxes = boxes - np.array([j, i, j, i], dtype='float32') # box are (x1, y1, x2, y2)
-        #cropped_boxes = paddle.minimum(cropped_boxes.reshape([-1, 2, 2]), max_size)
         cropped_boxes = np.minimum(cropped_boxes.reshape([-1, 2, 2]), max_size)
         cropped_boxes = cropped_boxes.clip(min=0)
         area = (cropped_boxes[:, 1, :] - cropped_boxes[:, 0, :]).prod(axis=1)
@@ -51,44 +57,37 @@ def crop(image, target, region):
         target['masks'] = target['masks'][:, i:i + h, j:j + w]
         fields.append('masks')
 
-
-    # remove the boxe or mask if the area is zero
+    # remove the box or mask if the area is zero
     if 'boxes' in target or 'masks' in target:
         if 'boxes' in target:
             cropped_boxes = target['boxes'].reshape((-1, 2, 2))
-            # FIXME: select indices where x2 > x1 and y2 > y1
+            # Select indices where x2 > x1 and y2 > y1
             # This paddle api will raise error in current env
             #keep = paddle.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], axis=1)
-            # Instead we use numpy for temp fix
-            #cropped_boxes = cropped_boxes.cpu().numpy()
+            # Instead we use numpy 
             keep  = np.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], axis=1)
-            #keep = keep.cpu().numpy()
         else:
             keep = target['masks'].flatten(1).any(1)
-            #keep = keep.cpu().numpy()
 
         keep_idx = np.where(keep)[0].astype('int32')
-        #keep = paddle.to_tensor(keep_idx).cpu()
         keep = keep_idx
 
         for field in fields:
-            #target[field] = target[field].index_select(keep, axis=0)
             target[field] = target[field][keep]
 
     return cropped_image, target
 
 
 def hflip(image, target):
+    """ horizontal flip image and corresponding labels"""
     flipped_image = T.hflip(image)
     w, h = image.size
     target = target.copy()
     if 'boxes' in target:
         boxes = target['boxes'] # n x 4
-        #boxes = boxes.index_select(paddle.to_tensor([2, 1, 0, 3], dtype='int32').cpu(), axis=1)
         boxes = boxes[:, [2, 1, 0, 3]]
-        #boxes = boxes * paddle.to_tensor(
-        #        [-1, 1, -1, 1], dtype='float32').cpu() + paddle.to_tensor([w, 0, w, 0], dtype='float32').cpu()
-        boxes = boxes * np.array([-1, 1, -1, 1], dtype='float32') + np.array([w, 0, w, 0], dtype='float32')
+        boxes = boxes * np.array([-1, 1, -1, 1], dtype='float32') + np.array(
+            [w, 0, w, 0], dtype='float32')
         target['boxes'] = boxes
 
     if 'masks' in target:
@@ -163,8 +162,8 @@ def resize(image, target, size, max_size=None):
         if boxes.shape[0] == 0: # empty boxes
             scaled_boxes = boxes
         else: # this line works well in pytorch, but not in paddle
-            #scaled_boxes = boxes * paddle.to_tensor([ratio_width, ratio_height, ratio_width, ratio_height]).cpu()
-            scaled_boxes = boxes * np.array([ratio_width, ratio_height, ratio_width, ratio_height], dtype='float32')
+            scaled_boxes = boxes * np.array(
+                [ratio_width, ratio_height, ratio_width, ratio_height], dtype='float32')
         target['boxes'] = scaled_boxes
 
     if 'area' in target:
@@ -173,7 +172,6 @@ def resize(image, target, size, max_size=None):
         target['area'] = scaled_area
 
     h, w = size
-    #target['size'] = paddle.to_tensor([h, w]).cpu()
     target['size'] = np.array([h, w], dtype='float32')
 
     if 'masks' in target:
@@ -195,7 +193,6 @@ def pad(image, target, padding):
     if target is None:
         return padded_image, None
     target = target.copy()
-    #target['size'] = paddle.to_tensor(padded_image.size[::-1]).cpu()
     target['size'] = np.array(padded_image.size[::-1], dtype='float32')
     if 'masks' in target:
         target['masks'] = T.pad(target['masks'], (0, padding[0], 0, padding[1]))
@@ -301,6 +298,7 @@ class RandomSelect():
 
 
 class ToTensor():
+    """convert image to tensor, target unchanged"""
     def __call__(self, image, target):
         return T.to_tensor(image), target
 
@@ -334,7 +332,6 @@ class Normalize():
         if 'boxes' in target and target['boxes'].shape[0] != 0:
             boxes = target['boxes']
             boxes = box_xyxy_to_cxcywh_numpy(boxes)
-            #boxes = boxes / paddle.to_tensor([w, h, w, h], dtype='float32').cpu()
             boxes = boxes / np.array([w, h, w, h], dtype='float32')
             target['boxes'] = boxes
 
@@ -342,6 +339,7 @@ class Normalize():
 
 
 class Compose():
+    """compose of different transform ops"""
     def __init__(self, transforms):
         self.transforms = transforms
 
