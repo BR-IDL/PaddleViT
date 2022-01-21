@@ -12,14 +12,15 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 <figcaption align = "center">DETR Model Overview</figcaption>
 
 ### Update 
-Update (2022-01-07): Code is refactored and ported weights is changed, new weights are coming soon.
-Update (2021-09-01): Code is released and ported weights are uploaded.
+* Update (2022-01-21): Code is updated and ported weights are uploaded.
+* Update (2022-01-07): Code is refactored and ported weights are changed, new weights are coming soon.
+* Update (2021-09-01): Code is released and ported weights are uploaded.
 
 ## Models Zoo
 | Model | backbone  | box_mAP | Model                                                                                                                                                       |
 |-------|-----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| DETR  | ResNet50  | 42.0    | [google]()/[baidu]()() |
-| DETR  | ResNet101 | 43.5    | [google]()/[baidu]()() |
+| DETR  | ResNet50  | 42.0    | [google](https://drive.google.com/file/d/1P49O2h_CmEJzGMdbQFAgyxY4FQWRYREj/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1GX_znZUgKe4f6Fjhga3TnQ?pwd=uamk)(uamk) |
+| DETR  | ResNet101 | 43.5    | [google](https://drive.google.com/file/d/1yNXRpRNtUDX-s5yrVa6dyLOvMcbzwsoh/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kfimY0-ebmgs42phlhwUWA?pwd=2veg)(2veg) |
 
 > *The results are evaluated on COCO validation set.
 
