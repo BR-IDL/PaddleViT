@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=1 \
+CUDA_VISIBLE_DEVICES=2 \
 python main_single_gpu.py \
 -cfg='./configs/detr_resnet50.yaml' \
 -dataset='coco' \

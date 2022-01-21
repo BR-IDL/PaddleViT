@@ -1,5 +1,5 @@
 DATA:
-    BATCH_SIZE: 2
+    BATCH_SIZE: 2 
 MODEL:
     DROPOUT: 0.1
     BACKBONE: "resnet50"

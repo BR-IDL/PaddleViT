@@ -140,7 +140,6 @@ class SetCriterion(nn.Layer):
 
         target_classes[idx] = target_classes_o
 
-        #loss_ce = F.l1_loss(outputs['pred_logits'], paddle.zeros_like(outputs['pred_logits']))
         loss_ce = F.cross_entropy(input=src_logits, label=target_classes, weight=self.empty_weight)
         losses = {'loss_ce': loss_ce}
         return losses
@@ -165,9 +164,11 @@ class SetCriterion(nn.Layer):
         """
         assert 'pred_boxes' in outputs
         idx = self._get_src_permutation_idx(indices)
-        src_boxes = paddle.zeros([idx[0].shape[0], 4])
-        for i in range(idx[0].shape[0]):
-            src_boxes[i, :] = outputs['pred_boxes'][idx[0][i], idx[1][i], :]
+        #src_boxes = paddle.zeros([idx[0].shape[0], 4]) # this is wrong in training
+        #for i in range(idx[0].shape[0]):
+        #    src_boxes[i, :] = outputs['pred_boxes'][idx[0][i], idx[1][i], :]
+        src_boxes = outputs['pred_boxes'][idx]
+
         target_boxes = paddle.concat(
             (t['boxes'].index_select(i) for t, (_, i) in zip(targets, indices)))
         # L1 Loss

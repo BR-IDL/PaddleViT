@@ -67,7 +67,18 @@ class HugarianMatcher(nn.Layer):
             #cost_class: [batch*num_queries, batch_num_boxes]
             cost_class = -paddle.index_select(out_prob, tgt_idx, axis=1)
             #cost_bbox: [batch*num_queries, batch_num_boxes]
+
+            # Option1: my impl using paddle apis
             cost_bbox = cdist_p1(out_bbox, tgt_bbox)
+            ## Option2: convert back to numpy
+            #out_bbox = out_bbox.cpu().numpy()
+            #tgt_bbox = tgt_bbox.cpu().numpy()
+            #cost_bbox = distance.cdist(out_bbox, tgt_bbox, 'minkowski', p=1).astype('float32')
+            #cost_bbox = paddle.to_tensor(cost_bbox)
+
+
+            out_bbox = paddle.to_tensor(out_bbox)
+            tgt_bbox = paddle.to_tensor(tgt_bbox)
             #cost_giou: [batch*num_queries, batch_num_boxes]
             cost_giou = -generalized_box_iou(box_cxcywh_to_xyxy(out_bbox),
                                              box_cxcywh_to_xyxy(tgt_bbox))

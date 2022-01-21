@@ -26,7 +26,6 @@ def box_xyxy_to_cxcywh_numpy(box):
     return np.stack([xc, yc, w, h], axis=-1)
 
 
-
 def box_cxcywh_to_xyxy(box):
     """convert box from center-size format:
     [center_x, center_y, width, height]

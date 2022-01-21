@@ -123,6 +123,7 @@ def train(dataloader,
     for batch_id, data in enumerate(dataloader):
         samples = data[0]
         targets = data[1]
+
         outputs = model(samples)
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
@@ -134,25 +135,26 @@ def train(dataloader,
             optimizer.clear_grad()
 
         # sync form other gpus for overall loss
-        batch_size = paddle.to_tensor(samples.tensors.shape[0])
-        #master_loss_ce = loss_dict['loss_ce']
-        master_loss_bbox = loss_dict['loss_bbox']
-        master_loss_giou = loss_dict['loss_giou']
-        master_batch_size = batch_size
-        #dist.all_reduce(master_loss_ce)
-        dist.all_reduce(master_loss_bbox)
-        dist.all_reduce(master_loss_giou)
-        dist.all_reduce(master_batch_size)
-        #master_loss_ce = master_loss_ce / dist.get_world_size()
-        master_loss_bbox = master_loss_bbox / dist.get_world_size()
-        master_loss_giou = master_loss_giou / dist.get_world_size()
-        #master_loss_ce_meter.update(master_loss_ce.numpy()[0], master_batch_size.numpy()[0])
-        master_loss_bbox_meter.update(master_loss_bbox.numpy()[0], master_batch_size.numpy()[0])
-        master_loss_giou_meter.update(master_loss_giou.numpy()[0], master_batch_size.numpy()[0])
-
-        #train_loss_ce_meter.update(loss_dict['loss_ce'].numpy()[0], batch_size.numpy()[0])
-        train_loss_bbox_meter.update(loss_dict['loss_bbox'].numpy()[0], batch_size.numpy()[0])
-        train_loss_giou_meter.update(loss_dict['loss_giou'].numpy()[0], batch_size.numpy()[0])
+        with paddle.no_grad():
+            batch_size = paddle.to_tensor(samples.tensors.shape[0])
+            master_loss_ce = loss_dict['loss_ce']
+            master_loss_bbox = loss_dict['loss_bbox']
+            master_loss_giou = loss_dict['loss_giou']
+            master_batch_size = batch_size
+            dist.all_reduce(master_loss_ce)
+            dist.all_reduce(master_loss_bbox)
+            dist.all_reduce(master_loss_giou)
+            dist.all_reduce(master_batch_size)
+            master_loss_ce = master_loss_ce / dist.get_world_size()
+            master_loss_bbox = master_loss_bbox / dist.get_world_size()
+            master_loss_giou = master_loss_giou / dist.get_world_size()
+            master_loss_ce_meter.update(master_loss_ce.numpy()[0], master_batch_size.numpy()[0])
+            master_loss_bbox_meter.update(master_loss_bbox.numpy()[0], master_batch_size.numpy()[0])
+            master_loss_giou_meter.update(master_loss_giou.numpy()[0], master_batch_size.numpy()[0])
+    
+            train_loss_ce_meter.update(loss_dict['loss_ce'].numpy()[0], batch_size.numpy()[0])
+            train_loss_bbox_meter.update(loss_dict['loss_bbox'].numpy()[0], batch_size.numpy()[0])
+            train_loss_giou_meter.update(loss_dict['loss_giou'].numpy()[0], batch_size.numpy()[0])
     
         if batch_id % debug_steps == 0:
             if local_logger:
@@ -170,7 +172,7 @@ def train(dataloader,
                     f"Avg loss_bbox: {master_loss_bbox_meter.avg:.4f}, " + 
                     f"Avg loss_giou: {master_loss_giou_meter.avg:.4f}") 
 
-        #dist.barrier()
+        dist.barrier()
 
     train_time = time.time() - time_st
     return (train_loss_ce_meter.avg,
@@ -382,6 +384,12 @@ def main_worker(*args):
         raise NotImplementedError(f"Unsupported Scheduler: {config.TRAIN.LR_SCHEDULER}.")
 
     # STEP 4: Define optimizer
+    params_dicts = [
+        {"params": [p for n, p in model.named_parameters() if "backbone" not in n and p.stop_gradient is False]},
+        {"params": [p for n, p in model.named_parameters() if "backbone" in n and p.stop_gradient is False],
+         "lr": config.MODEL.BACKBONE_LR}, # lr is lr_mult 
+    ]
+
     if config.TRAIN.GRAD_CLIP:
         clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
     else:
