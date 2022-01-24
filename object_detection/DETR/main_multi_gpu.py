@@ -503,13 +503,13 @@ def main_worker(*args):
                           f"Loss_ce: {trn_loss_ce:.4f}, " +
                           f"Loss_bbox: {trn_loss_bbox:.4f}, " +
                           f"Loss_giou: {trn_loss_giou:.4f}, " +
-                          f"time: {train_time:.2f}")
+                          f"time: {trn_time:.2f}")
         if master_logger is not None:
             master_logger.info(f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                                f"Loss_ce: {avg_loss_ce:.4f}, " +
                                f"Loss_bbox: {avg_loss_bbox:.4f}, " +
                                f"Loss_giou: {avg_loss_giou:.4f}, " +
-                               f"time: {train_time:.2f}")
+                               f"time: {trn_time:.2f}")
 
         # validation
         if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
