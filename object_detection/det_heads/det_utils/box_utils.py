@@ -110,7 +110,7 @@ def boxes_area(boxes):
         raise ValueError("The dim of boxes must be 2 or 3!")
 
 
-def boxes_iou(boxes1, boxes2, mode='a'):
+def boxes_iou(boxes1, boxes2, mode='a', type='iou'):
     '''
     Compute the ious of two boxes tensor and the coordinate format of boxes is xyxy.
 
@@ -139,6 +139,17 @@ def boxes_iou(boxes1, boxes2, mode='a'):
                             inter_area / union_area,
                             paddle.zeros_like(inter_area, dtype="float32"))
 
+        if type == "giou":
+            enclosing_lt = paddle.maximum(boxes1.unsqueeze(-2)[:, :, :2], boxes2.unsqueeze(0)[:, :, :2])
+            enclosing_rb = paddle.minimum(boxes1.unsqueeze(-2)[:, :, 2:], boxes2.unsqueeze(0)[:, :, 2:])
+
+            enclosing_wh = (enclosing_rb - enclosing_lt).astype("float32").clip(min=0)
+            enclosing_area = enclosing_wh[:, 0] * enclosing_wh[:, 1] + 1e-6
+
+            giou = ious - (enclosing_area - union_area) / enclosing_area
+
+            return giou, union_area
+
         return ious, union_area
 
     elif mode == 'b':
@@ -155,6 +166,17 @@ def boxes_iou(boxes1, boxes2, mode='a'):
         ious = paddle.where(inter_area > 0,
                             inter_area / union_area,
                             paddle.zeros_like(inter_area, dtype="float32"))
+
+        if type == "giou":
+            enclosing_lt = paddle.minimum(boxes1[:, :2], boxes2[:, :2])
+            enclosing_rb = paddle.maximum(boxes1[:, 2:], boxes2[:, 2:])
+
+            enclosing_wh = (enclosing_rb - enclosing_lt).astype("float32").clip(min=0)
+            enclosing_area = enclosing_wh[:, 0] * enclosing_wh[:, 1] + 1e-6
+
+            giou = ious - (enclosing_area - union_area) / enclosing_area
+
+            return giou, union_area
 
         return ious, union_area
         

@@ -61,6 +61,7 @@ class RetinaNetHead(nn.Layer):
             weights=config.RETINANET.WEIGHTS
         )
         self.postprocess = RetinaNetPostProcess(
+            num_classes=config.RETINANET.NUM_CLASSES,
             score_threshold=config.RETINANET.SCORE_THRESH,
             keep_top_k=config.RETINANET.KEEP_TOPK,
             nms_top_k=config.RETINANET.NMS_TOPK,
@@ -144,14 +145,11 @@ class RetinaNetHead(nn.Layer):
             return loss_dict
         
         else:
-            img_whwh = paddle.concat([inputs["imgs_shape"][:, 1:2],
-                                      inputs["imgs_shape"][:, 0:1]], axis=-1)
             pred_result, bbox_num = self.postprocess(
                 pred_scores_list, 
                 pred_boxes_list, 
                 anchors,
-                inputs["scale_factor_wh"], 
-                img_whwh
+                inputs
             )
 
             return pred_result, bbox_num
