@@ -30,9 +30,8 @@ from augment import auto_augment_policy_original
 from augment import AutoAugment
 from augment import rand_augment_policy_original
 from augment import RandAugment
-from masking_generator import RandomMaskingGenerator
-from transforms import RandomHorizontalFlip
 from random_erasing import RandomErasing
+
 
 class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
@@ -51,15 +50,7 @@ class ImageNet2012Dataset(Dataset):
         super(ImageNet2012Dataset, self).__init__()
         assert mode in ["train", "val"]
         self.file_folder = file_folder
-
-        if isinstance(transform, tuple):
-            # training: transform = [transform, mask_generator]
-            self.transform = transform[0]
-            self.mask_generator = transform[1] # if mae finetune, mask_generator is None
-        else:
-            # val: transform = transform
-            self.transform = transform
-            self.mask_generator = None
+        self.transform = transform
         self.img_path_list = []
         self.label_list = []
 
@@ -82,46 +73,53 @@ class ImageNet2012Dataset(Dataset):
     def __getitem__(self, index):
         data = image_load(self.img_path_list[index]).convert('RGB')
         data = self.transform(data)
-        if self.mask_generator is not None:
-            mask = self.mask_generator()
-        else:
-            mask = None
+        label = self.label_list[index]
 
-        if mask is None:
-            label = self.label_list[index]
-            return data, label
-
-        return data, mask
+        return data, label
 
 
-def get_train_transforms(config):
-    """ Get training transforms
+def get_train_transforms_pretrain(config):
+    """Simple augmentation for pretraining"""
+    aug_op_list = [transforms.RandomResizedCrop(size=(config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
+                                                scale=(0.2, 1.0),
+                                                interpolation='bicubic'), # same as MAE pytorch
+                   transforms.RandomHorizontalFlip(),
+                   transforms.ToTensor(),
+                   transforms.Normalize(mean=config.DATA.IMAGENET_MEAN, std=config.DATA.IMAGENET_STD)]
+    transforms_train = transforms.Compose(aug_op_list)
+    return transforms_train
 
-    For training, a RandomResizedCrop is applied, then normalization is applied with
-    [0.5, 0.5, 0.5] mean and std. The input pixel values must be rescaled to [0, 1.]
-    Outputs is converted to tensor
 
-    Args:
-        config: configs contains IMAGE_SIZE, see config.py for details
-    Returns:
-        transforms_train: training transforms
-    """
+def get_train_transforms_linearprobe(config):
+    """Weak augmentation for linear probing"""
+    aug_op_list = [transforms.RandomResizedCrop(size=(config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
+                                                interpolation='bicubic'), # same as MAE pytorch
+                   transforms.RandomHorizontalFlip(),
+                   transforms.ToTensor(),
+                   transforms.Normalize(mean=config.DATA.IMAGENET_MEAN, std=config.DATA.IMAGENET_STD)]
+    transforms_train = transforms.Compose(aug_op_list)
+    return transforms_train
 
+
+def get_train_transforms_finetune(config):
+    """Full augmentation for finetuning"""
     aug_op_list = []
     # STEP1: random crop and resize
     aug_op_list.append(
         transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
-                                     scale=(0.05, 1.0), interpolation='bicubic'))
-    # STEP2: auto_augment or color jitter
-    if config.TRAIN.AUTO_AUGMENT:
-        policy = auto_augment_policy_original()
-        auto_augment = AutoAugment(policy)
-        aug_op_list.append(auto_augment)
-    elif config.TRAIN.RAND_AUGMENT:
+                                     scale=(0.2, 1.0), interpolation='bicubic'))# Same as MAE pytorch
+    # STEP2: random horizontalflip
+    aug_op_list.append(transforms.RandomHorizontalFlip())
+    # STEP3: rand_augment or auto_augment or color jitter
+    if config.TRAIN.RAND_AUGMENT: # MAE: True
         policy = rand_augment_policy_original()
         rand_augment = RandAugment(policy)
         aug_op_list.append(rand_augment)
-    else:
+    elif config.TRAIN.AUTO_AUGMENT: # MAE: None
+        policy = auto_augment_policy_original()
+        auto_augment = AutoAugment(policy)
+        aug_op_list.append(auto_augment)
+    else: # MAE: None
         jitter = (float(config.TRAIN.COLOR_JITTER), ) * 3
         aug_op_list.append(transforms.ColorJitter(*jitter))
     # STEP3: other ops
@@ -138,17 +136,35 @@ def get_train_transforms(config):
     # Final: compose transforms and return
     transforms_train = transforms.Compose(aug_op_list)
 
-    if config.MODEL.MAE_PRETRAIN:
-        # for MAE pretraining
-        mask_generator = RandomMaskingGenerator(
-            input_size=config.DATA.IMAGE_SIZE // config.MODEL.TRANS.PATCH_SIZE,
-            mask_ratio=config.MODEL.TRANS.MASK_RATIO)
+    return transforms_train
+
+
+def get_train_transforms(config):
+    """ Get training transforms
+
+    For training, a RandomResizedCrop is applied, then normalization is applied with
+    mean and std. The input pixel values must be rescaled to [0, 1.]
+    Outputs is converted to tensor
+
+    Args:
+        config: configs contains IMAGE_SIZE, see config.py for details
+    Returns:
+        transforms_train: training transforms
+    """
+    assert config.MODEL.TYPE in ["PRETRAIN", "FINETUNE", "LINEARPROBE"]
+    if config.MODEL.TYPE == "PRETRAIN":
+        transforms_train = get_train_transforms_pretrain
+    elif config.MODEL.TYPE == "FINETUNE":
+        transforms_train =  get_train_transforms_finetune
+    elif config.MODEL.TYPE == "LINEARPROBE":
+        transforms_train = get_train_transforms_linearprobe
     else:
-        mask_generator = None
+        raise ValueError('config.MODEL.TYPE not supported!')
+    
+    return transforms_train(config)
 
-    return (transforms_train, mask_generator)
 
-
+# val transform is for MAE finetune and line probing
 def get_val_transforms(config):
     """ Get training transforms
 
@@ -168,8 +184,7 @@ def get_val_transforms(config):
         transforms.Resize(scale_size, 'bicubic'), # single int for resize shorter side of image
         transforms.CenterCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=config.DATA.IMAGENET_MEAN, std=config.DATA.IMAGENET_STD),
-    ])
+        transforms.Normalize(mean=config.DATA.IMAGENET_MEAN, std=config.DATA.IMAGENET_STD)])
     return transforms_val
 
 

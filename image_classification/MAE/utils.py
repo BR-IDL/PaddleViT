@@ -20,7 +20,94 @@ and WarmupCosineScheduler for training
 """
 
 import math
+import numpy as np
+import paddle
 from paddle.optimizer.lr import LRScheduler
+
+def get_params_groups(model):
+    regularized = []
+    not_regularized = []
+    for name, param in model.named_parameters():
+        if param.stop_gradient:
+            continue
+        # do not regularize biases and norm params
+        if name.endswith(".bias") or len(param.shape) == 1:
+            not_regularized.append(param)
+        else:
+            regularized.append(param)
+    return [{'params': regularized}, {'params': not_regularized, 'weight_decay': 0.}]
+
+
+def cosine_scheduler(base_value,
+                     final_value,
+                     epochs,
+                     num_iters_per_epoch,
+                     warmup_epochs=0,
+                     start_warmup_value=0):
+    warmup_schedule = np.array([])
+    warmup_iters = warmup_epochs * num_iters_per_epoch
+    if warmup_epochs > 0:
+        # linear schedule for warmup epochs
+        warmup_schedule = np.linspace(start_warmup_value, base_value, warmup_iters)
+
+    iters = np.arange(epochs * num_iters_per_epoch  - warmup_iters)
+    schedule = final_value + 0.5 * (base_value - final_value) * (1 + np.cos(np.pi * iters / len(iters)))
+    schedule = np.concatenate((warmup_schedule, schedule))
+    assert len(schedule) == epochs * num_iters_per_epoch
+    return schedule
+
+
+def interpolate_pos_embed(model, state_dict):
+    if 'position_embedding' in state_dict:
+        pos_embed_w = state_dict['position_embedding']
+        embed_dim = pos_embed_w.shape[-1]
+        n_patches = model.patch_embedding.n_patches
+        n_extra_tokens = model.position_embedding.shape[-2] - n_patches # seq_l - n_patches
+        orig_size = int((pos_embed_w.shape[-2] - n_extra_tokens) ** 0.5)
+        new_size = int(n_patches ** 0.5)
+        if orig_size != new_size:
+            extra_tokens = pos_embed_w[:, :n_extra_tokens]
+            pos_tokens = pos_embed_w[:, n_extra_tokens:]
+            pos_tokens = pos_tokens.reshape([-1, orig_size, orig_size, embed_dim])
+            pos_tokens = pos_tokens.transpose([0, 3, 1, 2])
+            pos_tokens = paddle.nn.functional.interpolate(
+                pos_token, size=(new_size, new_size), mode='bicubic', align_corners=False)
+            pos_tokens = pos_tokens.transpose([0, 2, 3, 1])
+            pos_tokens = pos_tokens.flatten(1, 2)
+            new_pos_embed = paddle.concat([extra_tokens, pos_tokens], axis=1)
+            state_dict['position_embedding'] = new_pos_embed
+
+
+#TODO: check correctness
+class LARS(paddle.optimizer.Optimizer):
+    """LARS optmizer"""
+    def __init__(self, params, learning_rate=0., weight_decay=0., momentum=0., trust_coefficient=0.001):
+        super().__init__(params, learning_rate=learning_rate, weight_decay=weight_decay)
+
+    @paddle.no_grad()
+    def step(self):
+        for g in self.param_groups:
+            for p in g['params']:
+                dp = p.grad
+                if dp is None:
+                    continue
+                if p.ndim > 1:
+                    dp = dp.add(p, alpha=g['weight_decay'])
+                    param_norm = paddle.norm(p)
+                    update_norm = paddle.norm(dp)
+                    one = paddle.ones_list(param_norm)
+                    q = paddle.where(param_norm >0.,
+                                     paddle.where(update_norm > 0,
+                                                  (g['trust_coefficient'] * param_norm / update_norm),
+                                                  one),
+                                     one)
+                    dp = dp.mul(q)
+                param_state = self.state[p]
+                if 'mu' not in param_state:
+                    param_state['mu'] = paddle.zeros_like(p)
+                mu = param_state['mu']
+                mu.mul_(g['momentum']).add_(dp)
+                p.add_(mu, alpha=-g['lr'])
 
 
 class AverageMeter():

@@ -2,34 +2,31 @@ DATA:
     IMAGE_SIZE: 224
     CROP_PCT: 0.875
 MODEL:
-    TYPE: MAE
+    TYPE: FINETUNE
     NAME: vit_base_patch16_224
     DROPPATH: 0.1
+    GLOBAL_POOL: True
     TRANS:
         PATCH_SIZE: 16
         MLP_RATIO: 4.0
         QKV_BIAS: true
-        MASK_RATIO: 0.75
         ENCODER:
             EMBED_DIM: 768
             DEPTH: 12
             NUM_HEADS: 12
-
 TRAIN:
-    NUM_EPOCHS: 100
+    NUM_EPOCHS: 50
     WARMUP_EPOCHS: 5
     WEIGHT_DECAY: 0.05
     BASE_LR: 1e-3
-    WARMUP_START_LR: 1e-6
-    ACCUM_ITER: 2 # the total batch size should be 1024
-
-    LR_SCHEDULER:
-        NAME: 'warmupcosine'
-
+    WARMUP_START_LR: 0.0
+    LINEAR_SCALED_LR: 256
+    END_LR: 1e-6
+    ACCUM_ITER: 1
     OPTIMIZER:
         NAME: 'AdamW'
         BETAS: (0.9, 0.999)
-
+    LAYER_DECAY: 0.65
     SMOOTHING: 0.1
     RAND_AUGMENT: True
     RAND_AUGMENT_LAYERS: 9
@@ -40,3 +37,8 @@ TRAIN:
     MIXUP_MODE: 'batch'
     CUTMIX_ALPHA: 1.0
     CUTMIX_MINMAX: None
+    RANDOM_ERASE_PROB: 0.25
+    RANDOM_ERASE_MODE: 'pixel'
+    RANDOM_ERASE_COUNT: 1
+    RANDOM_ERASE_SPLIT: False
+

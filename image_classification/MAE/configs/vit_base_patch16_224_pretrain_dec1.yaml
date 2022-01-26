@@ -2,10 +2,9 @@ DATA:
     IMAGE_SIZE: 224
     CROP_PCT: 0.875
 MODEL:
-    TYPE: MAE
+    TYPE: PRETRAIN
     NAME: vit_base_patch16_224_dec1
     DROPPATH: 0.0
-    MAE_PRETRAIN: True
     TRANS:
         PATCH_SIZE: 16
         MLP_RATIO: 4.0
@@ -25,8 +24,8 @@ TRAIN:
     WEIGHT_DECAY: 0.05
     BASE_LR: 1.5e-4
     WARMUP_START_LR: 1e-6
-    GRAD_CLIP: None
-    ACCUM_ITER: 2 # 8gpus only have 2048 batch size, the total batch size should be 4096
+    GRAD_CLIP: 1
+    ACCUM_ITER: 1 # the total batch size should be 4096
     LINEAR_SCALED_LR: None
 
     LR_SCHEDULER:

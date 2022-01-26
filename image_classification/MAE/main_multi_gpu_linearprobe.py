@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""MAE finetuning using multiple GPU """
+"""MAE linear probing using multiple GPU """
 
 import sys
 import os
@@ -27,7 +27,6 @@ import paddle.nn.functional as F
 import paddle.distributed as dist
 from datasets import get_dataloader
 from datasets import get_dataset
-from mixup import Mixup
 from losses import LabelSmoothingCrossEntropyLoss
 from losses import SoftTargetCrossEntropyLoss
 from transformer import build_transformer as build_model
@@ -37,7 +36,6 @@ from utils import get_exclude_from_weight_decay_fn
 from utils import get_params_groups
 from utils import cosine_scheduler
 from utils import interpolate_pos_embed
-import lr_decay
 from config import get_config
 from config import update_config
 
@@ -109,7 +107,6 @@ def train(dataloader,
           total_batch,
           debug_steps=100,
           accum_iter=1,
-          mixup_fn=None,
           amp=False,
           local_logger=None,
           master_logger=None):
@@ -125,7 +122,6 @@ def train(dataloader,
         total_batch: int, total num of batches for one epoch
         debug_steps: int, num of iters to log info, default: 100
         accum_iter: int, num of iters for accumulating gradients, default: 1
-        mixup_fn: Mixup, mixup instance, default: None
         amp: bool, if True, use mix precision training, default: False
         local_logger: logger for local process/gpu, default: None
         master_logger: logger for main process, default: None
@@ -150,10 +146,6 @@ def train(dataloader,
         # get data
         images = data[0]
         label = data[1]
-        label_orig = label.clone()
-
-        if mixup_fn is not None:
-            images, label = mixup_fn(images, label_orig)
 
         # set per iteration lr using scheduler
         global_train_iter = total_batch * (epoch - 1) + batch_id # epoch starts from 1
@@ -179,10 +171,7 @@ def train(dataloader,
                 optimizer.clear_grad()
 
         pred = F.softmax(output)
-        if mixup_fn:
-            acc = paddle.metric.accuracy(pred, label_orig)
-        else:
-            acc = paddle.metric.accuracy(pred, label_orig.unsqueeze(1))
+        acc = paddle.metric.accuracy(pred, label.unsqueeze(1))
 
         # sync from other gpus for overall loss and acc
         batch_size = paddle.to_tensor(images.shape[0])
@@ -194,7 +183,6 @@ def train(dataloader,
         dist.all_reduce(master_batch_size)
         master_loss = master_loss / dist.get_world_size()
         master_acc = master_acc / dist.get_world_size()
-
         master_loss_meter.update(master_loss.numpy()[0], master_batch_size.numpy()[0])
         master_acc_meter.update(master_acc.numpy()[0], master_batch_size.numpy()[0])
 
@@ -355,24 +343,8 @@ def main_worker(*args):
     message = f'----- Total # of val batch (single gpu): {total_batch_val}'
     write_log(local_logger, master_logger, message)
 
-    # STEP 3: Define Mixup function
-    mixup_fn = None
-    if config.TRAIN.MIXUP_PROB > 0 or config.TRAIN.CUTMIX_ALPHA > 0 or config.TRAIN.CUTMIX_MINMAX is not None:
-        mixup_fn = Mixup(mixup_alpha=config.TRAIN.MIXUP_ALPHA,
-                         cutmix_alpha=config.TRAIN.CUTMIX_ALPHA,
-                         cutmix_minmax=config.TRAIN.CUTMIX_MINMAX,
-                         prob=config.TRAIN.MIXUP_PROB,
-                         switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
-                         mode=config.TRAIN.MIXUP_MODE,
-                         label_smoothing=config.TRAIN.SMOOTHING)
-
     # STEP 4: Define criterion
-    if config.TRAIN.MIXUP_PROB > 0.:
-        criterion = SoftTargetCrossEntropyLoss()
-    elif config.TRAIN.SMOOTHING:
-        criterion = LabelSmoothingCrossEntropyLoss()
-    else:
-        criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss()
     # only use cross entropy for val
     criterion_val = nn.CrossEntropyLoss()
 
@@ -401,11 +373,7 @@ def main_worker(*args):
                                    len(dataloader_train),
                                    warmup_epochs=config.TRAIN.WARMUP_EPOCHS)
 
-    #params_groups = get_params_groups(model)
-    params_groups = lr_decay.param_groups_lrd(
-        model=model._layers, # TODO: check correctness
-        weight_decay=config.TRAIN.WEIGHT_DECAY,
-        layer_decay=config.TRAIN.LAYER_DECAY)
+    params_groups = get_params_groups(model)
 
     if config.TRAIN.GRAD_CLIP:
         clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
@@ -425,7 +393,7 @@ def main_worker(*args):
             learning_rate=0.0, #scheduler if scheduler is not None else config.TRAIN.BASE_LR,
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-            weight_decay=1.0, #config.TRAIN.WEIGHT_DECAY,
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
             epsilon=config.TRAIN.OPTIMIZER.EPS,
             grad_clip=clip)
     else:
@@ -448,10 +416,19 @@ def main_worker(*args):
         # interpolate position embedding
         interpolate_pos_embed(model, model_state)
 
-
         model.set_dict(model_state)
         message = f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}"
         write_log(local_logger, master_logger, message)
+
+        # for linearprobing
+        model._layers.classifier = nn.Sequential(
+            nn.BatchNorm1D(model._layers.classifier.weight.shape[0], weight_attr=False, epsilon=1e-6),
+            model._layers.classifier)
+        # freeze all but the classifier
+        for _, p in model.named_parameters():
+            p.stop_gradient = True
+        for _, p in model._layers.classifier.named_parameters():
+            p.stop_gradient = False
 
     if config.MODEL.RESUME:
         assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
@@ -506,7 +483,6 @@ def main_worker(*args):
             total_batch=total_batch_train,
             debug_steps=config.REPORT_FREQ,
             accum_iter=config.TRAIN.ACCUM_ITER,
-            mixup_fn=mixup_fn,
             amp=config.AMP,
             local_logger=local_logger,
             master_logger=master_logger)
@@ -566,7 +542,7 @@ def main():
     config = update_config(config, arguments)
     # set output folder
     if not config.EVAL:
-        config.SAVE = '{}/finetuning-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
+        config.SAVE = '{}/linearprobe-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
     else:
         config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M-%S'))
     if not os.path.exists(config.SAVE):

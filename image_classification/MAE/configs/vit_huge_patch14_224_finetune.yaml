@@ -3,16 +3,16 @@ DATA:
     CROP_PCT: 0.875
 MODEL:
     TYPE: FINETUNE
-    NAME: vit_large_patch16_224
-    DROPPATH: 0.1
+    NAME: vit_huge_patch14_224
+    DROPPATH: 0.3
     GLOBAL_POOL: True
     TRANS:
         PATCH_SIZE: 16
         MLP_RATIO: 4.0
         QKV_BIAS: true
         ENCODER:
-            EMBED_DIM: 1024
-            DEPTH: 24
+            EMBED_DIM: 1280
+            DEPTH: 32
             NUM_HEADS: 16
 TRAIN:
     NUM_EPOCHS: 50
@@ -26,7 +26,7 @@ TRAIN:
     OPTIMIZER:
         NAME: 'AdamW'
         BETAS: (0.9, 0.999)
-    LAYER_DECAY: 0.65
+    LAYER_DECAY: 0.75
     SMOOTHING: 0.1
     RAND_AUGMENT: True
     RAND_AUGMENT_LAYERS: 9

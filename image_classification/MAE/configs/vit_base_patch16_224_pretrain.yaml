@@ -2,10 +2,9 @@ DATA:
     IMAGE_SIZE: 224
     CROP_PCT: 0.875
 MODEL:
-    TYPE: MAE
+    TYPE: PRETRAIN
     NAME: vit_base_patch16_224
     DROPPATH: 0.0
-    MAE_PRETRAIN: True
     TRANS:
         PATCH_SIZE: 16
         MLP_RATIO: 4.0
@@ -18,19 +17,16 @@ MODEL:
         DECODER:
             EMBED_DIM: 512
             DEPTH: 8
-            NUM_HEADS: 8
+            NUM_HEADS: 16
 TRAIN:
     NUM_EPOCHS: 800
     WARMUP_EPOCHS: 40
     WEIGHT_DECAY: 0.05
     BASE_LR: 1.5e-4
-    WARMUP_START_LR: 1e-6
+    WARMUP_START_LR: 0.0
+    LINEAR_SCALED_LR: 256
     GRAD_CLIP: None
-    ACCUM_ITER: 2 # the total batch size should be 4096
-
-    LR_SCHEDULER:
-        NAME: 'warmupcosine'
-
+    ACCUM_ITER: 1
     OPTIMIZER:
         NAME: 'AdamW'
         BETAS: (0.9, 0.95)

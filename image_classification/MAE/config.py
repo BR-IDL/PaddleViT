@@ -1,4 +1,4 @@
-# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,15 +41,15 @@ _C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225] # [0.5, 0.5, 0.5]
 
 # model settings
 _C.MODEL = CN()
-_C.MODEL.TYPE = 'MAE'
+_C.MODEL.TYPE = 'PRETRAIN' # [PRETRAIN, FINETUNE, LINEARPROBE]
 _C.MODEL.NAME = 'MAE'
 _C.MODEL.RESUME = None
 _C.MODEL.PRETRAINED = None
 _C.MODEL.NUM_CLASSES = 1000
-_C.MODEL.DROPOUT = 0.0
-_C.MODEL.DROPPATH = 0.0
-_C.MODEL.ATTENTION_DROPOUT = 0.0
-_C.MODEL.MAE_PRETRAIN = True
+_C.MODEL.DROPOUT = 0.1
+_C.MODEL.DROPPATH = 0.1
+_C.MODEL.ATTENTION_DROPOUT = 0.1
+_C.MODEL.GLOBAL_POOL = False # use for finetune only
 
 # transformer settings
 _C.MODEL.TRANS = CN()
@@ -57,6 +57,7 @@ _C.MODEL.TRANS.PATCH_SIZE = 16
 _C.MODEL.TRANS.MLP_RATIO = 4.0
 _C.MODEL.TRANS.QKV_BIAS = True
 _C.MODEL.TRANS.MASK_RATIO = 0.75
+_C.MODEL.TRANS.NORM_PIX_LOSS = True
 _C.MODEL.TRANS.ENCODER = CN()
 _C.MODEL.TRANS.ENCODER.DEPTH = 12
 _C.MODEL.TRANS.ENCODER.EMBED_DIM = 768
@@ -71,27 +72,35 @@ _C.MODEL.TRANS.DECODER.NUM_HEADS = 8
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 800
-_C.TRAIN.WARMUP_EPOCHS = 40  
-_C.TRAIN.WEIGHT_DECAY = 0.05  
-_C.TRAIN.BASE_LR = 1.5e-4  
+_C.TRAIN.WARMUP_EPOCHS = 40  # 34 # ~ 10k steps for 4096 batch size
+_C.TRAIN.WEIGHT_DECAY = 0.05  # 0.3 # 0.0 for finetune
+_C.TRAIN.BASE_LR = 1.5e-4  # 0.003 for pretrain # 0.03 for finetune
 _C.TRAIN.WARMUP_START_LR = 1e-6  # 0.0
-_C.TRAIN.END_LR = 0.0
+_C.TRAIN.END_LR = 5e-4
 _C.TRAIN.GRAD_CLIP = None
-_C.TRAIN.ACCUM_ITER = 1  
-_C.TRAIN.LINEAR_SCALED_LR = 256
-_C.TRAIN.NORMALIZE_TARGET = True
+_C.TRAIN.ACCUM_ITER = 2  # 1
+_C.TRAIN.LINEAR_SCALED_LR = None
+_C.TRAIN.LAYER_DECAY = None # used for finetuning only
 
 # train augmentation (only for finetune)
 _C.TRAIN.SMOOTHING = 0.1
-_C.TRAIN.RAND_AUGMENT = False
+_C.TRAIN.COLOR_JITTER = 0.4
+_C.TRAIN.RAND_AUGMENT = True
 _C.TRAIN.RAND_AUGMENT_LAYERS = 9
 _C.TRAIN.RAND_AUGMENT_MAGNITUDE = 5  # scale from 0 to 10
-_C.TRAIN.MIXUP_ALPHA = 0.8
+# mixup params
+_C.TRAIN.MIXUP_ALPHA = 0.0
 _C.TRAIN.MIXUP_PROB = 1.0
 _C.TRAIN.MIXUP_SWITCH_PROB = 0.5
 _C.TRAIN.MIXUP_MODE = 'batch'
-_C.TRAIN.CUTMIX_ALPHA = 1.0
+_C.TRAIN.CUTMIX_ALPHA = 0.0
 _C.TRAIN.CUTMIX_MINMAX = None
+# random erase parameters
+_C.TRAIN.RANDOM_ERASE_PROB = 0.25
+_C.TRAIN.RANDOM_ERASE_MODE = 'pixel'
+_C.TRAIN.RANDOM_ERASE_COUNT = 1
+_C.TRAIN.RANDOM_ERASE_SPLIT = False
+
 
 _C.TRAIN.LR_SCHEDULER = CN()
 _C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
@@ -102,7 +111,7 @@ _C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1  # only used in StepLRScheduler
 _C.TRAIN.OPTIMIZER = CN()
 _C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
-_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.95)  # same as MAE paper, for adamW
+_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.95)  # for adamW same as pytorch MAE
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 
 
@@ -145,24 +154,19 @@ def update_config(config, args):
     config.defrost()
     if args.dataset:
         config.DATA.DATASET = args.dataset
-    if args.eval:
-        config.EVAL = True
     if args.batch_size:
         config.DATA.BATCH_SIZE = args.batch_size
-        if config.EVAL:
-            config.DATA.BATCH_SIZE_EVAL = args.batch_size
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
-    if args.output is not None:
-        config.SAVE = args.output
     if args.ngpus:
         config.NGPUS = args.ngpus
+    if args.eval:
+        config.EVAL = True
+        config.DATA.BATCH_SIZE_EVAL = args.batch_size
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
-    if args.mae_pretrain:
-        config.MODEL.MAE_PRETRAIN = args.mae_pretrain
     if args.resume:
         config.MODEL.RESUME = args.resume
     if args.last_epoch:

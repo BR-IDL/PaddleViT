@@ -1,6 +1,6 @@
 CUDA_VISIBLE_DEVICES=0,1 \
-python main_multi_gpu_finetune.py \
--cfg='./configs/vit_base_patch16_224_finetune.yaml' \
+python main_multi_gpu_linearprobe.py \
+-cfg='./configs/vit_base_patch16_224_linearprobe.yaml' \
 -dataset='imagenet2012' \
 -batch_size=2 \
 -data_path='/dataset/imagenet' \
