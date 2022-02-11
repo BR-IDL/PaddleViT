@@ -523,7 +523,7 @@ def main_worker(*args):
         write_log(local_logger, master_logger, local_message, master_message)
 
         # validation
-        if epoch % config.VALIDATION_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
+        if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             write_log(local_logger, master_logger, f'----- Validation after Epoch: {epoch}')
             val_loss, val_acc1, val_acc5, avg_loss, avg_acc1, avg_acc5, val_time = validate(
                 dataloader=dataloader_val,
