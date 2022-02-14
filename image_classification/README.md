@@ -6,6 +6,7 @@ PaddlePaddle training/validation code and pretrained models for **Image Classifi
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
+* Update (2022-02-14): Add imagenet train_list.txt and val_list.txt links.
 * Update (2021-12-30): Add MobileViT model and multi scale sampler.
 * Update (2021-12-28): Add HvT model.
 * Update (2021-12-24): Add CvT model.
@@ -78,6 +79,8 @@ cd PaddleViT/image_classification
 ImageNet2012 dataset is used in the following folder structure:
 ```
 │imagenet/
+├──train_list.txt
+├──val_list.txt
 ├──train/
 │  ├── n01440764
 │  │   ├── n01440764_10026.JPEG
@@ -91,6 +94,10 @@ ImageNet2012 dataset is used in the following folder structure:
 │  │   ├── ......
 │  ├── ......
 ```
+- `train_list.txt`: list of relative paths and labels of training images. You can download it from: [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm)(a4vm)
+- `val_list.txt`: list of relative paths and labels of validation images. You can download it from: [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga)(kdga) 
+
+
 ### Demo Example
 To use the model with pretrained weights, go to the specific subfolder, then download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.  
 
