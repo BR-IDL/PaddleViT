@@ -6,6 +6,7 @@ PaddlePaddle用于图像分类的训练/评估代码和预训练模型。
 此实现是 [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) 项目的一部分.
 
 ## 更新 
+* 更新 (2021-02-14): 添加 imagenet1k 的 train_list.txt 和 val_list.txt
 * 更新 (2021-12-30): 添加 MobileViT 模型和 multi scale sampler.
 * 更新 (2021-12-28): 添加 HvT 模型.
 * 更新 (2021-12-24): 添加 CvT 模型.
@@ -74,9 +75,11 @@ cd PaddleViT/image_classification
 
 ## 基本用法
 ### 数据准备
-ImageNet2012 数据集用于以下文件结构:
+ImageNet2012 数据集使用以下的格式存储:
 ```
 │imagenet/
+├──train_list.txt
+├──val_list.txt
 ├──train/
 │  ├── n01440764
 │  │   ├── n01440764_10026.JPEG
@@ -90,6 +93,9 @@ ImageNet2012 数据集用于以下文件结构:
 │  │   ├── ......
 │  ├── ......
 ```
+- `train_list.txt`: 训练集图片的路径和标签。下载链接： [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm)(a4vm)
+- `val_list.txt`: 验证集图片的相对路径和标签。下载链接: [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga)(kdga) 
+
 ### Demo 示例
 如果需要使用具有预训练权重的模型，请转到特定子文件夹，然后下载 `.pdparam` 权重文件，并在以下python脚本中更改相关文件路径，模型配置文件位于 `./configs/`.  
 
