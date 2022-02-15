@@ -327,7 +327,6 @@ def main_worker(*args):
     
     # STEP 1: Create model
     model = build_model(config)
-    model = paddle.DataParallel(model)
 
     # STEP 2: Create train and val dataloader
     if not config.EVAL:
@@ -350,56 +349,57 @@ def main_worker(*args):
 
     # STEP 4: Define optimizer and lr_scheduler
     # set lr according to batch size and world size (hacked from Swin official code and modified for CSwin)
-    if config.TRAIN.LINEAR_SCALED_LR is not None:
-        linear_scaled_lr = (
-            config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
-        linear_scaled_warmup_start_lr = (
-            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
-        linear_scaled_end_lr = (
-            config.TRAIN.END_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
-    
-        if config.TRAIN.ACCUM_ITER > 1:
-            linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
-            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
-            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+    if not config.EVAL:
+        if config.TRAIN.LINEAR_SCALED_LR is not None:
+            linear_scaled_lr = (
+                config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+            #linear_scaled_warmup_start_lr = (
+            #    config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+            #linear_scaled_end_lr = (
+            #    config.TRAIN.END_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
         
-        config.TRAIN.BASE_LR = linear_scaled_lr
-        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
-        config.TRAIN.END_LR = linear_scaled_end_lr
+            if config.TRAIN.ACCUM_ITER > 1:
+                linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
+                #linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+                #linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+            
+            config.TRAIN.BASE_LR = linear_scaled_lr
+            #config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+            #config.TRAIN.END_LR = linear_scaled_end_lr
 
-    lr_schedule = cosine_scheduler(config.TRAIN.BASE_LR, # add linear scale
-                                   config.TRAIN.END_LR,
-                                   config.TRAIN.NUM_EPOCHS,
-                                   len(dataloader_train),
-                                   warmup_epochs=config.TRAIN.WARMUP_EPOCHS)
+        lr_schedule = cosine_scheduler(config.TRAIN.BASE_LR, # add linear scale
+                                       config.TRAIN.END_LR,
+                                       config.TRAIN.NUM_EPOCHS,
+                                       len(dataloader_train),
+                                       warmup_epochs=config.TRAIN.WARMUP_EPOCHS)
 
-    params_groups = get_params_groups(model)
+        params_groups = get_params_groups(model)
 
-    if config.TRAIN.GRAD_CLIP:
-        clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
-    else:
-        clip = None
+        if config.TRAIN.GRAD_CLIP:
+            clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
+        else:
+            clip = None
 
-    if config.TRAIN.OPTIMIZER.NAME == "SGD":
-        optimizer = paddle.optimizer.Momentum(
-            parameters=params_groups,
-            learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-            weight_decay=config.TRAIN.WEIGHT_DECAY,
-            momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
-            grad_clip=clip)
-    elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
-        optimizer = paddle.optimizer.AdamW(
-            parameters=params_groups,
-            learning_rate=0.0, #scheduler if scheduler is not None else config.TRAIN.BASE_LR,
-            beta1=config.TRAIN.OPTIMIZER.BETAS[0],
-            beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-            weight_decay=config.TRAIN.WEIGHT_DECAY,
-            epsilon=config.TRAIN.OPTIMIZER.EPS,
-            grad_clip=clip)
-    else:
-        message = f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}."
-        write_log(local_logger, master_logger, message, None, 'fatal')
-        raise NotImplementedError(message)
+        if config.TRAIN.OPTIMIZER.NAME == "SGD":
+            optimizer = paddle.optimizer.Momentum(
+                parameters=params_groups,
+                learning_rate=scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+                weight_decay=config.TRAIN.WEIGHT_DECAY,
+                momentum=config.TRAIN.OPTIMIZER.MOMENTUM,
+                grad_clip=clip)
+        elif config.TRAIN.OPTIMIZER.NAME == "AdamW":
+            optimizer = paddle.optimizer.AdamW(
+                parameters=params_groups,
+                learning_rate=0.0, #scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+                beta1=config.TRAIN.OPTIMIZER.BETAS[0],
+                beta2=config.TRAIN.OPTIMIZER.BETAS[1],
+                weight_decay=config.TRAIN.WEIGHT_DECAY,
+                epsilon=config.TRAIN.OPTIMIZER.EPS,
+                grad_clip=clip)
+        else:
+            message = f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}."
+            write_log(local_logger, master_logger, message, None, 'fatal')
+            raise NotImplementedError(message)
 
     # STEP 5: Load pretrained model / load resumt model and optimizer states
     if config.MODEL.PRETRAINED:
@@ -416,19 +416,17 @@ def main_worker(*args):
         # interpolate position embedding
         interpolate_pos_embed(model, model_state)
 
-        model.set_dict(model_state)
+        model.set_state_dict(model_state)
         message = f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}"
         write_log(local_logger, master_logger, message)
 
         # for linearprobing
-        model._layers.classifier = nn.Sequential(
-            nn.BatchNorm1D(model._layers.classifier.weight.shape[0], weight_attr=False, epsilon=1e-6),
-            model._layers.classifier)
+        model.classifier = nn.Sequential(
+            nn.BatchNorm1D(model.classifier.weight.shape[0], weight_attr=False, epsilon=1e-6),
+            model.classifier)
         # freeze all but the classifier
         for _, p in model.named_parameters():
             p.stop_gradient = True
-        for _, p in model._layers.classifier.named_parameters():
-            p.stop_gradient = False
 
     if config.MODEL.RESUME:
         assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
@@ -440,6 +438,9 @@ def main_worker(*args):
         message = f"----- Resume Training: Load model and optmizer from {config.MODEL.RESUME}"
         write_log(local_logger, master_logger, message)
 
+    # enable data paralle for distributed
+    model = paddle.DataParallel(model)
+
     # STEP 6: Validation (eval mode)
     if config.EVAL:
         write_log(local_logger, master_logger, f"----- Start Validation")
@@ -449,22 +450,23 @@ def main_worker(*args):
             criterion=criterion_val,
             total_batch=total_batch_train,
             debug_steps=config.REPORT_FREQ,
+            amp=config.AMP,
             local_logger=local_logger,
             master_logger=master_logger)
 
-        local_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+        local_message = (f"----- Validation: " +
                          f"Validation Loss: {val_loss:.4f}, " +
                          f"Validation Acc@1: {val_acc1:.4f}, " +
                          f"Validation Acc@1: {val_acc5:.4f}, " +
                          f"time: {val_time:.2f}")
 
-        local_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+        master_message = (f"----- Validation: " +
                          f"Validation Loss: {avg_loss:.4f}, " +
                          f"Validation Acc@1: {avg_acc1:.4f}, " +
                          f"Validation Acc@1: {avg_acc5:.4f}, " +
                          f"time: {val_time:.2f}")
-         
-
+        write_log(local_logger, master_logger, local_message, master_message)
+        return
     
     # STEP 7: Start training (train mode)
     write_log(local_logger, master_logger, f"----- Start training from epoch {last_epoch+1}.")
@@ -499,7 +501,7 @@ def main_worker(*args):
         write_log(local_logger, master_logger, local_message, master_message)
 
         # validation
-        if epoch % config.VALIDATION_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
+        if epoch % config.VALIDATE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
             write_log(local_logger, master_logger, f'----- Validation after Epoch: {epoch}')
             val_loss, val_acc1, val_acc5, avg_loss, avg_acc1, avg_acc5, val_time = validate(
                 dataloader=dataloader_val,
@@ -516,7 +518,7 @@ def main_worker(*args):
                              f"Validation Acc@1: {val_acc5:.4f}, " +
                              f"time: {val_time:.2f}")
 
-            local_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
+            master_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                              f"Validation Loss: {avg_loss:.4f}, " +
                              f"Validation Acc@1: {avg_acc1:.4f}, " +
                              f"Validation Acc@1: {avg_acc5:.4f}, " +

@@ -231,19 +231,19 @@ def main_worker(*args):
     if config.TRAIN.LINEAR_SCALED_LR is not None:
         linear_scaled_lr = (
             config.TRAIN.BASE_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
-        linear_scaled_warmup_start_lr = (
-            config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
-        linear_scaled_end_lr = (
-            config.TRAIN.END_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+        #linear_scaled_warmup_start_lr = (
+        #    config.TRAIN.WARMUP_START_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
+        #linear_scaled_end_lr = (
+        #    config.TRAIN.END_LR * config.DATA.BATCH_SIZE * world_size) / config.TRAIN.LINEAR_SCALED_LR
     
         if config.TRAIN.ACCUM_ITER > 1:
             linear_scaled_lr = linear_scaled_lr * config.TRAIN.ACCUM_ITER
-            linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
-            linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
+            #linear_scaled_warmup_start_lr = linear_scaled_warmup_start_lr * config.TRAIN.ACCUM_ITER
+            #linear_scaled_end_lr = linear_scaled_end_lr * config.TRAIN.ACCUM_ITER
         
         config.TRAIN.BASE_LR = linear_scaled_lr
-        config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
-        config.TRAIN.END_LR = linear_scaled_end_lr
+        #config.TRAIN.WARMUP_START_LR = linear_scaled_warmup_start_lr
+        #config.TRAIN.END_LR = linear_scaled_end_lr
 
     lr_schedule = cosine_scheduler(config.TRAIN.BASE_LR, # add linear scale
                                    config.TRAIN.END_LR,

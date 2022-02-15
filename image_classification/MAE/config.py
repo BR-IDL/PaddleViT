@@ -78,7 +78,7 @@ _C.TRAIN.BASE_LR = 1.5e-4  # 0.003 for pretrain # 0.03 for finetune
 _C.TRAIN.WARMUP_START_LR = 1e-6  # 0.0
 _C.TRAIN.END_LR = 5e-4
 _C.TRAIN.GRAD_CLIP = None
-_C.TRAIN.ACCUM_ITER = 2  # 1
+_C.TRAIN.ACCUM_ITER = 1
 _C.TRAIN.LINEAR_SCALED_LR = None
 _C.TRAIN.LAYER_DECAY = None # used for finetuning only
 
@@ -118,7 +118,7 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 1  # freq to save chpt
+_C.SAVE_FREQ = 20  # freq to save chpt
 _C.REPORT_FREQ = 100  # freq to logging info
 _C.VALIDATE_FREQ = 100  # freq to do validation
 _C.SEED = 0

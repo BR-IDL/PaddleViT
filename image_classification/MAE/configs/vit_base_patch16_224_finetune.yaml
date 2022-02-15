@@ -15,11 +15,11 @@ MODEL:
             DEPTH: 12
             NUM_HEADS: 12
 TRAIN:
-    NUM_EPOCHS: 50
+    NUM_EPOCHS: 100 # same as MAE official readme
     WARMUP_EPOCHS: 5
     WEIGHT_DECAY: 0.05
-    BASE_LR: 1e-3
-    WARMUP_START_LR: 0.0
+    BASE_LR: 5e-4
+    WARMUP_START_LR: 1e-7
     LINEAR_SCALED_LR: 256
     END_LR: 1e-6
     ACCUM_ITER: 1
