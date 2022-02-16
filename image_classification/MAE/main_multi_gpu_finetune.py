@@ -171,7 +171,6 @@ def train(dataloader,
         else:
             scaled = scaler.scale(loss)
             scaled.backward()
-            # todo: check if manually unscale and clip grad is required here
             if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 # amp for param group refer here: https://github.com/PaddlePaddle/Paddle/issues/37188
                 scaler.step(optimizer)
