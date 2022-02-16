@@ -2,32 +2,33 @@ import os
 import glob
 import paddle
 from config import get_config
-from transformer import build_mae_pretrain as build_model
+from transformer import build_transformer as build_model
+#from transformer import build_mae_pretrain as build_model
 
-def count_gelu(layer, input, output):
+def count_gelu(layer, inputs, output):
     activation_flops = 8
-    x = input[0]
+    x = inputs[0]
     num = x.numel()
     layer.total_ops += num * activation_flops 
 
 
-def count_softmax(layer, input, output):
+def count_softmax(layer, inputs, output):
     softmax_flops = 5 # max/substract, exp, sum, divide
-    x = input[0]
+    x = inputs[0]
     num = x.numel()
     layer.total_ops += num * softmax_flops 
 
 
-def count_layernorm(layer, input, output):
+def count_layernorm(layer, inputs, output):
     layer_norm_flops = 5 # get mean (sum), get variance (square and sum), scale(multiply)
-    x = input[0]
+    x = inputs[0]
     num = x.numel()
     layer.total_ops += num * layer_norm_flops 
 
 
-cfg = './configs/vit_large_patch32_384.yaml'
-#input_size = (1, 3, 224, 224)
-input_size = (1, 3, 384, 384)
+cfg = './configs/vit_large_patch16_224_finetune.yaml'
+input_size = (1, 3, 224, 224)
+#input_size = (1, 3, 384, 384)
 config = get_config(cfg)
 model = build_model(config)
 

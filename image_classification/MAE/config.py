@@ -118,9 +118,9 @@ _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 # misc
 _C.SAVE = "./output"
 _C.TAG = "default"
-_C.SAVE_FREQ = 20  # freq to save chpt
+_C.SAVE_FREQ = 10  # freq to save chpt
 _C.REPORT_FREQ = 100  # freq to logging info
-_C.VALIDATE_FREQ = 100  # freq to do validation
+_C.VALIDATE_FREQ = 10  # freq to do validation
 _C.SEED = 0
 _C.EVAL = False  # run evaluation only
 _C.AMP = False  # mix precision training

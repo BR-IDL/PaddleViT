@@ -163,7 +163,7 @@ def train(dataloader,
         else:
             scaled = scaler.scale(loss)
             scaled.backward()
-            # TODO: check if manually unscale and clip grad is required here
+            # todo: check if manually unscale and clip grad is required here
             if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
                 # amp for param group refer here: https://github.com/PaddlePaddle/Paddle/issues/37188
                 scaler.step(optimizer)
@@ -211,7 +211,7 @@ def train(dataloader,
 @paddle.no_grad()
 def validate(dataloader,
              model,
-             optimizer,
+             criterion,
              total_batch,
              debug_steps=100,
              local_logger=None,
@@ -241,8 +241,6 @@ def validate(dataloader,
     master_acc1_meter = AverageMeter()
     master_acc5_meter = AverageMeter()
 
-    if amp is True:
-        scaler = paddle.amp.GradScaler() # default init_loss_scaling = 32768
     time_st = time.time()
 
     for batch_id, data in enumerate(dataloader):
@@ -250,7 +248,7 @@ def validate(dataloader,
         images = data[0]
         label = data[1]
 
-        output = model(image)
+        output = model(images)
         loss = criterion(output, label)
 
         pred = F.softmax(output)
@@ -427,6 +425,9 @@ def main_worker(*args):
         # freeze all but the classifier
         for _, p in model.named_parameters():
             p.stop_gradient = True
+        # set classifier trainable
+        for _, p in model.classifier.named_parameters():
+            p.stop_gradient = False
 
     if config.MODEL.RESUME:
         assert os.path.isfile(config.MODEL.RESUME+'.pdparams') is True
@@ -450,7 +451,6 @@ def main_worker(*args):
             criterion=criterion_val,
             total_batch=total_batch_train,
             debug_steps=config.REPORT_FREQ,
-            amp=config.AMP,
             local_logger=local_logger,
             master_logger=master_logger)
 
