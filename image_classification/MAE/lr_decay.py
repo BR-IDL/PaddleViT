@@ -14,48 +14,61 @@
 
 """parameters groups for layer-wise lr decay, used in BeiT and MAE"""
 
+import json
+
+# Note: param_groups_lrd is NOT used because paddle Adam optimizer seems has problems which we don't know,
+#       instead, we use paddlenlp.ops.optimizer.AdamWDL with lr_settings (see below) right now for temp fix.
 def param_groups_lrd(model, weight_decay=0.05, no_weight_decay_list=[], layer_decay=0.75):
+    """layer-wise decay
+    set learning rate decay according to layer depth
+    Note: 
+        1. In Paddle param_groups, dict key 'learning_rate' is in fact the 'lr_mult'
+        2. param_names in no_weight_decay_list will have no decay
+        3. model.encoder.layers may need to change for models other than MAE_finetune
+    """
     param_group_names = {}
     param_groups = {}
     num_layers = len(model.encoder.layers) + 1
     layer_scales = list(layer_decay ** (num_layers - i) for i in range(num_layers + 1))
 
-    for n, p in model.named_parameters():
-        if p.stop_gradient is True:
+    for name, param in model.named_parameters():
+        if param.stop_gradient is True:
             continue
 
         # no decay
-        if p.ndim == 1 or n in no_weight_decay_list:
+        if param.ndim == 1 or name.endswith('.bias') or name in no_weight_decay_list:
             g_decay = 'no_decay'
-            this_decay = 0.
+            this_weight_decay = 0.
         else:
             g_decay = 'decay'
-            this_decay = weight_decay
+            this_weight_decay = weight_decay
 
-        layer_id = get_layer_id_for_vit(n, num_layers)
+        layer_id = get_layer_id_for_vit(name, num_layers)
         group_name = f"layer_{layer_id}_{g_decay}"
 
         if group_name not in param_group_names:
             this_scale = layer_scales[layer_id]
             param_group_names[group_name] = {
-                "learning_rate": this_scale, # TODO: check correctness 
-                "weight_decay": this_decay,
+                "learning_rate": this_scale,
+                "weight_decay": this_weight_decay,
                 "params": [],
             }
             param_groups[group_name] = {
                 "learning_rate": this_scale,
-                "weight_decay": this_decay,
+                "weight_decay": this_weight_decay,
                 "params": [],
             }
 
-        param_group_names[group_name]["params"].append(n)
-        param_groups[group_name]["params"].append(p)
+        param_group_names[group_name]["params"].append(name)
+        param_groups[group_name]["params"].append(param)
+        
+    print("parameter groups: \n%s" % json.dumps(param_group_names, indent=2))
     return list(param_groups.values())
 
 
 def get_layer_id_for_vit(name, num_layers):
     """assign a parameter with its layer id"""
-    if name in ['cls_token', 'position_embedding']:
+    if name in ['cls_token', 'mask_token', 'encoder_position_embedding']:
         return 0
     elif name.startswith('patch_embedding'):
         return 0
@@ -64,3 +77,10 @@ def get_layer_id_for_vit(name, num_layers):
     else:
         return num_layers
 
+
+def lr_setting(layer_decay, name_dict, num_layers, param):
+    layer_scales = list(layer_decay ** (num_layers - i) for i in range(num_layers + 1))
+    static_name = name_dict[param.name]
+    #print('static_name= ', static_name, ', param.name= ', param.name)
+    layer_id = get_layer_id_for_vit(static_name, num_layers)
+    param.optimize_attr["learning_rate"] *= layer_scales[layer_id]

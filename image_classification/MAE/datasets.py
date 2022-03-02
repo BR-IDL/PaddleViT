@@ -28,7 +28,7 @@ from paddle.vision import datasets
 from paddle.vision import image_load
 from augment import auto_augment_policy_original
 from augment import AutoAugment
-from augment import rand_augment_policy_original
+from augment import rand_augment_policy_increasing
 from augment import RandAugment
 from random_erasing import RandomErasing
 
@@ -37,6 +37,9 @@ class ImageNet2012Dataset(Dataset):
     """Build ImageNet2012 dataset
 
     This class gets train/val imagenet datasets, which loads transfomed data and labels.
+    Note:
+        train_list.txt and val_list.txt is required.
+        Please refer https://github.com/BR-IDL/PaddleViT/tree/mae_refactor/image_classification#data-preparation
 
     Attributes:
         file_folder: path where imagenet images are stored
@@ -93,6 +96,7 @@ def get_train_transforms_pretrain(config):
 def get_train_transforms_linearprobe(config):
     """Weak augmentation for linear probing"""
     aug_op_list = [transforms.RandomResizedCrop(size=(config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
+                                                scale=(0.08, 1.0),
                                                 interpolation='bicubic'), # same as MAE pytorch
                    transforms.RandomHorizontalFlip(),
                    transforms.ToTensor(),
@@ -107,13 +111,15 @@ def get_train_transforms_finetune(config):
     # STEP1: random crop and resize
     aug_op_list.append(
         transforms.RandomResizedCrop((config.DATA.IMAGE_SIZE, config.DATA.IMAGE_SIZE),
-                                     scale=(0.2, 1.0), interpolation='bicubic'))# Same as MAE pytorch
+                                     scale=(0.08, 1.0), interpolation='bicubic'))# Same as MAE pytorch
     # STEP2: random horizontalflip
     aug_op_list.append(transforms.RandomHorizontalFlip())
     # STEP3: rand_augment or auto_augment or color jitter
     if config.TRAIN.RAND_AUGMENT: # MAE: True
-        policy = rand_augment_policy_original()
-        rand_augment = RandAugment(policy)
+        policy = rand_augment_policy_increasing(
+            magnitude_idx=config.TRAIN.RAND_AUGMENT_MAGNITUDE)
+        rand_augment = RandAugment(
+            policy=policy, num_layers=config.TRAIN.RAND_AUGMENT_LAYERS)
         aug_op_list.append(rand_augment)
     elif config.TRAIN.AUTO_AUGMENT: # MAE: None
         policy = auto_augment_policy_original()
@@ -159,9 +165,12 @@ def get_train_transforms(config):
     elif config.MODEL.TYPE == "LINEARPROBE":
         transforms_train = get_train_transforms_linearprobe
     else:
-        raise ValueError('config.MODEL.TYPE not supported!')
+        raise ValueError(f'{config.MODEL.TYPE} not supported!')
+
+    transforms = transforms_train(config)
+    print(transforms)
     
-    return transforms_train(config)
+    return transforms
 
 
 # val transform is for MAE finetune and line probing
@@ -198,28 +207,13 @@ def get_dataset(config, mode='train'):
     Returns:
         dataset: dataset object
     """
-    assert mode in ['train', 'val']
-    if config.DATA.DATASET == "cifar10":
-        if mode == 'train':
-            dataset = datasets.Cifar10(mode=mode, transform=get_train_transforms(config))
-        else:
-            mode = 'test'
-            dataset = datasets.Cifar10(mode=mode, transform=get_val_transforms(config))
-    elif config.DATA.DATASET == "cifar100":
-        if mode == 'train':
-            dataset = datasets.Cifar100(mode=mode, transform=get_train_transforms(config))
-        else:
-            mode = 'test'
-            dataset = datasets.Cifar100(mode=mode, transform=get_val_transforms(config))
-    elif config.DATA.DATASET == "imagenet2012":
-        if mode == 'train':
-            dataset = ImageNet2012Dataset(config.DATA.DATA_PATH,
-                                          mode=mode,
-                                          transform=get_train_transforms(config))
-        else:
-            dataset = ImageNet2012Dataset(config.DATA.DATA_PATH,
-                                          mode=mode,
-                                          transform=get_val_transforms(config))
+    assert mode in ['train', 'val', 'test']
+    # both val and test use get_val_transforms
+    if config.DATA.DATASET == "imagenet2012":
+        transform = get_train_transforms(config) if mode == 'train' else get_val_transforms(config)
+        dataset = ImageNet2012Dataset(config.DATA.DATA_PATH,
+                                      mode=mode,
+                                      transform=transform)
     else:
         raise NotImplementedError(
             "[{config.DATA.DATASET}] Only cifar10, cifar100, imagenet2012 are supported now")
@@ -240,10 +234,7 @@ def get_dataloader(config, dataset, mode='train', multi_process=False):
         dataloader: paddle.io.DataLoader object.
     """
 
-    if mode == 'train':
-        batch_size = config.DATA.BATCH_SIZE
-    else:
-        batch_size = config.DATA.BATCH_SIZE_EVAL
+    batch_size = config.DATA.BATCH_SIZE if mode == 'train' else config.DATA.BATCH_SIZE_EVAL
 
     if multi_process is True:
         sampler = DistributedBatchSampler(dataset,

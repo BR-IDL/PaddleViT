@@ -24,7 +24,7 @@ import numpy as np
 import paddle
 from paddle.optimizer.lr import LRScheduler
 
-def get_params_groups(model):
+def get_params_groups(model, weight_decay=0.01):
     regularized = []
     not_regularized = []
     for name, param in model.named_parameters():
@@ -35,7 +35,7 @@ def get_params_groups(model):
             not_regularized.append(param)
         else:
             regularized.append(param)
-    return [{'params': regularized}, {'params': not_regularized, 'weight_decay': 0.}]
+    return [{'params': regularized, 'weight_decay': weight_decay}, {'params': not_regularized, 'weight_decay': 0.}]
 
 
 def cosine_scheduler(base_value,
@@ -57,12 +57,27 @@ def cosine_scheduler(base_value,
     return schedule
 
 
-def interpolate_pos_embed(model, state_dict):
-    if 'position_embedding' in state_dict:
-        pos_embed_w = state_dict['position_embedding']
+def adjust_learning_rate(optimizer,
+                         base_lr,
+                         min_lr,
+                         cur_epoch,
+                         warmup_epochs,
+                         total_epochs):
+    if cur_epoch < warmup_epochs:
+        lr = base_lr * cur_epoch / warmup_epochs
+    else:
+        lr = min_lr + (base_lr - min_lr) * 0.5 * (
+            1. + math.cos(math.pi * (cur_epoch - warmup_epochs) / (total_epochs - warmup_epochs)))
+    optimizer.set_lr(lr)
+    return lr
+
+
+def interpolate_pos_embed(model, state_dict, key_name='encoder_position_embedding'):
+    if key_name in state_dict:
+        pos_embed_w = state_dict[key_name]
         embed_dim = pos_embed_w.shape[-1]
         n_patches = model.patch_embedding.n_patches
-        n_extra_tokens = model.position_embedding.shape[-2] - n_patches # seq_l - n_patches
+        n_extra_tokens = getattr(model, key_name).shape[-2] - n_patches
         orig_size = int((pos_embed_w.shape[-2] - n_extra_tokens) ** 0.5)
         new_size = int(n_patches ** 0.5)
         if orig_size != new_size:
@@ -75,7 +90,7 @@ def interpolate_pos_embed(model, state_dict):
             pos_tokens = pos_tokens.transpose([0, 2, 3, 1])
             pos_tokens = pos_tokens.flatten(1, 2)
             new_pos_embed = paddle.concat([extra_tokens, pos_tokens], axis=1)
-            state_dict['position_embedding'] = new_pos_embed
+            state_dict[key_name] = new_pos_embed
 
 
 #TODO: check correctness

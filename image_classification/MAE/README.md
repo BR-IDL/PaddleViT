@@ -14,8 +14,18 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 ### Update 
+- Update (2022-03-02): Code is refactored and bugs are fixed.
 - Update (2022-02-15): Code is refactored and ported weights are uploaded.
 - Update (2021-12-13): Code is released.
+
+## Note:
+Current Version requires extra packages installed: `paddlenlp`.
+You can use the following command to install paddlenlp:
+```shell
+pip install paddlenlp
+```
+> Note: the reason to use paddlenlp is we found the AdamW in paddle cannot handle layer wise decay properly, instead the paddlenlp.ops.optimizer.AdamWLD works well in our case, so we import this op for temp fix.
+
 
 ## Models Zoo
 | Finetuned Model               | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |

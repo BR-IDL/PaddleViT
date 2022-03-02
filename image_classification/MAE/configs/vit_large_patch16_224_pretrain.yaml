@@ -10,7 +10,6 @@ MODEL:
         MLP_RATIO: 4.0
         QKV_BIAS: true
         MASK_RATIO: 0.75
-        NORM_PIX_LOSS: True
         ENCODER:
             EMBED_DIM: 1024
             DEPTH: 24
@@ -19,12 +18,13 @@ MODEL:
             EMBED_DIM: 512
             DEPTH: 8
             NUM_HEADS: 16
+        NORM_PIX_LOSS: True
 TRAIN:
     NUM_EPOCHS: 800
     WARMUP_EPOCHS: 40
     WEIGHT_DECAY: 0.05
     BASE_LR: 1.5e-4
-    WARMUP_START_LR: 1e-7
+    END_LR: 0.0
     LINEAR_SCALED_LR: 256
     GRAD_CLIP: None
     ACCUM_ITER: 1

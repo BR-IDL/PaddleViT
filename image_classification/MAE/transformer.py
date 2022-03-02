@@ -24,6 +24,7 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 from droppath import DropPath
 from config import get_config
+from pos_embed import get_2d_sincos_pos_embed
 
 
 class Identity(nn.Layer):
@@ -39,7 +40,9 @@ class Identity(nn.Layer):
 
 
 def get_position_encoding(seq_len, embed_dim):
-    """ sinusoid position encoding table"""
+    """ sinusoid position encoding table
+    Note: not used in MAE, use get_2d_sincos_pos_embed instead
+    """
     def get_position_angle_vec(embed_dim, position):
         return [position / np.power(10000, 2 * (hid_j // 2) / embed_dim) for hid_j in range(embed_dim)]
 
@@ -131,7 +134,6 @@ class Attention(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
-            #initializer=nn.initializer.TruncatedNormal(std=.02))
             initializer=nn.initializer.XavierUniform()) # MAE 
         bias_attr = paddle.ParamAttr(
             initializer=nn.initializer.Constant(0.0))
@@ -196,7 +198,6 @@ class Mlp(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
-            #initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
             initializer=paddle.nn.initializer.XavierUniform()) # MAE 
         bias_attr = paddle.ParamAttr(
             initializer=paddle.nn.initializer.Constant(0.0))
@@ -413,7 +414,7 @@ class MAEPretrainTransformer(nn.Layer):
                  encoder_depth=12,
                  decoder_depth=8,
                  encoder_num_heads=12,
-                 decoder_num_heads=8,
+                 decoder_num_heads=16,
                  mlp_ratio=4,
                  qkv_bias=True,
                  dropout=0.,
@@ -435,15 +436,18 @@ class MAEPretrainTransformer(nn.Layer):
             shape=[1, 1, encoder_embed_dim],
             dtype='float32',
             default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02)) #MAE
-
+ 
+        pos_embed = get_2d_sincos_pos_embed(embed_dim=encoder_embed_dim,
+                                            grid_size= int(self.num_patches ** 0.5),
+                                            cls_token=True)
         self.encoder_position_embedding = paddle.create_parameter(
             shape=[1, 1 + self.num_patches, encoder_embed_dim],
             dtype='float32',
             default_initializer=paddle.nn.initializer.Assign(
-                get_position_encoding(seq_len=1 + self.num_patches,
-                                      embed_dim=encoder_embed_dim)
+                paddle.to_tensor(pos_embed, dtype='float32').unsqueeze(0)
             )
         )
+        self.encoder_position_embedding.stop_gradient = True
 
         self.encoder = Encoder(
             encoder_embed_dim,
@@ -469,14 +473,17 @@ class MAEPretrainTransformer(nn.Layer):
             dtype='float32',
             default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02)) #MAE
 
+        pos_embed = get_2d_sincos_pos_embed(embed_dim=decoder_embed_dim,
+                                            grid_size= int(self.num_patches ** 0.5),
+                                            cls_token=True)
         self.decoder_position_embedding = paddle.create_parameter(
             shape=[1, 1 + self.num_patches, decoder_embed_dim],
             dtype='float32',
             default_initializer=paddle.nn.initializer.Assign(
-                get_position_encoding(seq_len=1 + self.num_patches,
-                                      embed_dim=decoder_embed_dim)
+                paddle.to_tensor(pos_embed, dtype='float32').unsqueeze(0)
             )
         )
+        self.decoder_position_embedding.stop_gradient = True
 
         self.decoder = Decoder(
             decoder_embed_dim,
@@ -500,7 +507,6 @@ class MAEPretrainTransformer(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(
-            #initializer=nn.initializer.TruncatedNormal(std=.02))
             initializer=nn.initializer.XavierUniform()) # MAE 
         bias_attr = paddle.ParamAttr(
             initializer=nn.initializer.Constant(0.0))
@@ -653,7 +659,7 @@ class MAETransformer(nn.Layer):
                                               embed_dim,
                                               dropout)
         # create positional embedding
-        self.position_embedding = paddle.create_parameter(
+        self.encoder_position_embedding = paddle.create_parameter(
             shape=[1, 1 + self.patch_embedding.n_patches, embed_dim],
             dtype='float32',
             default_initializer=paddle.nn.initializer.Assign(
@@ -675,16 +681,17 @@ class MAETransformer(nn.Layer):
                                dropout,
                                attention_dropout,
                                droppath,
-                               has_norm=False)
+                               has_norm=not global_pool)
         # define encoder norm here to aviod cls_token (when global_pool is True)
-        w_attr, b_attr = self._init_weights_norm()
-        self.encoder_norm = nn.LayerNorm(embed_dim,
-                                         weight_attr=w_attr,
-                                         bias_attr=b_attr,
-                                         epsilon=1e-6)
+        if global_pool:
+            w_attr, b_attr = self._init_weights_norm()
+            self.encoder_norm = nn.LayerNorm(embed_dim,
+                                             weight_attr=w_attr,
+                                             bias_attr=b_attr,
+                                             epsilon=1e-6)
 
         # classifier head (for finetuning)
-        w_attr_1, b_attr_1 = self._init_weights_linear()
+        w_attr_1, b_attr_1 = self._init_weights_classifier()
         self.classifier = nn.Linear(embed_dim,
                                     num_classes,
                                     weight_attr=w_attr_1,
@@ -695,14 +702,14 @@ class MAETransformer(nn.Layer):
         x = self.patch_embedding(x)
         cls_tokens = self.cls_token.expand((x.shape[0], -1, -1))
         x = paddle.concat((cls_tokens, x), axis=1)
-        x = x + self.position_embedding
+        x = x + self.encoder_position_embedding
         x = self.encoder(x)
 
         if self.global_pool:
-            x = x[:, 1:, :].mean(axis=1) # global poll w/o cls_token
+            x = x[:, 1:, :].mean(axis=1) # global pool w/o cls_token
             out = self.encoder_norm(x)
         else:
-            x = self.encoder_norm(x)
+            # norm is applied in encoder
             out = x[:, 0] # return cls_token only
 
         return out
@@ -719,8 +726,13 @@ class MAETransformer(nn.Layer):
         return weight_attr, bias_attr
 
     def _init_weights_linear(self):
-        #weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
         weight_attr = paddle.ParamAttr(initializer=nn.initializer.XavierUniform()) # MAE 
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        return weight_attr, bias_attr
+
+    def _init_weights_classifier(self):
+        #weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=2e-5))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
         return weight_attr, bias_attr
 
@@ -750,6 +762,7 @@ def build_transformer(config):
     model = MAETransformer(image_size=config.DATA.IMAGE_SIZE,
                            patch_size=config.MODEL.TRANS.PATCH_SIZE,
                            in_channels=3,
+                           num_classes=config.MODEL.NUM_CLASSES,
                            embed_dim=config.MODEL.TRANS.ENCODER.EMBED_DIM,
                            depth=config.MODEL.TRANS.ENCODER.DEPTH,
                            num_heads=config.MODEL.TRANS.ENCODER.NUM_HEADS,

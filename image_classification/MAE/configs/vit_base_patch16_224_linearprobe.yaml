@@ -4,7 +4,6 @@ DATA:
 MODEL:
     TYPE: LINEARPROBE
     NAME: vit_base_patch16_224
-    DROPPATH: 0.1
     GLOBAL_POOL: False # enable cls_token
     TRANS:
         PATCH_SIZE: 16
@@ -19,26 +18,8 @@ TRAIN:
     WARMUP_EPOCHS: 10
     WEIGHT_DECAY: 0.0
     BASE_LR: 0.1
-    WARMUP_START_LR: 0.0
     LINEAR_SCALED_LR: 256
     END_LR: 0.0
     ACCUM_ITER: 1
     OPTIMIZER:
-        NAME: 'AdamW'
-        BETAS: (0.9, 0.999)
-    #LAYER_DECAY: 0.75
-    #SMOOTHING: 0.1
-    #RAND_AUGMENT: True
-    #RAND_AUGMENT_LAYERS: 9
-    #RAND_AUGMENT_MAGNITUDE: 5
-    #MIXUP_ALPHA: 0.0
-    #MIXUP_PROB: 1.0
-    #MIXUP_SWITCH_PROB: 0.5
-    #MIXUP_MODE: 'batch'
-    #CUTMIX_ALPHA: 0.0
-    #CUTMIX_MINMAX: None
-    #RANDOM_ERASE_PROB: 0.25
-    #RANDOM_ERASE_MODE: 'pixel'
-    #RANDOM_ERASE_COUNT: 1
-    #RANDOM_ERASE_SPLIT: False
-
+        NAME: 'LARS'
