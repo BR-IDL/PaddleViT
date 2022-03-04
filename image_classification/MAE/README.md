@@ -30,18 +30,18 @@ pip install paddlenlp
 ## Models Zoo
 | Finetuned Model               | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
 |-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| mae_finetuned_vit_base        | 83.72 | 96.54 | 86.4M   | 17.0G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1txV3fWnu_Jr17tCCqk9e_pFeuh7GkmvU/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1cqed6Omp8GeNVaa3-W82GA?pwd=i71u)(i71u) |
-| mae_finetuned_vit_large       | 85.95 | 97.57 | 304.1M  | 59.9G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1dzVWxQ0_XTKqKKpA3pSSVU57rT_g8nOe/view?usp=sharing)/[baidu](https://pan.baidu.com/s/17cG1UC3gX4dAXdGDTv_BBw?pwd=v2zk)(v2zk) |
-| mae_finetuned_vit_huge        | 86.90 | 98.07 | 631.7M  | 162.5G | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1xqjdPez4uG495w3akVbHbn4YqUB1Nmmk/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1N1t-dsNZpwXSKeVOTkz3IQ?pwd=gs6c)(gs6c) |
+| mae_finetuned_vit_base        | 83.72 | 96.54 | 86.4M   | 17.0G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1txV3fWnu_Jr17tCCqk9e_pFeuh7GkmvU/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1rIV2lYHEIYhD0ScTxmMi5A?pwd=svaw)(svaw) |
+| mae_finetuned_vit_large       | 85.95 | 97.57 | 304.1M  | 59.9G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1dzVWxQ0_XTKqKKpA3pSSVU57rT_g8nOe/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1zlqmA-_fqCNZiuKOPMTtQA?pwd=tp48)(tp48) |
+| mae_finetuned_vit_huge        | 86.90 | 98.07 | 631.7M  | 162.5G | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1xqjdPez4uG495w3akVbHbn4YqUB1Nmmk/view?usp=sharing)/[baidu](https://pan.baidu.com/s/17z-NK-akSlvYJSRZkUU2CQ?pwd=1fds)(1fds) |
 > *The results are evaluated on ImageNet2012 validation set.
 
 | Pretrained Model              | Link         |
 |-------------------------------|--------------|
-| mae_pretrain_vit_base        | [google](https://drive.google.com/file/d/1K7ZEaDj1D56i7uTX46hSelf0Ydbpmtie/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1kBn-ad2xyCar4xt-k_oYaA?pwd=rmsi)(rmsi) |
-| mae_pretrain_vit_large       | [google](https://drive.google.com/file/d/1UagT3mz_cLHcjyIQfyyLOkXtJXda3UbS/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1IcdX_rDdl9vLyI7rD1I8HQ?pwd=r77v)(r77v) |
-| mae_pretrain_vit_huge        | [google](https://drive.google.com/file/d/1Y1lIO_COL2vkz2YvrmYt2yI8iAiRNiPh/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Wk_tp8De4AYNFBGnIgl5fg?pwd=mthi)(mthi) |
+| mae_pretrain_vit_base        | [google](https://drive.google.com/file/d/1K7ZEaDj1D56i7uTX46hSelf0Ydbpmtie/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1aFdDhA61-5lB9g6LoAlKoQ?pwd=3fu3)(3fu3) |
+| mae_pretrain_vit_large       | [google](https://drive.google.com/file/d/1UagT3mz_cLHcjyIQfyyLOkXtJXda3UbS/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1UIZuA_3uk5v-AHX41rjd0A?pwd=9c3s)(9c3s) |
+| mae_pretrain_vit_huge        | [google](https://drive.google.com/file/d/1Y1lIO_COL2vkz2YvrmYt2yI8iAiRNiPh/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1XN-WkiiICqQUXcmv44PUxw?pwd=vc42)(vc42) |
 
-
+> Note: current model weighs are ported from official repo for paddle, our trainied model weights are coming soon.
 
 ## Notebooks
 We provide a few notebooks in aistudio to help you get started:
