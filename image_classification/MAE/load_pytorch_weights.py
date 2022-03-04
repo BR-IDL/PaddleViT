@@ -29,14 +29,30 @@ paddle.seed(seed)
 np.random.seed(seed)
 random.seed(seed)
 
-#model_name = 'mae_vit_huge_patch14'
-#config = get_config(f'./configs/vit_huge_patch14_224_pretrain.yaml')
 
-#model_name = 'mae_vit_large_patch16'
-#config = get_config(f'./configs/vit_large_patch16_224_pretrain.yaml')
+#model_type = 'base'
+#model_type = 'large'
+model_type = 'huge'
 
-model_name = 'mae_vit_base_patch16'
-config = get_config(f'./configs/vit_base_patch16_224_pretrain.yaml')
+if model_type == 'base':
+    model_name = 'mae_vit_base_patch16'
+    config = get_config(f'./configs/vit_base_patch16_224_pretrain.yaml')
+    pth_model_path = './mae_pretrain_vit_base.pth'
+    pd_model_path = './mae_pretrain_vit_base.pdparams'
+    npatches = 196
+elif model_type == 'large':
+    model_name = 'mae_vit_large_patch16'
+    config = get_config(f'./configs/vit_large_patch16_224_pretrain.yaml')
+    pth_model_path = './mae_pretrain_vit_large.pth'
+    pd_model_path = './mae_pretrain_vit_large.pdparams'
+    npatches = 196
+elif model_type == 'huge':
+    model_name = 'mae_vit_huge_patch14'
+    config = get_config(f'./configs/vit_huge_patch14_224_pretrain.yaml')
+    pth_model_path = './mae_pretrain_vit_huge.pth'
+    pd_model_path = './mae_pretrain_vit_huge.pdparams'
+    npatches = 256
+
 
 def print_model_named_params(model):
     print('----------------------------------')
@@ -161,7 +177,7 @@ def convert(torch_model, paddle_model):
 
     
 def main():
-
+    
     paddle.set_device('cpu')
     paddle_model = build_model(config)
     paddle_model.eval()
@@ -174,7 +190,7 @@ def main():
     torch_model = models_mae.__dict__[model_name](norm_pix_loss=True)
     print_model_named_params(torch_model)
     print_model_named_buffers(torch_model)
-    state_dict = torch.load('./mae_pretrain_vit_base.pth', map_location='cpu')['model']
+    state_dict = torch.load(pth_model_path, map_location='cpu')['model']
     print('===========================')
     for key in state_dict:
         print(key)
@@ -187,14 +203,18 @@ def main():
     paddle_model = convert(torch_model, paddle_model)
 
     # check correctness
-    x = np.random.randn(2, 3, 224, 224).astype('float32')
+    x = np.random.randn(4, 3, 224, 224).astype('float32')
     x_paddle = paddle.to_tensor(x)
     x_torch = torch.Tensor(x).to(device)
+    
+    # manually set the same rand probs(noise) for random masking
+    rp = np.random.rand(4, npatches)
+    rand_probs = paddle.to_tensor(rp) 
+    noise = torch.Tensor(rp)
 
-    #out_torch = torch_model(x_torch)[1]
-    #out_paddle = paddle_model(x_paddle)[1]
-    out_torch = torch_model.forward_encoder(x_torch, 0.0)[0]
-    out_paddle = paddle_model.forward_encoder(x_paddle, 0.0)[0]
+    # encoder out
+    out_torch = torch_model.forward_encoder(x_torch, 0.75, noise)[0]
+    out_paddle = paddle_model.forward_encoder(x_paddle, 0.75, rand_probs)[0]
 
     out_torch = out_torch.data.cpu().numpy()
     out_paddle = out_paddle.cpu().numpy()
@@ -205,10 +225,53 @@ def main():
     print(out_paddle[0, 0:100])
     assert np.allclose(out_torch, out_paddle, atol = 1e-5)
     
+
+    # encoder out: mask
+    out_torch = torch_model.forward_encoder(x_torch, 0.75, noise)[1]
+    out_paddle = paddle_model.forward_encoder(x_paddle, 0.75, rand_probs)[1]
+
+    out_torch = out_torch.data.cpu().numpy()
+    out_paddle = out_paddle.cpu().numpy()
+
+    print(out_torch.shape, out_paddle.shape)
+    print(out_torch[0, 0:100])
+    print('========================================================')
+    print(out_paddle[0, 0:100])
+    assert np.allclose(out_torch, out_paddle, atol = 1e-5)
+
+
+
+    # manually set the same rand probs(noise) for random masking
+    rp = np.random.rand(4, npatches)
+    rand_probs = paddle.to_tensor(rp) 
+    noise = torch.Tensor(rp)
+    # [0]: loss, [1]: decoder_out
+    out_torch = torch_model(x_torch, 0.75, noise)[0]
+    out_paddle = paddle_model(x_paddle, 0.75, rand_probs)[0]
+
+    out_torch = out_torch.data.cpu().numpy()
+    out_paddle = out_paddle.cpu().numpy()
+
+    print('torch loss = ', out_torch)
+    print('paddle loss = ', out_paddle)
+
+    print(out_torch.shape, out_paddle.shape)
+    #print(out_torch[0, 0:100])
+    #print('========================================================')
+    #print(out_paddle[0, 0:100])
+    #print('--------------------------------------------------------')
+    #print(out_torch[1, 0:100])
+    #print('========================================================')
+    #print(out_paddle[1, 0:100])
+    assert np.allclose(out_torch, out_paddle, atol = 1e-5)
+    #assert np.allclose(out_torch[0, :, :], out_paddle[0, :, :], atol = 1e-5)
+    #assert np.allclose(out_torch[1, :, :], out_paddle[1, :, :], atol = 1e-5)
+
+
     ## save weights for paddle model
-    #model_path = os.path.join(f'./{model_name}.pdparams')
-    #paddle.save(paddle_model.state_dict(), model_path)
-    #print('all done')
+    model_path = os.path.join(f'./{pd_model_path}')
+    paddle.save(paddle_model.state_dict(), model_path)
+    print('all done')
 
 
 if __name__ == "__main__":

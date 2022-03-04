@@ -537,7 +537,7 @@ class MAEPretrainTransformer(nn.Layer):
         x = x.reshape([images.shape[0], -1, n_patches * self.patch_size, n_patches * self.patch_size])
         return x
 
-    def random_masking(self, x, mask_ratio):
+    def random_masking(self, x, mask_ratio, rand_probs=None):
         """
         Shuffle x then mask the last few tokens according to mask ratio.
         Args:
@@ -548,12 +548,13 @@ class MAEPretrainTransformer(nn.Layer):
         """
         batch_size, seq_len, embed_dim = x.shape
         keep_len = int(seq_len * (1 - mask_ratio))
-        rand_probs = paddle.rand([batch_size, seq_len])
+        # for debug only
+        rand_probs = rand_probs if rand_probs is not None else paddle.rand([batch_size, seq_len])
+        #rand_probs = paddle.rand([batch_size, seq_len])
         shuffle_ids = paddle.argsort(rand_probs, axis=-1)
         restore_ids = paddle.argsort(shuffle_ids, axis=-1)
 
         keep_ids = shuffle_ids[:, :keep_len]
-
         ids = keep_ids + (paddle.arange(batch_size) * seq_len).unsqueeze(-1).expand([batch_size, -1])
         x_masked = paddle.gather(x.flatten(0, 1), index=ids.flatten(), axis=0).reshape([batch_size, keep_len, -1])
 
@@ -564,12 +565,12 @@ class MAEPretrainTransformer(nn.Layer):
         mask = paddle.gather(mask.flatten(), index=restore_ids_expand.flatten()).reshape([batch_size, seq_len])
         return x_masked, mask, restore_ids
 
-    def forward_encoder(self, images, mask_ratio):
+    def forward_encoder(self, images, mask_ratio, rand_probs=None):
         x = self.patch_embedding(images)
         # add pos embed w/o cls token
         x = x + self.encoder_position_embedding[:, 1:, :]
         # masking
-        x, mask, ids_restore = self.random_masking(x, mask_ratio)
+        x, mask, ids_restore = self.random_masking(x, mask_ratio, rand_probs)
         # append cls token
         cls_token = self.cls_token + self.encoder_position_embedding[:, :1, :]
         cls_tokens = cls_token.expand((x.shape[0], -1, -1))
@@ -586,7 +587,14 @@ class MAEPretrainTransformer(nn.Layer):
         # x_: [batch, num_patches, decoder_embed_dim] 
         x_ = paddle.concat([x[:, 1:, :], mask_tokens], axis=1) # no cls token 
         x_shape = x_.shape
-        x_ = paddle.gather(x_.flatten(0, 1), index=ids_restore.flatten()).reshape(x_shape)
+        batch_size = x_shape[0]
+        seq_len = x_shape[1]
+
+        ## The following ops assures the paddle gather_nd op has the same behaviour as pytorch gather op.
+        ids_restore_expand = ids_restore + (paddle.arange(batch_size) * seq_len).unsqueeze(-1).expand([batch_size, -1])
+        x_ = paddle.gather_nd(x_.flatten(0, 1), index=ids_restore_expand.flatten().unsqueeze(-1)) 
+        x_ = x_.reshape(x_shape)
+
         x = paddle.concat([x[:, :1, :], x_], axis=1) # append cls token
 
         x = x + self.decoder_position_embedding
@@ -607,8 +615,8 @@ class MAEPretrainTransformer(nn.Layer):
         loss = (loss * mask).sum() / mask.sum() # mean loss on removed patches
         return loss
 
-    def forward(self, images, mask_ratio=0.75):
-        encoder_out, mask, restore_ids = self.forward_encoder(images, mask_ratio)
+    def forward(self, images, mask_ratio=0.75, rand_probs=None):
+        encoder_out, mask, restore_ids = self.forward_encoder(images, mask_ratio, rand_probs)
         decoder_out = self.forward_decoder(encoder_out, restore_ids)
         loss = self.forward_loss(images, decoder_out, mask)
         return loss, decoder_out, mask

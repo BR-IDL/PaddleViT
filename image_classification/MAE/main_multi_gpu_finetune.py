@@ -356,7 +356,7 @@ def validate(dataloader,
 
 def main_worker(*args):
     # STEP 0: Preparation
-    dist.init_parallel_env()
+    #dist.init_parallel_env()
     world_size = dist.get_world_size()
     local_rank = dist.get_rank()
     config = args[0]
@@ -526,13 +526,13 @@ def main_worker(*args):
         local_message = (f"----- Validation: " +
                          f"Validation Loss: {val_loss:.4f}, " +
                          f"Validation Acc@1: {val_acc1:.4f}, " +
-                         f"Validation Acc@1: {val_acc5:.4f}, " +
+                         f"Validation Acc@5: {val_acc5:.4f}, " +
                          f"time: {val_time:.2f}")
 
         master_message = (f"----- Validation: " +
                          f"Validation Loss: {avg_loss:.4f}, " +
                          f"Validation Acc@1: {avg_acc1:.4f}, " +
-                         f"Validation Acc@1: {avg_acc5:.4f}, " +
+                         f"Validation Acc@5: {avg_acc5:.4f}, " +
                          f"time: {val_time:.2f}")
         write_log(local_logger, master_logger, local_message, master_message)
         return
@@ -590,13 +590,13 @@ def main_worker(*args):
             local_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                              f"Validation Loss: {val_loss:.4f}, " +
                              f"Validation Acc@1: {val_acc1:.4f}, " +
-                             f"Validation Acc@1: {val_acc5:.4f}, " +
+                             f"Validation Acc@5: {val_acc5:.4f}, " +
                              f"time: {val_time:.2f}")
 
             master_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], " +
                              f"Validation Loss: {avg_loss:.4f}, " +
                              f"Validation Acc@1: {avg_acc1:.4f}, " +
-                             f"Validation Acc@1: {avg_acc5:.4f}, " +
+                             f"Validation Acc@5: {avg_acc5:.4f}, " +
                              f"time: {val_time:.2f}")
             write_log(local_logger, master_logger, local_message, master_message)
 
@@ -604,7 +604,7 @@ def main_worker(*args):
         if local_rank == 0:
             if epoch % config.SAVE_FREQ == 0 or epoch == config.TRAIN.NUM_EPOCHS:
                 model_path = os.path.join(
-                    config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{train_loss}")
+                    config.SAVE, f"{config.MODEL.TYPE}-Epoch-{epoch}-Loss-{avg_loss}")
                 paddle.save(model.state_dict(), model_path + '.pdparams')
                 paddle.save(optimizer.state_dict(), model_path + '.pdopt')
                 message = (f"----- Save model: {model_path}.pdparams \n" +
