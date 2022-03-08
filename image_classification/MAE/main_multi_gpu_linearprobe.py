@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""MAE finetuning using multiple GPU """
+"""MAE linear probing using multiple GPU """
 
 import sys
 import os
@@ -391,6 +391,15 @@ def main_worker(*args):
     model = build_model(config)
     if dist.get_world_size() > 1:
         strategy = fleet.DistributedStrategy()
+        # lars
+        if config.TRAIN.OPTIMIZER.NAME == "LARS":
+            strategy.lars = True
+            strategy.lars_configs = {
+                "lars_coeff": 0.001,
+                "lars_weight_decay": config.TRAIN.WEIGHT_DECAY,
+                "exclude_from_weight_decay": ['classifier.0._mean', 'classifier.0._variance']
+            }
+
         ## Hybrid Parallel Training
         strategy.hybrid_configs = {}
         fleet.init(is_collective=True, strategy=strategy)
@@ -409,28 +418,10 @@ def main_worker(*args):
     message = f'----- Total # of val batch (single gpu): {total_batch_val}'
     write_log(local_logger, master_logger, message)
 
-    # STEP 3: Define Mixup function
-    mixup_fn = None
-    if config.TRAIN.MIXUP_PROB > 0 or config.TRAIN.CUTMIX_ALPHA > 0 or config.TRAIN.CUTMIX_MINMAX is not None:
-        mixup_fn = Mixup(mixup_alpha=config.TRAIN.MIXUP_ALPHA,
-                         cutmix_alpha=config.TRAIN.CUTMIX_ALPHA,
-                         cutmix_minmax=config.TRAIN.CUTMIX_MINMAX,
-                         prob=config.TRAIN.MIXUP_PROB,
-                         switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
-                         mode=config.TRAIN.MIXUP_MODE,
-                         label_smoothing=config.TRAIN.SMOOTHING)
+    # STEP 3: Define criterion
+    criterion = nn.CrossEntropyLoss()
 
-    # STEP 4: Define criterion
-    if config.TRAIN.MIXUP_PROB > 0.:
-        criterion = SoftTargetCrossEntropyLoss()
-    elif config.TRAIN.SMOOTHING:
-        criterion = LabelSmoothingCrossEntropyLoss()
-    else:
-        criterion = nn.CrossEntropyLoss()
-    # only use cross entropy for val
-    criterion_val = nn.CrossEntropyLoss()
-
-    # STEP 5: Define optimizer and lr_scheduler
+    # STEP 4: Define optimizer and lr_scheduler
     # set lr according to batch size and world size (hacked from Swin official code and modified for CSwin)
     if not config.EVAL:
         if config.TRAIN.LINEAR_SCALED_LR is not None:
@@ -489,12 +480,20 @@ def main_worker(*args):
                 beta2=config.TRAIN.OPTIMIZER.BETAS[1],
                 epsilon=config.TRAIN.OPTIMIZER.EPS,
                 grad_clip=clip)
+        elif config.TRAIN.OPTIMIZER.NAME == "LARS":
+            optimizer = paddle.optimizer.Momentum(
+                learning_rate=config.TRAIN.BASE_LR,
+                parameters=model.classifier.parameters(),
+                momentum=0.9,
+                grad_clip=None,
+                weight_decay=None, # set by fleet lars
+            )
         else:
             message = f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}."
             write_log(local_logger, master_logger, message, None, 'fatal')
             raise NotImplementedError(message)
 
-    # STEP 6: Load pretrained model / load resumt model and optimizer states
+    # STEP 5: Load pretrained model / load resumt model and optimizer states
     if config.MODEL.PRETRAINED:
         assert os.path.isfile(config.MODEL.PRETRAINED) is True
         model_state = paddle.load(config.MODEL.PRETRAINED)
@@ -520,6 +519,19 @@ def main_worker(*args):
         model.set_state_dict(model_state)
         message = f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}"
         write_log(local_logger, master_logger, message)
+
+    # for linear prob: add bn1d to classifier layer
+    model.classifier = nn.Sequential(
+        nn.BatchNorm1D(model.classifier.weight.shape[0], weight_attr=False, bias_attr=False, epsilon=1e-6),
+        model.classifier) 
+    # freeze all but the classifier
+    for _, p in model.named_parameters():
+        p.stop_gradient = True
+    for _, p in model.classifier.named_parameters():
+        p.stop_gradient = False
+
+    for n, p in model.named_parameters():
+        print(n, p.shape, p.stop_gradient)
 
     if config.MODEL.RESUME:
         assert os.path.isfile(config.MODEL.RESUME) is True
@@ -551,7 +563,7 @@ def main_worker(*args):
         val_loss, val_acc1, val_acc5, avg_loss, avg_acc1, avg_acc5, val_time = validate(
             dataloader=dataloader_val,
             model=model,
-            criterion=criterion_val,
+            criterion=criterion,
             total_batches=total_batch_val,
             debug_steps=config.REPORT_FREQ,
             local_logger=local_logger,
@@ -591,7 +603,7 @@ def main_worker(*args):
             total_batches=total_batch_train,
             debug_steps=config.REPORT_FREQ,
             accum_iter=config.TRAIN.ACCUM_ITER,
-            mixup_fn=mixup_fn,
+            mixup_fn=None,
             amp_grad_scaler=amp_grad_scaler,
             local_logger=local_logger,
             master_logger=master_logger)
@@ -615,7 +627,7 @@ def main_worker(*args):
             val_loss, val_acc1, val_acc5, avg_loss, avg_acc1, avg_acc5, val_time = validate(
                 dataloader=dataloader_val,
                 model=model,
-                criterion=criterion_val,
+                criterion=criterion,
                 total_batches=total_batch_val,
                 debug_steps=config.REPORT_FREQ,
                 local_logger=local_logger,
@@ -657,7 +669,7 @@ def main():
     config = update_config(config, arguments)
     # set output folder
     if not config.EVAL:
-        config.SAVE = '{}/finetuning-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M'))
+        config.SAVE = '{}/linearprobing-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M'))
     else:
         config.SAVE = '{}/eval-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M'))
     if not os.path.exists(config.SAVE):

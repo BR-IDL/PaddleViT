@@ -34,7 +34,7 @@ _C.DATA.DATA_PATH = '/dataset/imagenet/'  # path to dataset
 _C.DATA.DATASET = 'imagenet2012'  # dataset name, currently only support imagenet2012
 _C.DATA.IMAGE_SIZE = 224  # input image size: 224 for pretrain
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 1  # number of data loading threads
+_C.DATA.NUM_WORKERS = 2  # number of data loading threads
 _C.DATA.IMAGENET_MEAN = [0.485, 0.456, 0.406] # [0.5, 0.5, 0.5] # imagenet mean values
 _C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225] # [0.5, 0.5, 0.5] # imagenet std values
 
@@ -162,6 +162,8 @@ def update_config(config, args):
         config.DATA.DATA_PATH = args.data_path
     if args.ngpus:
         config.NGPUS = args.ngpus
+    if args.accum_iter:
+        config.TRAIN.ACCUM_ITER = args.accum_iter
     if args.eval:
         config.EVAL = True
         config.DATA.BATCH_SIZE_EVAL = args.batch_size

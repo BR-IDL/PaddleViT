@@ -31,3 +31,5 @@ TRAIN:
     OPTIMIZER:
         NAME: 'AdamW'
         BETAS: (0.9, 0.95)
+
+SAVE_FREQ: 1
