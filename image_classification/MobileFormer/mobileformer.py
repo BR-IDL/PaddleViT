@@ -678,7 +678,7 @@ class MobileFormer(nn.Layer):
                           act,
                           pointwiseconv_groups):
         self.blocks = []
-        for i in range(0, len(in_channel_list)):
+        for i, _ in enumerate(in_channel_list):
             self.blocks.append(
                 MFBlock(
                     in_channels=int(alpha * in_channel_list[i]),
