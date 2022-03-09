@@ -4,9 +4,9 @@ DATA:
 MODEL:
     TYPE: MobileFormer
     NAME: MobileFormer_508M
-    DROPPATH: 0.1
-    DROPOUT: 0.1
-    MLP_DROPOUT: 0.1
+    DROPPATH: 0.3
+    DROPOUT: 0.3
+    MLP_DROPOUT: 0.3
     ATTENTION_DROPOUT: 0.1
     MF:
         IN_CHANNELS: 3

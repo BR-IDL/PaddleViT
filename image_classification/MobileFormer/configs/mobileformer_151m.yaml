@@ -5,7 +5,7 @@ MODEL:
     TYPE: MobileFormer
     NAME: MobileFormer_151M
     DROPPATH: 0.1
-    DROPOUT: 0.1
+    DROPOUT: 0.2
     MLP_DROPOUT: 0.1
     ATTENTION_DROPOUT: 0.1
     MF:

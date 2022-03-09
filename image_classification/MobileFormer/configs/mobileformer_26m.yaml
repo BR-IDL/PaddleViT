@@ -4,7 +4,7 @@ DATA:
 MODEL:
     TYPE: MobileFormer
     NAME: MobileFormer_26M
-    DROPPATH: 0.1
+    DROPPATH: 0.0
     DROPOUT: 0.1
     MLP_DROPOUT: 0.1
     ATTENTION_DROPOUT: 0.1

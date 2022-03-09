@@ -12,54 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Implement MLP And DYReLU Layer
+MobileFormer Arch -- DYReLU Implement
 """
 import paddle
 from paddle import nn
 
-class MLP(nn.Layer):
-    """Multi Layer Perceptron
-        Params Info:
-            in_features: input token feature size
-            out_features: output token feature size
-            mlp_ratio: the scale of hidden feature size
-            mlp_dropout_rate: the dropout rate of mlp layer output
-    """
-    def __init__(self,
-                 in_features,
-                 out_features=None,
-                 mlp_ratio=2,
-                 mlp_dropout_rate=0.,
-                 act=nn.GELU):
-        super(MLP, self).__init__(name_scope="MLP")
-        self.out_features = in_features if out_features is None else \
-                            out_features
-        linear_weight_attr, linear_bias_attr = self._linear_init()
+from attention import MLP
 
-        self.fc1 = nn.Linear(in_features=in_features,
-                             out_features=int(mlp_ratio*in_features),
-                             weight_attr=linear_weight_attr,
-                             bias_attr=linear_bias_attr)
-        self.fc2 = nn.Linear(in_features=int(mlp_ratio*in_features),
-                             out_features=self.out_features,
-                             weight_attr=linear_weight_attr,
-                             bias_attr=linear_bias_attr)
-
-        self.act = act()
-        self.dropout = nn.Dropout(mlp_dropout_rate)
-
-    def _linear_init(self):
-        weight_attr = nn.initializer.KaimingNormal()
-        bias_attr = nn.initializer.Constant(value=0.0)
-        return weight_attr, bias_attr
-
-    def forward(self, inputs):
-        x = self.fc1(inputs)
-        x = self.act(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-        x = self.dropout(x)
-        return x
 
 class DyReLU(nn.Layer):
     """Dynamic ReLU activation function -- use one MLP
@@ -78,7 +37,8 @@ class DyReLU(nn.Layer):
                  k=2, # a_1, a_2 coef, b_1, b_2 bias
                  coefs=[1.0, 0.5], # coef init value
                  consts=[1.0, 0.0], # const init value
-                 reduce=4):
+                 reduce=4,
+                 init_type='kn'):
         super(DyReLU, self).__init__(
                  name_scope="DyReLU")
         self.embed_dims = embed_dims
@@ -94,11 +54,14 @@ class DyReLU(nn.Layer):
         self.const = paddle.to_tensor([consts[0]] + [consts[1]]*(2*k-1))
 
         self.project = nn.Sequential(
+            # nn.LayerNorm(embed_dims),
             MLP(in_features=embed_dims,
                 out_features=self.mid_channels,
                 mlp_ratio=1/reduce,
-                act=nn.ReLU),
-            nn.BatchNorm(self.mid_channels)
+                act=nn.GELU,
+                init_type=init_type),
+            # nn.BatchNorm(self.mid_channels)
+            nn.LayerNorm(self.mid_channels)
         )
 
     def forward(self, feature_map, tokens):
