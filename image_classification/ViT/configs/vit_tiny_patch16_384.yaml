@@ -1,15 +1,15 @@
 DATA:
-    IMAGE_SIZE: 224
-    CROP_PCT: 0.875
+    IMAGE_SIZE: 384
+    CROP_PCT: 1.0
 MODEL:
     TYPE: vit
-    NAME: vit_base_patch32_224
-    PATCH_SIZE: 32
+    NAME: vit_tiny_patch16_384
+    PATCH_SIZE: 16
     MLP_RATIO: 4.0
     QKV_BIAS: true
-    EMBED_DIM: 768
+    EMBED_DIM: 192
     DEPTH: 12
-    NUM_HEADS: 12
+    NUM_HEADS: 3
     DROPOUT: 0.1  # same as paper
     ATTENTION_DROPOUT: 0.1  # same as paper
 TRAIN:
