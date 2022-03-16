@@ -13,6 +13,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
+* Update (2022-03-16): Code is refactored.
 * Update (2021-12-30): Add multi scale sampler DDP and update mobilevit_s model weights.
 * Update (2021-11-02): Pretrained model weights (mobilevit_s) is released.
 * Update (2021-11-02): Pretrained model weights (mobilevit_xs) is released.
@@ -22,36 +23,29 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 ## Models Zoo
 | Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
 |-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| mobilevit_xxs   				| 70.31| 89.68 | 1.32M   | 0.44G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1l3L-_TxS3QisRUIb8ohcv318vrnrHnWA/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1KFZ5G834_-XXN33W67k8eg)(axpc) |
-| mobilevit_xs   				| 74.47| 92.02 | 2.33M   | 0.95G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1oRMA4pNs2Ba0LYDbPufC842tO4OFcgwq/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1IP8S-S6ZAkiL0OEsiBWNkw)(hfhm) |
-| mobilevit_s   				| 76.74| 93.08 | 5.59M   | 1.88G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1ibkhsswGYWvZwIRjwfgNA4-Oo2stKi0m/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1-rI6hiCHZaI7os2siFASNg)(34bg) |
-| mobilevit_s $\dag$  			| 77.83| 93.83 | 5.59M   | 1.88G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1BztBJ5jzmqgDWfQk-FB_ywDWqyZYu2yG/view?usp=sharing)/[baidu](https://pan.baidu.com/s/19YepMAO-sveBOLA4aSjIEQ?pwd=92ic)(92ic) |
+| mobilevit_xxs   				| 70.31| 89.68 | 1.32M   | 0.44G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1l3L-_TxS3QisRUIb8ohcv318vrnrHnWA/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1KFZ5G834_-XXN33W67k8eg?pwd=axpc) |
+| mobilevit_xs   				| 74.47| 92.02 | 2.33M   | 0.95G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1oRMA4pNs2Ba0LYDbPufC842tO4OFcgwq/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1IP8S-S6ZAkiL0OEsiBWNkw?pwd=hfhm) |
+| mobilevit_s   				| 76.74| 93.08 | 5.59M   | 1.88G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1ibkhsswGYWvZwIRjwfgNA4-Oo2stKi0m/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1-rI6hiCHZaI7os2siFASNg?pwd=34bg) |
+| mobilevit_s*  		    	| 77.83| 93.83 | 5.59M   | 1.88G   | 256        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1BztBJ5jzmqgDWfQk-FB_ywDWqyZYu2yG/view?usp=sharing)/[baidu](https://pan.baidu.com/s/19YepMAO-sveBOLA4aSjIEQ?pwd=92ic) |
 
 
 
 > The results are evaluated on ImageNet2012 validation set.
 > 
-> All models are trained from scratch using PaddleViT.
+> All models are trained from scratch using **PaddleViT**.
 >
-> $\dag$ means model is trained from scratch using PaddleViT using multi scale sampler DDP.
+> \* means model is trained from scratch using PaddleViT using multi scale sampler DDP.
 
 
-## Notebooks
-We provide a few notebooks in aistudio to help you get started:
-
-**\*(coming soon)\***
 
 
-## Requirements
-- Python>=3.6
-- yaml>=0.2.5
-- [PaddlePaddle](https://www.paddlepaddle.org.cn/documentation/docs/en/install/index_en.html)>=2.1.0
-- [yacs](https://github.com/rbgirshick/yacs)>=0.1.8
 
-## Data 
-ImageNet2012 dataset is used in the following folder structure:
+## Data Preparation
+ImageNet2012 dataset is used in the following file structure:
 ```
 │imagenet/
+├──train_list.txt
+├──val_list.txt
 ├──train/
 │  ├── n01440764
 │  │   ├── n01440764_10026.JPEG
@@ -65,106 +59,77 @@ ImageNet2012 dataset is used in the following folder structure:
 │  │   ├── ......
 │  ├── ......
 ```
+- `train_list.txt`: list of relative paths and labels of training images. You can download it from: [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm?pwd=a4vm)
+- `val_list.txt`: list of relative paths and labels of validation images. You can download it from: [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga?pwd=kdga) 
+
 
 ## Usage
 To use the model with pretrained weights, download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
 
-For example, assume the downloaded weight file is stored in `./mobilevit_xxs.pdparams`, to use the `mobilevit_xxs` model in python:
+For example, assume weight file is downloaded in `./mobilevit_s.pdparams`, to use the `mobilevit_s` model in python:
 ```python
 from config import get_config
-from mobile_vit import build_mobile_vit as build_model
-import paddle
+from mobilevit import build_mobilevit as build_model
 # config files in ./configs/
-config = get_config('./configs/mobilevit_xxs.yaml')
+config = get_config('./configs/mobilevit_s.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights
-model_state_dict = paddle.load('./mobilevit_xxs.pdparams')
-model.set_dict(model_state_dict)
+model_state_dict = paddle.load('./mobilevit_s.pdparams')
+model.set_state_dict(model_state_dict)
 ```
 
 ## Evaluation
-To evaluate MobileViT model performance on ImageNet2012 with a single GPU, run the following script using command line:
-```shell
-sh run_eval.sh
-```
-or
-```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_single_gpu.py \
-    -cfg=./configs/mobilevit_xxs.yaml \
-    -dataset=imagenet2012 \
-    -batch_size=16 \
-    -data_path=/path/to/dataset/imagenet/val \
-    -eval \
-    -pretrained=/path/to/pretrained/model/mobilevit_xxs  # .pdparams is NOT needed
-```
-
-<details>
-
-<summary>
-Run evaluation using multi-GPUs:
-</summary>
-
-
+To evaluate MobileViT model performance on ImageNet2012, run the following script using command line:
 ```shell
 sh run_eval_multi.sh
 ```
 or
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg=./configs/mobilevit_xxs.yaml \
-    -dataset=imagenet2012 \
-    -batch_size=16 \
-    -data_path=/path/to/dataset/imagenet/val \
-    -eval \
-    -pretrained=/path/to/pretrained/model/mobilevit_xxs  # .pdparams is NOT needed
+-cfg='./configs/mobilevit_s.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-eval \
+-pretrained='./mobilevit_s.pdparams' \
+-amp
 ```
-
-</details>
+> Note: if you have only 1 GPU, change device number to `CUDA_VISIBLE_DEVICES=0` would run the evaluation on single GPU.
 
 
 ## Training
-To train the MobileVit XXS model on ImageNet2012 with single GPU, run the following script using command line:
+To train the MobileViT model on ImageNet2012 with distillation, run the following script using command line:
 ```shell
-sh run_train.sh
+sh run_train_multi_distill.sh
 ```
 or
 ```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_singel_gpu.py \
-  -cfg=./configs/mobilevit_xxs.yaml \
-  -dataset=imagenet2012 \
-  -batch_size=32 \
-  -data_path=/path/to/dataset/imagenet/train
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+python main_multi_gpu_distill.py \
+-cfg='./configs/mobilevit_s.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-amp
 ```
+> Note: it is highly recommanded to run the training using multiple GPUs / multi-node GPUs.
 
-<details>
-
-<summary>
-Run training using multi-GPUs:
-</summary>
-
-
+## Finetuning
+To finetune the MobileViT model on ImageNet2012, run the following script using command line:
 ```shell
-sh run_train_multi.sh
-```
-or
-```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg=./configs/mobilevit_xxs.yaml \
-    -dataset=imagenet2012 \
-    -batch_size=16 \
-    -data_path=/path/to/dataset/imagenet/train
+-cfg='./configs/mobilevit_s.yaml' \
+-dataset='imagenet2012' \
+-batch_size=16 \
+-data_path='/dataset/imagenet' \
+-pretrained='./mobilevit_s.pdparams' \
+-amp
 ```
+> Note: use `-pretrained` argument to set the pretrained model path, you may also need to modify the hyperparams defined in config file.
 
-</details>
-
-
-## Visualization Attention Map
-**(coming soon)**
 
 ## Reference
 ```

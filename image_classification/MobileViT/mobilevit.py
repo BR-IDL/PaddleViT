@@ -1,5 +1,28 @@
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+MobileViT in Paddle
+
+A Paddle Implementation of MobileViT as described in:
+
+"MobileViT: Light-weight, General-purpose, and Mobile-friendly Vision Transformer"
+    - Paper Link: https://arxiv.org/abs/2110.02178
+"""
 import paddle
 import paddle.nn as nn
+from droppath import DropPath
 
 
 def _init_weights_linear():
@@ -14,8 +37,8 @@ def _init_weights_layernorm():
     return weight_attr, bias_attr
 
 
-# DONE
 class ConvNormAct(nn.Layer):
+    """Layer ops: Conv2D -> BatchNorm2D -> Silu"""
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -43,22 +66,27 @@ class ConvNormAct(nn.Layer):
         return out
 
 
-# DONE
 class Identity(nn.Layer):
-    """ Identity layer"""
-    def __init__(self):
-        super().__init__()
-
+    """ Identity layer
+    The output of this layer is the input without any change.
+    Use this layer to avoid if condition in some forward methods
+    """
     def forward(self, inputs):
         return inputs
 
 
-#DONE
 class Mlp(nn.Layer):
-    def __init__(self,
-                 embed_dim,
-                 mlp_ratio,
-                 dropout=0.):
+    """ MLP module
+    Impl using nn.Linear and activation is GELU, dropout is applied.
+    Ops: fc -> act -> dropout -> fc -> dropout
+
+    Attributes:
+        fc1: nn.Linear
+        fc2: nn.Linear
+        act: GELU
+        dropout: dropout after fc1 and fc2
+    """
+    def __init__(self, embed_dim, mlp_ratio, dropout=0.):
         super().__init__()
         w_attr_1, b_attr_1 = _init_weights_linear()
         self.fc1 = nn.Linear(embed_dim,
@@ -73,41 +101,60 @@ class Mlp(nn.Layer):
                              bias_attr=b_attr_2)
 
         self.act = nn.Silu()
-        self.dropout1 = nn.Dropout(dropout)
-        self.dropout2 = nn.Dropout(dropout)
-
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         x = self.fc1(x)
         x = self.act(x)
-        x = self.dropout1(x)
+        x = self.dropout(x)
         x = self.fc2(x)
-        x = self.dropout2(x)
+        x = self.dropout(x)
         return x
 
 
 class Attention(nn.Layer):
+    """ Attention module
+    Attention module for ViT, here q, k, v are assumed the same.
+    The qkv mappings are stored as one single param.
+
+    Attributes:
+        num_heads: number of heads
+        attn_head_size: feature dim of single head
+        all_head_size: feature dim of all heads
+        qkv: a nn.Linear for q, k, v mapping
+        scales: 1 / sqrt(single_head_feature_dim)
+        proj: projection of multi-head attention
+        attn_dropout: dropout for attention
+        proj_dropout: final dropout before output
+        softmax: softmax op for attention
+    """
     def __init__(self,
                  embed_dim,
                  num_heads,
+                 attn_head_size=None,
                  qkv_bias=True,
                  dropout=0.,
                  attention_dropout=0.):
         super().__init__()
+        self.embed_dim = embed_dim
         self.num_heads = num_heads
-        self.attn_head_dim = int(embed_dim / self.num_heads)
-        self.all_head_dim = self.attn_head_dim * self.num_heads
-        
+        if attn_head_size is not None:
+            self.attn_head_size = attn_head_size
+        else:
+            assert embed_dim % num_heads == 0, "embed_dim must be divisible by num_heads"
+            self.attn_head_size = embed_dim // num_heads
+        self.all_head_size = self.attn_head_size * num_heads
+
         w_attr_1, b_attr_1 = _init_weights_linear()
         self.qkv = nn.Linear(embed_dim,
-                             self.all_head_dim * 3, # weights for q, k, v
+                             self.all_head_size * 3, # weights for q, k, v
                              weight_attr=w_attr_1,
                              bias_attr=b_attr_1 if qkv_bias else False)
 
-        self.scales = self.attn_head_dim ** -0.5
+        self.scales = self.attn_head_size ** -0.5
 
         w_attr_2, b_attr_2 = _init_weights_linear()
-        self.proj = nn.Linear(embed_dim,
+        self.proj = nn.Linear(self.all_head_size,
                               embed_dim,
                               weight_attr=w_attr_2,
                               bias_attr=b_attr_2)
@@ -145,11 +192,11 @@ class Attention(nn.Layer):
         return z
 
 
-# DONE
 class EncoderLayer(nn.Layer):
     def __init__(self,
                  embed_dim,
                  num_heads=8,
+                 attn_head_size=None,
                  qkv_bias=True,
                  mlp_ratio=2.0,
                  dropout=0.,
@@ -160,7 +207,7 @@ class EncoderLayer(nn.Layer):
         w_attr_2, b_attr_2 = _init_weights_layernorm()
 
         self.attn_norm = nn.LayerNorm(embed_dim, weight_attr=w_attr_1, bias_attr=b_attr_1)
-        self.attn = Attention(embed_dim, num_heads, qkv_bias, attention_dropout, dropout)
+        self.attn = Attention(embed_dim, num_heads, attn_head_size, qkv_bias, attention_dropout, dropout)
         self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
         self.mlp_norm = nn.LayerNorm(embed_dim, weight_attr=w_attr_2, bias_attr=b_attr_2)
         self.mlp = Mlp(embed_dim, mlp_ratio, dropout)
@@ -180,12 +227,12 @@ class EncoderLayer(nn.Layer):
         return x
 
 
-# DONE
 class Transformer(nn.Layer):
     def __init__(self,
                  embed_dim,
                  num_heads,
                  depth,
+                 attn_head_size=None,
                  qkv_bias=True,
                  mlp_ratio=2.0,
                  dropout=0.,
@@ -198,6 +245,7 @@ class Transformer(nn.Layer):
         for i in range(depth):
             layer_list.append(EncoderLayer(embed_dim, 
                                            num_heads,
+                                           attn_head_size,
                                            qkv_bias,
                                            mlp_ratio,
                                            dropout,
@@ -218,7 +266,6 @@ class Transformer(nn.Layer):
         return out
 
 
-# DONE
 class MobileV2Block(nn.Layer):
     """Mobilenet v2 InvertedResidual block, hacked from torchvision"""
     def __init__(self, inp, oup, stride=1, expansion=4):
@@ -250,12 +297,12 @@ class MobileV2Block(nn.Layer):
         return self.conv(x)
 
 
-# DONE
 class MobileViTBlock(nn.Layer):
     def __init__(self,
                  dim,
                  hidden_dim,
                  depth,
+                 attn_head_size=None,
                  num_heads=8,
                  qkv_bias=True,
                  mlp_ratio=2.0,
@@ -274,12 +321,12 @@ class MobileViTBlock(nn.Layer):
         self.transformer = Transformer(embed_dim=hidden_dim,
                                        num_heads=num_heads,
                                        depth=depth,
+                                       attn_head_size=attn_head_size,
                                        qkv_bias=qkv_bias,
                                        mlp_ratio=mlp_ratio,
                                        dropout=dropout,
                                        attention_dropout=attention_dropout,
                                        droppath=droppath)
-
         # fusion
         self.conv3 = ConvNormAct(hidden_dim, dim, kernel_size=1)
         # last conv-nxn, the input is concat of input tensor and conv3 output tensor
@@ -310,11 +357,10 @@ class MobileViTBlock(nn.Layer):
         return x
 
 
-# DONE
 class MobileViT(nn.Layer):
     def __init__(self,
                  in_channels=3,
-                 dims=[16, 32, 48, 48, 48, 64, 80, 96, 384], # XS
+                 dims=[16, 32, 48, 48, 48, 64, 80, 96, 384],
                  hidden_dims=[96, 120, 144], # d: hidden dims in mobilevit block
                  num_classes=1000):
         super().__init__()
@@ -378,29 +424,16 @@ class MobileViT(nn.Layer):
 
         return x
 
-# DONE
-def build_mobile_vit(config):
+
+def build_mobilevit(config):
     """Build MobileViT by reading options in config object
     Args:
         config: config instance contains setting options
     Returns:
         model: MobileViT model
     """
-    model = MobileViT(in_channels=config.MODEL.IN_CHANNELS,
-                      dims=config.MODEL.DIMS,  # XS: [16, 32, 48, 48, 48, 64, 80, 96, 384]
-                      hidden_dims=config.MODEL.HIDDEN_DIMS, # XS: [96, 120, 144], # d: hidden dims in mobilevit block
+    model = MobileViT(in_channels=config.DATA.IMAGE_CHANNELS,
+                      dims=config.MODEL.DIMS,
+                      hidden_dims=config.MODEL.HIDDEN_DIMS,
                       num_classes=config.MODEL.NUM_CLASSES)
     return model
-
-
-
-#def main():
-#    paddle.set_device('cpu')
-#    model = MobileViT()
-#    print(model)
-#    t = paddle.randn([4, 3, 256, 256])
-#    out = model(t)
-#    print(out.shape)
-#
-#if __name__  == "__main__":
-#    main()
