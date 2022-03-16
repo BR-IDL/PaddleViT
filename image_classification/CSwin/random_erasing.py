@@ -27,7 +27,7 @@ def _get_pixels(per_pixel, rand_color, patch_size, dtype="float32"):
     return paddle.zeros((patch_size[0], 1, 1)).astype(dtype)
 
 
-class RandomErasing(object):
+class RandomErasing():
     """
     Args:
         prob: probability of performing random erasing
@@ -37,7 +37,7 @@ class RandomErasing(object):
         max_aspect: Maximum aspect ratio of earsed area
         mode: pixel color mode, in ['const', 'rand', 'pixel']
             'const' - erase block is constant valued 0 for all channels
-            'rand'  - erase block is valued random color (same per-channel)  
+            'rand'  - erase block is valued random color (same per-channel)
             'pixel' - erase block is vauled random color per pixel
         min_count: Minimum # of ereasing blocks per image.
         max_count: Maximum # of ereasing blocks per image. Area per box is scaled by count
@@ -70,7 +70,7 @@ class RandomErasing(object):
         count = self.min_count if self.min_count == self.max_count else \
             random.randint(self.min_count, self.max_count)
         for _ in range(count):
-            for attempt in range(10):
+            for attemp in range(10):
                 target_area = random.uniform(self.min_area, self.max_area) * area / count
                 aspect_ratio = math.exp(random.uniform(*self.log_aspect_ratio))
                 h = int(round(math.sqrt(target_area * aspect_ratio)))
@@ -82,16 +82,16 @@ class RandomErasing(object):
                                 self.per_pixel, self.rand_color, (chan, h, w),
                                 dtype=dtype)
                     break
-    
-    def __call__(self, input):
-        if len(input.shape) == 3:
-            self._erase(input, *input.shape, input.dtype)
+
+    def __call__(self, inputs):
+        if len(inputs.shape) == 3:
+            self._erase(inputs, *inputs.shape, inputs.dtype)
         else:
-            batch_size, chan, img_h, img_w = input.shape
+            batch_size, chan, img_h, img_w = inputs.shape
             batch_start = batch_size // self.num_splits if self.num_splits > 1 else 0
             for i in range(batch_start, batch_size):
-                self._erase(input[i], chan, img_h, img_w, input.dtype)
-        return input
+                self._erase(inputs[i], chan, img_h, img_w, inputs.dtype)
+        return inputs
 
 
 

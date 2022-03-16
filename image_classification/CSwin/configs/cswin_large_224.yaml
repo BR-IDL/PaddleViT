@@ -4,9 +4,8 @@ DATA:
 MODEL:
     TYPE: cswin
     NAME: cswin_large_224
-    TRANS:
-        PATCH_SIZE: 4
-        EMBED_DIM: 144
-        DEPTHS: [2, 4, 32, 2]
-        SPLIT_SIZES: [1, 2, 7, 7]
-        NUM_HEADS: [6, 12, 24, 24]
+    PATCH_SIZE: 4
+    EMBED_DIM: 144
+    DEPTHS: [2, 4, 32, 2]
+    SPLIT_SIZES: [1, 2, 7, 7]
+    NUM_HEADS: [6, 12, 24, 24]

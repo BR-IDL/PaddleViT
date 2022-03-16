@@ -53,8 +53,8 @@ ImageNet2012 dataset is used in the following file structure:
 │  │   ├── ......
 │  ├── ......
 ```
-- `train_list.txt`: list of relative paths and labels of training images. You can download it from: [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm)(a4vm)
-- `val_list.txt`: list of relative paths and labels of validation images. You can download it from: [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga)(kdga) 
+- `train_list.txt`: list of relative paths and labels of training images. You can download it from: [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm?pwd=a4vm)
+- `val_list.txt`: list of relative paths and labels of validation images. You can download it from: [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga?pwd=kdga) 
 
 
 ## Usage
@@ -114,7 +114,7 @@ python main_multi_gpu_distill.py \
 To finetune the Swin model on ImageNet2012, run the following script using command line:
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-python main_multi_gpu_distill.py \
+python main_multi_gpu.py \
 -cfg='./configs/swin_base_patch4_window12_384.yaml' \
 -dataset='imagenet2012' \
 -batch_size=16 \

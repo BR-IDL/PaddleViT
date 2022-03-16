@@ -5,12 +5,11 @@ MODEL:
     TYPE: cswin
     NAME: cswin_base_224
     DROPPATH: 0.5
-    TRANS:
-        PATCH_SIZE: 4
-        EMBED_DIM: 96
-        DEPTHS: [2, 4, 32, 2]
-        SPLIT_SIZES: [1, 2, 7, 7]
-        NUM_HEADS: [4, 8, 16, 32]
+    PATCH_SIZE: 4
+    EMBED_DIM: 96
+    DEPTHS: [2, 4, 32, 2]
+    SPLIT_SIZES: [1, 2, 7, 7]
+    NUM_HEADS: [4, 8, 16, 32]
 TRAIN:
     NUM_EPOCHS: 300
     WARMUP_EPOCHS: 20

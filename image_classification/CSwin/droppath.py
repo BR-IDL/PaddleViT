@@ -15,8 +15,6 @@
 """
 Droppath, reimplement from https://github.com/yueatsprograms/Stochastic_Depth
 """
-
-import numpy as np
 import paddle
 import paddle.nn as nn
 
@@ -24,7 +22,7 @@ import paddle.nn as nn
 class DropPath(nn.Layer):
     """DropPath class"""
     def __init__(self, drop_prob=None):
-        super(DropPath, self).__init__()
+        super().__init__()
         self.drop_prob = drop_prob
 
     def drop_path(self, inputs):
@@ -44,7 +42,7 @@ class DropPath(nn.Layer):
         shape = (inputs.shape[0], ) + (1, ) * (inputs.ndim - 1)  # shape=(N, 1, 1, 1)
         random_tensor = keep_prob + paddle.rand(shape, dtype=inputs.dtype)
         random_tensor = random_tensor.floor() # mask
-        output = inputs.divide(keep_prob) * random_tensor # divide is to keep same output expectation
+        output = inputs.divide(keep_prob) * random_tensor # divide to keep same output expectation
         return output
 
     def forward(self, inputs):
@@ -54,9 +52,8 @@ class DropPath(nn.Layer):
 #def main():
 #    tmp = paddle.to_tensor(np.random.rand(8, 16, 8, 8), dtype='float32')
 #    dp = DropPath(0.5)
-#    for i in range(100):
-#        out = dp(tmp)
-#        print(out)
+#    out = dp(tmp)
+#    print(out)
 #
 #if __name__ == "__main__":
 #    main()

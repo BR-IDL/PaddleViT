@@ -4,9 +4,19 @@ DATA:
 MODEL:
     TYPE: cswin
     NAME: cswin_base_384
-    TRANS:
-        PATCH_SIZE: 4
-        EMBED_DIM: 96
-        DEPTHS: [2, 4, 32, 2]
-        SPLIT_SIZES: [1, 2, 12, 12]
-        NUM_HEADS: [4, 8, 16, 32]
+    DROPPATH: 0.7
+    PATCH_SIZE: 4
+    EMBED_DIM: 96
+    DEPTHS: [2, 4, 32, 2]
+    SPLIT_SIZES: [1, 2, 12, 12]
+    NUM_HEADS: [4, 8, 16, 32]
+TRAIN:
+    NUM_EPOCHS: 20  # finetune
+    WARMUP_EPOCHS: 0
+    BASE_LR: 5e-6
+    END_LR: 5e-7
+    WEIGHT_DECAY: 1e-8
+    MODEL_EMA: True
+    MODEL_EMA_DECAY: 0.9998
+    MIXUP_ALPHA: 0.1
+    CUTMIX_ALPHA: 0.1
