@@ -287,17 +287,25 @@ def main_worker(*args):
         # define scaler for amp training
         amp_grad_scaler = paddle.amp.GradScaler() if config.AMP else None
         # warmup + cosine lr scheduler
-        cosine_lr_scheduler = paddle.optimizer.lr.CosineAnnealingDecay(
+        if config.TRAIN.WARMUP_EPOCHS > 0:
+            cosine_lr_scheduler = paddle.optimizer.lr.CosineAnnealingDecay(
                 learning_rate=config.TRAIN.BASE_LR,
                 T_max=config.TRAIN.NUM_EPOCHS - config.TRAIN.WARMUP_EPOCHS,
                 eta_min=config.TRAIN.END_LR,
                 last_epoch=-1) # do not set last epoch, handled in warmup sched get_lr()
-        lr_scheduler = paddle.optimizer.lr.LinearWarmup(
+            lr_scheduler = paddle.optimizer.lr.LinearWarmup(
                 learning_rate=cosine_lr_scheduler, # use cosine lr sched after warmup
-                warmup_steps=config.TRAIN.WARMUP_EPOCHS,
+                warmup_steps=config.TRAIN.WARMUP_EPOCHS, # only support position integet
                 start_lr=config.TRAIN.WARMUP_START_LR,
                 end_lr=config.TRAIN.BASE_LR,
                 last_epoch=config.TRAIN.LAST_EPOCH)
+        else:
+            lr_scheduler = paddle.optimizer.lr.CosineAnnealingDecay(
+                learning_rate=config.TRAIN.BASE_LR,
+                T_max=config.TRAIN.NUM_EPOCHS,
+                eta_min=config.TRAIN.END_LR,
+                last_epoch=config.TRAIN.LAST_EPOCH)
+
         # set gradient clip
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
