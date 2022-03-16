@@ -13,9 +13,13 @@
 # limitations under the License.
 
 """
-Implement Transformer Class for Swin Transformer
-"""
+Swin Transformer in Paddle
 
+A Paddle Implementation of Swin Transformer (Swin) as described in:
+
+"Swin Transformer: Hierarchical Vision Transformer using Shifted Windows"
+    - Paper Link: https://arxiv.org/abs/2103.14030
+"""
 import paddle
 import paddle.nn as nn
 from droppath import DropPath
@@ -23,21 +27,16 @@ from droppath import DropPath
 
 class Identity(nn.Layer):
     """ Identity layer
-
     The output of this layer is the input without any change.
     Use this layer to avoid if condition in some forward methods
-
     """
-    def __init__(self):
-        super(Identity, self).__init__()
     def forward(self, x):
         return x
 
 
 class PatchEmbedding(nn.Layer):
     """Patch Embeddings
-
-    Apply patch embeddings on input images. Embeddings is implemented using a Conv2D op.
+    Apply patch embedding (which is implemented using Conv2D) on input data.
 
     Attributes:
         image_size: int, input image size, default: 224
@@ -45,10 +44,9 @@ class PatchEmbedding(nn.Layer):
         in_channels: int, input image channels, default: 3
         embed_dim: int, embedding dimension, default: 96
     """
-
     def __init__(self, image_size=224, patch_size=4, in_channels=3, embed_dim=96):
         super().__init__()
-        image_size = (image_size, image_size) # TODO: add to_2tuple
+        image_size = (image_size, image_size)
         patch_size = (patch_size, patch_size)
         patches_resolution = [image_size[0]//patch_size[0], image_size[1]//patch_size[1]]
         self.image_size = image_size
@@ -73,16 +71,15 @@ class PatchEmbedding(nn.Layer):
         return weight_attr, bias_attr
 
     def forward(self, x):
-        x = self.patch_embed(x) # [batch, embed_dim, h, w] h,w = patch_resolution
-        x = x.flatten(start_axis=2, stop_axis=-1) # [batch, embed_dim, h*w] h*w = num_patches
-        x = x.transpose([0, 2, 1]) # [batch, h*w, embed_dim]
-        x = self.norm(x) # [batch, num_patches, embed_dim]
+        x = self.patch_embed(x)  # [batch, embed_dim, h, w]; h,w = patch_resolution
+        x = x.flatten(start_axis=2, stop_axis=-1)  # [batch, embed_dim, h*w]; h*w = num_patches
+        x = x.transpose([0, 2, 1])  # [batch, h*w, embed_dim]
+        x = self.norm(x)  # [batch, num_patches, embed_dim]
         return x
 
 
 class PatchMerging(nn.Layer):
     """ Patch Merging class
-
     Merge multiple patch into one path and keep the out dim.
     Spefically, merge adjacent 2x2 patches(dim=C) into 1 patch.
     The concat dim 4*C is rescaled to 2*C
@@ -95,17 +92,17 @@ class PatchMerging(nn.Layer):
     """
 
     def __init__(self, input_resolution, dim):
-        super(PatchMerging, self).__init__()
+        super().__init__()
         self.input_resolution = input_resolution
         self.dim = dim
-        w_attr_1, b_attr_1 = self._init_weights()
+        w_attr_1, _ = self._init_weights()
         self.reduction = nn.Linear(4 * dim,
                                    2 * dim,
                                    weight_attr=w_attr_1,
                                    bias_attr=False)
 
         w_attr_2, b_attr_2 = self._init_weights_layernorm()
-        self.norm = nn.LayerNorm(4*dim,
+        self.norm = nn.LayerNorm(4 * dim,
                                  weight_attr=w_attr_2,
                                  bias_attr=b_attr_2)
 
@@ -124,12 +121,12 @@ class PatchMerging(nn.Layer):
         b, _, c = x.shape
         x = x.reshape([b, h, w, c])
 
-        x0 = x[:, 0::2, 0::2, :] # [B, H/2, W/2, C]
-        x1 = x[:, 1::2, 0::2, :] # [B, H/2, W/2, C]
-        x2 = x[:, 0::2, 1::2, :] # [B, H/2, W/2, C]
-        x3 = x[:, 1::2, 1::2, :] # [B, H/2, W/2, C]
-        x = paddle.concat([x0, x1, x2, x3], -1) #[B, H/2, W/2, 4*C]
-        x = x.reshape([b, -1, 4*c]) # [B, H/2*W/2, 4*C]
+        x0 = x[:, 0::2, 0::2, :]  # [B, H/2, W/2, C]
+        x1 = x[:, 1::2, 0::2, :]  # [B, H/2, W/2, C]
+        x2 = x[:, 0::2, 1::2, :]  # [B, H/2, W/2, C]
+        x3 = x[:, 1::2, 1::2, :]  # [B, H/2, W/2, C]
+        x = paddle.concat([x0, x1, x2, x3], -1)  # [B, H/2, W/2, 4*C]
+        x = x.reshape([b, -1, 4*c])  # [B, H/2*W/2, 4*C]
 
         x = self.norm(x)
         x = self.reduction(x)
@@ -139,7 +136,6 @@ class PatchMerging(nn.Layer):
 
 class Mlp(nn.Layer):
     """ MLP module
-
     Impl using nn.Linear and activation is GELU, dropout is applied.
     Ops: fc -> act -> dropout -> fc -> dropout
 
@@ -152,7 +148,7 @@ class Mlp(nn.Layer):
     """
 
     def __init__(self, in_features, hidden_features, dropout):
-        super(Mlp, self).__init__()
+        super().__init__()
         w_attr_1, b_attr_1 = self._init_weights()
         self.fc1 = nn.Linear(in_features,
                              hidden_features,
@@ -204,7 +200,7 @@ class WindowAttention(nn.Layer):
                  qk_scale=None,
                  attention_dropout=0.,
                  dropout=0.):
-        super(WindowAttention, self).__init__()
+        super().__init__()
         self.window_size = window_size
         self.num_heads = num_heads
         self.dim = dim
@@ -219,8 +215,8 @@ class WindowAttention(nn.Layer):
         # relative position index for each token inside window
         coords_h = paddle.arange(self.window_size[0])
         coords_w = paddle.arange(self.window_size[1])
-        coords = paddle.stack(paddle.meshgrid([coords_h, coords_w])) # [2, window_h, window_w]
-        coords_flatten = paddle.flatten(coords, 1) # [2, window_h * window_w]
+        coords = paddle.stack(paddle.meshgrid([coords_h, coords_w]))  # [2, window_h, window_w]
+        coords_flatten = paddle.flatten(coords, 1)  # [2, window_h * window_w]
         # 2, window_h * window_w, window_h * window_w
         relative_coords = coords_flatten.unsqueeze(2) - coords_flatten.unsqueeze(1)
         # winwod_h*window_w, window_h*window_w, 2
@@ -262,29 +258,29 @@ class WindowAttention(nn.Layer):
     def get_relative_pos_bias_from_pos_index(self):
         # relative_position_bias_table is a ParamBase object
         # https://github.com/PaddlePaddle/Paddle/blob/067f558c59b34dd6d8626aad73e9943cf7f5960f/python/paddle/fluid/framework.py#L5727
-        table = self.relative_position_bias_table # N x num_heads
+        table = self.relative_position_bias_table  # N x num_heads
         # index is a tensor
-        index = self.relative_position_index.reshape([-1]) # window_h*window_w * window_h*window_w
-        # NOTE: paddle does NOT support indexing Tensor by a Tensor
+        index = self.relative_position_index.reshape([-1])  # window_h*window_w * window_h*window_w
+        # Current paddle version does NOT support indexing Tensor by a Tensor
         relative_position_bias = paddle.index_select(x=table, index=index)
         return relative_position_bias
 
     def forward(self, x, mask=None):
-        qkv = self.qkv(x).chunk(3, axis=-1)     # {list:3}
-        q, k, v = map(self.transpose_multihead, qkv)       # [512,3,49,32] -> [128,6,49,32]-> [32,12,49,32]->[8,24,49,32]
+        qkv = self.qkv(x).chunk(3, axis=-1)  # list of 3 elements
+        q, k, v = map(self.transpose_multihead, qkv)
         q = q * self.scale
-        attn = paddle.matmul(q, k, transpose_y=True)        # [512,3,49,49] -> [128,6,49,49] -> [32,12,49,49] -> [8,24,49,49]
+        attn = paddle.matmul(q, k, transpose_y=True)
 
-        relative_position_bias = self.get_relative_pos_bias_from_pos_index() #[2401,3]->[2401,6]->[2401,12]->[2401,24]
+        relative_position_bias = self.get_relative_pos_bias_from_pos_index()
 
         relative_position_bias = relative_position_bias.reshape(
             [self.window_size[0] * self.window_size[1],
              self.window_size[0] * self.window_size[1],
-             -1])       # [49,49,3]->[49,49,6]->[49,49,12]->[49,49,24]
+             -1])
 
         # nH, window_h*window_w, window_h*window_w
-        relative_position_bias = relative_position_bias.transpose([2, 0, 1])  # [3,49,49]->[6,49,49]->[12,49,49]->[24,49,49]
-        attn = attn + relative_position_bias.unsqueeze(0)   
+        relative_position_bias = relative_position_bias.transpose([2, 0, 1])
+        attn = attn + relative_position_bias.unsqueeze(0)
 
         if mask is not None:
             nW = mask.shape[0]
@@ -296,14 +292,14 @@ class WindowAttention(nn.Layer):
         else:
             attn = self.softmax(attn)
 
-        attn = self.attn_dropout(attn)  # [512,3,49,49]->[128,6,49,49]->[32,12,49,49]->[8,24,49,49]
+        attn = self.attn_dropout(attn)
 
-        z = paddle.matmul(attn, v)      # [512,3,49,32]->[128,6,49,32]->[32,12,49,32]->[8,24,49,32]
+        z = paddle.matmul(attn, v)
         z = z.transpose([0, 2, 1, 3])
         new_shape = z.shape[:-2] + [self.dim]
         z = z.reshape(new_shape)
         z = self.proj(z)
-        z = self.proj_dropout(z)    # [512,49,96]->[128,49,192]->[32,49,384]->[8,49,768]
+        z = self.proj_dropout(z)
 
         return z
 
@@ -318,9 +314,9 @@ def windows_partition(x, window_size):
     """
 
     B, H, W, C = x.shape
-    x = x.reshape([B, H//window_size, window_size, W//window_size, window_size, C]) # [bs,num_window,window_size,num_window,window_size,C]
-    x = x.transpose([0, 1, 3, 2, 4, 5])     # [bs,num_window,num_window,window_size,window_Size,C]
-    x = x.reshape([-1, window_size, window_size, C]) #(bs*num_windows,window_size, window_size, C)
+    x = x.reshape([B, H//window_size, window_size, W//window_size, window_size, C])
+    x = x.transpose([0, 1, 3, 2, 4, 5])  #[batch, n_window, n_window, window_size, window_size, c]
+    x = x.reshape([-1, window_size, window_size, C])  #[batch*n_window, window_size, window_size, c]
 
     return x
 
@@ -336,11 +332,10 @@ def windows_reverse(windows, window_size, H, W):
     Returns:
         x: (B, H, W, C)
     """
-
     B = int(windows.shape[0] / (H * W / window_size / window_size))
-    x = windows.reshape([B, H // window_size, W // window_size, window_size, window_size, -1]) # [bs,num_window,num_window,window_size,window_Size,C]
-    x = x.transpose([0, 1, 3, 2, 4, 5]) # [bs,num_window,window_size,num_window,window_size,C]
-    x = x.reshape([B, H, W, -1])  #(bs,num_windows*window_size, num_windows*window_size, C)
+    x = windows.reshape([B, H // window_size, W // window_size, window_size, window_size, -1])
+    x = x.transpose([0, 1, 3, 2, 4, 5])  #[batch, n_windows, window_size, n_windows, window_size, c]
+    x = x.reshape([B, H, W, -1])  #[batch, n_windows*window_size, n_windows*window_size, c]
     return x
 
 
@@ -366,7 +361,7 @@ class SwinTransformerBlock(nn.Layer):
     def __init__(self, dim, input_resolution, num_heads, window_size=7, shift_size=0,
                  mlp_ratio=4., qkv_bias=True, qk_scale=None, dropout=0.,
                  attention_dropout=0., droppath=0.):
-        super(SwinTransformerBlock, self).__init__()
+        super().__init__()
         self.dim = dim
         self.input_resolution = input_resolution
         self.num_heads = num_heads
@@ -438,25 +433,27 @@ class SwinTransformerBlock(nn.Layer):
         H, W = self.input_resolution
         B, L, C = x.shape
         h = x
-        x = self.norm1(x)   # [bs,H*W,C]
+        x = self.norm1(x)  # [batch, h*w, c]
 
         new_shape = [B, H, W, C]
-        x = x.reshape(new_shape) # [bs,H,W,C]
+        x = x.reshape(new_shape)  # [batch, h, w, c]
 
         if self.shift_size > 0:
             shifted_x = paddle.roll(x,
                                     shifts=(-self.shift_size, -self.shift_size),
-                                    axis=(1, 2))        # [bs,H,W,C]
+                                    axis=(1, 2)) # [batch, h, w, c]
         else:
             shifted_x = x
 
-        x_windows = windows_partition(shifted_x, self.window_size)  # [bs*num_windows,7,7,C]
-        x_windows = x_windows.reshape([-1, self.window_size * self.window_size, C]) # [bs*num_windows,7*7,C]
+        x_windows = windows_partition(shifted_x, self.window_size)  # [batch*n_windows, 7, 7, c]
+        x_windows = x_windows.reshape(
+            [-1, self.window_size * self.window_size, C])  # [batch*n_windows, 7*7, c]
 
-        attn_windows = self.attn(x_windows, mask=self.attn_mask)    # [bs*num_windows,7*7,C]
-        attn_windows = attn_windows.reshape([-1, self.window_size, self.window_size, C])    # [bs*num_windows,7,7,C]
+        attn_windows = self.attn(x_windows, mask=self.attn_mask)  # [batch*n_windows, 7*7, c]
+        attn_windows = attn_windows.reshape(
+            [-1, self.window_size, self.window_size, C])  # [batch*n_windows, 7, 7, c]
 
-        shifted_x = windows_reverse(attn_windows, self.window_size, H, W)   # [bs,H,W,C] 
+        shifted_x = windows_reverse(attn_windows, self.window_size, H, W)   # [batch, h, w, c]
 
         # reverse cyclic shift
         if self.shift_size > 0:
@@ -466,15 +463,16 @@ class SwinTransformerBlock(nn.Layer):
         else:
             x = shifted_x
 
-        x = x.reshape([B, H*W, C])      # [bs,H*W,C] 
+        x = x.reshape([B, H*W, C])  # [batch, h*w, c]
 
         if self.drop_path is not None:
             x = h + self.drop_path(x)
         else:
             x = h + x
-        h = x       # [bs,H*W,C]
-        x = self.norm2(x)       # [bs,H*W,C]
-        x = self.mlp(x)         # [bs,H*W,C]
+
+        h = x  # [batch, h*w, c]
+        x = self.norm2(x)
+        x = self.mlp(x)
         if self.drop_path is not None:
             x = h + self.drop_path(x)
         else:
@@ -499,7 +497,7 @@ class SwinTransformerStage(nn.Layer):
     def __init__(self, dim, input_resolution, depth, num_heads, window_size,
                  mlp_ratio=4., qkv_bias=True, qk_scale=None, dropout=0.,
                  attention_dropout=0., droppath=0., downsample=None):
-        super(SwinTransformerStage, self).__init__()
+        super().__init__()
         self.dim = dim
         self.input_resolution = input_resolution
         self.depth = depth
@@ -523,10 +521,9 @@ class SwinTransformerStage(nn.Layer):
 
     def forward(self, x):
         for block in self.blocks:
-            x = block(x)                # [bs,56*56,96] -> [bs,28*28,96*2] -> [bs,14*14,96*4] -> [bs,7*7,96*8]
+            x = block(x)
         if self.downsample is not None:
-            x = self.downsample(x)      # [bs,28*28,96*2] -> [bs,14*14,96*4] -> [bs,7*7,96*8]
-
+            x = self.downsample(x)
         return x
 
 
@@ -571,23 +568,23 @@ class SwinTransformer(nn.Layer):
                  attention_dropout=0.,
                  droppath=0.,
                  ape=False):
-        super(SwinTransformer, self).__init__()
-
-        self.num_classes = num_classes 
+        super().__init__()
+        self.num_classes = num_classes
         self.num_stages = len(depths)
-        self.embed_dim = embed_dim 
+        self.embed_dim = embed_dim
         self.num_features = int(self.embed_dim * 2 ** (self.num_stages - 1))
         self.mlp_ratio = mlp_ratio
-        self.ape = ape
 
-        self.patch_embedding = PatchEmbedding(image_size=image_size,
-                                              patch_size=patch_size,
-                                              in_channels=in_channels,
-                                              embed_dim=embed_dim)
+        # create patch embedding
+        self.patch_embedding = PatchEmbedding(image_size,
+                                              patch_size,
+                                              in_channels,
+                                              embed_dim)
         num_patches = self.patch_embedding.num_patches
         self.patches_resolution = self.patch_embedding.patches_resolution
 
-
+        # absolute position embedding
+        self.ape = ape
         if self.ape:
             self.absolute_positional_embedding = paddle.nn.ParameterList([
                 paddle.create_parameter(
@@ -595,7 +592,6 @@ class SwinTransformer(nn.Layer):
                     default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))])
 
         self.position_dropout = nn.Dropout(dropout)
-
         depth_decay = [x.item() for x in paddle.linspace(0, droppath, sum(depths))]
 
         self.stages = nn.LayerList()
@@ -643,41 +639,41 @@ class SwinTransformer(nn.Layer):
         return weight_attr, bias_attr
 
     def forward_features(self, x):
-        x = self.patch_embedding(x)     # [bs,H*W,96]
+        x = self.patch_embedding(x)  # [batch, h*w, embed_dim]
         if self.ape:
             x = x + self.absolute_positional_embedding
-        x = self.position_dropout(x)    # [bs,H*W,96]
+        x = self.position_dropout(x)  # [batch, h*w, embed_dim]
 
         for stage in self.stages:
-            x = stage(x)        # [bs,784,192],[bs,196,384],[bs,49,768],[bs,49,768]
+            x = stage(x)  # stage1-4: [b, 784, 192], [b, 196, 384], [b, 49, 768], [b, 49, 768]
 
-        x = self.norm(x)        # [bs,49,768]
+        x = self.norm(x)  # [batch, h*w, embed_dim]
         x = x.transpose([0, 2, 1])
-        x = self.avgpool(x)     # [bs,768,1]
-        x = x.flatten(1)        # [bs,768]
+        x = self.avgpool(x)  # [batch, embed_dim, 1]
+        x = x.flatten(1)  # [batch, embed_dim]
         return x
 
     def forward(self, x):
-        x = self.forward_features(x)        # [bs,768]
-        x = self.fc(x)                  # [bs,1000]
+        x = self.forward_features(x)  # [batch, embed_dim]
+        x = self.fc(x)  # [batch, num_classes]
         return x
 
 
 def build_swin(config):
-    model = SwinTransformer(
-        image_size=config.DATA.IMAGE_SIZE,
-        patch_size=config.MODEL.TRANS.PATCH_SIZE,
-        in_channels=config.MODEL.TRANS.IN_CHANNELS,
-        embed_dim=config.MODEL.TRANS.EMBED_DIM,
-        num_classes=config.MODEL.NUM_CLASSES,
-        depths=config.MODEL.TRANS.STAGE_DEPTHS,
-        num_heads=config.MODEL.TRANS.NUM_HEADS,
-        mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-        qkv_bias=config.MODEL.TRANS.QKV_BIAS,
-        qk_scale=config.MODEL.TRANS.QK_SCALE,
-        ape=config.MODEL.TRANS.APE,
-        window_size=config.MODEL.TRANS.WINDOW_SIZE,
-        dropout=config.MODEL.DROPOUT,
-        attention_dropout=config.MODEL.ATTENTION_DROPOUT,
-        droppath=config.MODEL.DROP_PATH)
+    """build swin model from config"""
+    model = SwinTransformer(image_size=config.DATA.IMAGE_SIZE,
+                            patch_size=config.MODEL.PATCH_SIZE,
+                            in_channels=config.DATA.IMAGE_CHANNELS,
+                            embed_dim=config.MODEL.EMBED_DIM,
+                            num_classes=config.MODEL.NUM_CLASSES,
+                            depths=config.MODEL.STAGE_DEPTHS,
+                            num_heads=config.MODEL.NUM_HEADS,
+                            mlp_ratio=config.MODEL.MLP_RATIO,
+                            qkv_bias=config.MODEL.QKV_BIAS,
+                            qk_scale=config.MODEL.QK_SCALE,
+                            ape=config.MODEL.APE,
+                            window_size=config.MODEL.WINDOW_SIZE,
+                            dropout=config.MODEL.DROPOUT,
+                            attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                            droppath=config.MODEL.DROPPATH)
     return model
