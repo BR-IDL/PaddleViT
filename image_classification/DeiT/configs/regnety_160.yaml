@@ -5,4 +5,3 @@ DATA:
 MODEL:
     TYPE: RegNet
     NAME: regnety_160
-

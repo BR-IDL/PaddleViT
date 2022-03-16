@@ -3,13 +3,13 @@ DATA:
     CROP_PCT: 0.875
 MODEL:
     TYPE: deit
-    NAME: deit_small_patch16_224
+    NAME: deit_tiny_patch16_224
     PATCH_SIZE: 16
     MLP_RATIO: 4.0
     QKV_BIAS: true
-    EMBED_DIM: 384
+    EMBED_DIM: 192
     DEPTH: 12
-    NUM_HEADS: 6
+    NUM_HEADS: 3
     DROPOUT: 0.0  # same as paper
     ATTENTION_DROPOUT: 0.1  # same as paper
 TRAIN:
@@ -24,7 +24,7 @@ TRAIN:
     OPTIMIZER:
         NAME: 'AdamW'
         BETAS: (0.9, 0.999)
-    DISTILLATION_TYPE: 'none' # no distill 
+    DISTILLATION_TYPE: 'hard'
 
 VALIDATE_FREQ: 1
 SAVE_FREQ: 1
