@@ -97,14 +97,14 @@ python main_multi_gpu.py \
 
 
 ## Training
-To train the CSwin model on ImageNet2012 with distillation, run the following script using command line:
+To train the CSwin model on ImageNet2012, run the following script using command line:
 ```shell
-sh run_train_multi_distill.sh
+sh run_train_multi.sh
 ```
 or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-python main_multi_gpu_distill.py \
+python main_multi_gpu.py \
 -cfg='./configs/cswin_tiny_224.yaml' \
 -dataset='imagenet2012' \
 -batch_size=256 \

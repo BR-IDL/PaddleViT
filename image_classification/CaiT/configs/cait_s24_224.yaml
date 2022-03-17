@@ -1,14 +1,30 @@
 DATA:
     IMAGE_SIZE: 224
     CROP_PCT: 1.0
-    
 MODEL:
     TYPE: cait
     NAME: cait_s24_224
-    TRANS:
-        PATCH_SIZE: 16
-        EMBED_DIM: 384
-        DEPTH: 24
-        NUM_HEADS: 8
-        INIT_VALUES: 1e-5
-        DEPTH_TOKEN_ONLY: 2
+    PATCH_SIZE: 16
+    EMBED_DIM: 384
+    DEPTH: 24
+    NUM_HEADS: 8
+    MLP_RATIO: 4.0
+    QKV_BIAS: True
+    INIT_VALUES: 1e-5
+    DEPTH_TOKEN_ONLY: 2
+    DROPPATH: 0.1
+TRAIN:
+    NUM_EPOCHS: 300  # same as paper
+    WARMUP_EPOCHS: 5  # same as paper 
+    WEIGHT_DECAY: 0.05  # same as paper
+    BASE_LR: 5e-4
+    WARMUP_START_LR: 1e-6
+    END_LR: 0.0
+    ACCUM_ITER: 1
+    LINEAR_SCALED_LR: 512
+    OPTIMIZER:
+        NAME: 'AdamW'
+        BETAS: (0.9, 0.999)
+VALIDATE_FREQ: 1
+SAVE_FREQ: 1
+REPORT_FREQ: 20
