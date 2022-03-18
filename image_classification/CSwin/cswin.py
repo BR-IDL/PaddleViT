@@ -13,10 +13,13 @@
 # limitations under the License.
 
 """
-Implement Transformer Class for CSwin
-"""
+Swin Transformer in Paddle
 
-import copy
+A Paddle Implementation of CSwin Transformer (CSwin) as described in:
+
+"CSWin Transformer: A General Vision Transformer Backbone with Cross-Shaped Windows"
+    - Paper Link: https://arxiv.org/abs/2107.00652
+"""
 import numpy as np
 import paddle
 import paddle.nn as nn
@@ -25,14 +28,9 @@ from droppath import DropPath
 
 class Identity(nn.Layer):
     """ Identity layer
-
     The output of this layer is the input without any change.
     Use this layer to avoid if condition in some forward methods
-
     """
-    def __init__(self):
-        super().__init__()
-
     def forward(self, x):
         return x
 
@@ -62,26 +60,25 @@ class PatchEmbedding(nn.Layer):
                                  bias_attr=b_attr)
 
     def _init_weights_layernorm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
- 
+
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
 
     def forward(self, x):
-        x = self.patch_embed(x) # [batch, embed_dim, h, w], h = w = image_size / 4
-        x = x.flatten(start_axis=2, stop_axis=-1) # [batch, embed_dim, h*w]
-        x = x.transpose([0, 2, 1]) # [batch, h*w, embed_dim]
+        x = self.patch_embed(x)  # [batch, embed_dim, h, w], h = w = image_size / 4
+        x = x.flatten(start_axis=2, stop_axis=-1)  # [batch, embed_dim, h*w]
+        x = x.transpose([0, 2, 1])  # [batch, h*w, embed_dim]
         x = self.norm(x)
         return x
 
 
 class Mlp(nn.Layer):
     """ MLP module
-
     Impl using nn.Linear and activation is GELU, dropout is applied.
     Ops: fc -> act -> dropout -> fc -> dropout
 
@@ -92,6 +89,7 @@ class Mlp(nn.Layer):
         dropout1: dropout after fc1
         dropout2: dropout after fc2
     """
+
     def __init__(self, in_features, hidden_features, dropout):
         super().__init__()
         w_attr_1, b_attr_1 = self._init_weights()
@@ -110,7 +108,7 @@ class Mlp(nn.Layer):
 
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
+        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
@@ -134,8 +132,8 @@ def img2windows(img, h_split, w_split):
     """
     B, C, H, W = img.shape
     out = img.reshape([B, C, H // h_split, h_split, W // w_split, w_split])
-    out = out.transpose([0, 2, 4, 3, 5, 1]) # [B, H//h_split, W//w_split, h_split, w_split, C]
-    out = out.reshape([-1, h_split * w_split, C]) # [B, H//h_split, W//w_split, h_split*w_split, C]
+    out = out.transpose([0, 2, 4, 3, 5, 1])  # [B, H//h_split, W//w_split, h_split, w_split, C]
+    out = out.reshape([-1, h_split * w_split, C])  # [B, H//h_split, W//w_split, h_split*w_split, C]
     return out
 
 
@@ -308,17 +306,16 @@ class CSwinBlock(nn.Layer):
         else: # last stage
             splits = [self.input_resolution[0], self.input_resolution[0]]
         for _ in range(num_branches):
-            attn = LePEAttention(dim=dim//num_branches,
-                                 resolution=input_resolution,
-                                 h_split=splits[0],
-                                 w_split=splits[1],
-                                 num_heads=num_heads//num_branches,
-                                 qk_scale=qk_scale,
-                                 attention_dropout=attention_dropout,
-                                 dropout=dropout)
-            self.attns.append(copy.deepcopy(attn))
+            self.attns.append(LePEAttention(dim=dim//num_branches,
+                                            resolution=input_resolution,
+                                            h_split=splits[0],
+                                            w_split=splits[1],
+                                            num_heads=num_heads//num_branches,
+                                            qk_scale=qk_scale,
+                                            attention_dropout=attention_dropout,
+                                            dropout=dropout))
             # switch splits from horizantal to vertical
-            # NOTE: may need to change for different H and W
+            # may need to change for different H and W
             splits[0], splits[1] = splits[1], splits[0]
 
         w_attr_3, b_attr_3 = self._init_weights()
@@ -340,7 +337,7 @@ class CSwinBlock(nn.Layer):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
- 
+
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
@@ -446,7 +443,7 @@ class CSwinStage(nn.Layer):
         super().__init__()
         self.blocks = nn.LayerList()
         for i in range(depth):
-            block = CSwinBlock(dim=dim,
+            self.blocks.append(CSwinBlock(dim=dim,
                                input_resolution=input_resolution,
                                num_heads=num_heads,
                                split_size=split_size,
@@ -456,8 +453,7 @@ class CSwinStage(nn.Layer):
                                attention_dropout=attention_dropout,
                                dropout=dropout,
                                droppath=droppath[i] if isinstance(droppath, list) else droppath,
-                               split_heads=not last_stage)
-            self.blocks.append(copy.deepcopy(block))
+                               split_heads=not last_stage))
         # last stage does not need merge layer
         self.merge = MergeBlock(dim_in=dim, dim_out=dim * 2) if not last_stage else Identity()
 
@@ -503,13 +499,12 @@ class CSwinTransformer(nn.Layer):
                  droppath=0.):
         super().__init__()
         # token embedding
-        self.patch_embedding = PatchEmbedding(patch_stride=patch_stride,
-                                              in_channels=in_channels,
-                                              embed_dim=embed_dim)
+        self.patch_embedding = PatchEmbedding(patch_stride, in_channels, embed_dim)
         # drop path decay by stage
         depth_decay = [x.item() for x in paddle.linspace(0, droppath, sum(depths))]
         dim = embed_dim
-        resolution = image_size // 4
+        resolution = image_size // patch_stride  # conv embed stride 4
+
         self.stages = nn.LayerList()
         num_stages = len(depths)
         # construct CSwin stages: each stage has multiple blocks
@@ -526,7 +521,7 @@ class CSwinTransformer(nn.Layer):
                                attention_dropout=attention_dropout,
                                droppath=depth_decay[
                                    sum(depths[:stage_idx]):sum(depths[:stage_idx+1])],
-                               last_stage=stage_idx == num_stages-1)
+                               last_stage=(stage_idx == num_stages-1))
             self.stages.append(stage)
             if stage_idx != num_stages - 1:
                 dim = dim * 2
@@ -546,7 +541,7 @@ class CSwinTransformer(nn.Layer):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.))
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
         return weight_attr, bias_attr
- 
+
     def _init_weights(self):
         weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.))
@@ -568,16 +563,16 @@ class CSwinTransformer(nn.Layer):
 def build_cswin(config):
     """build cswin transformer model using config"""
     model = CSwinTransformer(image_size=config.DATA.IMAGE_SIZE,
-                             patch_stride=config.MODEL.TRANS.PATCH_SIZE,
-                             in_channels=config.MODEL.TRANS.IN_CHANNELS,
+                             patch_stride=config.MODEL.PATCH_SIZE,
+                             in_channels=config.DATA.IMAGE_CHANNELS,
                              num_classes=config.MODEL.NUM_CLASSES,
-                             embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                             depths=config.MODEL.TRANS.DEPTHS,
-                             splits=config.MODEL.TRANS.SPLIT_SIZES,
-                             num_heads=config.MODEL.TRANS.NUM_HEADS,
-                             mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                             qkv_bias=config.MODEL.TRANS.QKV_BIAS,
-                             qk_scale=config.MODEL.TRANS.QK_SCALE,
+                             embed_dim=config.MODEL.EMBED_DIM,
+                             depths=config.MODEL.DEPTHS,
+                             splits=config.MODEL.SPLIT_SIZES,
+                             num_heads=config.MODEL.NUM_HEADS,
+                             mlp_ratio=config.MODEL.MLP_RATIO,
+                             qkv_bias=config.MODEL.QKV_BIAS,
+                             qk_scale=config.MODEL.QK_SCALE,
                              dropout=config.MODEL.DROPOUT,
                              attention_dropout=config.MODEL.ATTENTION_DROPOUT,
                              droppath=config.MODEL.DROPPATH)

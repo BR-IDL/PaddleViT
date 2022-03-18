@@ -11,12 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-Implement CaiT Transformer
-"""
+CaiT in Paddle
 
-import copy
+A Paddle Implementation of CaiT as described in:
+
+"Going deeper with Image Transformers"
+    - Paper Link: https://arxiv.org/abs/2103.17239
+"""
 import paddle
 import paddle.nn as nn
 from droppath import DropPath
@@ -24,21 +26,16 @@ from droppath import DropPath
 
 class Identity(nn.Layer):
     """ Identity layer
-
     The output of this layer is the input without any change.
-    Use this layer to avoid using 'if' condition in forward methods
+    This layer is used to avoid using 'if' condition in methods such as forward
     """
-
-    def __init__(self):
-        super(Identity, self).__init__()
     def forward(self, x):
         return x
 
 
 class PatchEmbedding(nn.Layer):
-    """Patch Embeddings
-
-    Apply patch embeddings on input images. Embeddings is implemented using a Conv2D op.
+    """Patch Embedding
+    Apply patch embedding (which is implemented using Conv2D) on input data.
 
     Attributes:
         image_size: int, input image size, default: 224
@@ -75,10 +72,8 @@ class PatchEmbedding(nn.Layer):
 
 class Mlp(nn.Layer):
     """ MLP module
-
     Impl using nn.Linear and activation is GELU, dropout is applied.
     Ops: fc -> act -> dropout -> fc -> dropout
-
     Attributes:
         fc1: nn.Linear
         fc2: nn.Linear
@@ -144,23 +139,14 @@ class ClassAttention(nn.Layer):
         self.dim_head = dim // num_heads
         self.scale = qk_scale or self.dim_head ** -0.5
 
-        w_attr_1, b_attr_1 = self._init_weights()
-        self.q = nn.Linear(dim, dim, weight_attr=w_attr_1, bias_attr=b_attr_1, if qkv_bias else False)
-        w_attr_2, b_attr_2 = self._init_weights()
-        self.k = nn.Linear(dim, dim, weight_attr=w_attr_2, bias_attr=b_attr_2, if qkv_bias else False)
-        w_attr_3, b_attr_3 = self._init_weights()
-        self.v = nn.Linear(dim, dim, weight_attr=w_attr_3, bias_attr=b_attr_3, if qkv_bias else False)
+        self.q = nn.Linear(dim, dim, bias_attr=qkv_bias)
+        self.k = nn.Linear(dim, dim, bias_attr=qkv_bias)
+        self.v = nn.Linear(dim, dim, bias_attr=qkv_bias)
 
         self.attn_dropout = nn.Dropout(attention_dropout)
-        w_attr_4, b_attr_4 = self._init_weights()
-        self.proj = nn.Linear(dim, dim, weight_attr=w_attr_4, bias_attr=b_attr_4)
+        self.proj = nn.Linear(dim, dim)
         self.proj_dropout = nn.Dropout(dropout)
         self.softmax = nn.Softmax(axis=-1)
-
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-        return weight_attr, bias_attr
 
     def forward(self, x):
         B, N, C = x.shape
@@ -215,24 +201,15 @@ class TalkingHeadAttention(nn.Layer):
         self.dim_head = dim // num_heads
         self.scale = self.dim_head ** -0.5
 
-        w_attr_1, b_attr_1 = self._init_weights()
-        self.qkv = nn.Linear(dim, dim * 3, weight_attr=w_attr_1, bias_attr=b_attr_1 if qkv_bias else False)
+        self.qkv = nn.Linear(dim, dim * 3, bias_attr=qkv_bias)
         self.attn_dropout = nn.Dropout(attention_dropout)
         self.softmax = nn.Softmax(axis=-1)
-        w_attr_2, b_attr_2 = self._init_weights()
-        self.proj = nn.Linear(dim, dim, weight_attr=w_attr_2, bias_attr=b_attr_2)
+        self.proj = nn.Linear(dim, dim)
         self.proj_dropout = nn.Dropout(dropout)
 
         # talking head
-        w_attr_3, b_attr_3 = self._init_weights()
-        self.proj_l = nn.Linear(num_heads, num_heads, weight_attr=w_attr_3, bias_attr=b_attr_3)
-        w_attr_4, b_attr_4 = self._init_weights()
-        self.proj_w = nn.Linear(num_heads, num_heads, weight_attr=w_attr_4, bias_attr=b_attr_4)
-
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-        return weight_attr, bias_attr
+        self.proj_l = nn.Linear(num_heads, num_heads)
+        self.proj_w = nn.Linear(num_heads, num_heads)
 
     def transpose_multihead(self, x):
         new_shape = x.shape[:-1] + [self.num_heads, self.dim_head]
@@ -298,16 +275,14 @@ class LayerScaleBlockClassAttention(nn.Layer):
                  droppath=0.,
                  init_values=1e-4):
         super().__init__()
-        w_attr_1, b_attr_1 = self._init_weights()
-        self.norm1 = nn.LayerNorm(dim, weight_attr=w_attr_1, bias_attr=b_attr_1, epsilon=1e-6)
+        self.norm1 = nn.LayerNorm(dim, epsilon=1e-6)
         self.attn = ClassAttention(dim,
                                    num_heads=num_heads,
                                    qkv_bias=qkv_bias,
                                    dropout=dropout,
                                    attention_dropout=attention_dropout)
         self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
-        w_attr_2, b_attr_2 = self._init_weights()
-        self.norm2 = nn.LayerNorm(dim, weight_attr=w_attr_2, bias_attr=b_attr_2, epsilon=1e-6)
+        self.norm2 = nn.LayerNorm(dim, epsilon=1e-6)
         self.mlp = Mlp(in_features=dim,
                        hidden_features=int(dim * mlp_ratio),
                        dropout=dropout)
@@ -320,11 +295,6 @@ class LayerScaleBlockClassAttention(nn.Layer):
             shape=[dim],
             dtype='float32',
             default_initializer=nn.initializer.Constant(init_values))
-
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-        return weight_attr, bias_attr
 
     def forward(self, x, x_cls):
         u = paddle.concat([x_cls, x], axis=1)
@@ -371,16 +341,14 @@ class LayerScaleBlock(nn.Layer):
                  droppath=0.,
                  init_values=1e-4):
         super().__init__()
-        w_attr_1, b_attr_1 = self._init_weights()
-        self.norm1 = nn.LayerNorm(dim, weight_attr=w_attr_1, bias_attr=b_attr_1, epsilon=1e-6)
+        self.norm1 = nn.LayerNorm(dim, epsilon=1e-6)
         self.attn = TalkingHeadAttention(dim,
                                          num_heads=num_heads,
                                          qkv_bias=qkv_bias,
                                          dropout=dropout,
                                          attention_dropout=attention_dropout)
         self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
-        w_attr_2, b_attr_2 = self._init_weights()
-        self.norm2 = nn.LayerNorm(dim, weight_attr=w_attr_2, bias_attr=b_attr_2, epsilon=1e-6)
+        self.norm2 = nn.LayerNorm(dim, epsilon=1e-6)
         self.mlp = Mlp(in_features=dim,
                        hidden_features=int(dim * mlp_ratio),
                        dropout=dropout)
@@ -393,11 +361,6 @@ class LayerScaleBlock(nn.Layer):
             shape=[dim],
             dtype='float32',
             default_initializer=nn.initializer.Constant(init_values))
-
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-        return weight_attr, bias_attr
 
     def forward(self, x):
         h = x
@@ -475,21 +438,20 @@ class Cait(nn.Layer):
         # create self-attention(layer-scale) layers
         layer_list = []
         for i in range(depth):
-            block_layers = LayerScaleBlock(dim=embed_dim,
-                                           num_heads=num_heads,
-                                           mlp_ratio=mlp_ratio,
-                                           qkv_bias=qkv_bias,
-                                           dropout=dropout,
-                                           attention_dropout=attention_dropout,
-                                           droppath=droppath,
-                                           init_values=init_values)
-            layer_list.append(copy.deepcopy(block_layers))
+            layer_list.append(LayerScaleBlock(dim=embed_dim,
+                                              num_heads=num_heads,
+                                              mlp_ratio=mlp_ratio,
+                                              qkv_bias=qkv_bias,
+                                              dropout=dropout,
+                                              attention_dropout=attention_dropout,
+                                              droppath=droppath,
+                                              init_values=init_values))
         self.blocks = nn.LayerList(layer_list)
 
         # craete class-attention layers
         layer_list = []
         for i in range(depth_token_only):
-            block_layers = LayerScaleBlockClassAttention(
+            layer_list.append(LayerScaleBlockClassAttention(
                 dim=embed_dim,
                 num_heads=num_heads,
                 mlp_ratio=mlp_ratio_class_token,
@@ -497,27 +459,11 @@ class Cait(nn.Layer):
                 dropout=0.,
                 attention_dropout=0.,
                 droppath=0.,
-                init_values=init_values)
-            layer_list.append(copy.deepcopy(block_layers))
+                init_values=init_values))
         self.blocks_token_only = nn.LayerList(layer_list)
 
-        w_attr_1, b_attr_1 = self._init_weights_norm()
-        self.norm = nn.LayerNorm(embed_dim, weight_attr=w_attr_1, bias_attr=b_attr_1, epsilon=1e-6)
-        w_attr_2, b_attr_2 = self._init_weights_linear()
-        self.head = nn.Linear(embed_dim,
-                              num_classes,
-                              weight_attr=w_attr_2,
-                              bias_attr=b_attr_2) if num_classes > 0 else Identity()
-
-    def _init_weights_norm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-        return weight_attr, bias_attr
-
-    def _init_weights_linear(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-        return weight_attr, bias_attr
+        self.norm = nn.LayerNorm(embed_dim, epsilon=1e-6)
+        self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else Identity()
 
     def forward_features(self, x):
         # Patch Embedding
@@ -543,20 +489,20 @@ class Cait(nn.Layer):
 
 
 def build_cait(config):
-    """build cait model using config"""
+    """build cait model from config"""
     model = Cait(image_size=config.DATA.IMAGE_SIZE,
+                 patch_size=config.MODEL.PATCH_SIZE,
+                 in_channels=config.DATA.IMAGE_CHANNELS,
                  num_classes=config.MODEL.NUM_CLASSES,
-                 in_channels=config.MODEL.TRANS.IN_CHANNELS,
-                 patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                 embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                 depth=config.MODEL.TRANS.DEPTH,
-                 num_heads=config.MODEL.TRANS.NUM_HEADS,
-                 mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                 qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                 embed_dim=config.MODEL.EMBED_DIM,
+                 depth=config.MODEL.DEPTH,
+                 num_heads=config.MODEL.NUM_HEADS,
+                 mlp_ratio=config.MODEL.MLP_RATIO,
+                 qkv_bias=config.MODEL.QKV_BIAS,
                  dropout=config.MODEL.DROPOUT,
                  attention_dropout=config.MODEL.ATTENTION_DROPOUT,
                  droppath=config.MODEL.DROPPATH,
-                 init_values=config.MODEL.TRANS.INIT_VALUES,
-                 mlp_ratio_class_token=config.MODEL.TRANS.MLP_RATIO,
-                 depth_token_only=config.MODEL.TRANS.DEPTH_TOKEN_ONLY):
+                 init_values=config.MODEL.INIT_VALUES,
+                 mlp_ratio_class_token=config.MODEL.MLP_RATIO,
+                 depth_token_only=config.MODEL.DEPTH_TOKEN_ONLY)
     return model

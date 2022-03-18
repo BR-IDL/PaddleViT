@@ -1,17 +1,29 @@
-import numpy as np
-import copy
-import paddle
-import paddle.nn as nn
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """RegNet y-160
 This is a simple version of regnet which only implements RegNetY-160.
 This model is used as the teacher model for DeiT.
 """
 
+import copy
+import numpy as np
+import paddle.nn as nn
+
+
 class Identity(nn.Layer):
     """ Identity Layer """
-    def __init__(self):
-        super().__init__()
-
     def forward(self, x):
         return x
 
@@ -212,13 +224,13 @@ class RegNet(nn.Layer):
                                                              stage_bottle_ratios,
                                                              stage_groups,
                                                              se_ratios)]
-        return stage_params 
+        return stage_params
 
     def _generate_regnet(self, w_slope, w_init, w_mult, depth, b=1, g=8):
         """Generate per block widths from RegNet parameters"""
         w_count = w_init + w_slope * np.arange(depth) # Equation 1
         w_exps = np.round(np.log(w_count / w_init) / np.log(w_mult)) # Equation 2
-        
+
         w = w_init * np.power(w_mult, w_exps) # Equation 3
         w = np.round(np.divide(w, 8)) * 8 # make all width list divisible by 8
 
@@ -241,7 +253,6 @@ class RegNet(nn.Layer):
         return x
 
 
-            
 def build_regnet():
     """build regnet model using dict as config"""
     regnety_160 = {

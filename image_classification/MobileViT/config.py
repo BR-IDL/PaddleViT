@@ -13,12 +13,9 @@
 # limitations under the License.
 
 """Configuration
-
-Configuration for data, model archtecture, and training, etc.
-Config can be set by .yaml file or by argparser(limited usage)
-
+Configurations for (1) data processing, (2) model archtecture, and (3) training settings, etc.
+Config can be set by .yaml file or by argparser
 """
-
 import os
 from yacs.config import CfgNode as CN
 import yaml
@@ -28,39 +25,38 @@ _C.BASE = ['']
 
 # data settings
 _C.DATA = CN()
-_C.DATA.BATCH_SIZE = 8 #1024 batch_size for single GPU
-_C.DATA.BATCH_SIZE_EVAL = 8 #1024 batch_size for single GPU
-_C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
-_C.DATA.DATASET = 'imagenet2012' # dataset name
-_C.DATA.IMAGE_SIZE = 224 # input image size
-_C.DATA.CROP_PCT = 0.9 # input image scale ratio, scale is applied before centercrop in eval mode
-_C.DATA.NUM_WORKERS = 4 # number of data loading threads
-_C.DATA.IMAGENET_MEAN = [0.485, 0.456, 0.406] # [0.5, 0.5, 0.5]
-_C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225] # [0.5, 0.5, 0.5]
+_C.DATA.BATCH_SIZE = 256  # train batch_size on single GPU
+_C.DATA.BATCH_SIZE_EVAL = None  # (disabled in update_config) val batch_size on single GPU
+_C.DATA.DATA_PATH = '/dataset/imagenet/'  # path to dataset
+_C.DATA.DATASET = 'imagenet2012'  # dataset name, currently only support imagenet2012
+_C.DATA.IMAGE_SIZE = 224  # input image size e.g., 224
+_C.DATA.IMAGE_CHANNELS = 3  # input image channels: e.g., 3
+_C.DATA.CROP_PCT = 0.9  # input image scale ratio, scale is applied before centercrop in eval mode
+_C.DATA.NUM_WORKERS = 2  # number of data loading threads
+_C.DATA.IMAGENET_MEAN = [0.485, 0.456, 0.406]  # imagenet mean values
+_C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225]  # imagenet std values
 
-# model settings
+# model general settings
 _C.MODEL = CN()
-_C.MODEL.TYPE = 'MobileViT'
+_C.MODEL.TYPE = 'mobilevit'
 _C.MODEL.NAME = 'mobilevit'
-_C.MODEL.RESUME = None
-_C.MODEL.RESUME_EMA = None
-_C.MODEL.PRETRAINED = None
-_C.MODEL.NUM_CLASSES = 1000
+_C.MODEL.RESUME = None  # full model path for resume training
+_C.MODEL.PRETRAINED = None  # full model path for finetuning
+_C.MODEL.NUM_CLASSES = 1000  # num of classes for classifier
 _C.MODEL.DROPOUT = 0.0
-_C.MODEL.DROPPATH = 0.0
 _C.MODEL.ATTENTION_DROPOUT = 0.0
-
-_C.MODEL.PATCH_SIZE = 2 
-_C.MODEL.IN_CHANNELS = 3
-_C.MODEL.DIMS = [16, 32, 48, 48, 48, 64, 80, 96, 384] # conv + mobv2 block out dims 
-_C.MODEL.HIDDEN_DIMS = [96, 120, 133] # mobile vit block hidden dims 
-_C.MODEL.DEPTH = [2, 4, 3] 
-_C.MODEL.NUM_HEADS = 8 
-_C.MODEL.MLP_RATIO = 2.
+_C.MODEL.DROPPATH = 0.0
+# model transformer settings
+_C.MODEL.PATCH_SIZE = 2
+_C.MODEL.DIMS = [16, 32, 48, 48, 48, 64, 80, 96, 384]
+_C.MODEL.HIDDEN_DIMS = [96, 120, 133]
+_C.MODEL.DEPTHS =[2, 4, 3] 
+_C.MODEL.NUM_HEADS = 8
+_C.MODEL.MLP_RATIO = 2.0
 _C.MODEL.QKV_BIAS = True
 _C.MODEL.QK_SCALE = None
 
-# training settings
+# training settings (for ViT-B/16 pretrain)
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 300
@@ -71,68 +67,59 @@ _C.TRAIN.WARMUP_START_LR = 0.0002
 _C.TRAIN.END_LR = 0.0002
 _C.TRAIN.GRAD_CLIP = None
 _C.TRAIN.ACCUM_ITER = 1
-_C.TRAIN.MODEL_EMA = True
-_C.TRAIN.MODEL_EMA_DECAY = 0.99996
 _C.TRAIN.LINEAR_SCALED_LR = None
-_C.TRAIN.MULTI_SCALE_SAMPLER_DDP = True # for mobilevit only
+_C.TRAIN.MULTI_SCALE_SAMPLER_DDP = False
 
-_C.TRAIN.LR_SCHEDULER = CN()
-_C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
-_C.TRAIN.LR_SCHEDULER.MILESTONES = "30, 60, 90" # only used in StepLRScheduler
-_C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
-_C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
-
+# optimizer
 _C.TRAIN.OPTIMIZER = CN()
 _C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
-_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
-_C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
+_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)
 
-# train augmentation
+# model ema
+_C.TRAIN.MODEL_EMA = True
+_C.TRAIN.MODEL_EMA_DECAY = 0.9996
+_C.TRAIN.MODEL_EMA_FORCE_CPU = False
+
+# data augmentation (optional, check datasets.py)
+_C.TRAIN.SMOOTHING = 0.1
+_C.TRAIN.COLOR_JITTER = 0.4  # if both auto augment and rand augment are False, use color jitter
+_C.TRAIN.AUTO_AUGMENT = False  # rand augment is used if both rand and auto augment are set True
+_C.TRAIN.RAND_AUGMENT = False
+_C.TRAIN.RAND_AUGMENT_LAYERS = 2
+_C.TRAIN.RAND_AUGMENT_MAGNITUDE = 9  # scale from 0 to 9
+# mixup params (optional, check datasets.py)
 _C.TRAIN.MIXUP_ALPHA = 0.8
-_C.TRAIN.CUTMIX_ALPHA = 1.0
-_C.TRAIN.CUTMIX_MINMAX = None
 _C.TRAIN.MIXUP_PROB = 1.0
 _C.TRAIN.MIXUP_SWITCH_PROB = 0.5
 _C.TRAIN.MIXUP_MODE = 'batch'
-
-_C.TRAIN.SMOOTHING = 0.1
-_C.TRAIN.COLOR_JITTER = 0.4
-_C.TRAIN.AUTO_AUGMENT = True #'rand-m9-mstd0.5-inc1'
-
+_C.TRAIN.CUTMIX_ALPHA = 1.0
+_C.TRAIN.CUTMIX_MINMAX = None
+# random erase params (optional, check datasets.py)
 _C.TRAIN.RANDOM_ERASE_PROB = 0.25
 _C.TRAIN.RANDOM_ERASE_MODE = 'pixel'
 _C.TRAIN.RANDOM_ERASE_COUNT = 1
 _C.TRAIN.RANDOM_ERASE_SPLIT = False
 
-# augmentation
-_C.AUG = CN()
-_C.AUG.COLOR_JITTER = 0.4 # color jitter factor
-_C.AUG.AUTO_AUGMENT = 'rand-m9-mstd0.5-inc1'
-_C.AUG.RE_PROB = 0.25 # random earse prob
-_C.AUG.RE_MODE = 'pixel' # random earse mode
-_C.AUG.RE_COUNT = 1 # random earse count
-_C.AUG.MIXUP = 0.8 # mixup alpha, enabled if >0
-_C.AUG.CUTMIX = 1.0 # cutmix alpha, enabled if >0
-_C.AUG.CUTMIX_MINMAX = None # cutmix min/max ratio, overrides alpha
-_C.AUG.MIXUP_PROB = 1.0 # prob of mixup or cutmix when either/both is enabled
-_C.AUG.MIXUP_SWITCH_PROB = 0.5 # prob of switching cutmix when both mixup and cutmix enabled
-_C.AUG.MIXUP_MODE = 'batch' #how to apply mixup/curmix params, per 'batch', 'pair', or 'elem'
-
 # misc
-_C.SAVE = "./output"
-_C.TAG = "default"
-_C.SAVE_FREQ = 1 # freq to save chpt
-_C.REPORT_FREQ = 50 # freq to logging info
-_C.VALIDATE_FREQ = 10 # freq to do validation
-_C.SEED = 0
-_C.EVAL = False # run evaluation only
-_C.AMP = False # mix precision training
-_C.LOCAL_RANK = 0
-_C.NGPUS = -1
+_C.SAVE = "./output"  # output folder, saves logs and weights
+_C.SAVE_FREQ = 10  # freq to save chpt
+_C.REPORT_FREQ = 20  # freq to logging info
+_C.VALIDATE_FREQ = 1  # freq to do validation
+_C.SEED = 0  # random seed
+_C.EVAL = False  # run evaluation only
+_C.AMP = False  # auto mix precision training
 
 
 def _update_config_from_file(config, cfg_file):
+    """Load cfg file (.yaml) and update config object
+
+    Args:
+        config: config object
+        cfg_file: config file (.yaml)
+    Return:
+        None
+    """
     config.defrost()
     with open(cfg_file, 'r') as infile:
         yaml_cfg = yaml.load(infile, Loader=yaml.FullLoader)
@@ -141,12 +128,13 @@ def _update_config_from_file(config, cfg_file):
             _update_config_from_file(
                 config, os.path.join(os.path.dirname(cfg_file), cfg)
             )
-    print('merging config from {}'.format(cfg_file))
     config.merge_from_file(cfg_file)
     config.freeze()
 
+
 def update_config(config, args):
     """Update config by ArgumentParser
+    Configs that are often used can be updated from arguments
     Args:
         args: ArgumentParser contains options
     Return:
@@ -157,40 +145,37 @@ def update_config(config, args):
     config.defrost()
     if args.dataset:
         config.DATA.DATASET = args.dataset
-    if args.eval:
-        config.EVAL = True
     if args.batch_size:
         config.DATA.BATCH_SIZE = args.batch_size
-        if config.EVAL:
-            config.DATA.BATCH_SIZE_EVAL = args.batch_size
+        config.DATA.BATCH_SIZE_EVAL = args.batch_size
+    if args.batch_size_eval:
+        config.DATA.BATCH_SIZE_EVAL = args.batch_size_eval
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
-    if args.num_classes:
-        config.MODEL.NUM_CLASSES = args.num_classes
+    if args.accum_iter:
+        config.TRAIN.ACCUM_ITER = args.accum_iter
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
-    if args.output is not None:
-        config.SAVE = args.output
-    if args.ngpus:
-        config.NGPUS = args.ngpus
+    if args.eval:
+        config.EVAL = True
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
     if args.resume:
         config.MODEL.RESUME = args.resume
+    if args.teacher_model_path:
+        config.TRAIN.TEACHER_MODEL = args.teacher_model_path
     if args.last_epoch:
         config.TRAIN.LAST_EPOCH = args.last_epoch
-    if args.amp: # only during training
-        if config.EVAL is True:
-            config.AMP = False
-        else:
-            config.AMP = True
-
-    #config.freeze()
+    if args.amp:  # only for training
+        config.AMP = not config.EVAL
+    if args.multi_scale_sampler_ddp:
+        config.TRAIN.MULTI_SCALE_SAMPLER_DDP = True
+    # config.freeze()
     return config
 
 
 def get_config(cfg_file=None):
-    """Return a clone of config or load from yaml file"""
+    """Return a clone of config and optionally overwrite it from yaml file"""
     config = _C.clone()
     if cfg_file:
         _update_config_from_file(config, cfg_file)

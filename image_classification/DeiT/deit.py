@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-Implement DeiT
-"""
+DeiT in Paddle
 
-import math
-import copy
-import numpy as np
+A Paddle Implementation of Data Efficient Image Transformer (DeiT) as described in:
+
+"Training data-efficient image transformers & distillation through attention"
+    - Paper Link: https://arxiv.org/abs/2012.12877
+"""
 import paddle
 import paddle.nn as nn
 from droppath import DropPath
@@ -26,85 +26,163 @@ from droppath import DropPath
 
 class Identity(nn.Layer):
     """ Identity layer
-    
     The output of this layer is the input without any change.
-    Use this layer to avoid using 'if' condition in forward methods
+    This layer is used to avoid using 'if' condition in methods such as forward
     """
-    def __init__(self):
-        super(Identity, self).__init__()
     def forward(self, x):
         return x
 
 
 class PatchEmbedding(nn.Layer):
-    """Patch Embeddings
+    """Patch Embedding
+    Apply patch embedding (which is implemented using Conv2D) on input data.
 
-    Then a proj (conv2d) layer is applied as the patch embedding.
-
-    Args:
-        image_size: int, input image size, default: 224
-        patch_size: int, patch size for patch embedding (k and stride for proj conv), default: 8
-        in_channels: int, input channels, default: 3
-        embed_dim: int, output dimension of patch embedding, default: 384
+    Attributes:
+        image_size: image size
+        patch_size: patch size
+        num_patches: num of patches
+        patch_embddings: patch embed operation (Conv2D)
     """
     def __init__(self,
                  image_size=224,
-                 patch_size=8,
+                 patch_size=16,
                  in_channels=3,
-                 embed_dim=384):
+                 embed_dim=768):
         super().__init__()
-        assert patch_size in [4, 8, 16]
-        
-        # define patch embeddings
-        self.proj = nn.Conv2D(in_channels,
-                              embed_dim,
-                              kernel_size = patch_size,
-                              stride = patch_size)
-        # num patches
+        self.image_size = image_size
+        self.patch_size = patch_size
         self.num_patches = (image_size // patch_size) * (image_size // patch_size)
+        self.patch_embedding = nn.Conv2D(in_channels=in_channels,
+                                         out_channels=embed_dim,
+                                         kernel_size=patch_size,
+                                         stride=patch_size)
+    def forward(self, x):
+        x = self.patch_embedding(x)
+        x = x.flatten(2)  # [B, C, H, W] -> [B, C, h*w]
+        x = x.transpose([0, 2, 1])  # [B, C, h*w] -> [B, h*w, C] = [B, N, C]
+        return x
+
+
+class Attention(nn.Layer):
+    """ Attention module
+    Attention module for ViT, here q, k, v are assumed the same.
+    The qkv mappings are stored as one single param.
+
+    Attributes:
+        num_heads: number of heads
+        attn_head_size: feature dim of single head
+        all_head_size: feature dim of all heads
+        qkv: a nn.Linear for q, k, v mapping
+        scales: 1 / sqrt(single_head_feature_dim)
+        out: projection of multi-head attention
+        attn_dropout: dropout for attention
+        proj_dropout: final dropout before output
+        softmax: softmax op for attention
+    """
+    def __init__(self,
+                 embed_dim,
+                 num_heads,
+                 attn_head_size=None,
+                 qkv_bias=True,
+                 dropout=0.,
+                 attention_dropout=0.):
+        super().__init__()
+        self.embed_dim = embed_dim
+        self.num_heads = num_heads
+        if attn_head_size is not None:
+            self.attn_head_size = attn_head_size
+        else:
+            assert embed_dim % num_heads == 0, "embed_dim must be divisible by num_heads"
+            self.attn_head_size = embed_dim // num_heads
+        self.all_head_size = self.attn_head_size * num_heads
+
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.qkv = nn.Linear(embed_dim,
+                             self.all_head_size * 3,  # weights for q, k, and v
+                             weight_attr=w_attr_1,
+                             bias_attr=b_attr_1 if qkv_bias else False)
+
+        self.scales = self.attn_head_size ** -0.5
+
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.out = nn.Linear(self.all_head_size,
+                             embed_dim,
+                             weight_attr=w_attr_2,
+                             bias_attr=b_attr_2)
+
+        self.attn_dropout = nn.Dropout(attention_dropout)
+        self.proj_dropout = nn.Dropout(dropout)
+        self.softmax = nn.Softmax(axis=-1)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.TruncatedNormal(std=.02))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
+
+    def transpose_multihead(self, x):
+        """[B, N, C] -> [B, N, n_heads, head_dim] -> [B, n_heads, N, head_dim]"""
+        new_shape = x.shape[:-1] + [self.num_heads, self.attn_head_size]
+        x = x.reshape(new_shape)  # [B, N, C] -> [B, N, n_heads, head_dim]
+        x = x.transpose([0, 2, 1, 3])  # [B, N, n_heads, head_dim] -> [B, n_heads, N, head_dim]
+        return x
 
     def forward(self, x):
-        x = self.proj(x)
-        x = x.flatten(2)
-        x = x.transpose([0, 2, 1])
-        return x
+        qkv = self.qkv(x).chunk(3, axis=-1)
+        q, k, v = map(self.transpose_multihead, qkv)
+        
+        q = q * self.scales
+        attn = paddle.matmul(q, k, transpose_y=True)  # [B, n_heads, N, N]
+        attn = self.softmax(attn)
+        attn = self.attn_dropout(attn)
+
+        z = paddle.matmul(attn, v)  # [B, n_heads, N, head_dim]
+        z = z.transpose([0, 2, 1, 3])  # [B, N, n_heads, head_dim]
+        new_shape = z.shape[:-2] + [self.all_head_size]
+        z = z.reshape(new_shape)  # [B, N, all_head_size]
+
+        z = self.out(z)
+        z = self.proj_dropout(z)
+        return z
 
 
 class Mlp(nn.Layer):
     """ MLP module
-    
     Impl using nn.Linear and activation is GELU, dropout is applied.
     Ops: fc -> act -> dropout -> fc -> dropout
-    
+
     Attributes:
         fc1: nn.Linear
         fc2: nn.Linear
         act: GELU
-        dropout1: dropout after fc1
-        dropout2: dropout after fc2
+        dropout: dropout after fc
     """
-    
-    def __init__(self, in_features, hidden_features, dropout=0.):
-        super(Mlp, self).__init__()
+
+    def __init__(self,
+                 embed_dim,
+                 mlp_ratio,
+                 dropout=0.):
+        super().__init__()
         w_attr_1, b_attr_1 = self._init_weights()
-        self.fc1 = nn.Linear(in_features,
-                             hidden_features,
+        self.fc1 = nn.Linear(embed_dim,
+                             int(embed_dim * mlp_ratio),
                              weight_attr=w_attr_1,
                              bias_attr=b_attr_1)
-    
+
         w_attr_2, b_attr_2 = self._init_weights()
-        self.fc2 = nn.Linear(hidden_features,
-                             in_features,
+        self.fc2 = nn.Linear(int(embed_dim * mlp_ratio),
+                             embed_dim,
                              weight_attr=w_attr_2,
                              bias_attr=b_attr_2)
         self.act = nn.GELU()
         self.dropout = nn.Dropout(dropout)
-    
+
     def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        weight_attr = paddle.ParamAttr(
+            initializer=paddle.nn.initializer.TruncatedNormal(std=0.2))
+        bias_attr = paddle.ParamAttr(
+            initializer=paddle.nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
-    
+
     def forward(self, x):
         x = self.fc1(x)
         x = self.act(x)
@@ -114,250 +192,334 @@ class Mlp(nn.Layer):
         return x
 
 
-class Attention(nn.Layer):
-    """ Attention
+class TransformerLayer(nn.Layer):
+    """Transformer Layer
+    Transformer layer contains attention, norm, mlp and residual
 
-    Regular Attention module same as ViT
-
-    Args:
-        dim: int, all heads dimension
-        num_heads: int, num of heads
-        qkv_bias: bool, if True, qkv linear layer is using bias, default: False
-        qk_scale: float, if None, qk_scale is dim_head ** -0.5, default: None
-        attention_dropout: float, dropout rate for attention dropout, default: 0.
-        dropout: float, dropout rate for projection dropout, default: 0.
+    Attributes:
+        embed_dim: transformer feature dim
+        attn_norm: nn.LayerNorm before attention
+        mlp_norm: nn.LayerNorm before mlp
+        mlp: mlp modual
+        attn: attention modual
     """
     def __init__(self,
-                 dim,
-                 num_heads=8,
-                 qkv_bias=False,
-                 qk_scale=None,
-                 attention_dropout=0.,
-                 dropout=0.):
-        super().__init__()
-        self.num_heads = num_heads
-        self.embed_dim = dim
-        self.dim_head = dim // num_heads
-        self.scale = qk_scale or self.dim_head ** -0.5
-
-        w_attr_1, b_attr_1 = self._init_weights()
-        self.qkv = nn.Linear(dim,
-                             dim * 3,
-                             weight_attr=w_attr_1,
-                             bias_attr=b_attr_1 if qkv_bias else False)
-        self.attn_dropout = nn.Dropout(attention_dropout)
-        self.softmax = nn.Softmax(axis=-1)
-        w_attr_2, b_attr_2 = self._init_weights()
-        self.proj = nn.Linear(dim,
-                              dim,
-                              weight_attr=w_attr_2,
-                              bias_attr=b_attr_2)
-        self.proj_dropout = nn.Dropout(dropout)
-
-    def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-        return weight_attr, bias_attr
-
-    def transpose_multihead(self, x):
-        new_shape = x.shape[:-1] + [self.num_heads, self.dim_head]
-        x = x.reshape(new_shape)
-        x = x.transpose([0, 2, 1, 3])
-        return x
-
-    def forward(self, x):
-        qkv = self.qkv(x).chunk(3, axis=-1)
-        q, k, v = map(self.transpose_multihead, qkv)
-
-        attn = paddle.matmul(q, k, transpose_y=True)
-        attn = attn * self.scale
-        attn = self.softmax(attn)
-        attn = self.attn_dropout(attn)
-
-        z = paddle.matmul(attn, v)
-        z = z.transpose([0, 2, 1, 3])
-
-        new_shape = z.shape[:-2] + [self.embed_dim]
-        z = z.reshape(new_shape)
-        z = self.proj(z)
-        z = self.proj_dropout(z)
-
-        return z
-
-
-class EncoderLayer(nn.Layer):
-    """Transformer Encoder Layer
-
-    Transformer encoder module, same as ViT
-
-    Args:
-        dim: int, all heads dimension
-        num_heads: int, num of heads
-        mlp_ratio: float, ratio to multiply with dim for mlp hidden feature dim, default: 4.
-        qkv_bias: bool, if True, qkv linear layer is using bias, default: False
-        qk_scale: float, if None, qk_scale is dim_head ** -0.5, default: None
-        attention_dropout: float, dropout rate for attention dropout, default: 0.
-        dropout: float, dropout rate for projection dropout, default: 0.
-    """
-
-    def __init__(self,
-                 dim,
+                 embed_dim,
                  num_heads,
+                 attn_head_size=None,
+                 qkv_bias=True,
                  mlp_ratio=4.,
-                 qkv_bias=False,
-                 qk_scale=None,
-                 attention_dropout=0,
+                 dropout=0.,
+                 attention_dropout=0.,
                  droppath=0.):
         super().__init__()
         w_attr_1, b_attr_1 = self._init_weights()
-        self.norm1 = nn.LayerNorm(dim,
-                                  weight_attr=w_attr_1,
-                                  bias_attr=b_attr_1,
-                                  epsilon=1e-6)
-        self.attn = Attention(dim,
-                              num_heads=num_heads,
-                              qkv_bias=qkv_bias,
-                              qk_scale=qk_scale,
-                              attention_dropout=attention_dropout)
+        self.attn_norm = nn.LayerNorm(embed_dim,
+                                      weight_attr=w_attr_1,
+                                      bias_attr=b_attr_1,
+                                      epsilon=1e-6)
+
+        self.attn = Attention(embed_dim,
+                              num_heads,
+                              attn_head_size,
+                              qkv_bias,
+                              dropout,
+                              attention_dropout)
+
         self.drop_path = DropPath(droppath) if droppath > 0. else Identity()
+
         w_attr_2, b_attr_2 = self._init_weights()
-        self.norm2 = nn.LayerNorm(dim,
-                                  weight_attr=w_attr_2,
-                                  bias_attr=b_attr_2,
-                                  epsilon=1e-6)
-        self.mlp = Mlp(in_features=dim,
-                       hidden_features=int(dim * mlp_ratio))
-    
+        self.mlp_norm = nn.LayerNorm(embed_dim,
+                                     weight_attr=w_attr_2,
+                                     bias_attr=b_attr_2,
+                                     epsilon=1e-6)
+
+        self.mlp = Mlp(embed_dim, mlp_ratio, dropout)
+
     def _init_weights(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
         return weight_attr, bias_attr
 
     def forward(self, x):
         h = x
-        x = self.norm1(x)
+        x = self.attn_norm(x)
         x = self.attn(x)
         x = self.drop_path(x)
-        x = h + x
+        x = x + h
 
         h = x
-        x = self.norm2(x)
+        x = self.mlp_norm(x)
         x = self.mlp(x)
         x = self.drop_path(x)
-        x = h + x
+        x = x + h
 
         return x
 
 
-class Deit(nn.Layer):
+class Encoder(nn.Layer):
+    """Transformer encoder
+    Encoder encoder contains a list of TransformerLayer, and a LayerNorm.
+
+    Attributes:
+        layers: nn.LayerList contains multiple EncoderLayers
+        encoder_norm: nn.LayerNorm which is applied after last encoder layer
+    """
+    def __init__(self,
+                 embed_dim,
+                 num_heads,
+                 depth,
+                 attn_head_size=None,
+                 qkv_bias=True,
+                 mlp_ratio=4.0,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 droppath=0.):
+        super().__init__()
+        # stochatic depth decay
+        depth_decay = [x.item() for x in paddle.linspace(0, droppath, depth)]
+
+        layer_list = []
+        for i in range(depth):
+            layer_list.append(TransformerLayer(embed_dim,
+                                               num_heads,
+                                               attn_head_size,
+                                               qkv_bias,
+                                               mlp_ratio,
+                                               dropout,
+                                               attention_dropout,
+                                               depth_decay[i]))
+        self.layers = nn.LayerList(layer_list)
+
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.encoder_norm = nn.LayerNorm(embed_dim,
+                                         weight_attr=w_attr_1,
+                                         bias_attr=b_attr_1,
+                                         epsilon=1e-6)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(initializer=nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        x = self.encoder_norm(x)
+        return x
+
+
+class VisionTransformer(nn.Layer):
+    """ViT transformer
+    ViT Transformer, classifier is a single Linear layer for finetune,
+    For training from scratch, two layer mlp should be used.
+    Classification is done using cls_token.
+
+    Args:
+        image_size: int, input image size, default: 224
+        patch_size: int, patch size, default: 16
+        in_channels: int, input image channels, default: 3
+        num_classes: int, number of classes for classification, default: 1000
+        embed_dim: int, embedding dimension (patch embed out dim), default: 768
+        depth: int, number ot transformer blocks, default: 12
+        num_heads: int, number of attention heads, default: 12
+        attn_head_size: int, dim of head, if none, set to embed_dim // num_heads, default: None
+        mlp_ratio: float, ratio of mlp hidden dim to embed dim(mlp in dim), default: 4.0
+        qkv_bias: bool, If True, enable qkv(nn.Linear) layer with bias, default: True
+        dropout: float, dropout rate for linear layers, default: 0.
+        attention_dropout: float, dropout rate for attention layers default: 0.
+        droppath: float, droppath rate for droppath layers, default: 0.
+        representation_size: int, set representation layer (pre-logits) if set, default: None
+    """
     def __init__(self,
                  image_size=224,
+                 patch_size=16,
                  in_channels=3,
                  num_classes=1000,
-                 patch_size=16,
-                 embed_dim=192,
-                 num_heads=3,
+                 embed_dim=768,
                  depth=12,
+                 num_heads=12,
+                 attn_head_size=None,
+                 mlp_ratio=4,
+                 qkv_bias=True,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 droppath=0.,
+                 representation_size=None):
+        super().__init__()
+        # create patch embedding
+        self.patch_embedding = PatchEmbedding(image_size,
+                                              patch_size,
+                                              in_channels,
+                                              embed_dim)
+        # create posision embedding
+        self.position_embedding = paddle.create_parameter(
+            shape=[1, 1 + self.patch_embedding.num_patches, embed_dim],
+            dtype='float32',
+            default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        # create cls token
+        self.cls_token = paddle.create_parameter(
+            shape=[1, 1, embed_dim],
+            dtype='float32',
+            default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        self.pos_dropout = nn.Dropout(dropout)
+        # create multi head self-attention layers
+        self.encoder = Encoder(embed_dim,
+                               num_heads,
+                               depth,
+                               attn_head_size,
+                               qkv_bias,
+                               mlp_ratio,
+                               dropout,
+                               attention_dropout,
+                               droppath)
+        # pre-logits
+        if representation_size is not None:
+            self.num_features = representation_size
+            w_attr_1, b_attr_1 = self._init_weights()
+            self.pre_logits = nn.Sequential(
+                nn.Linear(embed_dim,
+                          representation_size,
+                          weight_attr=w_attr_1,
+                          bias_attr=b_attr_1),
+                nn.ReLU())
+        else:
+            self.pre_logits = Identity()
+
+        # classifier head
+        w_attr_2, b_attr_2 = self._init_weights()
+        self.classifier = nn.Linear(embed_dim,
+                                    num_classes,
+                                    weight_attr=w_attr_2,
+                                    bias_attr=b_attr_2)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(
+            initializer=paddle.nn.initializer.Constant(1.0))
+        bias_attr = paddle.ParamAttr(
+            initializer=paddle.nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
+
+    def forward_features(self, x):
+        x = self.patch_embedding(x)
+        cls_tokens = self.cls_token.expand((x.shape[0], -1, -1))
+        x = paddle.concat((cls_tokens, x), axis=1)
+        x = x + self.position_embedding
+        x = self.pos_dropout(x)
+        x = self.encoder(x)
+        x = self.pre_logits(x[:, 0]) # cls_token only
+        return x
+
+    def forward(self, x):
+        x = self.forward_features(x)
+        logits = self.classifier(x)
+        return logits
+
+
+class DistilledVisionTransformer(VisionTransformer):
+    """Distilled ViT transformer (DeiT)
+
+    Args:
+        image_size: int, input image size, default: 224
+        patch_size: int, patch size, default: 16
+        in_channels: int, input image channels, default: 3
+        num_classes: int, number of classes for classification, default: 1000
+        embed_dim: int, embedding dimension (patch embed out dim), default: 768
+        depth: int, number ot transformer blocks, default: 12
+        num_heads: int, number of attention heads, default: 12
+        attn_head_size: int, dim of head, if none, set to embed_dim // num_heads, default: None
+        mlp_ratio: float, ratio of mlp hidden dim to embed dim(mlp in dim), default: 4.0
+        qkv_bias: bool, If True, enable qkv(nn.Linear) layer with bias, default: True
+        dropout: float, dropout rate for linear layers, default: 0.
+        attention_dropout: float, dropout rate for attention layers default: 0.
+        droppath: float, droppath rate for droppath layers, default: 0.
+    """
+    def __init__(self,
+                 image_size=224,
+                 patch_size=16,
+                 in_channels=3,
+                 num_classes=1000,
+                 embed_dim=768,
+                 depth=12,
+                 num_heads=12,
+                 attn_head_size=None,
                  mlp_ratio=4,
                  qkv_bias=True,
                  dropout=0.,
                  attention_dropout=0.,
                  droppath=0.):
-        super().__init__()
-        self.num_classes = num_classes
-        # patch embedding
-        self.patch_embed = PatchEmbedding(image_size=image_size,
-                                          patch_size=patch_size,
-                                          in_channels=in_channels,
-                                          embed_dim=embed_dim)
-        # class token
-        self.class_token = paddle.create_parameter(
+        super().__init__(image_size, patch_size, in_channels, num_classes, embed_dim, depth,
+            num_heads, attn_head_size, mlp_ratio, qkv_bias, dropout, attention_dropout,
+            droppath, None)
+        # overwrite posision embedding
+        self.position_embedding = paddle.create_parameter(
+            shape=[1, 2 + self.patch_embedding.num_patches, embed_dim],
+            dtype='float32',
+            default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        # create distill token
+        self.dist_token = paddle.create_parameter(
             shape=[1, 1, embed_dim],
             dtype='float32',
-            default_initializer=nn.initializer.Constant(0.))
-        # distillation token
-        self.distill_token = paddle.create_parameter(
-            shape=[1, 1, embed_dim],
-            dtype='float32',
-            default_initializer=nn.initializer.TruncatedNormal(std=.02))
-        # positional embedding
-        self.pos_embed = paddle.create_parameter(
-            shape=[1, self.patch_embed.num_patches + 2, embed_dim],
-            dtype='float32',
-            default_initializer=nn.initializer.TruncatedNormal(std=.02))
-        self.pos_dropout = nn.Dropout(dropout)
-
-        self.layers = nn.LayerList([
-            copy.deepcopy(EncoderLayer(dim=embed_dim,
-                                       num_heads=num_heads,
-                                       mlp_ratio=mlp_ratio,
-                                       qkv_bias=qkv_bias,
-                                       attention_dropout=attention_dropout,
-                                       droppath=droppath)) for _ in range(depth)])
-        w_attr_1, b_attr_1 = self._init_weights_norm()
-        self.norm = nn.LayerNorm(embed_dim,
-                                 weight_attr=w_attr_1,
-                                 bias_attr=b_attr_1,
-                                 epsilon=1e-6)
-
-        w_attr_2, b_attr_2 = self._init_weights_linear()
-        self.head = nn.Linear(embed_dim,
-                              num_classes,
-                              weight_attr=w_attr_2,
-                              bias_attr=b_attr_2)
-        w_attr_3, b_attr_3 = self._init_weights_linear()
-        self.head_distill = nn.Linear(embed_dim,
-                                      num_classes, 
-                                      weight_attr=w_attr_3,
-                                      bias_attr=b_attr_3)
-
-    def _init_weights_linear(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-        return weight_attr, bias_attr
-
-    def _init_weights_norm(self):
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(1.0))
-        bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0.0))
-        return weight_attr, bias_attr
+            default_initializer=paddle.nn.initializer.TruncatedNormal(std=.02))
+        # distill classifier head
+        w_attr_1, b_attr_1 = self._init_weights()
+        self.classifier_dist = nn.Linear(embed_dim,
+                                         num_classes,
+                                         weight_attr=w_attr_1,
+                                         bias_attr=b_attr_1)
 
     def forward_features(self, x):
-        x = self.patch_embed(x)
-        class_tokens = self.class_token.expand([x.shape[0], -1, -1])
-        distill_tokens = self.distill_token.expand([x.shape[0], -1, -1])
-        x = paddle.concat((class_tokens, distill_tokens, x), axis=1)
-
-        x = x + self.pos_embed
+        x = self.patch_embedding(x)
+        cls_tokens = self.cls_token.expand((x.shape[0], -1, -1))
+        dist_tokens = self.dist_token.expand((x.shape[0], -1, -1))
+        x = paddle.concat((cls_tokens, dist_tokens, x), axis=1)
+        x = x + self.position_embedding
         x = self.pos_dropout(x)
-
-        for layer in self.layers:
-            x = layer(x)
-        x = self.norm(x)
-
+        x = self.encoder(x)
         return x[:, 0], x[:, 1]
 
     def forward(self, x):
-        x, x_distill = self.forward_features(x)
-        x = self.head(x)
-        x_distill = self.head_distill(x_distill)
+        x = self.forward_features(x)
+        logits = self.classifier(x[0])
+        logits_dist = self.classifier_dist(x[1])
         if self.training:
-            return x, x_distill
-        else:
-            return (x + x_distill) / 2
+            return logits, logits_dist
+        return (logits + logits_dist) / 2
+
+
+def build_vit(config):
+    """build vit model from config, this is same as ViT"""
+    model = VisionTransformer(image_size=config.DATA.IMAGE_SIZE,
+                              patch_size=config.MODEL.PATCH_SIZE,
+                              in_channels=config.DATA.IMAGE_CHANNELS,
+                              num_classes=config.MODEL.NUM_CLASSES,
+                              embed_dim=config.MODEL.EMBED_DIM,
+                              depth=config.MODEL.DEPTH,
+                              num_heads=config.MODEL.NUM_HEADS,
+                              attn_head_size=config.MODEL.ATTN_HEAD_SIZE,
+                              mlp_ratio=config.MODEL.MLP_RATIO,
+                              qkv_bias=config.MODEL.QKV_BIAS,
+                              dropout=config.MODEL.DROPOUT,
+                              attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                              droppath=config.MODEL.DROPPATH,
+                              representation_size=None)
+    return model
 
 
 def build_deit(config):
-    """build deit model using config"""
-    model = Deit(image_size=config.DATA.IMAGE_SIZE,
-                 in_channels=config.MODEL.TRANS.IN_CHANNELS,
-                 num_classes=config.MODEL.NUM_CLASSES,
-                 patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                 embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                 num_heads=config.MODEL.TRANS.NUM_HEADS,
-                 depth=config.MODEL.TRANS.DEPTH,
-                 mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                 qkv_bias=config.MODEL.TRANS.QKV_BIAS,
-                 dropout=config.MODEL.DROPOUT,
-                 attention_dropout=config.MODEL.ATTENTION_DROPOUT,
-                 droppath=config.MODEL.DROPPATH)
+    """build deit model from config"""
+    model = DistilledVisionTransformer(
+        image_size=config.DATA.IMAGE_SIZE,
+        patch_size=config.MODEL.PATCH_SIZE,
+        in_channels=config.DATA.IMAGE_CHANNELS,
+        num_classes=config.MODEL.NUM_CLASSES,
+        embed_dim=config.MODEL.EMBED_DIM,
+        depth=config.MODEL.DEPTH,
+        num_heads=config.MODEL.NUM_HEADS,
+        attn_head_size=config.MODEL.ATTN_HEAD_SIZE,
+        mlp_ratio=config.MODEL.MLP_RATIO,
+        qkv_bias=config.MODEL.QKV_BIAS,
+        dropout=config.MODEL.DROPOUT,
+        attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+        droppath=config.MODEL.DROPPATH)
     return model

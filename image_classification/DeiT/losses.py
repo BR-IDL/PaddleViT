@@ -21,50 +21,29 @@ import paddle.nn.functional as F
 class LabelSmoothingCrossEntropyLoss(nn.Layer):
     """ cross entropy loss for label smoothing
     Args:
-        smoothing: float, label smoothing rate
-        x: tensor, predictions (default is before softmax) with shape [N, num_classes] as default
-        target: tensor, target label with shape [N] as default
-        weight: tensor, optional, a manual rescaling weight given to each class        
-        reduction: str, optional, indicate how to average the loss by batch_size,
-                   default is ``'mean'``, the candicates are ``'none'`` | ``'mean'`` | ``'sum'``
-        axis: int, optional, the index of dimension to perform softmax calculations,
-                   default is ``-1``, if `axis` is not -1 -> the shape of x and target may not be default
-        use_softmax: bool, optional, if `use_softmax` is ``False``, ``x`` should be after softmax,
-                     default is ``True``, the candicates are ``True`` | ``False``
-        name: str, optional, the name of the operator, default is ``None``,
-              for more information, please refer to :ref:`api_guide_Name`.
+        smoothing: float, smoothing rate
+        x: tensor, predictions (before softmax) with shape [N, num_classes]
+        target: tensor, target label with shape [N]
     Return:
         loss: float, cross entropy loss value
     """
-    def __init__(self,
-                 smoothing=0.1,
-                 weight=None,                 
-                 reduction='mean',                 
-                 axis=-1,
-                 use_softmax=True,
-                 name=None):
+    def __init__(self, smoothing=0.1):
         super().__init__()
         assert 0 <= smoothing < 1.0
         self.smoothing = smoothing
-        self.weight = weight
-        self.reduction = reduction        
-        self.axis = axis
-        self.use_softmax = use_softmax
-        self.name = name
+        self.confidence = 1 - smoothing
 
     def forward(self, x, target):
-        target = paddle.nn.functional.one_hot(target, num_classes=x.shape[1])
-        target = paddle.nn.functional.label_smooth(target, epsilon=self.smoothing)        
-        loss = paddle.nn.functional.cross_entropy(
-            x,
-            target,            
-            weight=self.weight,            
-            reduction=self.reduction,
-            soft_label=True,
-            axis=self.axis,
-            use_softmax=self.use_softmax,
-            name=self.name)
-        return loss
+        log_probs = F.log_softmax(x) # [N, num_classes]
+        # target_index is used to get prob for each of the N samples
+        target_index = paddle.zeros([x.shape[0], 2], dtype='int64') # [N, 2]
+        target_index[:, 0] = paddle.arange(x.shape[0])
+        target_index[:, 1] = target
+
+        nll_loss = -log_probs.gather_nd(index=target_index) # index: [N]
+        smooth_loss = -log_probs.mean(axis=-1)
+        loss = self.confidence * nll_loss + self.smoothing * smooth_loss
+        return loss.mean()
 
 
 class SoftTargetCrossEntropyLoss(nn.Layer):
@@ -75,9 +54,6 @@ class SoftTargetCrossEntropyLoss(nn.Layer):
     Returns:
         loss: float, the mean loss value
     """
-    def __init__(self):
-        super().__init__()
-
     def forward(self, x, target):
         loss = paddle.sum(-target * F.log_softmax(x, axis=-1), axis=-1)
         return loss.mean()
@@ -85,16 +61,16 @@ class SoftTargetCrossEntropyLoss(nn.Layer):
 
 class DistillationLoss(nn.Layer):
     """Distillation loss function
-    This layer includes the orginal loss (criterion) and a extra 
-    distillation loss (criterion), which computes the loss with 
-    different type options, between current model and 
+    This layer includes the orginal loss (criterion) and a extra
+    distillation loss (criterion), which computes the loss with
+    different type options, between current model and
     a teacher model as its supervision.
 
     Args:
         base_criterion: nn.Layer, the original criterion
         teacher_model: nn.Layer, the teacher model as supervision
         distillation_type: str, one of ['none', 'soft', 'hard']
-        alpha: float, ratio of base loss (* (1-alpha)) 
+        alpha: float, ratio of base loss (* (1-alpha))
                and distillation loss( * alpha)
         tao: float, temperature in distillation
     """
@@ -122,7 +98,9 @@ class DistillationLoss(nn.Layer):
                          in the last layer of the model
             targets: tensor, the labels for the base criterion
         """
-        outputs, outputs_kd = outputs[0], outputs[1]
+        outputs_kd = None
+        if not isinstance(outputs, paddle.Tensor):
+            outputs, outputs_kd = outputs[0], outputs[1]
         base_loss = self.base_criterion(outputs, targets)
         if self.type == 'none':
             return base_loss
@@ -140,5 +118,3 @@ class DistillationLoss(nn.Layer):
 
         loss = base_loss * (1 - self.alpha) + distillation_loss * self.alpha
         return loss
-
-

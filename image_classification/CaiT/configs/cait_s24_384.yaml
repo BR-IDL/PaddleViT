@@ -1,14 +1,13 @@
 DATA:
     IMAGE_SIZE: 384
     CROP_PCT: 1.0
-    
 MODEL:
     TYPE: cait
     NAME: cait_s24_384
-    TRANS:
-        PATCH_SIZE: 16
-        EMBED_DIM: 384
-        DEPTH: 24
-        NUM_HEADS: 8
-        INIT_VALUES: 1e-5
-        DEPTH_TOKEN_ONLY: 2
+    PATCH_SIZE: 16
+    EMBED_DIM: 384
+    DEPTH: 24
+    NUM_HEADS: 8
+    INIT_VALUES: 1e-5
+    DEPTH_TOKEN_ONLY: 2
+    DROPPATH: 0.1

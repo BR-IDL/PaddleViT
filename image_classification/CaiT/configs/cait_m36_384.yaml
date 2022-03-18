@@ -1,14 +1,13 @@
 DATA:
     IMAGE_SIZE: 384
     CROP_PCT: 1.0
-    
 MODEL:
     TYPE: cait
     NAME: cait_m36_384
-    TRANS:
-        PATCH_SIZE: 16
-        EMBED_DIM: 768
-        DEPTH: 36
-        NUM_HEADS: 16
-        INIT_VALUES: 1e-6
-        DEPTH_TOKEN_ONLY: 2
+    PATCH_SIZE: 16
+    EMBED_DIM: 768
+    DEPTH: 36
+    NUM_HEADS: 16
+    INIT_VALUES: 1e-6
+    DEPTH_TOKEN_ONLY: 2
+    DROPPATH: 0.3

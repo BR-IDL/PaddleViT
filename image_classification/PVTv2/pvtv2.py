@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,39 +11,35 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-Implement Transformer Class for PVTv2
-"""
+DeiT in Paddle
 
+A Paddle Implementation of Data Efficient Image Transformer (DeiT) as described in:
+
+"Training data-efficient image transformers & distillation through attention"
+    - Paper Link: https://arxiv.org/abs/2012.12877
+"""
 import copy
 import paddle
 import paddle.nn as nn
 from droppath import DropPath
 
 
-class Identity(nn.Layer):                      
+class Identity(nn.Layer):
     """ Identity layer
-
     The output of this layer is the input without any change.
-    Use this layer to avoid if condition in some forward methods
-
+    This layer is used to avoid using 'if' condition in methods such as forward
     """
-    def __init__(self):
-        super(Identity, self).__init__()
- 
-    def forward(self, input):
-        return input
+    def forward(self, x):
+        return x
 
 
 class DWConv(nn.Layer):
     """Depth-Wise convolution 3x3
-
     Improve the local continuity of features.
-
     """
     def __init__(self, dim=768):
-        super(DWConv, self).__init__()
+        super().__init__()
         w_attr_1, b_attr_1 = self._init_weights_conv() # init for conv
         self.dwconv = nn.Conv2D(in_channels=dim,
                                 out_channels=dim,
@@ -84,7 +80,7 @@ class OverlapPatchEmbedding(nn.Layer):
 
     def __init__(self, image_size=224, patch_size=7, stride=4, in_channels=3, embed_dim=768):
         super().__init__()
-        image_size = (image_size, image_size) # TODO: add to_2tuple
+        image_size = (image_size, image_size)
         patch_size = (patch_size, patch_size)
 
         self.image_size = image_size
@@ -127,8 +123,7 @@ class Mlp(nn.Layer):
         fc2: nn.Linear
         dwconv: Depth-Wise Convolution
         act: GELU
-        dropout1: dropout after fc1
-        dropout2: dropout after fc2
+        dropout: dropout after fc1 and fc2
     """
 
     def __init__(self, in_features, hidden_features, dropout=0.0, linear=False):
@@ -185,7 +180,7 @@ class Attention(nn.Layer):
         attn_dropout: dropout for attention
         proj_dropout: final dropout before output
         softmax: softmax op for attention
-        linear: bool, if True, use linear spatial reduction attention instead of spatial reduction attention
+        linear: bool, if True, use linear spatial reduction attn instead of spatial reduction attn
         sr_ratio: the spatial reduction ratio of SRA (linear spatial reduction attention)
     """
 
@@ -237,7 +232,7 @@ class Attention(nn.Layer):
                                     weight_attr=w_attr_4,
                                     bias_attr=b_attr_4)
                 self.norm = nn.LayerNorm(dim,
-                                         epsilon=1e-5,
+                                         epsilon=1e-6,
                                          weight_attr=w_attr_5,
                                          bias_attr=b_attr_5)
         else:
@@ -249,7 +244,7 @@ class Attention(nn.Layer):
                                 weight_attr=w_attr_4,
                                 bias_attr=b_attr_4)
             self.norm = nn.LayerNorm(dim,
-                                     epsilon=1e-5,
+                                     epsilon=1e-6,
                                      weight_attr=w_attr_5,
                                      bias_attr=b_attr_5)
             self.act = nn.GELU()
@@ -278,19 +273,22 @@ class Attention(nn.Layer):
                 x_ = x.transpose([0, 2, 1]).reshape([B, C, H, W])
                 x_ = self.sr(x_).reshape([B, C, -1]).transpose([0, 2, 1])
                 x_ = self.norm(x_)
-                kv = self.kv(x_).reshape([B, -1, 2, self.num_heads, C // self.num_heads]).transpose([2, 0, 3, 1, 4])
+                kv = self.kv(x_).reshape(
+                    [B, -1, 2, self.num_heads, C // self.num_heads]).transpose([2, 0, 3, 1, 4])
             else:
-                kv = self.kv(x).reshape([B, -1, 2, self.num_heads, C // self.num_heads]).transpose([2, 0, 3, 1, 4])
+                kv = self.kv(x).reshape(
+                    [B, -1, 2, self.num_heads, C // self.num_heads]).transpose([2, 0, 3, 1, 4])
         else:
             x_ = x.transpose([0, 2, 1]).reshape([B, C, H, W])
             x_ = self.sr(self.pool(x_)).reshape([B, C, -1]).transpose([0, 2, 1])
             x_ = self.norm(x_)
             x_ = self.act(x_)
-            kv = self.kv(x_).reshape([B, -1, 2, self.num_heads, C // self.num_heads]).transpose([2, 0, 3, 1, 4])
+            kv = self.kv(x_).reshape(
+                [B, -1, 2, self.num_heads, C // self.num_heads]).transpose([2, 0, 3, 1, 4])
         k, v = kv[0], kv[1]
 
+        q = q * self.scale
         attn = paddle.matmul(q, k, transpose_y=True)
-        attn = attn * self.scale
         attn = self.softmax(attn)
         attn = self.attn_dropout(attn)
 
@@ -374,7 +372,7 @@ class PyramidVisionTransformerV2(nn.Layer):
         dropout: float, dropout rate for linear layer
         attention_dropout: float, dropout rate for attention
         drop_path: float, drop path rate, default: 0.
-        linear: bool, if True, use linear spatial reduction attention instead of spatial reduction attention
+        linear: bool, if True, use linear spatial reduction attn instead of spatial reduction attn
         patch_embedding: PatchEmbedding, patch embedding instance
         norm: nn.LayerNorm, norm layer applied after transformer
         fc: nn.Linear, classifier op.
@@ -494,20 +492,21 @@ class PyramidVisionTransformerV2(nn.Layer):
 
 
 def build_pvtv2(config):
+    """build pvtv2 model from config"""
     model = PyramidVisionTransformerV2(
         image_size=config.DATA.IMAGE_SIZE,
-        patch_size=config.MODEL.TRANS.PATCH_SIZE,
-        embed_dims=config.MODEL.TRANS.EMBED_DIMS,
+        patch_size=config.MODEL.PATCH_SIZE,
+        embed_dims=config.MODEL.EMBED_DIM,
         num_classes=config.MODEL.NUM_CLASSES,
-        in_channels=config.MODEL.TRANS.IN_CHANNELS,
-        num_heads=config.MODEL.TRANS.NUM_HEADS,
-        depths=config.MODEL.TRANS.STAGE_DEPTHS,
-        mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-        sr_ratio=config.MODEL.TRANS.SR_RATIO,
-        qkv_bias=config.MODEL.TRANS.QKV_BIAS,
-        qk_scale=config.MODEL.TRANS.QK_SCALE,
+        in_channels=config.DATA.IMAGE_CHANNELS,
+        num_heads=config.MODEL.NUM_HEADS,
+        depths=config.MODEL.STAGE_DEPTH,
+        mlp_ratio=config.MODEL.MLP_RATIO,
+        sr_ratio=config.MODEL.SR_RATIO,
+        qkv_bias=config.MODEL.QKV_BIAS,
+        qk_scale=config.MODEL.QK_SCALE,
         dropout=config.MODEL.DROPOUT,
         attention_dropout=config.MODEL.ATTENTION_DROPOUT,
         drop_path=config.MODEL.DROPPATH,
-        linear=config.MODEL.TRANS.LINEAR)
+        linear=config.MODEL.LINEAR)
     return model
