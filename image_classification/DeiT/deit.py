@@ -129,9 +129,9 @@ class Attention(nn.Layer):
     def forward(self, x):
         qkv = self.qkv(x).chunk(3, axis=-1)
         q, k, v = map(self.transpose_multihead, qkv)
-
+        
+        q = q * self.scales
         attn = paddle.matmul(q, k, transpose_y=True)  # [B, n_heads, N, N]
-        attn = attn * self.scales
         attn = self.softmax(attn)
         attn = self.attn_dropout(attn)
 

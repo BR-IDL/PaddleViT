@@ -287,8 +287,8 @@ class Attention(nn.Layer):
                 [B, -1, 2, self.num_heads, C // self.num_heads]).transpose([2, 0, 3, 1, 4])
         k, v = kv[0], kv[1]
 
+        q = q * self.scale
         attn = paddle.matmul(q, k, transpose_y=True)
-        attn = attn * self.scale
         attn = self.softmax(attn)
         attn = self.attn_dropout(attn)
 
