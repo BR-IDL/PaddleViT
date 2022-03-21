@@ -20,34 +20,25 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 ## Models Zoo
 | Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
 |-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| t2t_vit_7      				| 71.68 | 90.89 | 4.3M    | 1.0G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1YkuPs1ku7B_udydOf_ls1LQvpJDg_c_j/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1jVNsz37gatLCDaOoU3NaMA)(1hpa) |
-| t2t_vit_10     				| 75.15 | 92.80 | 5.8M    | 1.3G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1H--55RxliMDlOCekn7FpKrHDGsUkyrJZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nbdb4PFMq4nsIp8HrNxLQg)(ixug) |
-| t2t_vit_12     				| 76.48 | 93.49 | 6.9M    | 1.5G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1stnIwOwaescaEcztaF1QjI4NK4jaqN7P/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1DcMzq9WeSwrS3epv6jKJXw)(qpbb) |
-| t2t_vit_14     				| 81.50 | 95.67 | 21.5M   | 4.4G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1HSvN3Csgsy7SJbxJYbkzjUx9guftkfZ1/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1wcfh22uopBv7pS7rKcH_iw)(c2u8) |
-| t2t_vit_19     				| 81.93 | 95.74 | 39.1M   | 7.8G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1eFnhaL6I33pHCQw2BaEE0Oet9CnjmUf_/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Hpyc5hBYo1zqoXWpryegnw)(4in3) |
-| t2t_vit_24     				| 82.28 | 95.89 | 64.0M   | 12.8G  | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1Z7nZCHeFp0AhIkGYcMAFkKdkGN0yXtpv/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Hpyc5hBYo1zqoXWpryegnw)(4in3) |
-| t2t_vit_t_14   				| 81.69 | 95.85 | 21.5M   | 4.4G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/16li4voStt_B8eWDXqJt7s20OT_Z8L263/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Hpyc5hBYo1zqoXWpryegnw)(4in3) |
-| t2t_vit_t_19   				| 82.44 | 96.08 | 39.1M   | 7.9G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1Ty-42SYOu15Nk8Uo6VRTJ7J0JV_6t7zJ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YdQd6l8tj5xMCWvcHWm7sg)(mier) |
-| t2t_vit_t_24   				| 82.55 | 96.07 | 64.0M   | 12.9G  | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1cvvXrGr2buB8Np2WlVL7n_F1_CnI1qow/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1BMU3KX_TRmPxQ1jN5cmWhg)(6vxc) |
-| t2t_vit_14_384 				| 83.34 | 96.50 | 21.5M   | 13.0G  | 384   	    | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1Yuso8WD7Q8Lu_9I8dTvAvkcXXtPSkmnm/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1AOMhyVRF9zPqJe-lTrd7pw)(r685) |
+| t2t_vit_7      				| 71.68 | 90.89 | 4.3M    | 1.0G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1YkuPs1ku7B_udydOf_ls1LQvpJDg_c_j/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1jVNsz37gatLCDaOoU3NaMA?pwd=1hpa) |
+| t2t_vit_10     				| 75.15 | 92.80 | 5.8M    | 1.3G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1H--55RxliMDlOCekn7FpKrHDGsUkyrJZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1nbdb4PFMq4nsIp8HrNxLQg?pwd=ixug) |
+| t2t_vit_12     				| 76.48 | 93.49 | 6.9M    | 1.5G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1stnIwOwaescaEcztaF1QjI4NK4jaqN7P/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1DcMzq9WeSwrS3epv6jKJXw?pwd=qpbb) |
+| t2t_vit_14     				| 81.50 | 95.67 | 21.5M   | 4.4G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1HSvN3Csgsy7SJbxJYbkzjUx9guftkfZ1/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1wcfh22uopBv7pS7rKcH_iw?pwd=c2u8) |
+| t2t_vit_19     				| 81.93 | 95.74 | 39.1M   | 7.8G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1eFnhaL6I33pHCQw2BaEE0Oet9CnjmUf_/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Hpyc5hBYo1zqoXWpryegnw?pwd=4in3) |
+| t2t_vit_24     				| 82.28 | 95.89 | 64.0M   | 12.8G  | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1Z7nZCHeFp0AhIkGYcMAFkKdkGN0yXtpv/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Hpyc5hBYo1zqoXWpryegnw?pwd=4in3) |
+| t2t_vit_t_14   				| 81.69 | 95.85 | 21.5M   | 4.4G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/16li4voStt_B8eWDXqJt7s20OT_Z8L263/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Hpyc5hBYo1zqoXWpryegnw?pwd=4in3) |
+| t2t_vit_t_19   				| 82.44 | 96.08 | 39.1M   | 7.9G   | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1Ty-42SYOu15Nk8Uo6VRTJ7J0JV_6t7zJ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YdQd6l8tj5xMCWvcHWm7sg?pwd=mier) |
+| t2t_vit_t_24   				| 82.55 | 96.07 | 64.0M   | 12.9G  | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1cvvXrGr2buB8Np2WlVL7n_F1_CnI1qow/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1BMU3KX_TRmPxQ1jN5cmWhg?pwd=6vxc) |
+| t2t_vit_14_384 				| 83.34 | 96.50 | 21.5M   | 13.0G  | 384   	    | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1Yuso8WD7Q8Lu_9I8dTvAvkcXXtPSkmnm/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1AOMhyVRF9zPqJe-lTrd7pw?pwd=r685) |
+
 
 > *The results are evaluated on ImageNet2012 validation set.
-## Notebooks
-We provide a few notebooks in aistudio to help you get started:
-
-**\*(coming soon)\***
-
-
-## Requirements
-- Python>=3.6
-- yaml>=0.2.5
-- [PaddlePaddle](https://www.paddlepaddle.org.cn/documentation/docs/en/install/index_en.html)>=2.1.0
-- [yacs](https://github.com/rbgirshick/yacs)>=0.1.8
-
-## Data 
-ImageNet2012 dataset is used in the following folder structure:
+## Data Preparation
+ImageNet2012 dataset is used in the following file structure:
 ```
 │imagenet/
+├──train_list.txt
+├──val_list.txt
 ├──train/
 │  ├── n01440764
 │  │   ├── n01440764_10026.JPEG
@@ -61,11 +52,14 @@ ImageNet2012 dataset is used in the following folder structure:
 │  │   ├── ......
 │  ├── ......
 ```
+- `train_list.txt`: list of relative paths and labels of training images. You can download it from: [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm?pwd=a4vm)
+- `val_list.txt`: list of relative paths and labels of validation images. You can download it from: [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga?pwd=kdga) 
+
 
 ## Usage
 To use the model with pretrained weights, download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
 
-For example, assume the downloaded weight file is stored in `./t2t_vit_7.pdparams`, to use the `t2t_vit_7` model in python:
+For example, assume weight file is downloaded in `./t2t_vit_7.pdparams`, to use the `t2t_vit_7` model in python:
 ```python
 from config import get_config
 from t2t_vit import build_t2t_vit as build_model
@@ -75,73 +69,31 @@ config = get_config('./configs/t2t_vit_7.yaml')
 model = build_model(config)
 # load pretrained weights
 model_state_dict = paddle.load('./t2t_vit_7.pdparams')
-model.set_dict(model_state_dict)
+model.set_state_dict(model_state_dict)
 ```
 
 ## Evaluation
-To evaluate T2T-ViT model performance on ImageNet2012 with a single GPU, run the following script using command line:
-```shell
-sh run_eval.sh
-```
-or
-```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_single_gpu.py \
-    -cfg=./configs/t2t_vit_7.yaml \
-    -dataset=imagenet2012 \
-    -batch_size=16 \
-    -data_path=/path/to/dataset/imagenet/val \
-    -eval \
-    -pretrained=/path/to/pretrained/model/t2t_vit_7  # .pdparams is NOT needed
-```
-
-<details>
-
-<summary>
-Run evaluation using multi-GPUs:
-</summary>
-
-
+To evaluate the model performance on ImageNet2012, run the following script using command line:
 ```shell
 sh run_eval_multi.sh
 ```
 or
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg=./configs/t2t_vit_7.yaml \
-    -dataset=imagenet2012 \
-    -batch_size=16 \
-    -data_path=/path/to/dataset/imagenet/val \
-    -eval \
-    -pretrained=/path/to/pretrained/model/t2t_vit_7  # .pdparams is NOT needed
+-cfg='./configs/t2t_vit_7.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-eval \
+-pretrained='./t2t_vit_7.pdparams' \
+-amp
 ```
-
-</details>
+> Note: if you have only 1 GPU, change device number to `CUDA_VISIBLE_DEVICES=0` would run the evaluation on single GPU.
 
 
 ## Training
-To train the T2T-ViT Transformer model on ImageNet2012 with single GPU, run the following script using command line:
-```shell
-sh run_train.sh
-```
-or
-```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_single_gpu.py \
-  -cfg=./configs/t2t_vit_7.yaml \
-  -dataset=imagenet2012 \
-  -batch_size=16 \
-  -data_path=/path/to/dataset/imagenet/train
-```
-
-<details>
-
-<summary>
-Run training using multi-GPUs:
-</summary>
-
-
+To train the model on ImageNet2012, run the following script using command line:
 ```shell
 sh run_train_multi.sh
 ```
@@ -149,17 +101,14 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg=./configs/t2t_vit_7.yaml \
-    -dataset=imagenet2012 \
-    -batch_size=32 \
-    -data_path=/path/to/dataset/imagenet/train
+-cfg='./configs/t2t_vit_7.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-amp
 ```
+> Note: it is highly recommanded to run the training using multiple GPUs / multi-node GPUs.
 
-</details>
-
-
-## Visualization Attention Map
-**(coming soon)**
 
 ## Reference
 ```

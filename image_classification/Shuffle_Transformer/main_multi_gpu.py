@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Swin train and eval using multiple GPU without teacher model"""
+"""Swin train and eval using multiple GPU"""
 import sys
 import os
 import time
