@@ -3,29 +3,28 @@ DATA:
     CROP_PCT: 0.875
 MODEL:
     TYPE: FINETUNE
-    NAME: vit_large_patch16_224
-    DROPPATH: 0.2 # same as MAE official readme
+    NAME: vit_base_patch16_224
+    DROPPATH: 0.1
     GLOBAL_POOL: True
-    TRANS:
-        PATCH_SIZE: 16
-        MLP_RATIO: 4.0
-        QKV_BIAS: true
-        ENCODER:
-            EMBED_DIM: 1024
-            DEPTH: 24
-            NUM_HEADS: 16
+    PATCH_SIZE: 16
+    MLP_RATIO: 4.0
+    QKV_BIAS: true
+    ENCODER:
+        EMBED_DIM: 768
+        DEPTH: 12
+        NUM_HEADS: 12
 TRAIN:
-    NUM_EPOCHS: 50
+    NUM_EPOCHS: 100 # same as MAE official readme
     WARMUP_EPOCHS: 5
     WEIGHT_DECAY: 0.05
-    BASE_LR: 1e-3 # absolute_lr = base_lr * total_batch_size / 256
+    BASE_LR: 5e-4
     LINEAR_SCALED_LR: 256
     END_LR: 1e-6
     ACCUM_ITER: 1
     OPTIMIZER:
         NAME: 'AdamWDL'
         BETAS: (0.9, 0.999)
-    LAYER_DECAY: 0.75  # same as MAE official readme
+    LAYER_DECAY: 0.65
     SMOOTHING: 0.1
     RAND_AUGMENT: True
     RAND_AUGMENT_LAYERS: 2

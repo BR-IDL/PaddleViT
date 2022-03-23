@@ -11,26 +11,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Augmentation"""
-""" Rand Augmentation """
-# reference: RandAugment: Practical automated data augmentation with a reduced search space
-# https://arxiv.org/abs/1909.13719
-
-""" Auto Augmentation """
-# reference: AutoAugment: Learning Augmentation Policies from Data
-# https://arxiv.org/abs/1805.09501
+"""Augmentation
+RandAug:
+- reference: RandAugment: Practical automated data augmentation with a reduced search space
+- https://arxiv.org/abs/1909.13719
+AutoAug:
+- reference: AutoAugment: Learning Augmentation Policies from Data
+- https://arxiv.org/abs/1805.09501
+"""
 
 import random
-import math
 import numpy as np
-from PIL import Image, ImageEnhance, ImageOps, ImageChops
-import PIL
+from PIL import Image, ImageEnhance, ImageOps
 
 LEVEL_DENOM = 10
+#fill color is set to 128 instead fo image mean
 
-#NOTE: fill color is set to 128 instead fo image mean 
 
-def auto_augment_policy_v0(hparams):
+def auto_augment_policy_v0():
     """policy v0:  hack from timm"""
     # ImageNet v0 policy from TPU EfficientNet impl, cannot find a paper reference.
     policy = [
@@ -56,7 +54,7 @@ def auto_augment_policy_v0(hparams):
         [('Equalize', 0.8, 4), ('Equalize', 0.0, 8)],
         [('Equalize', 1.0, 4), ('AutoContrast', 0.6, 2)],
         [('ShearY', 0.4, 7), ('SolarizeAdd', 0.6, 7)],
-        [('Posterize', 0.8, 2), ('Solarize', 0.6, 10)],  # This results in black image with Tpu posterize
+        [('Posterize', 0.8, 2), ('Solarize', 0.6, 10)],
         [('Solarize', 0.6, 8), ('Equalize', 0.6, 1)],
         [('Color', 0.8, 6), ('Rotate', 0.4, 5)],
     ]
@@ -64,7 +62,7 @@ def auto_augment_policy_v0(hparams):
     return policy
 
 
-def auto_augment_policy_v0r(hparams):
+def auto_augment_policy_v0r():
     """policy v0r:  hack from timm"""
     # ImageNet v0 policy from TPU EfficientNet impl, with variation of Posterize used
     # in Google research implementation (number of bits discarded increases with magnitude)
@@ -99,7 +97,7 @@ def auto_augment_policy_v0r(hparams):
     return policy
 
 
-def auto_augment_policy_originalr(hparams):
+def auto_augment_policy_originalr():
     """policy originalr:  hack from timm"""
     # ImageNet policy from https://arxiv.org/abs/1805.09501 with research posterize variation
     policy = [
@@ -185,8 +183,8 @@ class AutoAugment():
             policy_idx = random.randint(0, len(self.policy) - 1)
 
         sub_policy = self.policy[policy_idx]
-        for op in sub_policy:
-            image = op(image)
+        for operation in sub_policy:
+            image = operation(image)
         return image
 
 
@@ -315,7 +313,7 @@ class SubPolicy:
         self.magnitude = magnitude
         self.magnitude_std = magnitude_std
 
-        self.op = image_ops[op_name]
+        self.ops = image_ops[op_name]
         self.level_fn = level_fn[op_name]
 
     def __call__(self, image):
@@ -332,16 +330,16 @@ class SubPolicy:
         upper_bound = LEVEL_DENOM
         magnitude = max(0, min(magnitude, upper_bound))
         level_args = self.level_fn(magnitude) if self.level_fn is not None else tuple()
-        image = self.op(image, *level_args)
+        image = self.ops(image, *level_args)
         return image
 
 
 #################################################################
 # Convert level to Image op arguments
 #################################################################
-def randomly_negate(v):
+def randomly_negate(value):
     """negate the value with 0.5 prob"""
-    return -v if random.random() > 0.5 else v
+    return -value if random.random() > 0.5 else value
 
 
 def shear_level_to_arg(level):
@@ -482,8 +480,8 @@ def solarize_add(image, add, thresh=128):
         if image.mode == "RGB" and len(lut) == 256:
             lut = lut + lut + lut
         return image.point(lut)
-    else:
-        return image
+
+    return image
 
 
 def posterize(image, bits_to_keep):
@@ -506,4 +504,3 @@ def brightness(image, factor):
 
 def sharpness(image, factor):
     return ImageEnhance.Sharpness(image).enhance(factor)
-

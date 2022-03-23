@@ -5,20 +5,19 @@ MODEL:
     TYPE: PRETRAIN
     NAME: vit_base_patch16_224
     DROPPATH: 0.0
-    TRANS:
-        PATCH_SIZE: 16
-        MLP_RATIO: 4.0
-        QKV_BIAS: true
-        MASK_RATIO: 0.75
-        ENCODER:
-            EMBED_DIM: 768
-            DEPTH: 12
-            NUM_HEADS: 12
-        DECODER:
-            EMBED_DIM: 512
-            DEPTH: 1
-            NUM_HEADS: 16
-        NORM_PIX_LOSS: True
+    PATCH_SIZE: 16
+    MLP_RATIO: 4.0
+    QKV_BIAS: true
+    MASK_RATIO: 0.75
+    ENCODER:
+        EMBED_DIM: 768
+        DEPTH: 12
+        NUM_HEADS: 12
+    DECODER:
+        EMBED_DIM: 512
+        DEPTH: 1
+        NUM_HEADS: 16
+    NORM_PIX_LOSS: True
 TRAIN:
     NUM_EPOCHS: 800
     WARMUP_EPOCHS: 40
@@ -29,7 +28,7 @@ TRAIN:
     GRAD_CLIP: None
     ACCUM_ITER: 1
     OPTIMIZER:
-        NAME: 'AdamW'
+        NAME: 'AdamWDL'
         BETAS: (0.9, 0.95)
 
 SAVE_FREQ: 1

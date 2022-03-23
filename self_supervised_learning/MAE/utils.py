@@ -19,10 +19,100 @@ and WarmupCosineScheduler for training
 
 """
 
-import math
-import numpy as np
+import logging
+import sys
+import os
 import paddle
 from paddle.optimizer.lr import LRScheduler
+
+
+def get_logger(file_path):
+    """Set logging file and format, logs are written in 2 loggers, one local_logger records
+       the information on its own gpu/process, one master_logger records the overall/average
+       information over all gpus/processes.
+    Args:
+        file_path: str, folder path of the logger files to write
+    Return:
+        local_logger: python logger for each process
+        master_logger: python logger for overall processes (on node 0)
+    """
+    local_rank = paddle.distributed.get_rank()
+    filename = os.path.join(file_path, 'log_all.txt')
+    log_format = "%(asctime)s %(message)s"
+    logging.basicConfig(filename=filename, level=logging.INFO,
+                        format=log_format, datefmt="%m%d %I:%M:%S %p")
+
+    # local_logger for each process/GPU
+    local_logger = logging.getLogger(f'local_{local_rank}')
+    filename = os.path.join(file_path, f'log_{local_rank}.txt')
+    fh = logging.FileHandler(filename)
+    fh.setFormatter(logging.Formatter(log_format))
+    local_logger.addHandler(fh)
+
+    # master_logger records avg performance and general message
+    if local_rank == 0:
+        master_logger = logging.getLogger('master')
+        # log.txt
+        filename = os.path.join(file_path, 'log.txt')
+        fh = logging.FileHandler(filename)
+        fh.setFormatter(logging.Formatter(log_format))
+        master_logger.addHandler(fh)
+        # consol (stdout)
+        sh_1 = logging.StreamHandler(sys.stdout)
+        sh_1.setFormatter(logging.Formatter(log_format))
+        master_logger.addHandler(sh_1)
+        # consol (stderr)
+        sh_2 = logging.StreamHandler(sys.stderr)
+        sh_2.setFormatter(logging.Formatter(log_format))
+        master_logger.addHandler(sh_2)
+    else:
+        master_logger = None
+    return local_logger, master_logger
+
+
+def write_log(local_logger, master_logger, msg_local, msg_master=None, level='info'):
+    """Write messages in loggers
+    Args:
+        local_logger: python logger, logs information on single gpu
+        master_logger: python logger, logs information over all gpus
+        msg_local: str, message to log on local_logger
+        msg_master: str, message to log on master_logger, if None, use msg_local, default: None
+        level: str, log level, in ['info', 'warning', 'fatal'], default: 'info'
+    """
+    # write log to local logger
+    if local_logger:
+        if level == 'info':
+            local_logger.info(msg_local)
+        elif level == 'warning':
+            local_logger.warning(msg_local)
+        elif level == 'fatal':
+            local_logger.fatal(msg_local)
+        else:
+            raise ValueError("level must in ['info', 'warning', 'fatal']")
+    # write log to master logger on node 0
+    if master_logger and paddle.distributed.get_rank() == 0:
+        if msg_master is None:
+            msg_master = msg_local
+        if level == 'info':
+            master_logger.info("MASTER_LOG " + msg_master)
+        elif level == 'warning':
+            master_logger.warning("MASTER_LOG " + msg_master)
+        elif level == 'fatal':
+            master_logger.fatal("MASTER_LOG " + msg_master)
+        else:
+            raise ValueError("level must in ['info', 'warning', 'fatal']")
+
+
+def all_reduce_mean(x):
+    """perform all_reduce on Tensor for gathering results from multi-gpus"""
+    world_size = paddle.distributed.get_world_size()
+    if world_size > 1:
+        x_reduce = paddle.to_tensor(x)
+        paddle.distributed.all_reduce(x_reduce)
+        x_reduce = x_reduce / world_size
+        return x_reduce.item()
+    return x
+
 
 def get_params_groups(model, weight_decay=0.01):
     regularized = []
@@ -93,38 +183,6 @@ def interpolate_pos_embed(model, state_dict, key_name='encoder_position_embeddin
             state_dict[key_name] = new_pos_embed
 
 
-#TODO: check correctness
-class LARS(paddle.optimizer.Optimizer):
-    """LARS optmizer"""
-    def __init__(self, params, learning_rate=0., weight_decay=0., momentum=0., trust_coefficient=0.001):
-        super().__init__(params, learning_rate=learning_rate, weight_decay=weight_decay)
-
-    @paddle.no_grad()
-    def step(self):
-        for g in self.param_groups:
-            for p in g['params']:
-                dp = p.grad
-                if dp is None:
-                    continue
-                if p.ndim > 1:
-                    dp = dp.add(p, alpha=g['weight_decay'])
-                    param_norm = paddle.norm(p)
-                    update_norm = paddle.norm(dp)
-                    one = paddle.ones_list(param_norm)
-                    q = paddle.where(param_norm >0.,
-                                     paddle.where(update_norm > 0,
-                                                  (g['trust_coefficient'] * param_norm / update_norm),
-                                                  one),
-                                     one)
-                    dp = dp.mul(q)
-                param_state = self.state[p]
-                if 'mu' not in param_state:
-                    param_state['mu'] = paddle.zeros_like(p)
-                mu = param_state['mu']
-                mu.mul_(g['momentum']).add_(dp)
-                p.add_(mu, alpha=-g['lr'])
-
-
 class AverageMeter():
     """ Meter for monitoring losses"""
     def __init__(self):
@@ -146,8 +204,7 @@ class AverageMeter():
         self.avg = self.sum / self.cnt
 
 
-
-def get_exclude_from_weight_decay_fn(exclude_list=[]):
+def skip_weight_decay_fn(model, skip_list=[], filter_bias_and_bn=True):
     """ Set params with no weight decay during the training
 
     For certain params, e.g., positional encoding in ViT, weight decay
@@ -155,18 +212,27 @@ def get_exclude_from_weight_decay_fn(exclude_list=[]):
     these params.
 
     Args:
-        exclude_list: a list of params names which need to exclude
-                      from weight decay.
+		model: nn.Layer, model
+        skip_list: list, a list of params names which need to exclude
+                      from weight decay, default: []
+		filter_bias_and_bn: bool, set True to exclude bias and bn in model, default: True
     Returns:
         exclude_from_weight_decay_fn: a function returns True if param
                                       will be excluded from weight decay
     """
-    if len(exclude_list) == 0:
+    if len(skip_list) == 0 and not filter_bias_and_bn:
         exclude_from_weight_decay_fn = None
     else:
+        skip_list_all = []
+        for name, param in model.named_parameters():
+            if param.stop_gradient:
+                continue
+            if len(param.shape) == 1 or name.endswith('.bias') or name in skip_list:
+                skip_list_all.append(name)
+
         def exclude_fn(param):
-            for name in exclude_list:
-                if param.endswith(name):
+            for name in skip_list_all:
+                if param == name:
                     return False
             return True
         exclude_from_weight_decay_fn = exclude_fn

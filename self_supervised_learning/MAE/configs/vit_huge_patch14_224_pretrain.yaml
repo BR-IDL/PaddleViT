@@ -5,20 +5,19 @@ MODEL:
     TYPE: PRETRAIN
     NAME: vit_huge_patch14_224
     DROPPATH: 0.0
-    TRANS:
-        PATCH_SIZE: 14
-        MLP_RATIO: 4.0
-        QKV_BIAS: true
-        MASK_RATIO: 0.75
-        ENCODER:
-            EMBED_DIM: 1280
-            DEPTH: 32
-            NUM_HEADS: 16
-        DECODER:
-            EMBED_DIM: 512
-            DEPTH: 8
-            NUM_HEADS: 16
-        NORM_PIX_LOSS: True
+    PATCH_SIZE: 14
+    MLP_RATIO: 4.0
+    QKV_BIAS: true
+    MASK_RATIO: 0.75
+    ENCODER:
+        EMBED_DIM: 1280
+        DEPTH: 32
+        NUM_HEADS: 16
+    DECODER:
+        EMBED_DIM: 512
+        DEPTH: 8
+        NUM_HEADS: 16
+    NORM_PIX_LOSS: True
 TRAIN:
     NUM_EPOCHS: 800
     WARMUP_EPOCHS: 40

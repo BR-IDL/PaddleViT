@@ -1,0 +1,1677 @@
+WARNING 2022-03-22 22:11:35,173 launch.py:503] Not found distinct arguments and compiled with cuda or xpu or npu. Default use collective mode
+INFO 2022-03-22 22:11:35,175 launch_utils.py:557] Local start 8 processes. First process distributed environment info (Only For Debug): 
+    +=======================================================================================+
+    |                        Distributed Envs                      Value                    |
+    +---------------------------------------------------------------------------------------+
+    |                       PADDLE_TRAINER_ID                        0                      |
+    |                 PADDLE_CURRENT_ENDPOINT                 127.0.0.1:11075               |
+    |                     PADDLE_TRAINERS_NUM                        8                      |
+    |                PADDLE_TRAINER_ENDPOINTS  ... 0.1:15064,127.0.0.1:41881,127.0.0.1:50174|
+    |                     PADDLE_RANK_IN_NODE                        0                      |
+    |                 PADDLE_LOCAL_DEVICE_IDS                        0                      |
+    |                 PADDLE_WORLD_DEVICE_IDS                 0,1,2,3,4,5,6,7               |
+    |                     FLAGS_selected_gpus                        0                      |
+    |             FLAGS_selected_accelerators                        0                      |
+    +=======================================================================================+
+
+INFO 2022-03-22 22:11:35,175 launch_utils.py:562] details about PADDLE_TRAINER_ENDPOINTS can be found in log/endpoints.log, and detail running logs maybe found in log/workerlog.0
+-----------  Configuration Arguments -----------
+backend: auto
+cluster_topo_path: None
+elastic_pre_hook: None
+elastic_server: None
+enable_auto_mapping: False
+force: False
+gpus: 0,1,2,3,4,5,6,7
+heter_devices: 
+heter_worker_num: None
+heter_workers: 
+host: None
+http_port: None
+ips: 127.0.0.1
+job_id: None
+log_dir: log
+np: None
+nproc_per_node: None
+rank_mapping_path: None
+run_mode: None
+scale: 0
+server_num: None
+servers: 
+training_script: main_multi_gpu_linearprobe.py
+training_script_args: ['-cfg=./configs/vit_base_patch16_224_linearprobe_single_node.yaml', '-dataset=imagenet2012', '-batch_size=512', '-data_path=/dataset/imagenet', '-pretrained=./mae_pretrain_vit_base.pdparams', '-amp']
+worker_num: None
+workers: 
+------------------------------------------------
+launch train in GPU mode!
+launch proc_id:5826 idx:0
+launch proc_id:5829 idx:1
+launch proc_id:5832 idx:2
+launch proc_id:5835 idx:3
+launch proc_id:5838 idx:4
+launch proc_id:5841 idx:5
+launch proc_id:5844 idx:6
+launch proc_id:5847 idx:7
+/usr/local/lib/python3.7/site-packages/paddlenlp/transformers/funnel/modeling.py:30: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated, and in 3.8 it will stop working
+  from collections import Iterable
+Compose(
+    <paddle.vision.transforms.transforms.RandomResizedCrop object at 0x7fa2f018d710>
+    <paddle.vision.transforms.transforms.RandomHorizontalFlip object at 0x7fa2f018d6a0>
+    <paddle.vision.transforms.transforms.ToTensor object at 0x7fa2f018d588>
+    <paddle.vision.transforms.transforms.Normalize object at 0x7fa2f020c4e0>
+)
+----- Imagenet2012 train_list.txt len = 1281167
+----- Imagenet2012 val_list.txt len = 50000
+2022-03-22 22:11:41,621 MASTER_LOG ----- world_size = 8, local_rank = 0 
+----- AMP: True
+BASE: ['']
+DATA:
+  BATCH_SIZE: 512
+  BATCH_SIZE_EVAL: 512
+  CROP_PCT: 0.875
+  DATASET: imagenet2012
+  DATA_PATH: /dataset/imagenet
+  IMAGENET_MEAN: [0.485, 0.456, 0.406]
+  IMAGENET_STD: [0.229, 0.224, 0.225]
+  IMAGE_CHANNELS: 3
+  IMAGE_SIZE: 224
+  NUM_WORKERS: 2
+EVAL: False
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DECODER:
+    DEPTH: 8
+    EMBED_DIM: 512
+    NUM_HEADS: 16
+  DROPOUT: 0.0
+  DROPPATH: 0.0
+  ENCODER:
+    DEPTH: 12
+    EMBED_DIM: 768
+    NUM_HEADS: 12
+  GLOBAL_POOL: False
+  MASK_RATIO: 0.75
+  MLP_RATIO: 4.0
+  NAME: vit_base_patch16_224
+  NORM_PIX_LOSS: True
+  NUM_CLASSES: 1000
+  PATCH_SIZE: 16
+  PRETRAINED: ./mae_pretrain_vit_base.pdparams
+  QKV_BIAS: True
+  RESUME: None
+  TYPE: LINEARPROBE
+REPORT_FREQ: 20
+SAVE: ./output/linearprobe-20220322-22-11
+SAVE_FREQ: 10
+SEED: 0
+TRAIN:
+  ACCUM_ITER: 4
+  AUTO_AUGMENT: False
+  BASE_LR: 0.1
+  COLOR_JITTER: 0.4
+  CUTMIX_ALPHA: 1.0
+  CUTMIX_MINMAX: None
+  END_LR: 0.0
+  GRAD_CLIP: None
+  LAST_EPOCH: 0
+  LAYER_DECAY: None
+  LINEAR_SCALED_LR: 256
+  MIXUP_ALPHA: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  NUM_EPOCHS: 90
+  OPTIMIZER:
+    BETAS: (0.9, 0.95)
+    EPS: 1e-08
+    NAME: LARS
+  RANDOM_ERASE_COUNT: 1
+  RANDOM_ERASE_MODE: pixel
+  RANDOM_ERASE_PROB: 0.25
+  RANDOM_ERASE_SPLIT: False
+  RAND_AUGMENT: True
+  RAND_AUGMENT_LAYERS: 2
+  RAND_AUGMENT_MAGNITUDE: 9
+  SMOOTHING: 0.1
+  WARMUP_EPOCHS: 10
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.0
+VALIDATE_FREQ: 1
+W0322 22:11:41.623504  5826 gpu_context.cc:240] Please NOTE: device: 0, GPU Compute Capability: 7.0, Driver API Version: 10.2, Runtime API Version: 10.2
+W0322 22:11:41.630729  5826 gpu_context.cc:268] device: 0, cuDNN Version: 7.6.
+encoder_position_embedding [1, 197, 768] True
+cls_token [1, 1, 768] True
+patch_embedding.patch_embedding.weight [768, 3, 16, 16] True
+patch_embedding.patch_embedding.bias [768] True
+encoder.layers.0.attn_norm.weight [768] True
+encoder.layers.0.attn_norm.bias [768] True
+encoder.layers.0.attn.qkv.weight [768, 2304] True
+encoder.layers.0.attn.qkv.bias [2304] True
+encoder.layers.0.attn.out.weight [768, 768] True
+encoder.layers.0.attn.out.bias [768] True
+encoder.layers.0.mlp_norm.weight [768] True
+encoder.layers.0.mlp_norm.bias [768] True
+encoder.layers.0.mlp.fc1.weight [768, 3072] True
+encoder.layers.0.mlp.fc1.bias [3072] True
+encoder.layers.0.mlp.fc2.weight [3072, 768] True
+encoder.layers.0.mlp.fc2.bias [768] True
+encoder.layers.1.attn_norm.weight [768] True
+encoder.layers.1.attn_norm.bias [768] True
+encoder.layers.1.attn.qkv.weight [768, 2304] True
+encoder.layers.1.attn.qkv.bias [2304] True
+encoder.layers.1.attn.out.weight [768, 768] True
+encoder.layers.1.attn.out.bias [768] True
+encoder.layers.1.mlp_norm.weight [768] True
+encoder.layers.1.mlp_norm.bias [768] True
+encoder.layers.1.mlp.fc1.weight [768, 3072] True
+encoder.layers.1.mlp.fc1.bias [3072] True
+encoder.layers.1.mlp.fc2.weight [3072, 768] True
+encoder.layers.1.mlp.fc2.bias [768] True
+encoder.layers.2.attn_norm.weight [768] True
+encoder.layers.2.attn_norm.bias [768] True
+encoder.layers.2.attn.qkv.weight [768, 2304] True
+encoder.layers.2.attn.qkv.bias [2304] True
+encoder.layers.2.attn.out.weight [768, 768] True
+encoder.layers.2.attn.out.bias [768] True
+encoder.layers.2.mlp_norm.weight [768] True
+encoder.layers.2.mlp_norm.bias [768] True
+encoder.layers.2.mlp.fc1.weight [768, 3072] True
+encoder.layers.2.mlp.fc1.bias [3072] True
+encoder.layers.2.mlp.fc2.weight [3072, 768] True
+encoder.layers.2.mlp.fc2.bias [768] True
+encoder.layers.3.attn_norm.weight [768] True
+encoder.layers.3.attn_norm.bias [768] True
+encoder.layers.3.attn.qkv.weight [768, 2304] True
+encoder.layers.3.attn.qkv.bias [2304] True
+encoder.layers.3.attn.out.weight [768, 768] True
+encoder.layers.3.attn.out.bias [768] True
+encoder.layers.3.mlp_norm.weight [768] True
+encoder.layers.3.mlp_norm.bias [768] True
+encoder.layers.3.mlp.fc1.weight [768, 3072] True
+encoder.layers.3.mlp.fc1.bias [3072] True
+encoder.layers.3.mlp.fc2.weight [3072, 768] True
+encoder.layers.3.mlp.fc2.bias [768] True
+encoder.layers.4.attn_norm.weight [768] True
+encoder.layers.4.attn_norm.bias [768] True
+encoder.layers.4.attn.qkv.weight [768, 2304] True
+encoder.layers.4.attn.qkv.bias [2304] True
+encoder.layers.4.attn.out.weight [768, 768] True
+encoder.layers.4.attn.out.bias [768] True
+encoder.layers.4.mlp_norm.weight [768] True
+encoder.layers.4.mlp_norm.bias [768] True
+encoder.layers.4.mlp.fc1.weight [768, 3072] True
+encoder.layers.4.mlp.fc1.bias [3072] True
+encoder.layers.4.mlp.fc2.weight [3072, 768] True
+encoder.layers.4.mlp.fc2.bias [768] True
+encoder.layers.5.attn_norm.weight [768] True
+encoder.layers.5.attn_norm.bias [768] True
+encoder.layers.5.attn.qkv.weight [768, 2304] True
+encoder.layers.5.attn.qkv.bias [2304] True
+encoder.layers.5.attn.out.weight [768, 768] True
+encoder.layers.5.attn.out.bias [768] True
+encoder.layers.5.mlp_norm.weight [768] True
+encoder.layers.5.mlp_norm.bias [768] True
+encoder.layers.5.mlp.fc1.weight [768, 3072] True
+encoder.layers.5.mlp.fc1.bias [3072] True
+encoder.layers.5.mlp.fc2.weight [3072, 768] True
+encoder.layers.5.mlp.fc2.bias [768] True
+encoder.layers.6.attn_norm.weight [768] True
+encoder.layers.6.attn_norm.bias [768] True
+encoder.layers.6.attn.qkv.weight [768, 2304] True
+encoder.layers.6.attn.qkv.bias [2304] True
+encoder.layers.6.attn.out.weight [768, 768] True
+encoder.layers.6.attn.out.bias [768] True
+encoder.layers.6.mlp_norm.weight [768] True
+encoder.layers.6.mlp_norm.bias [768] True
+encoder.layers.6.mlp.fc1.weight [768, 3072] True
+encoder.layers.6.mlp.fc1.bias [3072] True
+encoder.layers.6.mlp.fc2.weight [3072, 768] True
+encoder.layers.6.mlp.fc2.bias [768] True
+encoder.layers.7.attn_norm.weight [768] True
+encoder.layers.7.attn_norm.bias [768] True
+encoder.layers.7.attn.qkv.weight [768, 2304] True
+encoder.layers.7.attn.qkv.bias [2304] True
+encoder.layers.7.attn.out.weight [768, 768] True
+encoder.layers.7.attn.out.bias [768] True
+encoder.layers.7.mlp_norm.weight [768] True
+encoder.layers.7.mlp_norm.bias [768] True
+encoder.layers.7.mlp.fc1.weight [768, 3072] True
+encoder.layers.7.mlp.fc1.bias [3072] True
+encoder.layers.7.mlp.fc2.weight [3072, 768] True
+encoder.layers.7.mlp.fc2.bias [768] True
+encoder.layers.8.attn_norm.weight [768] True
+encoder.layers.8.attn_norm.bias [768] True
+encoder.layers.8.attn.qkv.weight [768, 2304] True
+encoder.layers.8.attn.qkv.bias [2304] True
+encoder.layers.8.attn.out.weight [768, 768] True
+encoder.layers.8.attn.out.bias [768] True
+INFO 2022-03-22 22:12:02,351 launch_utils.py:321] terminate process group gid:5838
+INFO 2022-03-22 22:12:02,351 launch_utils.py:321] terminate process group gid:5841
+INFO 2022-03-22 22:12:02,351 launch_utils.py:321] terminate process group gid:5844
+INFO 2022-03-22 22:12:02,352 launch_utils.py:321] terminate process group gid:5847
+INFO 2022-03-22 22:12:06,355 launch_utils.py:342] terminate all the procs
+ERROR 2022-03-22 22:12:06,355 launch_utils.py:638] ABORT!!! Out of all 8 trainers, the trainer process with rank=[0, 1, 2, 3] was aborted. Please check its log.
+INFO 2022-03-22 22:12:10,359 launch_utils.py:342] terminate all the procs
+INFO 2022-03-22 22:12:10,359 launch.py:391] Local processes completed.
+encoder.layers.8.mlp_norm.weight [768] True
+encoder.layers.8.mlp_norm.bias [768] True
+encoder.layers.8.mlp.fc1.weight [768, 3072] True
+encoder.layers.8.mlp.fc1.bias [3072] True
+encoder.layers.8.mlp.fc2.weight [3072, 768] True
+encoder.layers.8.mlp.fc2.bias [768] True
+encoder.layers.9.attn_norm.weight [768] True
+encoder.layers.9.attn_norm.bias [768] True
+encoder.layers.9.attn.qkv.weight [768, 2304] True
+encoder.layers.9.attn.qkv.bias [2304] True
+encoder.layers.9.attn.out.weight [768, 768] True
+encoder.layers.9.attn.out.bias [768] True
+encoder.layers.9.mlp_norm.weight [768] True
+encoder.layers.9.mlp_norm.bias [768] True
+encoder.layers.9.mlp.fc1.weight [768, 3072] True
+encoder.layers.9.mlp.fc1.bias [3072] True
+encoder.layers.9.mlp.fc2.weight [3072, 768] True
+encoder.layers.9.mlp.fc2.bias [768] True
+encoder.layers.10.attn_norm.weight [768] True
+encoder.layers.10.attn_norm.bias [768] True
+encoder.layers.10.attn.qkv.weight [768, 2304] True
+encoder.layers.10.attn.qkv.bias [2304] True
+encoder.layers.10.attn.out.weight [768, 768] True
+encoder.layers.10.attn.out.bias [768] True
+encoder.layers.10.mlp_norm.weight [768] True
+encoder.layers.10.mlp_norm.bias [768] True
+encoder.layers.10.mlp.fc1.weight [768, 3072] True
+encoder.layers.10.mlp.fc1.bias [3072] True
+encoder.layers.10.mlp.fc2.weight [3072, 768] True
+encoder.layers.10.mlp.fc2.bias [768] True
+encoder.layers.11.attn_norm.weight [768] True
+encoder.layers.11.attn_norm.bias [768] True
+encoder.layers.11.attn.qkv.weight [768, 2304] True
+encoder.layers.11.attn.qkv.bias [2304] True
+encoder.layers.11.attn.out.weight [768, 768] True
+encoder.layers.11.attn.out.bias [768] True
+encoder.layers.11.mlp_norm.weight [768] True
+encoder.layers.11.mlp_norm.bias [768] True
+encoder.layers.11.mlp.fc1.weight [768, 3072] True
+encoder.layers.11.mlp.fc1.bias [3072] True
+encoder.layers.11.mlp.fc2.weight [3072, 768] True
+encoder.layers.11.mlp.fc2.bias [768] True
+encoder.norm.weight [768] True
+encoder.norm.bias [768] True
+classifier.0.weight [768] False
+classifier.0.bias [768] False
+classifier.0._mean [768] False
+classifier.0._variance [768] False
+classifier.1.weight [768, 1000] False
+classifier.1.bias [1000] False
+server not ready, wait 3 sec to retry...
+not ready endpoints:['127.0.0.1:17571', '127.0.0.1:20006', '127.0.0.1:55374', '127.0.0.1:25328', '127.0.0.1:15064', '127.0.0.1:41881', '127.0.0.1:50174']
+I0322 22:11:54.265852  5826 nccl_context.cc:82] init nccl context nranks: 8 local rank: 0 gpu id: 0 ring id: 0
+I0322 22:11:56.234949  5826 nccl_context.cc:114] init nccl context nranks: 8 local rank: 0 gpu id: 0 ring id: 10
+2022-03-22 22:11:57,826-INFO: [topology.py:169:__init__] HybridParallelInfo: rank_id: 0, mp_degree: 1, sharding_degree: 1, pp_degree: 1, dp_degree: 8, mp_group: [0],  sharding_group: [0], pp_group: [0], dp_group: [0, 1, 2, 3, 4, 5, 6, 7], check/clip group: [0]
+2022-03-22 22:11:57,828 MASTER_LOG ----- Total # of train batch (single gpu): 312
+2022-03-22 22:11:57,828 MASTER_LOG ----- Total # of val batch (single gpu): 13
+2022-03-22 22:11:57,829 MASTER_LOG Base lr is scaled to: 6.4
+Traceback (most recent call last):
+  File "main_multi_gpu_linearprobe.py", line 622, in <module>
+    main()
+  File "main_multi_gpu_linearprobe.py", line 618, in main
+    main_worker(config, dataset_train, dataset_val)
+  File "main_multi_gpu_linearprobe.py", line 438, in main_worker
+    assert os.path.isfile(config.MODEL.PRETRAINED) is True
+AssertionError
+WARNING 2022-03-23 10:07:48,191 launch.py:503] Not found distinct arguments and compiled with cuda or xpu or npu. Default use collective mode
+INFO 2022-03-23 10:07:48,193 launch_utils.py:557] Local start 8 processes. First process distributed environment info (Only For Debug): 
+    +=======================================================================================+
+    |                        Distributed Envs                      Value                    |
+    +---------------------------------------------------------------------------------------+
+    |                       PADDLE_TRAINER_ID                        0                      |
+    |                 PADDLE_CURRENT_ENDPOINT                 127.0.0.1:16322               |
+    |                     PADDLE_TRAINERS_NUM                        8                      |
+    |                PADDLE_TRAINER_ENDPOINTS  ... 0.1:33084,127.0.0.1:60249,127.0.0.1:48028|
+    |                     PADDLE_RANK_IN_NODE                        0                      |
+    |                 PADDLE_LOCAL_DEVICE_IDS                        0                      |
+    |                 PADDLE_WORLD_DEVICE_IDS                 0,1,2,3,4,5,6,7               |
+    |                     FLAGS_selected_gpus                        0                      |
+    |             FLAGS_selected_accelerators                        0                      |
+    +=======================================================================================+
+
+INFO 2022-03-23 10:07:48,193 launch_utils.py:562] details about PADDLE_TRAINER_ENDPOINTS can be found in log/endpoints.log, and detail running logs maybe found in log/workerlog.0
+-----------  Configuration Arguments -----------
+backend: auto
+cluster_topo_path: None
+elastic_pre_hook: None
+elastic_server: None
+enable_auto_mapping: False
+force: False
+gpus: 0,1,2,3,4,5,6,7
+heter_devices: 
+heter_worker_num: None
+heter_workers: 
+host: None
+http_port: None
+ips: 127.0.0.1
+job_id: None
+log_dir: log
+np: None
+nproc_per_node: None
+rank_mapping_path: None
+run_mode: None
+scale: 0
+server_num: None
+servers: 
+training_script: main_multi_gpu_linearprobe.py
+training_script_args: ['-cfg=./configs/vit_base_patch16_224_linearprobe_single_node.yaml', '-dataset=imagenet2012', '-batch_size=512', '-data_path=/dataset/imagenet', '-pretrained=./mae_pretrain_vit_base.pdparams', '-amp']
+worker_num: None
+workers: 
+------------------------------------------------
+launch train in GPU mode!
+launch proc_id:6102 idx:0
+launch proc_id:6105 idx:1
+launch proc_id:6108 idx:2
+launch proc_id:6111 idx:3
+launch proc_id:6114 idx:4
+launch proc_id:6117 idx:5
+launch proc_id:6120 idx:6
+launch proc_id:6123 idx:7
+/usr/local/lib/python3.7/site-packages/paddlenlp/transformers/funnel/modeling.py:30: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated, and in 3.8 it will stop working
+  from collections import Iterable
+Compose(
+    <paddle.vision.transforms.transforms.RandomResizedCrop object at 0x7f315ce9d940>
+    <paddle.vision.transforms.transforms.RandomHorizontalFlip object at 0x7f3158d33da0>
+    <paddle.vision.transforms.transforms.ToTensor object at 0x7f3158d54c50>
+    <paddle.vision.transforms.transforms.Normalize object at 0x7f3158d54b38>
+)
+----- Imagenet2012 train_list.txt len = 1281167
+----- Imagenet2012 val_list.txt len = 50000
+2022-03-23 10:07:54,812 MASTER_LOG ----- world_size = 8, local_rank = 0 
+----- AMP: True
+BASE: ['']
+DATA:
+  BATCH_SIZE: 512
+  BATCH_SIZE_EVAL: 512
+  CROP_PCT: 0.875
+  DATASET: imagenet2012
+  DATA_PATH: /dataset/imagenet
+  IMAGENET_MEAN: [0.485, 0.456, 0.406]
+  IMAGENET_STD: [0.229, 0.224, 0.225]
+  IMAGE_CHANNELS: 3
+  IMAGE_SIZE: 224
+  NUM_WORKERS: 2
+EVAL: False
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DECODER:
+    DEPTH: 8
+    EMBED_DIM: 512
+    NUM_HEADS: 16
+  DROPOUT: 0.0
+  DROPPATH: 0.0
+  ENCODER:
+    DEPTH: 12
+    EMBED_DIM: 768
+    NUM_HEADS: 12
+  GLOBAL_POOL: False
+  MASK_RATIO: 0.75
+  MLP_RATIO: 4.0
+  NAME: vit_base_patch16_224
+  NORM_PIX_LOSS: True
+  NUM_CLASSES: 1000
+  PATCH_SIZE: 16
+  PRETRAINED: ./mae_pretrain_vit_base.pdparams
+  QKV_BIAS: True
+  RESUME: None
+  TYPE: LINEARPROBE
+REPORT_FREQ: 20
+SAVE: ./output/linearprobe-20220323-10-07
+SAVE_FREQ: 10
+SEED: 0
+TRAIN:
+  ACCUM_ITER: 4
+  AUTO_AUGMENT: False
+  BASE_LR: 0.1
+  COLOR_JITTER: 0.4
+  CUTMIX_ALPHA: 1.0
+  CUTMIX_MINMAX: None
+  END_LR: 0.0
+  GRAD_CLIP: None
+  LAST_EPOCH: 0
+  LAYER_DECAY: None
+  LINEAR_SCALED_LR: 256
+  MIXUP_ALPHA: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  NUM_EPOCHS: 90
+  OPTIMIZER:
+    BETAS: (0.9, 0.95)
+    EPS: 1e-08
+    NAME: LARS
+  RANDOM_ERASE_COUNT: 1
+  RANDOM_ERASE_MODE: pixel
+  RANDOM_ERASE_PROB: 0.25
+  RANDOM_ERASE_SPLIT: False
+  RAND_AUGMENT: True
+  RAND_AUGMENT_LAYERS: 2
+  RAND_AUGMENT_MAGNITUDE: 9
+  SMOOTHING: 0.1
+  WARMUP_EPOCHS: 10
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.0
+VALIDATE_FREQ: 1
+W0323 10:07:54.817029  6102 gpu_context.cc:240] Please NOTE: device: 0, GPU Compute Capability: 7.0, Driver API Version: 10.2, Runtime API Version: 10.2
+W0323 10:07:54.823293  6102 gpu_context.cc:268] device: 0, cuDNN Version: 7.6.
+encoder_position_embedding [1, 197, 768] True
+cls_token [1, 1, 768] True
+patch_embedding.patch_embedding.weight [768, 3, 16, 16] True
+patch_embedding.patch_embedding.bias [768] True
+encoder.layers.0.attn_norm.weight [768] True
+encoder.layers.0.attn_norm.bias [768] True
+encoder.layers.0.attn.qkv.weight [768, 2304] True
+encoder.layers.0.attn.qkv.bias [2304] True
+encoder.layers.0.attn.out.weight [768, 768] True
+encoder.layers.0.attn.out.bias [768] True
+encoder.layers.0.mlp_norm.weight [768] True
+encoder.layers.0.mlp_norm.bias [768] True
+encoder.layers.0.mlp.fc1.weight [768, 3072] True
+encoder.layers.0.mlp.fc1.bias [3072] True
+encoder.layers.0.mlp.fc2.weight [3072, 768] True
+encoder.layers.0.mlp.fc2.bias [768] True
+encoder.layers.1.attn_norm.weight [768] True
+encoder.layers.1.attn_norm.bias [768] True
+encoder.layers.1.attn.qkv.weight [768, 2304] True
+encoder.layers.1.attn.qkv.bias [2304] True
+encoder.layers.1.attn.out.weight [768, 768] True
+encoder.layers.1.attn.out.bias [768] True
+encoder.layers.1.mlp_norm.weight [768] True
+encoder.layers.1.mlp_norm.bias [768] True
+encoder.layers.1.mlp.fc1.weight [768, 3072] True
+encoder.layers.1.mlp.fc1.bias [3072] True
+encoder.layers.1.mlp.fc2.weight [3072, 768] True
+encoder.layers.1.mlp.fc2.bias [768] True
+encoder.layers.2.attn_norm.weight [768] True
+encoder.layers.2.attn_norm.bias [768] True
+encoder.layers.2.attn.qkv.weight [768, 2304] True
+encoder.layers.2.attn.qkv.bias [2304] True
+encoder.layers.2.attn.out.weight [768, 768] True
+encoder.layers.2.attn.out.bias [768] True
+encoder.layers.2.mlp_norm.weight [768] True
+encoder.layers.2.mlp_norm.bias [768] True
+encoder.layers.2.mlp.fc1.weight [768, 3072] True
+encoder.layers.2.mlp.fc1.bias [3072] True
+encoder.layers.2.mlp.fc2.weight [3072, 768] True
+encoder.layers.2.mlp.fc2.bias [768] True
+encoder.layers.3.attn_norm.weight [768] True
+encoder.layers.3.attn_norm.bias [768] True
+encoder.layers.3.attn.qkv.weight [768, 2304] True
+encoder.layers.3.attn.qkv.bias [2304] True
+encoder.layers.3.attn.out.weight [768, 768] True
+encoder.layers.3.attn.out.bias [768] True
+encoder.layers.3.mlp_norm.weight [768] True
+encoder.layers.3.mlp_norm.bias [768] True
+encoder.layers.3.mlp.fc1.weight [768, 3072] True
+encoder.layers.3.mlp.fc1.bias [3072] True
+encoder.layers.3.mlp.fc2.weight [3072, 768] True
+encoder.layers.3.mlp.fc2.bias [768] True
+encoder.layers.4.attn_norm.weight [768] True
+encoder.layers.4.attn_norm.bias [768] True
+encoder.layers.4.attn.qkv.weight [768, 2304] True
+encoder.layers.4.attn.qkv.bias [2304] True
+encoder.layers.4.attn.out.weight [768, 768] True
+encoder.layers.4.attn.out.bias [768] True
+encoder.layers.4.mlp_norm.weight [768] True
+encoder.layers.4.mlp_norm.bias [768] True
+encoder.layers.4.mlp.fc1.weight [768, 3072] True
+encoder.layers.4.mlp.fc1.bias [3072] True
+encoder.layers.4.mlp.fc2.weight [3072, 768] True
+encoder.layers.4.mlp.fc2.bias [768] True
+encoder.layers.5.attn_norm.weight [768] True
+encoder.layers.5.attn_norm.bias [768] True
+encoder.layers.5.attn.qkv.weight [768, 2304] True
+encoder.layers.5.attn.qkv.bias [2304] True
+encoder.layers.5.attn.out.weight [768, 768] True
+encoder.layers.5.attn.out.bias [768] True
+encoder.layers.5.mlp_norm.weight [768] True
+encoder.layers.5.mlp_norm.bias [768] True
+encoder.layers.5.mlp.fc1.weight [768, 3072] True
+encoder.layers.5.mlp.fc1.bias [3072] True
+encoder.layers.5.mlp.fc2.weight [3072, 768] True
+encoder.layers.5.mlp.fc2.bias [768] True
+encoder.layers.6.attn_norm.weight [768] True
+encoder.layers.6.attn_norm.bias [768] True
+encoder.layers.6.attn.qkv.weight [768, 2304] True
+encoder.layers.6.attn.qkv.bias [2304] True
+encoder.layers.6.attn.out.weight [768, 768] True
+encoder.layers.6.attn.out.bias [768] True
+encoder.layers.6.mlp_norm.weight [768] True
+encoder.layers.6.mlp_norm.bias [768] True
+encoder.layers.6.mlp.fc1.weight [768, 3072] True
+encoder.layers.6.mlp.fc1.bias [3072] True
+encoder.layers.6.mlp.fc2.weight [3072, 768] True
+encoder.layers.6.mlp.fc2.bias [768] True
+encoder.layers.7.attn_norm.weight [768] True
+encoder.layers.7.attn_norm.bias [768] True
+encoder.layers.7.attn.qkv.weight [768, 2304] True
+encoder.layers.7.attn.qkv.bias [2304] True
+encoder.layers.7.attn.out.weight [768, 768] True
+encoder.layers.7.attn.out.bias [768] True
+encoder.layers.7.mlp_norm.weight [768] True
+encoder.layers.7.mlp_norm.bias [768] True
+encoder.layers.7.mlp.fc1.weight [768, 3072] True
+encoder.layers.7.mlp.fc1.bias [3072] True
+encoder.layers.7.mlp.fc2.weight [3072, 768] True
+encoder.layers.7.mlp.fc2.bias [768] True
+encoder.layers.8.attn_norm.weight [768] True
+encoder.layers.8.attn_norm.bias [768] True
+encoder.layers.8.attn.qkv.weight [768, 2304] True
+encoder.layers.8.attn.qkv.bias [2304] True
+encoder.layers.8.attn.out.weight [768, 768] True
+encoder.layers.8.attn.out.bias [768] True
+INFO 2022-03-23 10:21:40,155 launch_utils.py:321] terminate process group gid:6102
+INFO 2022-03-23 10:21:40,155 launch_utils.py:321] terminate process group gid:6117
+INFO 2022-03-23 10:21:44,159 launch_utils.py:342] terminate all the procs
+ERROR 2022-03-23 10:21:44,159 launch_utils.py:638] ABORT!!! Out of all 8 trainers, the trainer process with rank=[1, 2, 3, 4, 6, 7] was aborted. Please check its log.
+INFO 2022-03-23 10:21:48,163 launch_utils.py:342] terminate all the procs
+INFO 2022-03-23 10:21:48,163 launch.py:391] Local processes completed.
+encoder.layers.8.mlp_norm.weight [768] True
+encoder.layers.8.mlp_norm.bias [768] True
+encoder.layers.8.mlp.fc1.weight [768, 3072] True
+encoder.layers.8.mlp.fc1.bias [3072] True
+encoder.layers.8.mlp.fc2.weight [3072, 768] True
+encoder.layers.8.mlp.fc2.bias [768] True
+encoder.layers.9.attn_norm.weight [768] True
+encoder.layers.9.attn_norm.bias [768] True
+encoder.layers.9.attn.qkv.weight [768, 2304] True
+encoder.layers.9.attn.qkv.bias [2304] True
+encoder.layers.9.attn.out.weight [768, 768] True
+encoder.layers.9.attn.out.bias [768] True
+encoder.layers.9.mlp_norm.weight [768] True
+encoder.layers.9.mlp_norm.bias [768] True
+encoder.layers.9.mlp.fc1.weight [768, 3072] True
+encoder.layers.9.mlp.fc1.bias [3072] True
+encoder.layers.9.mlp.fc2.weight [3072, 768] True
+encoder.layers.9.mlp.fc2.bias [768] True
+encoder.layers.10.attn_norm.weight [768] True
+encoder.layers.10.attn_norm.bias [768] True
+encoder.layers.10.attn.qkv.weight [768, 2304] True
+encoder.layers.10.attn.qkv.bias [2304] True
+encoder.layers.10.attn.out.weight [768, 768] True
+encoder.layers.10.attn.out.bias [768] True
+encoder.layers.10.mlp_norm.weight [768] True
+encoder.layers.10.mlp_norm.bias [768] True
+encoder.layers.10.mlp.fc1.weight [768, 3072] True
+encoder.layers.10.mlp.fc1.bias [3072] True
+encoder.layers.10.mlp.fc2.weight [3072, 768] True
+encoder.layers.10.mlp.fc2.bias [768] True
+encoder.layers.11.attn_norm.weight [768] True
+encoder.layers.11.attn_norm.bias [768] True
+encoder.layers.11.attn.qkv.weight [768, 2304] True
+encoder.layers.11.attn.qkv.bias [2304] True
+encoder.layers.11.attn.out.weight [768, 768] True
+encoder.layers.11.attn.out.bias [768] True
+encoder.layers.11.mlp_norm.weight [768] True
+encoder.layers.11.mlp_norm.bias [768] True
+encoder.layers.11.mlp.fc1.weight [768, 3072] True
+encoder.layers.11.mlp.fc1.bias [3072] True
+encoder.layers.11.mlp.fc2.weight [3072, 768] True
+encoder.layers.11.mlp.fc2.bias [768] True
+encoder.norm.weight [768] True
+encoder.norm.bias [768] True
+classifier.0.weight [768] False
+classifier.0.bias [768] False
+classifier.0._mean [768] False
+classifier.0._variance [768] False
+classifier.1.weight [768, 1000] False
+classifier.1.bias [1000] False
+server not ready, wait 3 sec to retry...
+not ready endpoints:['127.0.0.1:24455', '127.0.0.1:49357', '127.0.0.1:29615', '127.0.0.1:17426', '127.0.0.1:33084', '127.0.0.1:60249', '127.0.0.1:48028']
+I0323 10:08:07.629041  6102 nccl_context.cc:82] init nccl context nranks: 8 local rank: 0 gpu id: 0 ring id: 0
+I0323 10:08:09.865425  6102 nccl_context.cc:114] init nccl context nranks: 8 local rank: 0 gpu id: 0 ring id: 10
+2022-03-23 10:08:11,574-INFO: [topology.py:169:__init__] HybridParallelInfo: rank_id: 0, mp_degree: 1, sharding_degree: 1, pp_degree: 1, dp_degree: 8, mp_group: [0],  sharding_group: [0], pp_group: [0], dp_group: [0, 1, 2, 3, 4, 5, 6, 7], check/clip group: [0]
+2022-03-23 10:08:11,575 MASTER_LOG ----- Total # of train batch (single gpu): 312
+2022-03-23 10:08:11,576 MASTER_LOG ----- Total # of val batch (single gpu): 13
+2022-03-23 10:08:11,576 MASTER_LOG Base lr is scaled to: 6.4
+2022-03-23 10:08:12,843 MASTER_LOG ----- Pretrained: Load model state from ./mae_pretrain_vit_base.pdparams
+2022-03-23 10:08:12,880 MASTER_LOG ----- Start training from epoch 1.
+2022-03-23 10:08:12,880 MASTER_LOG Train epoch 1. LR=6.400000e-01
+2022-03-23 10:08:20,797 MASTER_LOG Epoch[001/090], Step[0000/0312], Lr: 0.000000e+00, Loss: 6.9421 (6.9421), Avg Acc: 0.0010
+2022-03-23 10:09:09,470 MASTER_LOG Epoch[001/090], Step[0020/0312], Lr: 4.102564e-02, Loss: 6.8971 (6.9324), Avg Acc: 0.0010
+2022-03-23 10:09:58,105 MASTER_LOG Epoch[001/090], Step[0040/0312], Lr: 8.205128e-02, Loss: 6.6101 (6.8617), Avg Acc: 0.0052
+2022-03-23 10:10:45,402 MASTER_LOG Epoch[001/090], Step[0060/0312], Lr: 1.230769e-01, Loss: 6.0317 (6.7012), Avg Acc: 0.0279
+2022-03-23 10:11:32,415 MASTER_LOG Epoch[001/090], Step[0080/0312], Lr: 1.641026e-01, Loss: 5.3711 (6.4640), Avg Acc: 0.0567
+2022-03-23 10:12:20,143 MASTER_LOG Epoch[001/090], Step[0100/0312], Lr: 2.051282e-01, Loss: 4.7358 (6.1868), Avg Acc: 0.0836
+2022-03-23 10:13:08,619 MASTER_LOG Epoch[001/090], Step[0120/0312], Lr: 2.461538e-01, Loss: 4.1960 (5.9053), Avg Acc: 0.1104
+2022-03-23 10:13:55,861 MASTER_LOG Epoch[001/090], Step[0140/0312], Lr: 2.871795e-01, Loss: 3.8316 (5.6387), Avg Acc: 0.1366
+2022-03-23 10:14:44,284 MASTER_LOG Epoch[001/090], Step[0160/0312], Lr: 3.282051e-01, Loss: 3.5256 (5.3938), Avg Acc: 0.1613
+2022-03-23 10:15:32,316 MASTER_LOG Epoch[001/090], Step[0180/0312], Lr: 3.692308e-01, Loss: 3.2858 (5.1746), Avg Acc: 0.1840
+2022-03-23 10:16:21,607 MASTER_LOG Epoch[001/090], Step[0200/0312], Lr: 4.102564e-01, Loss: 3.0855 (4.9790), Avg Acc: 0.2046
+2022-03-23 10:17:09,678 MASTER_LOG Epoch[001/090], Step[0220/0312], Lr: 4.512821e-01, Loss: 2.9397 (4.8059), Avg Acc: 0.2231
+2022-03-23 10:17:57,601 MASTER_LOG Epoch[001/090], Step[0240/0312], Lr: 4.923077e-01, Loss: 2.8253 (4.6502), Avg Acc: 0.2400
+2022-03-23 10:18:45,861 MASTER_LOG Epoch[001/090], Step[0260/0312], Lr: 5.333333e-01, Loss: 2.7706 (4.5104), Avg Acc: 0.2556
+2022-03-23 10:19:33,782 MASTER_LOG Epoch[001/090], Step[0280/0312], Lr: 5.743590e-01, Loss: 2.7140 (4.3843), Avg Acc: 0.2697
+2022-03-23 10:20:22,668 MASTER_LOG Epoch[001/090], Step[0300/0312], Lr: 6.153846e-01, Loss: 2.6050 (4.2708), Avg Acc: 0.2826
+2022-03-23 10:20:47,517 MASTER_LOG Epoch[001/090], Step[0311/0312], Lr: 6.317949e-01, Loss: 2.6399 (4.2128), Avg Acc: 0.2891
+2022-03-23 10:20:49,805 MASTER_LOG ----- Epoch[001/090], Lr: 6.317949e-01, time: 756.92Train Loss: 4.2128, Train Acc: 0.2891
+2022-03-23 10:20:49,805 MASTER_LOG ----- Validation after Epoch: 1
+2022-03-23 10:20:59,660 MASTER_LOG Step[0000/0013], Avg Loss: 1.7821, Avg Acc@1: 0.5928, Avg Acc@5: 0.8276
+Traceback (most recent call last):
+  File "main_multi_gpu_linearprobe.py", line 622, in <module>
+    main()
+  File "main_multi_gpu_linearprobe.py", line 618, in main
+    main_worker(config, dataset_train, dataset_val)
+  File "main_multi_gpu_linearprobe.py", line 569, in main_worker
+    master_logger=master_logger)
+  File "<decorator-gen-337>", line 2, in validate
+  File "/usr/local/lib/python3.7/site-packages/paddle/fluid/dygraph/base.py", line 351, in _decorate_function
+    return func(*args, **kwargs)
+  File "main_multi_gpu_linearprobe.py", line 272, in validate
+    paddle.distrtibuted.barrier()
+AttributeError: module 'paddle' has no attribute 'distrtibuted'
+WARNING 2022-03-23 16:59:15,049 launch.py:503] Not found distinct arguments and compiled with cuda or xpu or npu. Default use collective mode
+INFO 2022-03-23 16:59:15,051 launch_utils.py:557] Local start 8 processes. First process distributed environment info (Only For Debug): 
+    +=======================================================================================+
+    |                        Distributed Envs                      Value                    |
+    +---------------------------------------------------------------------------------------+
+    |                       PADDLE_TRAINER_ID                        0                      |
+    |                 PADDLE_CURRENT_ENDPOINT                 127.0.0.1:43622               |
+    |                     PADDLE_TRAINERS_NUM                        8                      |
+    |                PADDLE_TRAINER_ENDPOINTS  ... 0.1:10870,127.0.0.1:15574,127.0.0.1:32888|
+    |                     PADDLE_RANK_IN_NODE                        0                      |
+    |                 PADDLE_LOCAL_DEVICE_IDS                        0                      |
+    |                 PADDLE_WORLD_DEVICE_IDS                 0,1,2,3,4,5,6,7               |
+    |                     FLAGS_selected_gpus                        0                      |
+    |             FLAGS_selected_accelerators                        0                      |
+    +=======================================================================================+
+
+INFO 2022-03-23 16:59:15,052 launch_utils.py:562] details about PADDLE_TRAINER_ENDPOINTS can be found in log/endpoints.log, and detail running logs maybe found in log/workerlog.0
+INFO 2022-03-23 16:59:22,188 launch_utils.py:342] terminate all the procs
+ERROR 2022-03-23 16:59:22,188 launch_utils.py:638] ABORT!!! Out of all 8 trainers, the trainer process with rank=[0, 1, 2, 3, 4, 5, 6, 7] was aborted. Please check its log.
+INFO 2022-03-23 16:59:26,192 launch_utils.py:342] terminate all the procs
+INFO 2022-03-23 16:59:26,192 launch.py:391] Local processes completed.
+-----------  Configuration Arguments -----------
+backend: auto
+cluster_topo_path: None
+elastic_pre_hook: None
+elastic_server: None
+enable_auto_mapping: False
+force: False
+gpus: 0,1,2,3,4,5,6,7
+heter_devices: 
+heter_worker_num: None
+heter_workers: 
+host: None
+http_port: None
+ips: 127.0.0.1
+job_id: None
+log_dir: log
+np: None
+nproc_per_node: None
+rank_mapping_path: None
+run_mode: None
+scale: 0
+server_num: None
+servers: 
+training_script: main_multi_gpu_linearprobe.py
+training_script_args: ['-cfg=./configs/vit_base_patch16_224_linearprobe_single_node.yaml', '-dataset=imagenet2012', '-batch_size=512', '-data_path=/dataset/imagenet', '-pretrained=./mae_pretrain_vit_base.pdparams', '-amp']
+worker_num: None
+workers: 
+------------------------------------------------
+launch train in GPU mode!
+launch proc_id:6736 idx:0
+launch proc_id:6739 idx:1
+launch proc_id:6742 idx:2
+launch proc_id:6745 idx:3
+launch proc_id:6748 idx:4
+launch proc_id:6751 idx:5
+launch proc_id:6754 idx:6
+launch proc_id:6757 idx:7
+Traceback (most recent call last):
+  File "main_multi_gpu_linearprobe.py", line 42, in <module>
+    from transformer import build_transformer as build_model
+  File "/workspace/ppvit_github/PaddleViT_Train/PaddleViT/image_classification/paddlecloud/MAE_gitlab/MAE_paddle/transformer.py", line 748
+    bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+            ^
+SyntaxError: invalid syntax
+WARNING 2022-03-23 17:10:58,917 launch.py:503] Not found distinct arguments and compiled with cuda or xpu or npu. Default use collective mode
+INFO 2022-03-23 17:10:58,919 launch_utils.py:557] Local start 8 processes. First process distributed environment info (Only For Debug): 
+    +=======================================================================================+
+    |                        Distributed Envs                      Value                    |
+    +---------------------------------------------------------------------------------------+
+    |                       PADDLE_TRAINER_ID                        0                      |
+    |                 PADDLE_CURRENT_ENDPOINT                 127.0.0.1:25091               |
+    |                     PADDLE_TRAINERS_NUM                        8                      |
+    |                PADDLE_TRAINER_ENDPOINTS  ... 0.1:56764,127.0.0.1:55133,127.0.0.1:16222|
+    |                     PADDLE_RANK_IN_NODE                        0                      |
+    |                 PADDLE_LOCAL_DEVICE_IDS                        0                      |
+    |                 PADDLE_WORLD_DEVICE_IDS                 0,1,2,3,4,5,6,7               |
+    |                     FLAGS_selected_gpus                        0                      |
+    |             FLAGS_selected_accelerators                        0                      |
+    +=======================================================================================+
+
+INFO 2022-03-23 17:10:58,919 launch_utils.py:562] details about PADDLE_TRAINER_ENDPOINTS can be found in log/endpoints.log, and detail running logs maybe found in log/workerlog.0
+-----------  Configuration Arguments -----------
+backend: auto
+cluster_topo_path: None
+elastic_pre_hook: None
+elastic_server: None
+enable_auto_mapping: False
+force: False
+gpus: 0,1,2,3,4,5,6,7
+heter_devices: 
+heter_worker_num: None
+heter_workers: 
+host: None
+http_port: None
+ips: 127.0.0.1
+job_id: None
+log_dir: log
+np: None
+nproc_per_node: None
+rank_mapping_path: None
+run_mode: None
+scale: 0
+server_num: None
+servers: 
+training_script: main_multi_gpu_linearprobe.py
+training_script_args: ['-cfg=./configs/vit_base_patch16_224_linearprobe_single_node.yaml', '-dataset=imagenet2012', '-batch_size=512', '-data_path=/dataset/imagenet', '-pretrained=./mae_pretrain_vit_base.pdparams', '-amp']
+worker_num: None
+workers: 
+------------------------------------------------
+launch train in GPU mode!
+launch proc_id:6911 idx:0
+launch proc_id:6914 idx:1
+launch proc_id:6917 idx:2
+launch proc_id:6920 idx:3
+launch proc_id:6923 idx:4
+launch proc_id:6926 idx:5
+launch proc_id:6929 idx:6
+launch proc_id:6932 idx:7
+/usr/local/lib/python3.7/site-packages/paddlenlp/transformers/funnel/modeling.py:30: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated, and in 3.8 it will stop working
+  from collections import Iterable
+Compose(
+    <paddle.vision.transforms.transforms.RandomResizedCrop object at 0x7fd16ed3af28>
+    <paddle.vision.transforms.transforms.RandomHorizontalFlip object at 0x7fd16ed5ccf8>
+    <paddle.vision.transforms.transforms.ToTensor object at 0x7fd16ed5c470>
+    <paddle.vision.transforms.transforms.Normalize object at 0x7fd16ed5c400>
+)
+----- Imagenet2012 train_list.txt len = 1281167
+----- Imagenet2012 val_list.txt len = 50000
+2022-03-23 17:11:06,114 MASTER_LOG ----- world_size = 8, local_rank = 0 
+----- AMP: True
+BASE: ['']
+DATA:
+  BATCH_SIZE: 512
+  BATCH_SIZE_EVAL: 512
+  CROP_PCT: 0.875
+  DATASET: imagenet2012
+  DATA_PATH: /dataset/imagenet
+  IMAGENET_MEAN: [0.485, 0.456, 0.406]
+  IMAGENET_STD: [0.229, 0.224, 0.225]
+  IMAGE_CHANNELS: 3
+  IMAGE_SIZE: 224
+  NUM_WORKERS: 2
+EVAL: False
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DECODER:
+    DEPTH: 8
+    EMBED_DIM: 512
+    NUM_HEADS: 16
+  DROPOUT: 0.0
+  DROPPATH: 0.0
+  ENCODER:
+    DEPTH: 12
+    EMBED_DIM: 768
+    NUM_HEADS: 12
+  GLOBAL_POOL: False
+  MASK_RATIO: 0.75
+  MLP_RATIO: 4.0
+  NAME: vit_base_patch16_224
+  NORM_PIX_LOSS: True
+  NUM_CLASSES: 1000
+  PATCH_SIZE: 16
+  PRETRAINED: ./mae_pretrain_vit_base.pdparams
+  QKV_BIAS: True
+  RESUME: None
+  TYPE: LINEARPROBE
+REPORT_FREQ: 20
+SAVE: ./output/linearprobe-20220323-17-11
+SAVE_FREQ: 10
+SEED: 0
+TRAIN:
+  ACCUM_ITER: 4
+  AUTO_AUGMENT: False
+  BASE_LR: 0.1
+  COLOR_JITTER: 0.4
+  CUTMIX_ALPHA: 1.0
+  CUTMIX_MINMAX: None
+  END_LR: 0.0
+  GRAD_CLIP: None
+  LAST_EPOCH: 0
+  LAYER_DECAY: None
+  LINEAR_SCALED_LR: 256
+  MIXUP_ALPHA: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  NUM_EPOCHS: 90
+  OPTIMIZER:
+    BETAS: (0.9, 0.95)
+    EPS: 1e-08
+    NAME: LARS
+  RANDOM_ERASE_COUNT: 1
+  RANDOM_ERASE_MODE: pixel
+  RANDOM_ERASE_PROB: 0.25
+  RANDOM_ERASE_SPLIT: False
+  RAND_AUGMENT: True
+  RAND_AUGMENT_LAYERS: 2
+  RAND_AUGMENT_MAGNITUDE: 9
+  SMOOTHING: 0.1
+  WARMUP_EPOCHS: 10
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.0
+VALIDATE_FREQ: 1
+W0323 17:11:06.116573  6911 gpu_context.cc:240] Please NOTE: device: 0, GPU Compute Capability: 7.0, Driver API Version: 10.2, Runtime API Version: 10.2
+W0323 17:11:06.121726  6911 gpu_context.cc:268] device: 0, cuDNN Version: 7.6.
+encoder_position_embedding [1, 197, 768] True
+cls_token [1, 1, 768] True
+patch_embedding.patch_embedding.weight [768, 3, 16, 16] True
+patch_embedding.patch_embedding.bias [768] True
+encoder.layers.0.attn_norm.weight [768] True
+encoder.layers.0.attn_norm.bias [768] True
+encoder.layers.0.attn.qkv.weight [768, 2304] True
+encoder.layers.0.attn.qkv.bias [2304] True
+encoder.layers.0.attn.out.weight [768, 768] True
+encoder.layers.0.attn.out.bias [768] True
+encoder.layers.0.mlp_norm.weight [768] True
+encoder.layers.0.mlp_norm.bias [768] True
+encoder.layers.0.mlp.fc1.weight [768, 3072] True
+encoder.layers.0.mlp.fc1.bias [3072] True
+encoder.layers.0.mlp.fc2.weight [3072, 768] True
+encoder.layers.0.mlp.fc2.bias [768] True
+encoder.layers.1.attn_norm.weight [768] True
+encoder.layers.1.attn_norm.bias [768] True
+encoder.layers.1.attn.qkv.weight [768, 2304] True
+encoder.layers.1.attn.qkv.bias [2304] True
+encoder.layers.1.attn.out.weight [768, 768] True
+encoder.layers.1.attn.out.bias [768] True
+encoder.layers.1.mlp_norm.weight [768] True
+encoder.layers.1.mlp_norm.bias [768] True
+encoder.layers.1.mlp.fc1.weight [768, 3072] True
+encoder.layers.1.mlp.fc1.bias [3072] True
+encoder.layers.1.mlp.fc2.weight [3072, 768] True
+encoder.layers.1.mlp.fc2.bias [768] True
+encoder.layers.2.attn_norm.weight [768] True
+encoder.layers.2.attn_norm.bias [768] True
+encoder.layers.2.attn.qkv.weight [768, 2304] True
+encoder.layers.2.attn.qkv.bias [2304] True
+encoder.layers.2.attn.out.weight [768, 768] True
+encoder.layers.2.attn.out.bias [768] True
+encoder.layers.2.mlp_norm.weight [768] True
+encoder.layers.2.mlp_norm.bias [768] True
+encoder.layers.2.mlp.fc1.weight [768, 3072] True
+encoder.layers.2.mlp.fc1.bias [3072] True
+encoder.layers.2.mlp.fc2.weight [3072, 768] True
+encoder.layers.2.mlp.fc2.bias [768] True
+encoder.layers.3.attn_norm.weight [768] True
+encoder.layers.3.attn_norm.bias [768] True
+encoder.layers.3.attn.qkv.weight [768, 2304] True
+encoder.layers.3.attn.qkv.bias [2304] True
+encoder.layers.3.attn.out.weight [768, 768] True
+encoder.layers.3.attn.out.bias [768] True
+encoder.layers.3.mlp_norm.weight [768] True
+encoder.layers.3.mlp_norm.bias [768] True
+encoder.layers.3.mlp.fc1.weight [768, 3072] True
+encoder.layers.3.mlp.fc1.bias [3072] True
+encoder.layers.3.mlp.fc2.weight [3072, 768] True
+encoder.layers.3.mlp.fc2.bias [768] True
+encoder.layers.4.attn_norm.weight [768] True
+encoder.layers.4.attn_norm.bias [768] True
+encoder.layers.4.attn.qkv.weight [768, 2304] True
+encoder.layers.4.attn.qkv.bias [2304] True
+encoder.layers.4.attn.out.weight [768, 768] True
+encoder.layers.4.attn.out.bias [768] True
+encoder.layers.4.mlp_norm.weight [768] True
+encoder.layers.4.mlp_norm.bias [768] True
+encoder.layers.4.mlp.fc1.weight [768, 3072] True
+encoder.layers.4.mlp.fc1.bias [3072] True
+encoder.layers.4.mlp.fc2.weight [3072, 768] True
+encoder.layers.4.mlp.fc2.bias [768] True
+encoder.layers.5.attn_norm.weight [768] True
+encoder.layers.5.attn_norm.bias [768] True
+encoder.layers.5.attn.qkv.weight [768, 2304] True
+encoder.layers.5.attn.qkv.bias [2304] True
+encoder.layers.5.attn.out.weight [768, 768] True
+encoder.layers.5.attn.out.bias [768] True
+encoder.layers.5.mlp_norm.weight [768] True
+encoder.layers.5.mlp_norm.bias [768] True
+encoder.layers.5.mlp.fc1.weight [768, 3072] True
+encoder.layers.5.mlp.fc1.bias [3072] True
+encoder.layers.5.mlp.fc2.weight [3072, 768] True
+encoder.layers.5.mlp.fc2.bias [768] True
+encoder.layers.6.attn_norm.weight [768] True
+encoder.layers.6.attn_norm.bias [768] True
+encoder.layers.6.attn.qkv.weight [768, 2304] True
+encoder.layers.6.attn.qkv.bias [2304] True
+encoder.layers.6.attn.out.weight [768, 768] True
+encoder.layers.6.attn.out.bias [768] True
+encoder.layers.6.mlp_norm.weight [768] True
+encoder.layers.6.mlp_norm.bias [768] True
+encoder.layers.6.mlp.fc1.weight [768, 3072] True
+encoder.layers.6.mlp.fc1.bias [3072] True
+encoder.layers.6.mlp.fc2.weight [3072, 768] True
+encoder.layers.6.mlp.fc2.bias [768] True
+encoder.layers.7.attn_norm.weight [768] True
+encoder.layers.7.attn_norm.bias [768] True
+encoder.layers.7.attn.qkv.weight [768, 2304] True
+encoder.layers.7.attn.qkv.bias [2304] True
+encoder.layers.7.attn.out.weight [768, 768] True
+encoder.layers.7.attn.out.bias [768] True
+encoder.layers.7.mlp_norm.weight [768] True
+encoder.layers.7.mlp_norm.bias [768] True
+encoder.layers.7.mlp.fc1.weight [768, 3072] True
+encoder.layers.7.mlp.fc1.bias [3072] True
+encoder.layers.7.mlp.fc2.weight [3072, 768] True
+encoder.layers.7.mlp.fc2.bias [768] True
+encoder.layers.8.attn_norm.weight [768] True
+encoder.layers.8.attn_norm.bias [768] True
+encoder.layers.8.attn.qkv.weight [768, 2304] True
+encoder.layers.8.attn.qkv.bias [2304] True
+encoder.layers.8.attn.out.weight [768, 768] True
+encoder.layers.8.attn.out.bias [768] True
+encoder.layers.8.mlp_norm.weight [768] True
+encoder.layers.8.mlp_norm.bias [768] True
+encoder.layers.8.mlp.fc1.weight [768, 3072] True
+encoder.layers.8.mlp.fc1.bias [3072] True
+encoder.layers.8.mlp.fc2.weight [3072, 768] True
+encoder.layers.8.mlp.fc2.bias [768] True
+encoder.layers.9.attn_norm.weight [768] True
+encoder.layers.9.attn_norm.bias [768] True
+encoder.layers.9.attn.qkv.weight [768, 2304] True
+encoder.layers.9.attn.qkv.bias [2304] True
+encoder.layers.9.attn.out.weight [768, 768] True
+encoder.layers.9.attn.out.bias [768] True
+encoder.layers.9.mlp_norm.weight [768] True
+encoder.layers.9.mlp_norm.bias [768] True
+encoder.layers.9.mlp.fc1.weight [768, 3072] True
+encoder.layers.9.mlp.fc1.bias [3072] True
+encoder.layers.9.mlp.fc2.weight [3072, 768] True
+encoder.layers.9.mlp.fc2.bias [768] True
+encoder.layers.10.attn_norm.weight [768] True
+encoder.layers.10.attn_norm.bias [768] True
+encoder.layers.10.attn.qkv.weight [768, 2304] True
+encoder.layers.10.attn.qkv.bias [2304] True
+encoder.layers.10.attn.out.weight [768, 768] True
+encoder.layers.10.attn.out.bias [768] True
+encoder.layers.10.mlp_norm.weight [768] True
+encoder.layers.10.mlp_norm.bias [768] True
+encoder.layers.10.mlp.fc1.weight [768, 3072] True
+encoder.layers.10.mlp.fc1.bias [3072] True
+encoder.layers.10.mlp.fc2.weight [3072, 768] True
+encoder.layers.10.mlp.fc2.bias [768] True
+encoder.layers.11.attn_norm.weight [768] True
+encoder.layers.11.attn_norm.bias [768] True
+encoder.layers.11.attn.qkv.weight [768, 2304] True
+encoder.layers.11.attn.qkv.bias [2304] True
+encoder.layers.11.attn.out.weight [768, 768] True
+encoder.layers.11.attn.out.bias [768] True
+encoder.layers.11.mlp_norm.weight [768] True
+encoder.layers.11.mlp_norm.bias [768] True
+encoder.layers.11.mlp.fc1.weight [768, 3072] True
+encoder.layers.11.mlp.fc1.bias [3072] True
+encoder.layers.11.mlp.fc2.weight [3072, 768] True
+encoder.layers.11.mlp.fc2.bias [768] True
+encoder.norm.weight [768] True
+encoder.norm.bias [768] True
+classifier.0.weight [768] False
+classifier.0.bias [768] False
+classifier.0._mean [768] False
+classifier.0._variance [768] False
+classifier.1.weight [768, 1000] False
+classifier.1.bias [1000] False
+server not ready, wait 3 sec to retry...
+not ready endpoints:['127.0.0.1:56293', '127.0.0.1:32775', '127.0.0.1:34540', '127.0.0.1:39983', '127.0.0.1:56764', '127.0.0.1:16222']
+I0323 17:11:19.512193  6911 nccl_context.cc:82] init nccl context nranks: 8 local rank: 0 gpu id: 0 ring id: 0
+I0323 17:11:22.297502  6911 nccl_context.cc:114] init nccl context nranks: 8 local rank: 0 gpu id: 0 ring id: 10
+2022-03-23 17:11:23,813-INFO: [topology.py:169:__init__] HybridParallelInfo: rank_id: 0, mp_degree: 1, sharding_degree: 1, pp_degree: 1, dp_degree: 8, mp_group: [0],  sharding_group: [0], pp_group: [0], dp_group: [0, 1, 2, 3, 4, 5, 6, 7], check/clip group: [0]
+2022-03-23 17:11:23,815 MASTER_LOG ----- Total # of train batch (single gpu): 312
+2022-03-23 17:11:23,816 MASTER_LOG ----- Total # of val batch (single gpu): 13
+2022-03-23 17:11:23,816 MASTER_LOG Base lr is scaled to: 6.4
+2022-03-23 17:11:24,992 MASTER_LOG ----- Pretrained: Load model state from ./mae_pretrain_vit_base.pdparams
+2022-03-23 17:11:25,028 MASTER_LOG ----- Start training from epoch 1.
+2022-03-23 17:11:25,028 MASTER_LOG Train epoch 1. LR=6.400000e-01
+2022-03-23 17:11:33,357 MASTER_LOG Epoch[001/090], Step[0000/0312], Lr: 0.000000e+00, Loss: 6.9446 (6.9446), Avg Acc: 0.0007
+2022-03-23 17:12:20,673 MASTER_LOG Epoch[001/090], Step[0020/0312], Lr: 4.102564e-02, Loss: 6.8917 (6.9327), Avg Acc: 0.0012
+2022-03-23 17:13:07,815 MASTER_LOG Epoch[001/090], Step[0040/0312], Lr: 8.205128e-02, Loss: 6.6096 (6.8621), Avg Acc: 0.0055
+2022-03-23 17:13:56,638 MASTER_LOG Epoch[001/090], Step[0060/0312], Lr: 1.230769e-01, Loss: 6.0556 (6.7020), Avg Acc: 0.0276
+2022-03-23 17:14:44,062 MASTER_LOG Epoch[001/090], Step[0080/0312], Lr: 1.641026e-01, Loss: 5.3570 (6.4639), Avg Acc: 0.0569
+2022-03-23 17:15:31,357 MASTER_LOG Epoch[001/090], Step[0100/0312], Lr: 2.051282e-01, Loss: 4.7307 (6.1849), Avg Acc: 0.0838
+2022-03-23 17:16:18,717 MASTER_LOG Epoch[001/090], Step[0120/0312], Lr: 2.461538e-01, Loss: 4.2049 (5.9027), Avg Acc: 0.1108
+2022-03-23 17:17:07,088 MASTER_LOG Epoch[001/090], Step[0140/0312], Lr: 2.871795e-01, Loss: 3.8519 (5.6359), Avg Acc: 0.1372
+2022-03-23 17:17:52,834 MASTER_LOG Epoch[001/090], Step[0160/0312], Lr: 3.282051e-01, Loss: 3.5104 (5.3910), Avg Acc: 0.1618
+2022-03-23 17:18:40,421 MASTER_LOG Epoch[001/090], Step[0180/0312], Lr: 3.692308e-01, Loss: 3.2756 (5.1712), Avg Acc: 0.1848
+2022-03-23 17:19:27,238 MASTER_LOG Epoch[001/090], Step[0200/0312], Lr: 4.102564e-01, Loss: 3.1019 (4.9761), Avg Acc: 0.2053
+2022-03-23 17:20:15,138 MASTER_LOG Epoch[001/090], Step[0220/0312], Lr: 4.512821e-01, Loss: 2.9507 (4.8022), Avg Acc: 0.2238
+2022-03-23 17:21:03,445 MASTER_LOG Epoch[001/090], Step[0240/0312], Lr: 4.923077e-01, Loss: 2.8121 (4.6464), Avg Acc: 0.2408
+2022-03-23 17:21:51,046 MASTER_LOG Epoch[001/090], Step[0260/0312], Lr: 5.333333e-01, Loss: 2.8340 (4.5066), Avg Acc: 0.2561
+2022-03-23 17:22:38,265 MASTER_LOG Epoch[001/090], Step[0280/0312], Lr: 5.743590e-01, Loss: 2.7239 (4.3801), Avg Acc: 0.2704
+2022-03-23 17:23:25,086 MASTER_LOG Epoch[001/090], Step[0300/0312], Lr: 6.153846e-01, Loss: 2.6461 (4.2663), Avg Acc: 0.2833
+2022-03-23 17:23:52,120 MASTER_LOG Epoch[001/090], Step[0311/0312], Lr: 6.317949e-01, Loss: 2.5715 (4.2076), Avg Acc: 0.2901
+2022-03-23 17:23:53,861 MASTER_LOG ----- Epoch[001/090], Lr: 6.317949e-01, time: 748.83Train Loss: 4.2076, Train Acc: 0.2901
+2022-03-23 17:23:53,861 MASTER_LOG ----- Validation after Epoch: 1
+2022-03-23 17:24:03,513 MASTER_LOG Step[0000/0013], Avg Loss: 1.7718, Avg Acc@1: 0.6011, Avg Acc@5: 0.8276
+2022-03-23 17:24:38,941 MASTER_LOG ----- Epoch[001/090], Validation Loss: 2.3240, Validation Acc@1: 0.5098, Validation Acc@5: 0.7485, time: 45.08
+2022-03-23 17:24:38,941 MASTER_LOG Train epoch 2. LR=6.317949e-01
+2022-03-23 17:24:46,390 MASTER_LOG Epoch[002/090], Step[0000/0312], Lr: 6.400000e-01, Loss: 2.6023 (2.6023), Avg Acc: 0.4768
+2022-03-23 17:25:35,702 MASTER_LOG Epoch[002/090], Step[0020/0312], Lr: 6.810256e-01, Loss: 2.5761 (2.5589), Avg Acc: 0.4805
+2022-03-23 17:26:23,060 MASTER_LOG Epoch[002/090], Step[0040/0312], Lr: 7.220513e-01, Loss: 2.4909 (2.5406), Avg Acc: 0.4835
+2022-03-23 17:27:11,715 MASTER_LOG Epoch[002/090], Step[0060/0312], Lr: 7.630769e-01, Loss: 2.4347 (2.5125), Avg Acc: 0.4874
+2022-03-23 17:27:58,314 MASTER_LOG Epoch[002/090], Step[0080/0312], Lr: 8.041026e-01, Loss: 2.4801 (2.4908), Avg Acc: 0.4906
+2022-03-23 17:28:47,354 MASTER_LOG Epoch[002/090], Step[0100/0312], Lr: 8.451282e-01, Loss: 2.3328 (2.4697), Avg Acc: 0.4936
+2022-03-23 17:29:33,551 MASTER_LOG Epoch[002/090], Step[0120/0312], Lr: 8.861538e-01, Loss: 2.3951 (2.4528), Avg Acc: 0.4959
+2022-03-23 17:30:20,979 MASTER_LOG Epoch[002/090], Step[0140/0312], Lr: 9.271795e-01, Loss: 2.3484 (2.4384), Avg Acc: 0.4980
+2022-03-23 17:31:08,425 MASTER_LOG Epoch[002/090], Step[0160/0312], Lr: 9.682051e-01, Loss: 2.3388 (2.4240), Avg Acc: 0.4999
+2022-03-23 17:31:55,103 MASTER_LOG Epoch[002/090], Step[0180/0312], Lr: 1.009231e+00, Loss: 2.2949 (2.4089), Avg Acc: 0.5016
+2022-03-23 17:32:42,267 MASTER_LOG Epoch[002/090], Step[0200/0312], Lr: 1.050256e+00, Loss: 2.2508 (2.3963), Avg Acc: 0.5033
+2022-03-23 17:33:29,309 MASTER_LOG Epoch[002/090], Step[0220/0312], Lr: 1.091282e+00, Loss: 2.2273 (2.3832), Avg Acc: 0.5050
+2022-03-23 17:34:16,509 MASTER_LOG Epoch[002/090], Step[0240/0312], Lr: 1.132308e+00, Loss: 2.2667 (2.3711), Avg Acc: 0.5066
+2022-03-23 17:35:03,547 MASTER_LOG Epoch[002/090], Step[0260/0312], Lr: 1.173333e+00, Loss: 2.1516 (2.3599), Avg Acc: 0.5081
+2022-03-23 17:35:50,751 MASTER_LOG Epoch[002/090], Step[0280/0312], Lr: 1.214359e+00, Loss: 2.1651 (2.3495), Avg Acc: 0.5097
+2022-03-23 17:36:38,494 MASTER_LOG Epoch[002/090], Step[0300/0312], Lr: 1.255385e+00, Loss: 2.1509 (2.3386), Avg Acc: 0.5112
+2022-03-23 17:37:02,761 MASTER_LOG Epoch[002/090], Step[0311/0312], Lr: 1.271795e+00, Loss: 2.1339 (2.3334), Avg Acc: 0.5119
+2022-03-23 17:37:04,586 MASTER_LOG ----- Epoch[002/090], Lr: 1.271795e+00, time: 744.91Train Loss: 2.3334, Train Acc: 0.5119
+2022-03-23 17:37:04,586 MASTER_LOG ----- Validation after Epoch: 2
+2022-03-23 17:37:14,165 MASTER_LOG Step[0000/0013], Avg Loss: 1.4541, Avg Acc@1: 0.6462, Avg Acc@5: 0.8638
+2022-03-23 17:37:49,147 MASTER_LOG ----- Epoch[002/090], Validation Loss: 1.8723, Validation Acc@1: 0.5792, Validation Acc@5: 0.8077, time: 44.56
+2022-03-23 17:37:49,147 MASTER_LOG Train epoch 3. LR=1.271795e+00
+2022-03-23 17:37:56,819 MASTER_LOG Epoch[003/090], Step[0000/0312], Lr: 1.280000e+00, Loss: 2.1946 (2.1946), Avg Acc: 0.5337
+2022-03-23 17:38:46,531 MASTER_LOG Epoch[003/090], Step[0020/0312], Lr: 1.321026e+00, Loss: 2.1591 (2.1450), Avg Acc: 0.5418
+2022-03-23 17:39:33,529 MASTER_LOG Epoch[003/090], Step[0040/0312], Lr: 1.362051e+00, Loss: 2.1572 (2.1336), Avg Acc: 0.5431
+2022-03-23 17:40:22,091 MASTER_LOG Epoch[003/090], Step[0060/0312], Lr: 1.403077e+00, Loss: 2.1495 (2.1311), Avg Acc: 0.5427
+2022-03-23 17:41:09,779 MASTER_LOG Epoch[003/090], Step[0080/0312], Lr: 1.444103e+00, Loss: 2.1288 (2.1306), Avg Acc: 0.5425
+2022-03-23 17:41:57,564 MASTER_LOG Epoch[003/090], Step[0100/0312], Lr: 1.485128e+00, Loss: 2.1564 (2.1282), Avg Acc: 0.5426
+2022-03-23 17:42:46,372 MASTER_LOG Epoch[003/090], Step[0120/0312], Lr: 1.526154e+00, Loss: 2.0892 (2.1246), Avg Acc: 0.5435
+2022-03-23 17:43:33,219 MASTER_LOG Epoch[003/090], Step[0140/0312], Lr: 1.567179e+00, Loss: 2.0518 (2.1210), Avg Acc: 0.5442
+2022-03-23 17:44:19,415 MASTER_LOG Epoch[003/090], Step[0160/0312], Lr: 1.608205e+00, Loss: 2.0591 (2.1162), Avg Acc: 0.5449
+2022-03-23 17:45:06,776 MASTER_LOG Epoch[003/090], Step[0180/0312], Lr: 1.649231e+00, Loss: 2.0602 (2.1116), Avg Acc: 0.5457
+2022-03-23 17:45:55,760 MASTER_LOG Epoch[003/090], Step[0200/0312], Lr: 1.690256e+00, Loss: 2.1306 (2.1082), Avg Acc: 0.5461
+2022-03-23 17:46:44,146 MASTER_LOG Epoch[003/090], Step[0220/0312], Lr: 1.731282e+00, Loss: 2.0988 (2.1037), Avg Acc: 0.5465
+2022-03-23 17:47:31,329 MASTER_LOG Epoch[003/090], Step[0240/0312], Lr: 1.772308e+00, Loss: 2.0522 (2.1021), Avg Acc: 0.5466
+2022-03-23 17:48:18,243 MASTER_LOG Epoch[003/090], Step[0260/0312], Lr: 1.813333e+00, Loss: 2.0880 (2.0995), Avg Acc: 0.5470
+2022-03-23 17:49:06,664 MASTER_LOG Epoch[003/090], Step[0280/0312], Lr: 1.854359e+00, Loss: 2.0344 (2.0961), Avg Acc: 0.5474
+2022-03-23 17:49:55,323 MASTER_LOG Epoch[003/090], Step[0300/0312], Lr: 1.895385e+00, Loss: 2.0421 (2.0943), Avg Acc: 0.5477
+2022-03-23 17:50:19,965 MASTER_LOG Epoch[003/090], Step[0311/0312], Lr: 1.911795e+00, Loss: 2.1169 (2.0920), Avg Acc: 0.5479
+2022-03-23 17:50:21,824 MASTER_LOG ----- Epoch[003/090], Lr: 1.911795e+00, time: 752.63Train Loss: 2.0920, Train Acc: 0.5479
+2022-03-23 17:50:21,824 MASTER_LOG ----- Validation after Epoch: 3
+2022-03-23 17:50:31,269 MASTER_LOG Step[0000/0013], Avg Loss: 1.3419, Avg Acc@1: 0.6663, Avg Acc@5: 0.8821
+2022-03-23 17:51:05,538 MASTER_LOG ----- Epoch[003/090], Validation Loss: 1.7411, Validation Acc@1: 0.5952, Validation Acc@5: 0.8243, time: 43.71
+2022-03-23 17:51:05,538 MASTER_LOG Train epoch 4. LR=1.911795e+00
+2022-03-23 17:51:13,044 MASTER_LOG Epoch[004/090], Step[0000/0312], Lr: 1.920000e+00, Loss: 2.0631 (2.0631), Avg Acc: 0.5610
+2022-03-23 17:52:02,762 MASTER_LOG Epoch[004/090], Step[0020/0312], Lr: 1.961026e+00, Loss: 1.9861 (2.0117), Avg Acc: 0.5606
+2022-03-23 17:52:50,620 MASTER_LOG Epoch[004/090], Step[0040/0312], Lr: 2.002051e+00, Loss: 2.0450 (2.0117), Avg Acc: 0.5607
+2022-03-23 17:53:36,868 MASTER_LOG Epoch[004/090], Step[0060/0312], Lr: 2.043077e+00, Loss: 2.0140 (2.0095), Avg Acc: 0.5615
+2022-03-23 17:54:23,936 MASTER_LOG Epoch[004/090], Step[0080/0312], Lr: 2.084103e+00, Loss: 2.0372 (2.0074), Avg Acc: 0.5618
+2022-03-23 17:55:12,399 MASTER_LOG Epoch[004/090], Step[0100/0312], Lr: 2.125128e+00, Loss: 1.9818 (2.0083), Avg Acc: 0.5613
+2022-03-23 17:55:58,946 MASTER_LOG Epoch[004/090], Step[0120/0312], Lr: 2.166154e+00, Loss: 1.9951 (2.0078), Avg Acc: 0.5612
+2022-03-23 17:56:46,416 MASTER_LOG Epoch[004/090], Step[0140/0312], Lr: 2.207179e+00, Loss: 2.0044 (2.0089), Avg Acc: 0.5608
+2022-03-23 17:57:33,428 MASTER_LOG Epoch[004/090], Step[0160/0312], Lr: 2.248205e+00, Loss: 2.0099 (2.0087), Avg Acc: 0.5608
+2022-03-23 17:58:20,428 MASTER_LOG Epoch[004/090], Step[0180/0312], Lr: 2.289231e+00, Loss: 2.0586 (2.0084), Avg Acc: 0.5606
+2022-03-23 17:59:07,997 MASTER_LOG Epoch[004/090], Step[0200/0312], Lr: 2.330256e+00, Loss: 2.0418 (2.0088), Avg Acc: 0.5607
+2022-03-23 17:59:55,232 MASTER_LOG Epoch[004/090], Step[0220/0312], Lr: 2.371282e+00, Loss: 1.9856 (2.0089), Avg Acc: 0.5605
+2022-03-23 18:00:42,545 MASTER_LOG Epoch[004/090], Step[0240/0312], Lr: 2.412308e+00, Loss: 1.9600 (2.0096), Avg Acc: 0.5602
+2022-03-23 18:01:29,816 MASTER_LOG Epoch[004/090], Step[0260/0312], Lr: 2.453333e+00, Loss: 2.0218 (2.0077), Avg Acc: 0.5604
+2022-03-23 18:02:16,909 MASTER_LOG Epoch[004/090], Step[0280/0312], Lr: 2.494359e+00, Loss: 1.9706 (2.0078), Avg Acc: 0.5604
+2022-03-23 18:03:03,939 MASTER_LOG Epoch[004/090], Step[0300/0312], Lr: 2.535385e+00, Loss: 2.0153 (2.0068), Avg Acc: 0.5605
+2022-03-23 18:03:28,744 MASTER_LOG Epoch[004/090], Step[0311/0312], Lr: 2.551795e+00, Loss: 2.0599 (2.0073), Avg Acc: 0.5604
+2022-03-23 18:03:30,373 MASTER_LOG ----- Epoch[004/090], Lr: 2.551795e+00, time: 744.83Train Loss: 2.0073, Train Acc: 0.5604
+2022-03-23 18:03:30,373 MASTER_LOG ----- Validation after Epoch: 4
+2022-03-23 18:03:40,089 MASTER_LOG Step[0000/0013], Avg Loss: 1.3449, Avg Acc@1: 0.6704, Avg Acc@5: 0.8762
+2022-03-23 18:04:14,236 MASTER_LOG ----- Epoch[004/090], Validation Loss: 1.6943, Validation Acc@1: 0.6047, Validation Acc@5: 0.8297, time: 43.86
+2022-03-23 18:04:14,236 MASTER_LOG Train epoch 5. LR=2.551795e+00
+2022-03-23 18:04:22,001 MASTER_LOG Epoch[005/090], Step[0000/0312], Lr: 2.560000e+00, Loss: 1.9499 (1.9499), Avg Acc: 0.5603
+2022-03-23 18:05:10,757 MASTER_LOG Epoch[005/090], Step[0020/0312], Lr: 2.601026e+00, Loss: 1.9676 (1.9491), Avg Acc: 0.5711
+2022-03-23 18:05:58,470 MASTER_LOG Epoch[005/090], Step[0040/0312], Lr: 2.642051e+00, Loss: 1.9360 (1.9537), Avg Acc: 0.5702
+2022-03-23 18:06:46,148 MASTER_LOG Epoch[005/090], Step[0060/0312], Lr: 2.683077e+00, Loss: 1.9794 (1.9533), Avg Acc: 0.5703
+2022-03-23 18:07:34,693 MASTER_LOG Epoch[005/090], Step[0080/0312], Lr: 2.724103e+00, Loss: 2.0194 (1.9603), Avg Acc: 0.5692
+2022-03-23 18:08:22,115 MASTER_LOG Epoch[005/090], Step[0100/0312], Lr: 2.765128e+00, Loss: 1.9801 (1.9642), Avg Acc: 0.5684
+2022-03-23 18:09:10,254 MASTER_LOG Epoch[005/090], Step[0120/0312], Lr: 2.806154e+00, Loss: 2.0328 (1.9661), Avg Acc: 0.5678
+2022-03-23 18:09:57,442 MASTER_LOG Epoch[005/090], Step[0140/0312], Lr: 2.847179e+00, Loss: 1.9159 (1.9655), Avg Acc: 0.5679
+2022-03-23 18:10:44,426 MASTER_LOG Epoch[005/090], Step[0160/0312], Lr: 2.888205e+00, Loss: 1.9509 (1.9667), Avg Acc: 0.5675
+2022-03-23 18:11:30,605 MASTER_LOG Epoch[005/090], Step[0180/0312], Lr: 2.929231e+00, Loss: 2.0758 (1.9692), Avg Acc: 0.5670
+2022-03-23 18:12:18,510 MASTER_LOG Epoch[005/090], Step[0200/0312], Lr: 2.970256e+00, Loss: 1.9531 (1.9691), Avg Acc: 0.5668
+2022-03-23 18:13:05,109 MASTER_LOG Epoch[005/090], Step[0220/0312], Lr: 3.011282e+00, Loss: 1.9572 (1.9695), Avg Acc: 0.5667
+2022-03-23 18:13:51,330 MASTER_LOG Epoch[005/090], Step[0240/0312], Lr: 3.052308e+00, Loss: 1.9586 (1.9719), Avg Acc: 0.5662
+2022-03-23 18:14:37,712 MASTER_LOG Epoch[005/090], Step[0260/0312], Lr: 3.093333e+00, Loss: 1.9429 (1.9727), Avg Acc: 0.5660
+2022-03-23 18:15:24,336 MASTER_LOG Epoch[005/090], Step[0280/0312], Lr: 3.134359e+00, Loss: 2.0274 (1.9741), Avg Acc: 0.5658
+2022-03-23 18:16:11,806 MASTER_LOG Epoch[005/090], Step[0300/0312], Lr: 3.175385e+00, Loss: 1.9580 (1.9742), Avg Acc: 0.5658
+2022-03-23 18:16:36,199 MASTER_LOG Epoch[005/090], Step[0311/0312], Lr: 3.191795e+00, Loss: 2.0199 (1.9751), Avg Acc: 0.5656
+2022-03-23 18:16:38,181 MASTER_LOG ----- Epoch[005/090], Lr: 3.191795e+00, time: 742.88Train Loss: 1.9751, Train Acc: 0.5656
+2022-03-23 18:16:38,181 MASTER_LOG ----- Validation after Epoch: 5
+2022-03-23 18:16:47,921 MASTER_LOG Step[0000/0013], Avg Loss: 1.3404, Avg Acc@1: 0.6614, Avg Acc@5: 0.8789
+2022-03-23 18:17:21,776 MASTER_LOG ----- Epoch[005/090], Validation Loss: 1.6810, Validation Acc@1: 0.6075, Validation Acc@5: 0.8324, time: 43.59
+2022-03-23 18:17:21,776 MASTER_LOG Train epoch 6. LR=3.191795e+00
+2022-03-23 18:17:28,904 MASTER_LOG Epoch[006/090], Step[0000/0312], Lr: 3.200000e+00, Loss: 2.0079 (2.0079), Avg Acc: 0.5610
+2022-03-23 18:18:17,204 MASTER_LOG Epoch[006/090], Step[0020/0312], Lr: 3.241026e+00, Loss: 1.8793 (1.9536), Avg Acc: 0.5699
+2022-03-23 18:19:05,063 MASTER_LOG Epoch[006/090], Step[0040/0312], Lr: 3.282051e+00, Loss: 1.9792 (1.9587), Avg Acc: 0.5686
+2022-03-23 18:19:54,814 MASTER_LOG Epoch[006/090], Step[0060/0312], Lr: 3.323077e+00, Loss: 1.9389 (1.9552), Avg Acc: 0.5688
+2022-03-23 18:20:43,388 MASTER_LOG Epoch[006/090], Step[0080/0312], Lr: 3.364103e+00, Loss: 1.9704 (1.9550), Avg Acc: 0.5692
+2022-03-23 18:21:31,471 MASTER_LOG Epoch[006/090], Step[0100/0312], Lr: 3.405128e+00, Loss: 1.9553 (1.9595), Avg Acc: 0.5681
+2022-03-23 18:22:19,837 MASTER_LOG Epoch[006/090], Step[0120/0312], Lr: 3.446154e+00, Loss: 2.0309 (1.9606), Avg Acc: 0.5682
+2022-03-23 18:23:08,896 MASTER_LOG Epoch[006/090], Step[0140/0312], Lr: 3.487179e+00, Loss: 1.8885 (1.9628), Avg Acc: 0.5678
+2022-03-23 18:23:57,965 MASTER_LOG Epoch[006/090], Step[0160/0312], Lr: 3.528205e+00, Loss: 1.9828 (1.9651), Avg Acc: 0.5676
+2022-03-23 18:24:46,842 MASTER_LOG Epoch[006/090], Step[0180/0312], Lr: 3.569231e+00, Loss: 1.9718 (1.9668), Avg Acc: 0.5674
+2022-03-23 18:25:37,370 MASTER_LOG Epoch[006/090], Step[0200/0312], Lr: 3.610256e+00, Loss: 1.9931 (1.9692), Avg Acc: 0.5671
+2022-03-23 18:26:26,272 MASTER_LOG Epoch[006/090], Step[0220/0312], Lr: 3.651282e+00, Loss: 1.9926 (1.9708), Avg Acc: 0.5667
+2022-03-23 18:27:14,380 MASTER_LOG Epoch[006/090], Step[0240/0312], Lr: 3.692308e+00, Loss: 1.9778 (1.9703), Avg Acc: 0.5667
+2022-03-23 18:28:02,335 MASTER_LOG Epoch[006/090], Step[0260/0312], Lr: 3.733333e+00, Loss: 1.9698 (1.9701), Avg Acc: 0.5669
+2022-03-23 18:28:49,586 MASTER_LOG Epoch[006/090], Step[0280/0312], Lr: 3.774359e+00, Loss: 2.0005 (1.9708), Avg Acc: 0.5668
+2022-03-23 18:29:37,070 MASTER_LOG Epoch[006/090], Step[0300/0312], Lr: 3.815385e+00, Loss: 1.9354 (1.9712), Avg Acc: 0.5668
+2022-03-23 18:30:05,555 MASTER_LOG Epoch[006/090], Step[0311/0312], Lr: 3.831795e+00, Loss: 1.9675 (1.9715), Avg Acc: 0.5667
+2022-03-23 18:30:08,052 MASTER_LOG ----- Epoch[006/090], Lr: 3.831795e+00, time: 766.27Train Loss: 1.9715, Train Acc: 0.5667
+2022-03-23 18:30:08,053 MASTER_LOG ----- Validation after Epoch: 6
+2022-03-23 18:30:17,520 MASTER_LOG Step[0000/0013], Avg Loss: 1.3391, Avg Acc@1: 0.6692, Avg Acc@5: 0.8872
+2022-03-23 18:30:52,336 MASTER_LOG ----- Epoch[006/090], Validation Loss: 1.6683, Validation Acc@1: 0.6104, Validation Acc@5: 0.8349, time: 44.28
+2022-03-23 18:30:52,337 MASTER_LOG Train epoch 7. LR=3.831795e+00
+2022-03-23 18:30:59,768 MASTER_LOG Epoch[007/090], Step[0000/0312], Lr: 3.840000e+00, Loss: 1.9089 (1.9089), Avg Acc: 0.5718
+2022-03-23 18:31:48,528 MASTER_LOG Epoch[007/090], Step[0020/0312], Lr: 3.881026e+00, Loss: 1.8937 (1.9345), Avg Acc: 0.5740
+2022-03-23 18:32:36,396 MASTER_LOG Epoch[007/090], Step[0040/0312], Lr: 3.922051e+00, Loss: 1.9312 (1.9355), Avg Acc: 0.5732
+2022-03-23 18:33:24,162 MASTER_LOG Epoch[007/090], Step[0060/0312], Lr: 3.963077e+00, Loss: 1.8898 (1.9373), Avg Acc: 0.5734
+2022-03-23 18:34:09,914 MASTER_LOG Epoch[007/090], Step[0080/0312], Lr: 4.004103e+00, Loss: 1.9330 (1.9451), Avg Acc: 0.5721
+2022-03-23 18:34:57,262 MASTER_LOG Epoch[007/090], Step[0100/0312], Lr: 4.045128e+00, Loss: 1.9476 (1.9478), Avg Acc: 0.5713
+2022-03-23 18:35:44,508 MASTER_LOG Epoch[007/090], Step[0120/0312], Lr: 4.086154e+00, Loss: 2.0406 (1.9505), Avg Acc: 0.5715
+2022-03-23 18:36:33,007 MASTER_LOG Epoch[007/090], Step[0140/0312], Lr: 4.127179e+00, Loss: 1.9690 (1.9527), Avg Acc: 0.5712
+2022-03-23 18:37:19,871 MASTER_LOG Epoch[007/090], Step[0160/0312], Lr: 4.168205e+00, Loss: 1.9940 (1.9568), Avg Acc: 0.5708
+2022-03-23 18:38:07,252 MASTER_LOG Epoch[007/090], Step[0180/0312], Lr: 4.209231e+00, Loss: 2.0022 (1.9591), Avg Acc: 0.5704
+2022-03-23 18:38:53,683 MASTER_LOG Epoch[007/090], Step[0200/0312], Lr: 4.250256e+00, Loss: 1.9668 (1.9613), Avg Acc: 0.5702
+2022-03-23 18:39:41,476 MASTER_LOG Epoch[007/090], Step[0220/0312], Lr: 4.291282e+00, Loss: 1.9307 (1.9622), Avg Acc: 0.5700
+2022-03-23 18:40:28,089 MASTER_LOG Epoch[007/090], Step[0240/0312], Lr: 4.332308e+00, Loss: 1.9802 (1.9629), Avg Acc: 0.5700
+2022-03-23 18:41:15,803 MASTER_LOG Epoch[007/090], Step[0260/0312], Lr: 4.373333e+00, Loss: 1.9879 (1.9639), Avg Acc: 0.5699
+2022-03-23 18:42:02,967 MASTER_LOG Epoch[007/090], Step[0280/0312], Lr: 4.414359e+00, Loss: 1.9997 (1.9647), Avg Acc: 0.5698
+2022-03-23 18:42:50,373 MASTER_LOG Epoch[007/090], Step[0300/0312], Lr: 4.455385e+00, Loss: 2.0135 (1.9663), Avg Acc: 0.5695
+2022-03-23 18:43:17,468 MASTER_LOG Epoch[007/090], Step[0311/0312], Lr: 4.471795e+00, Loss: 2.0479 (1.9670), Avg Acc: 0.5694
+2022-03-23 18:43:18,985 MASTER_LOG ----- Epoch[007/090], Lr: 4.471795e+00, time: 746.64Train Loss: 1.9670, Train Acc: 0.5694
+2022-03-23 18:43:18,985 MASTER_LOG ----- Validation after Epoch: 7
+2022-03-23 18:43:28,981 MASTER_LOG Step[0000/0013], Avg Loss: 1.3498, Avg Acc@1: 0.6665, Avg Acc@5: 0.8889
+2022-03-23 18:44:03,968 MASTER_LOG ----- Epoch[007/090], Validation Loss: 1.6847, Validation Acc@1: 0.6066, Validation Acc@5: 0.8333, time: 44.98
+2022-03-23 18:44:03,968 MASTER_LOG Train epoch 8. LR=4.471795e+00
+2022-03-23 18:44:11,385 MASTER_LOG Epoch[008/090], Step[0000/0312], Lr: 4.480000e+00, Loss: 1.9220 (1.9220), Avg Acc: 0.5820
+2022-03-23 18:44:59,945 MASTER_LOG Epoch[008/090], Step[0020/0312], Lr: 4.521026e+00, Loss: 1.9748 (1.9283), Avg Acc: 0.5739
+2022-03-23 18:45:48,443 MASTER_LOG Epoch[008/090], Step[0040/0312], Lr: 4.562051e+00, Loss: 1.9922 (1.9349), Avg Acc: 0.5727
+2022-03-23 18:46:35,541 MASTER_LOG Epoch[008/090], Step[0060/0312], Lr: 4.603077e+00, Loss: 1.9987 (1.9347), Avg Acc: 0.5731
+2022-03-23 18:47:23,778 MASTER_LOG Epoch[008/090], Step[0080/0312], Lr: 4.644103e+00, Loss: 1.9517 (1.9415), Avg Acc: 0.5728
+2022-03-23 18:48:11,672 MASTER_LOG Epoch[008/090], Step[0100/0312], Lr: 4.685128e+00, Loss: 2.1101 (1.9485), Avg Acc: 0.5719
+2022-03-23 18:48:59,875 MASTER_LOG Epoch[008/090], Step[0120/0312], Lr: 4.726154e+00, Loss: 1.9832 (1.9521), Avg Acc: 0.5718
+2022-03-23 18:49:48,702 MASTER_LOG Epoch[008/090], Step[0140/0312], Lr: 4.767179e+00, Loss: 2.0436 (1.9555), Avg Acc: 0.5712
+2022-03-23 18:50:37,095 MASTER_LOG Epoch[008/090], Step[0160/0312], Lr: 4.808205e+00, Loss: 1.8981 (1.9567), Avg Acc: 0.5712
+2022-03-23 18:51:24,224 MASTER_LOG Epoch[008/090], Step[0180/0312], Lr: 4.849231e+00, Loss: 1.9244 (1.9586), Avg Acc: 0.5710
+2022-03-23 18:52:12,147 MASTER_LOG Epoch[008/090], Step[0200/0312], Lr: 4.890256e+00, Loss: 1.9776 (1.9617), Avg Acc: 0.5706
+2022-03-23 18:52:59,311 MASTER_LOG Epoch[008/090], Step[0220/0312], Lr: 4.931282e+00, Loss: 1.9353 (1.9608), Avg Acc: 0.5708
+2022-03-23 18:53:46,599 MASTER_LOG Epoch[008/090], Step[0240/0312], Lr: 4.972308e+00, Loss: 1.9873 (1.9621), Avg Acc: 0.5705
+2022-03-23 18:54:34,561 MASTER_LOG Epoch[008/090], Step[0260/0312], Lr: 5.013333e+00, Loss: 2.0346 (1.9646), Avg Acc: 0.5702
+2022-03-23 18:55:22,271 MASTER_LOG Epoch[008/090], Step[0280/0312], Lr: 5.054359e+00, Loss: 1.9937 (1.9652), Avg Acc: 0.5700
+2022-03-23 18:56:10,719 MASTER_LOG Epoch[008/090], Step[0300/0312], Lr: 5.095385e+00, Loss: 2.0392 (1.9672), Avg Acc: 0.5698
+2022-03-23 18:56:38,115 MASTER_LOG Epoch[008/090], Step[0311/0312], Lr: 5.111795e+00, Loss: 1.8997 (1.9679), Avg Acc: 0.5697
+2022-03-23 18:56:41,882 MASTER_LOG ----- Epoch[008/090], Lr: 5.111795e+00, time: 757.85Train Loss: 1.9679, Train Acc: 0.5697
+2022-03-23 18:56:41,882 MASTER_LOG ----- Validation after Epoch: 8
+2022-03-23 18:56:51,498 MASTER_LOG Step[0000/0013], Avg Loss: 1.3126, Avg Acc@1: 0.6804, Avg Acc@5: 0.8872
+2022-03-23 18:57:27,581 MASTER_LOG ----- Epoch[008/090], Validation Loss: 1.6786, Validation Acc@1: 0.6125, Validation Acc@5: 0.8323, time: 45.70
+2022-03-23 18:57:27,581 MASTER_LOG Train epoch 9. LR=5.111795e+00
+2022-03-23 18:57:35,489 MASTER_LOG Epoch[009/090], Step[0000/0312], Lr: 5.120000e+00, Loss: 1.9738 (1.9738), Avg Acc: 0.5681
+2022-03-23 18:58:27,152 MASTER_LOG Epoch[009/090], Step[0020/0312], Lr: 5.161026e+00, Loss: 1.9118 (1.9394), Avg Acc: 0.5739
+2022-03-23 18:59:13,955 MASTER_LOG Epoch[009/090], Step[0040/0312], Lr: 5.202051e+00, Loss: 2.0332 (1.9442), Avg Acc: 0.5736
+2022-03-23 19:00:02,020 MASTER_LOG Epoch[009/090], Step[0060/0312], Lr: 5.243077e+00, Loss: 2.0133 (1.9440), Avg Acc: 0.5740
+2022-03-23 19:00:50,401 MASTER_LOG Epoch[009/090], Step[0080/0312], Lr: 5.284103e+00, Loss: 1.9586 (1.9533), Avg Acc: 0.5724
+2022-03-23 19:01:39,198 MASTER_LOG Epoch[009/090], Step[0100/0312], Lr: 5.325128e+00, Loss: 1.9244 (1.9562), Avg Acc: 0.5715
+2022-03-23 19:02:28,136 MASTER_LOG Epoch[009/090], Step[0120/0312], Lr: 5.366154e+00, Loss: 2.0224 (1.9611), Avg Acc: 0.5710
+2022-03-23 19:03:15,876 MASTER_LOG Epoch[009/090], Step[0140/0312], Lr: 5.407179e+00, Loss: 2.0974 (1.9666), Avg Acc: 0.5703
+2022-03-23 19:04:03,379 MASTER_LOG Epoch[009/090], Step[0160/0312], Lr: 5.448205e+00, Loss: 1.9680 (1.9666), Avg Acc: 0.5703
+2022-03-23 19:04:51,355 MASTER_LOG Epoch[009/090], Step[0180/0312], Lr: 5.489231e+00, Loss: 2.0121 (1.9676), Avg Acc: 0.5698
+2022-03-23 19:05:39,381 MASTER_LOG Epoch[009/090], Step[0200/0312], Lr: 5.530256e+00, Loss: 1.9885 (1.9704), Avg Acc: 0.5697
+2022-03-23 19:06:28,503 MASTER_LOG Epoch[009/090], Step[0220/0312], Lr: 5.571282e+00, Loss: 1.9638 (1.9721), Avg Acc: 0.5694
+2022-03-23 19:07:16,995 MASTER_LOG Epoch[009/090], Step[0240/0312], Lr: 5.612308e+00, Loss: 1.9483 (1.9715), Avg Acc: 0.5696
+2022-03-23 19:08:05,370 MASTER_LOG Epoch[009/090], Step[0260/0312], Lr: 5.653333e+00, Loss: 2.0017 (1.9725), Avg Acc: 0.5696
+2022-03-23 19:08:53,746 MASTER_LOG Epoch[009/090], Step[0280/0312], Lr: 5.694359e+00, Loss: 1.9450 (1.9744), Avg Acc: 0.5694
+2022-03-23 19:09:41,127 MASTER_LOG Epoch[009/090], Step[0300/0312], Lr: 5.735385e+00, Loss: 1.9227 (1.9739), Avg Acc: 0.5696
+2022-03-23 19:10:05,862 MASTER_LOG Epoch[009/090], Step[0311/0312], Lr: 5.751795e+00, Loss: 2.0063 (1.9745), Avg Acc: 0.5696
+2022-03-23 19:10:08,932 MASTER_LOG ----- Epoch[009/090], Lr: 5.751795e+00, time: 761.35Train Loss: 1.9745, Train Acc: 0.5696
+2022-03-23 19:10:08,932 MASTER_LOG ----- Validation after Epoch: 9
+2022-03-23 19:10:18,322 MASTER_LOG Step[0000/0013], Avg Loss: 1.3230, Avg Acc@1: 0.6697, Avg Acc@5: 0.8926
+2022-03-23 19:10:54,339 MASTER_LOG ----- Epoch[009/090], Validation Loss: 1.6816, Validation Acc@1: 0.6104, Validation Acc@5: 0.8350, time: 45.40
+2022-03-23 19:10:54,339 MASTER_LOG Train epoch 10. LR=5.751795e+00
+2022-03-23 19:11:02,176 MASTER_LOG Epoch[010/090], Step[0000/0312], Lr: 5.760000e+00, Loss: 1.9811 (1.9811), Avg Acc: 0.5703
+2022-03-23 19:11:51,349 MASTER_LOG Epoch[010/090], Step[0020/0312], Lr: 5.801026e+00, Loss: 1.9588 (1.9405), Avg Acc: 0.5732
+2022-03-23 19:12:39,033 MASTER_LOG Epoch[010/090], Step[0040/0312], Lr: 5.842051e+00, Loss: 2.0036 (1.9439), Avg Acc: 0.5741
+2022-03-23 19:13:26,987 MASTER_LOG Epoch[010/090], Step[0060/0312], Lr: 5.883077e+00, Loss: 1.9953 (1.9462), Avg Acc: 0.5749
+2022-03-23 19:14:14,383 MASTER_LOG Epoch[010/090], Step[0080/0312], Lr: 5.924103e+00, Loss: 1.9743 (1.9489), Avg Acc: 0.5744
+2022-03-23 19:15:02,268 MASTER_LOG Epoch[010/090], Step[0100/0312], Lr: 5.965128e+00, Loss: 2.0248 (1.9540), Avg Acc: 0.5736
+2022-03-23 19:15:50,736 MASTER_LOG Epoch[010/090], Step[0120/0312], Lr: 6.006154e+00, Loss: 2.0233 (1.9591), Avg Acc: 0.5728
+2022-03-23 19:16:38,736 MASTER_LOG Epoch[010/090], Step[0140/0312], Lr: 6.047179e+00, Loss: 1.9522 (1.9606), Avg Acc: 0.5723
+2022-03-23 19:17:26,780 MASTER_LOG Epoch[010/090], Step[0160/0312], Lr: 6.088205e+00, Loss: 1.9826 (1.9628), Avg Acc: 0.5717
+2022-03-23 19:18:13,751 MASTER_LOG Epoch[010/090], Step[0180/0312], Lr: 6.129231e+00, Loss: 1.8861 (1.9641), Avg Acc: 0.5714
+2022-03-23 19:19:01,280 MASTER_LOG Epoch[010/090], Step[0200/0312], Lr: 6.170256e+00, Loss: 2.1194 (1.9655), Avg Acc: 0.5711
+2022-03-23 19:19:49,253 MASTER_LOG Epoch[010/090], Step[0220/0312], Lr: 6.211282e+00, Loss: 2.0323 (1.9679), Avg Acc: 0.5709
+2022-03-23 19:20:37,390 MASTER_LOG Epoch[010/090], Step[0240/0312], Lr: 6.252308e+00, Loss: 2.0445 (1.9692), Avg Acc: 0.5708
+2022-03-23 19:21:25,783 MASTER_LOG Epoch[010/090], Step[0260/0312], Lr: 6.293333e+00, Loss: 1.9631 (1.9703), Avg Acc: 0.5706
+2022-03-23 19:22:14,360 MASTER_LOG Epoch[010/090], Step[0280/0312], Lr: 6.334359e+00, Loss: 1.9837 (1.9719), Avg Acc: 0.5702
+2022-03-23 19:23:01,660 MASTER_LOG Epoch[010/090], Step[0300/0312], Lr: 6.375385e+00, Loss: 1.9544 (1.9737), Avg Acc: 0.5700
+2022-03-23 19:23:25,722 MASTER_LOG Epoch[010/090], Step[0311/0312], Lr: 6.391795e+00, Loss: 2.0441 (1.9748), Avg Acc: 0.5699
+2022-03-23 19:23:27,854 MASTER_LOG ----- Epoch[010/090], Lr: 6.391795e+00, time: 752.45Train Loss: 1.9748, Train Acc: 0.5699
+2022-03-23 19:23:27,854 MASTER_LOG ----- Validation after Epoch: 10
+2022-03-23 19:23:37,539 MASTER_LOG Step[0000/0013], Avg Loss: 1.3566, Avg Acc@1: 0.6753, Avg Acc@5: 0.8889
+2022-03-23 19:24:12,907 MASTER_LOG ----- Epoch[010/090], Validation Loss: 1.6874, Validation Acc@1: 0.6084, Validation Acc@5: 0.8349, time: 45.05
+2022-03-23 19:24:13,842 MASTER_LOG ----- Save model: ./output/linearprobe-20220323-17-11/LINEARPROBE-Epoch-10-Loss-1.6873605159378051.pdparams
+2022-03-23 19:24:13,842 MASTER_LOG Train epoch 11. LR=6.391795e+00
+2022-03-23 19:24:20,976 MASTER_LOG Epoch[011/090], Step[0000/0312], Lr: 6.400000e+00, Loss: 1.9267 (1.9267), Avg Acc: 0.5764
+2022-03-23 19:25:08,853 MASTER_LOG Epoch[011/090], Step[0020/0312], Lr: 6.399990e+00, Loss: 1.9046 (1.9351), Avg Acc: 0.5773
+2022-03-23 19:25:56,867 MASTER_LOG Epoch[011/090], Step[0040/0312], Lr: 6.399959e+00, Loss: 1.9576 (1.9370), Avg Acc: 0.5764
+2022-03-23 19:26:43,725 MASTER_LOG Epoch[011/090], Step[0060/0312], Lr: 6.399909e+00, Loss: 1.9133 (1.9371), Avg Acc: 0.5763
+2022-03-23 19:27:31,782 MASTER_LOG Epoch[011/090], Step[0080/0312], Lr: 6.399838e+00, Loss: 1.9721 (1.9435), Avg Acc: 0.5754
+2022-03-23 19:28:19,758 MASTER_LOG Epoch[011/090], Step[0100/0312], Lr: 6.399747e+00, Loss: 1.9133 (1.9431), Avg Acc: 0.5755
+2022-03-23 19:29:07,513 MASTER_LOG Epoch[011/090], Step[0120/0312], Lr: 6.399635e+00, Loss: 1.9686 (1.9452), Avg Acc: 0.5750
+2022-03-23 19:29:53,615 MASTER_LOG Epoch[011/090], Step[0140/0312], Lr: 6.399503e+00, Loss: 1.9385 (1.9446), Avg Acc: 0.5749
+2022-03-23 19:30:42,881 MASTER_LOG Epoch[011/090], Step[0160/0312], Lr: 6.399351e+00, Loss: 1.9348 (1.9454), Avg Acc: 0.5748
+2022-03-23 19:31:29,793 MASTER_LOG Epoch[011/090], Step[0180/0312], Lr: 6.399179e+00, Loss: 1.9315 (1.9463), Avg Acc: 0.5744
+2022-03-23 19:32:16,837 MASTER_LOG Epoch[011/090], Step[0200/0312], Lr: 6.398986e+00, Loss: 1.9348 (1.9478), Avg Acc: 0.5743
+2022-03-23 19:33:04,313 MASTER_LOG Epoch[011/090], Step[0220/0312], Lr: 6.398773e+00, Loss: 1.9564 (1.9496), Avg Acc: 0.5740
+2022-03-23 19:33:52,415 MASTER_LOG Epoch[011/090], Step[0240/0312], Lr: 6.398540e+00, Loss: 1.9416 (1.9496), Avg Acc: 0.5738
+2022-03-23 19:34:39,618 MASTER_LOG Epoch[011/090], Step[0260/0312], Lr: 6.398287e+00, Loss: 1.9005 (1.9498), Avg Acc: 0.5739
+2022-03-23 19:35:27,701 MASTER_LOG Epoch[011/090], Step[0280/0312], Lr: 6.398013e+00, Loss: 1.8958 (1.9496), Avg Acc: 0.5739
+2022-03-23 19:36:15,086 MASTER_LOG Epoch[011/090], Step[0300/0312], Lr: 6.397719e+00, Loss: 1.8763 (1.9488), Avg Acc: 0.5741
+2022-03-23 19:36:42,982 MASTER_LOG Epoch[011/090], Step[0311/0312], Lr: 6.397596e+00, Loss: 1.9948 (1.9486), Avg Acc: 0.5741
+2022-03-23 19:36:44,986 MASTER_LOG ----- Epoch[011/090], Lr: 6.397596e+00, time: 750.56Train Loss: 1.9486, Train Acc: 0.5741
+2022-03-23 19:36:44,986 MASTER_LOG ----- Validation after Epoch: 11
+2022-03-23 19:36:54,640 MASTER_LOG Step[0000/0013], Avg Loss: 1.2828, Avg Acc@1: 0.6833, Avg Acc@5: 0.8860
+2022-03-23 19:37:29,323 MASTER_LOG ----- Epoch[011/090], Validation Loss: 1.6456, Validation Acc@1: 0.6165, Validation Acc@5: 0.8388, time: 44.33
+2022-03-23 19:37:29,324 MASTER_LOG Train epoch 12. LR=6.397596e+00
+2022-03-23 19:37:37,268 MASTER_LOG Epoch[012/090], Step[0000/0312], Lr: 6.397533e+00, Loss: 1.8674 (1.8674), Avg Acc: 0.5964
+2022-03-23 19:38:27,243 MASTER_LOG Epoch[012/090], Step[0020/0312], Lr: 6.397207e+00, Loss: 1.9347 (1.8849), Avg Acc: 0.5854
+2022-03-23 19:39:15,060 MASTER_LOG Epoch[012/090], Step[0040/0312], Lr: 6.396860e+00, Loss: 1.8737 (1.8910), Avg Acc: 0.5832
+2022-03-23 19:40:02,443 MASTER_LOG Epoch[012/090], Step[0060/0312], Lr: 6.396493e+00, Loss: 1.9122 (1.8962), Avg Acc: 0.5830
+2022-03-23 19:40:51,822 MASTER_LOG Epoch[012/090], Step[0080/0312], Lr: 6.396106e+00, Loss: 1.9316 (1.8928), Avg Acc: 0.5835
+2022-03-23 19:41:40,699 MASTER_LOG Epoch[012/090], Step[0100/0312], Lr: 6.395698e+00, Loss: 1.8575 (1.8982), Avg Acc: 0.5827
+2022-03-23 19:42:28,459 MASTER_LOG Epoch[012/090], Step[0120/0312], Lr: 6.395271e+00, Loss: 1.8704 (1.9004), Avg Acc: 0.5824
+2022-03-23 19:43:17,128 MASTER_LOG Epoch[012/090], Step[0140/0312], Lr: 6.394823e+00, Loss: 1.9260 (1.9033), Avg Acc: 0.5820
+2022-03-23 19:44:04,466 MASTER_LOG Epoch[012/090], Step[0160/0312], Lr: 6.394355e+00, Loss: 1.9274 (1.9040), Avg Acc: 0.5818
+2022-03-23 19:44:51,942 MASTER_LOG Epoch[012/090], Step[0180/0312], Lr: 6.393866e+00, Loss: 1.9152 (1.9079), Avg Acc: 0.5811
+2022-03-23 19:45:39,109 MASTER_LOG Epoch[012/090], Step[0200/0312], Lr: 6.393358e+00, Loss: 1.8977 (1.9091), Avg Acc: 0.5808
+2022-03-23 19:46:25,603 MASTER_LOG Epoch[012/090], Step[0220/0312], Lr: 6.392829e+00, Loss: 1.9236 (1.9088), Avg Acc: 0.5805
+2022-03-23 19:47:13,484 MASTER_LOG Epoch[012/090], Step[0240/0312], Lr: 6.392280e+00, Loss: 1.9516 (1.9102), Avg Acc: 0.5803
+2022-03-23 19:48:00,756 MASTER_LOG Epoch[012/090], Step[0260/0312], Lr: 6.391710e+00, Loss: 1.9077 (1.9103), Avg Acc: 0.5802
+2022-03-23 19:48:47,520 MASTER_LOG Epoch[012/090], Step[0280/0312], Lr: 6.391121e+00, Loss: 1.9250 (1.9102), Avg Acc: 0.5804
+2022-03-23 19:49:34,054 MASTER_LOG Epoch[012/090], Step[0300/0312], Lr: 6.390511e+00, Loss: 1.9672 (1.9114), Avg Acc: 0.5802
+2022-03-23 19:50:00,740 MASTER_LOG Epoch[012/090], Step[0311/0312], Lr: 6.390261e+00, Loss: 1.9579 (1.9118), Avg Acc: 0.5802
+2022-03-23 19:50:03,042 MASTER_LOG ----- Epoch[012/090], Lr: 6.390261e+00, time: 753.65Train Loss: 1.9118, Train Acc: 0.5802
+2022-03-23 19:50:03,042 MASTER_LOG ----- Validation after Epoch: 12
+2022-03-23 19:50:12,547 MASTER_LOG Step[0000/0013], Avg Loss: 1.2312, Avg Acc@1: 0.6909, Avg Acc@5: 0.8936
+2022-03-23 19:50:48,825 MASTER_LOG ----- Epoch[012/090], Validation Loss: 1.6169, Validation Acc@1: 0.6248, Validation Acc@5: 0.8394, time: 45.78
+2022-03-23 19:50:48,825 MASTER_LOG Train epoch 13. LR=6.390261e+00
+2022-03-23 19:50:56,169 MASTER_LOG Epoch[013/090], Step[0000/0312], Lr: 6.390135e+00, Loss: 1.7806 (1.7806), Avg Acc: 0.6003
+2022-03-23 19:51:45,457 MASTER_LOG Epoch[013/090], Step[0020/0312], Lr: 6.389493e+00, Loss: 1.8600 (1.8455), Avg Acc: 0.5917
+2022-03-23 19:52:32,690 MASTER_LOG Epoch[013/090], Step[0040/0312], Lr: 6.388831e+00, Loss: 1.8242 (1.8494), Avg Acc: 0.5902
+2022-03-23 19:53:20,785 MASTER_LOG Epoch[013/090], Step[0060/0312], Lr: 6.388148e+00, Loss: 1.8588 (1.8594), Avg Acc: 0.5881
+2022-03-23 19:54:08,357 MASTER_LOG Epoch[013/090], Step[0080/0312], Lr: 6.387446e+00, Loss: 1.8359 (1.8626), Avg Acc: 0.5879
+2022-03-23 19:54:56,150 MASTER_LOG Epoch[013/090], Step[0100/0312], Lr: 6.386723e+00, Loss: 1.8936 (1.8641), Avg Acc: 0.5880
+2022-03-23 19:55:43,479 MASTER_LOG Epoch[013/090], Step[0120/0312], Lr: 6.385980e+00, Loss: 1.8148 (1.8665), Avg Acc: 0.5879
+2022-03-23 19:56:31,705 MASTER_LOG Epoch[013/090], Step[0140/0312], Lr: 6.385216e+00, Loss: 1.9487 (1.8713), Avg Acc: 0.5869
+2022-03-23 19:57:19,358 MASTER_LOG Epoch[013/090], Step[0160/0312], Lr: 6.384433e+00, Loss: 1.8823 (1.8735), Avg Acc: 0.5864
+2022-03-23 19:58:07,391 MASTER_LOG Epoch[013/090], Step[0180/0312], Lr: 6.383629e+00, Loss: 1.7822 (1.8740), Avg Acc: 0.5863
+2022-03-23 19:58:54,818 MASTER_LOG Epoch[013/090], Step[0200/0312], Lr: 6.382805e+00, Loss: 1.8696 (1.8754), Avg Acc: 0.5858
+2022-03-23 19:59:42,340 MASTER_LOG Epoch[013/090], Step[0220/0312], Lr: 6.381961e+00, Loss: 1.9471 (1.8769), Avg Acc: 0.5856
+2022-03-23 20:00:29,417 MASTER_LOG Epoch[013/090], Step[0240/0312], Lr: 6.381097e+00, Loss: 1.8829 (1.8777), Avg Acc: 0.5854
+2022-03-23 20:01:16,663 MASTER_LOG Epoch[013/090], Step[0260/0312], Lr: 6.380213e+00, Loss: 1.8602 (1.8775), Avg Acc: 0.5855
+2022-03-23 20:02:04,954 MASTER_LOG Epoch[013/090], Step[0280/0312], Lr: 6.379308e+00, Loss: 1.8996 (1.8776), Avg Acc: 0.5856
+2022-03-23 20:02:52,912 MASTER_LOG Epoch[013/090], Step[0300/0312], Lr: 6.378384e+00, Loss: 1.8973 (1.8777), Avg Acc: 0.5856
+2022-03-23 20:03:18,219 MASTER_LOG Epoch[013/090], Step[0311/0312], Lr: 6.378008e+00, Loss: 1.8635 (1.8773), Avg Acc: 0.5856
+2022-03-23 20:03:20,292 MASTER_LOG ----- Epoch[013/090], Lr: 6.378008e+00, time: 751.46Train Loss: 1.8773, Train Acc: 0.5856
+2022-03-23 20:03:20,292 MASTER_LOG ----- Validation after Epoch: 13
+2022-03-23 20:03:30,029 MASTER_LOG Step[0000/0013], Avg Loss: 1.2380, Avg Acc@1: 0.6953, Avg Acc@5: 0.8962
+2022-03-23 20:04:04,209 MASTER_LOG ----- Epoch[013/090], Validation Loss: 1.5961, Validation Acc@1: 0.6255, Validation Acc@5: 0.8436, time: 43.91
+2022-03-23 20:04:04,210 MASTER_LOG Train epoch 14. LR=6.378008e+00
+2022-03-23 20:04:11,970 MASTER_LOG Epoch[014/090], Step[0000/0312], Lr: 6.377819e+00, Loss: 1.8118 (1.8118), Avg Acc: 0.5911
+2022-03-23 20:05:01,565 MASTER_LOG Epoch[014/090], Step[0020/0312], Lr: 6.376862e+00, Loss: 1.7704 (1.8262), Avg Acc: 0.5940
+2022-03-23 20:05:50,357 MASTER_LOG Epoch[014/090], Step[0040/0312], Lr: 6.375885e+00, Loss: 1.8377 (1.8226), Avg Acc: 0.5945
+2022-03-23 20:06:38,567 MASTER_LOG Epoch[014/090], Step[0060/0312], Lr: 6.374888e+00, Loss: 1.8551 (1.8296), Avg Acc: 0.5933
+2022-03-23 20:07:26,638 MASTER_LOG Epoch[014/090], Step[0080/0312], Lr: 6.373871e+00, Loss: 1.9680 (1.8363), Avg Acc: 0.5927
+2022-03-23 20:08:13,843 MASTER_LOG Epoch[014/090], Step[0100/0312], Lr: 6.372833e+00, Loss: 1.8188 (1.8341), Avg Acc: 0.5931
+2022-03-23 20:09:02,356 MASTER_LOG Epoch[014/090], Step[0120/0312], Lr: 6.371776e+00, Loss: 1.7792 (1.8363), Avg Acc: 0.5931
+2022-03-23 20:09:50,217 MASTER_LOG Epoch[014/090], Step[0140/0312], Lr: 6.370698e+00, Loss: 1.9810 (1.8397), Avg Acc: 0.5925
+2022-03-23 20:10:37,390 MASTER_LOG Epoch[014/090], Step[0160/0312], Lr: 6.369601e+00, Loss: 1.8568 (1.8431), Avg Acc: 0.5918
+2022-03-23 20:11:24,613 MASTER_LOG Epoch[014/090], Step[0180/0312], Lr: 6.368483e+00, Loss: 1.7800 (1.8441), Avg Acc: 0.5917
+2022-03-23 20:12:11,954 MASTER_LOG Epoch[014/090], Step[0200/0312], Lr: 6.367345e+00, Loss: 1.9335 (1.8458), Avg Acc: 0.5915
+2022-03-23 20:13:01,049 MASTER_LOG Epoch[014/090], Step[0220/0312], Lr: 6.366187e+00, Loss: 1.9046 (1.8477), Avg Acc: 0.5911
+2022-03-23 20:13:49,727 MASTER_LOG Epoch[014/090], Step[0240/0312], Lr: 6.365009e+00, Loss: 1.8469 (1.8478), Avg Acc: 0.5911
+2022-03-23 20:14:37,162 MASTER_LOG Epoch[014/090], Step[0260/0312], Lr: 6.363811e+00, Loss: 1.8067 (1.8487), Avg Acc: 0.5909
+2022-03-23 20:15:25,063 MASTER_LOG Epoch[014/090], Step[0280/0312], Lr: 6.362593e+00, Loss: 1.8619 (1.8498), Avg Acc: 0.5907
+2022-03-23 20:16:13,612 MASTER_LOG Epoch[014/090], Step[0300/0312], Lr: 6.361355e+00, Loss: 1.8062 (1.8506), Avg Acc: 0.5905
+2022-03-23 20:16:37,833 MASTER_LOG Epoch[014/090], Step[0311/0312], Lr: 6.360854e+00, Loss: 1.8878 (1.8512), Avg Acc: 0.5905
+2022-03-23 20:16:40,197 MASTER_LOG ----- Epoch[014/090], Lr: 6.360854e+00, time: 755.96Train Loss: 1.8512, Train Acc: 0.5905
+2022-03-23 20:16:40,197 MASTER_LOG ----- Validation after Epoch: 14
+2022-03-23 20:16:49,756 MASTER_LOG Step[0000/0013], Avg Loss: 1.2487, Avg Acc@1: 0.6885, Avg Acc@5: 0.8977
+2022-03-23 20:17:25,390 MASTER_LOG ----- Epoch[014/090], Validation Loss: 1.5789, Validation Acc@1: 0.6288, Validation Acc@5: 0.8470, time: 45.19
+2022-03-23 20:17:25,390 MASTER_LOG Train epoch 15. LR=6.360854e+00
+2022-03-23 20:17:33,369 MASTER_LOG Epoch[015/090], Step[0000/0312], Lr: 6.360603e+00, Loss: 1.7248 (1.7248), Avg Acc: 0.6096
+2022-03-23 20:18:23,044 MASTER_LOG Epoch[015/090], Step[0020/0312], Lr: 6.359333e+00, Loss: 1.8203 (1.8114), Avg Acc: 0.5978
+2022-03-23 20:19:11,393 MASTER_LOG Epoch[015/090], Step[0040/0312], Lr: 6.358042e+00, Loss: 1.7478 (1.8130), Avg Acc: 0.5982
+2022-03-23 20:20:00,206 MASTER_LOG Epoch[015/090], Step[0060/0312], Lr: 6.356732e+00, Loss: 1.7485 (1.8148), Avg Acc: 0.5973
+2022-03-23 20:20:48,498 MASTER_LOG Epoch[015/090], Step[0080/0312], Lr: 6.355402e+00, Loss: 1.7948 (1.8200), Avg Acc: 0.5963
+2022-03-23 20:21:35,331 MASTER_LOG Epoch[015/090], Step[0100/0312], Lr: 6.354052e+00, Loss: 1.8764 (1.8213), Avg Acc: 0.5960
+2022-03-23 20:22:22,198 MASTER_LOG Epoch[015/090], Step[0120/0312], Lr: 6.352682e+00, Loss: 1.8772 (1.8229), Avg Acc: 0.5954
+2022-03-23 20:23:10,600 MASTER_LOG Epoch[015/090], Step[0140/0312], Lr: 6.351292e+00, Loss: 1.8091 (1.8223), Avg Acc: 0.5958
+2022-03-23 20:23:59,499 MASTER_LOG Epoch[015/090], Step[0160/0312], Lr: 6.349881e+00, Loss: 1.8063 (1.8241), Avg Acc: 0.5954
+2022-03-23 20:24:46,609 MASTER_LOG Epoch[015/090], Step[0180/0312], Lr: 6.348451e+00, Loss: 1.7346 (1.8246), Avg Acc: 0.5954
+2022-03-23 20:25:34,258 MASTER_LOG Epoch[015/090], Step[0200/0312], Lr: 6.347001e+00, Loss: 1.7634 (1.8258), Avg Acc: 0.5953
+2022-03-23 20:26:20,518 MASTER_LOG Epoch[015/090], Step[0220/0312], Lr: 6.345531e+00, Loss: 1.8289 (1.8274), Avg Acc: 0.5949
+2022-03-23 20:27:08,007 MASTER_LOG Epoch[015/090], Step[0240/0312], Lr: 6.344041e+00, Loss: 1.8394 (1.8277), Avg Acc: 0.5950
+2022-03-23 20:27:55,874 MASTER_LOG Epoch[015/090], Step[0260/0312], Lr: 6.342532e+00, Loss: 1.9220 (1.8296), Avg Acc: 0.5945
+2022-03-23 20:28:45,421 MASTER_LOG Epoch[015/090], Step[0280/0312], Lr: 6.341002e+00, Loss: 1.8444 (1.8295), Avg Acc: 0.5944
+2022-03-23 20:29:33,499 MASTER_LOG Epoch[015/090], Step[0300/0312], Lr: 6.339452e+00, Loss: 1.7443 (1.8306), Avg Acc: 0.5941
+2022-03-23 20:29:57,476 MASTER_LOG Epoch[015/090], Step[0311/0312], Lr: 6.338827e+00, Loss: 1.8068 (1.8311), Avg Acc: 0.5940
+2022-03-23 20:30:00,079 MASTER_LOG ----- Epoch[015/090], Lr: 6.338827e+00, time: 754.62Train Loss: 1.8311, Train Acc: 0.5940
+2022-03-23 20:30:00,079 MASTER_LOG ----- Validation after Epoch: 15
+2022-03-23 20:30:09,703 MASTER_LOG Step[0000/0013], Avg Loss: 1.2546, Avg Acc@1: 0.6833, Avg Acc@5: 0.8970
+2022-03-23 20:30:44,103 MASTER_LOG ----- Epoch[015/090], Validation Loss: 1.5601, Validation Acc@1: 0.6327, Validation Acc@5: 0.8483, time: 44.02
+2022-03-23 20:30:44,104 MASTER_LOG Train epoch 16. LR=6.338827e+00
+2022-03-23 20:30:51,567 MASTER_LOG Epoch[016/090], Step[0000/0312], Lr: 6.338513e+00, Loss: 1.8000 (1.8000), Avg Acc: 0.6038
+2022-03-23 20:31:40,302 MASTER_LOG Epoch[016/090], Step[0020/0312], Lr: 6.336931e+00, Loss: 1.8106 (1.7873), Avg Acc: 0.6022
+2022-03-23 20:32:28,795 MASTER_LOG Epoch[016/090], Step[0040/0312], Lr: 6.335330e+00, Loss: 1.8351 (1.7942), Avg Acc: 0.6008
+2022-03-23 20:33:15,444 MASTER_LOG Epoch[016/090], Step[0060/0312], Lr: 6.333709e+00, Loss: 1.7562 (1.7971), Avg Acc: 0.6004
+2022-03-23 20:34:02,536 MASTER_LOG Epoch[016/090], Step[0080/0312], Lr: 6.332068e+00, Loss: 1.8773 (1.8028), Avg Acc: 0.5993
+2022-03-23 20:34:49,342 MASTER_LOG Epoch[016/090], Step[0100/0312], Lr: 6.330407e+00, Loss: 1.8464 (1.8045), Avg Acc: 0.5989
+2022-03-23 20:35:36,534 MASTER_LOG Epoch[016/090], Step[0120/0312], Lr: 6.328726e+00, Loss: 1.8631 (1.8054), Avg Acc: 0.5990
+2022-03-23 20:36:26,081 MASTER_LOG Epoch[016/090], Step[0140/0312], Lr: 6.327026e+00, Loss: 1.7449 (1.8048), Avg Acc: 0.5990
+2022-03-23 20:37:14,640 MASTER_LOG Epoch[016/090], Step[0160/0312], Lr: 6.325305e+00, Loss: 1.7647 (1.8044), Avg Acc: 0.5989
+2022-03-23 20:38:01,642 MASTER_LOG Epoch[016/090], Step[0180/0312], Lr: 6.323565e+00, Loss: 1.8593 (1.8063), Avg Acc: 0.5984
+2022-03-23 20:38:49,399 MASTER_LOG Epoch[016/090], Step[0200/0312], Lr: 6.321805e+00, Loss: 1.8039 (1.8077), Avg Acc: 0.5979
+2022-03-23 20:39:37,607 MASTER_LOG Epoch[016/090], Step[0220/0312], Lr: 6.320025e+00, Loss: 1.8422 (1.8079), Avg Acc: 0.5980
+2022-03-23 20:40:25,830 MASTER_LOG Epoch[016/090], Step[0240/0312], Lr: 6.318226e+00, Loss: 1.8059 (1.8085), Avg Acc: 0.5978
+2022-03-23 20:41:13,189 MASTER_LOG Epoch[016/090], Step[0260/0312], Lr: 6.316406e+00, Loss: 1.8920 (1.8090), Avg Acc: 0.5978
+2022-03-23 20:42:01,783 MASTER_LOG Epoch[016/090], Step[0280/0312], Lr: 6.314567e+00, Loss: 1.8680 (1.8109), Avg Acc: 0.5974
+2022-03-23 20:42:49,418 MASTER_LOG Epoch[016/090], Step[0300/0312], Lr: 6.312708e+00, Loss: 1.8260 (1.8133), Avg Acc: 0.5970
+2022-03-23 20:43:13,592 MASTER_LOG Epoch[016/090], Step[0311/0312], Lr: 6.311959e+00, Loss: 1.8062 (1.8135), Avg Acc: 0.5969
+2022-03-23 20:43:16,076 MASTER_LOG ----- Epoch[016/090], Lr: 6.311959e+00, time: 751.93Train Loss: 1.8135, Train Acc: 0.5969
+2022-03-23 20:43:16,076 MASTER_LOG ----- Validation after Epoch: 16
+2022-03-23 20:43:25,606 MASTER_LOG Step[0000/0013], Avg Loss: 1.2228, Avg Acc@1: 0.6968, Avg Acc@5: 0.8933
+2022-03-23 20:43:59,423 MASTER_LOG ----- Epoch[016/090], Validation Loss: 1.5559, Validation Acc@1: 0.6336, Validation Acc@5: 0.8491, time: 43.34
+2022-03-23 20:43:59,424 MASTER_LOG Train epoch 17. LR=6.311959e+00
+2022-03-23 20:44:06,902 MASTER_LOG Epoch[017/090], Step[0000/0312], Lr: 6.311584e+00, Loss: 1.7571 (1.7571), Avg Acc: 0.6069
+2022-03-23 20:44:55,141 MASTER_LOG Epoch[017/090], Step[0020/0312], Lr: 6.309693e+00, Loss: 1.7478 (1.7928), Avg Acc: 0.6005
+2022-03-23 20:45:42,573 MASTER_LOG Epoch[017/090], Step[0040/0312], Lr: 6.307783e+00, Loss: 1.7913 (1.7867), Avg Acc: 0.6017
+2022-03-23 20:46:30,850 MASTER_LOG Epoch[017/090], Step[0060/0312], Lr: 6.305854e+00, Loss: 1.8293 (1.7863), Avg Acc: 0.6012
+2022-03-23 20:47:18,309 MASTER_LOG Epoch[017/090], Step[0080/0312], Lr: 6.303904e+00, Loss: 1.8258 (1.7845), Avg Acc: 0.6015
+2022-03-23 20:48:05,797 MASTER_LOG Epoch[017/090], Step[0100/0312], Lr: 6.301935e+00, Loss: 1.7645 (1.7847), Avg Acc: 0.6017
+2022-03-23 20:48:53,097 MASTER_LOG Epoch[017/090], Step[0120/0312], Lr: 6.299946e+00, Loss: 1.8011 (1.7883), Avg Acc: 0.6009
+2022-03-23 20:49:39,947 MASTER_LOG Epoch[017/090], Step[0140/0312], Lr: 6.297938e+00, Loss: 1.8073 (1.7917), Avg Acc: 0.6004
+2022-03-23 20:50:26,695 MASTER_LOG Epoch[017/090], Step[0160/0312], Lr: 6.295910e+00, Loss: 1.8019 (1.7931), Avg Acc: 0.6001
+2022-03-23 20:51:13,743 MASTER_LOG Epoch[017/090], Step[0180/0312], Lr: 6.293862e+00, Loss: 1.7651 (1.7948), Avg Acc: 0.5998
+2022-03-23 20:52:01,301 MASTER_LOG Epoch[017/090], Step[0200/0312], Lr: 6.291795e+00, Loss: 1.7256 (1.7951), Avg Acc: 0.5997
+2022-03-23 20:52:48,857 MASTER_LOG Epoch[017/090], Step[0220/0312], Lr: 6.289708e+00, Loss: 1.6860 (1.7972), Avg Acc: 0.5995
+2022-03-23 20:53:36,456 MASTER_LOG Epoch[017/090], Step[0240/0312], Lr: 6.287602e+00, Loss: 1.7771 (1.7983), Avg Acc: 0.5994
+2022-03-23 20:54:23,696 MASTER_LOG Epoch[017/090], Step[0260/0312], Lr: 6.285476e+00, Loss: 1.8034 (1.8003), Avg Acc: 0.5991
+2022-03-23 20:55:12,085 MASTER_LOG Epoch[017/090], Step[0280/0312], Lr: 6.283330e+00, Loss: 1.8201 (1.7999), Avg Acc: 0.5993
+2022-03-23 20:56:01,202 MASTER_LOG Epoch[017/090], Step[0300/0312], Lr: 6.281165e+00, Loss: 1.7719 (1.8012), Avg Acc: 0.5991
+2022-03-23 20:56:25,985 MASTER_LOG Epoch[017/090], Step[0311/0312], Lr: 6.280294e+00, Loss: 1.8351 (1.8015), Avg Acc: 0.5990
+2022-03-23 20:56:28,174 MASTER_LOG ----- Epoch[017/090], Lr: 6.280294e+00, time: 747.51Train Loss: 1.8015, Train Acc: 0.5990
+2022-03-23 20:56:28,174 MASTER_LOG ----- Validation after Epoch: 17
+2022-03-23 20:56:37,729 MASTER_LOG Step[0000/0013], Avg Loss: 1.1828, Avg Acc@1: 0.7012, Avg Acc@5: 0.8999
+2022-03-23 20:57:13,141 MASTER_LOG ----- Epoch[017/090], Validation Loss: 1.5399, Validation Acc@1: 0.6373, Validation Acc@5: 0.8508, time: 44.96
+2022-03-23 20:57:13,141 MASTER_LOG Train epoch 18. LR=6.280294e+00
+2022-03-23 20:57:21,053 MASTER_LOG Epoch[018/090], Step[0000/0312], Lr: 6.279857e+00, Loss: 1.6889 (1.6889), Avg Acc: 0.6179
+2022-03-23 20:58:09,312 MASTER_LOG Epoch[018/090], Step[0020/0312], Lr: 6.277660e+00, Loss: 1.8207 (1.7733), Avg Acc: 0.6061
+2022-03-23 20:58:57,552 MASTER_LOG Epoch[018/090], Step[0040/0312], Lr: 6.275445e+00, Loss: 1.7266 (1.7639), Avg Acc: 0.6061
+2022-03-23 20:59:45,878 MASTER_LOG Epoch[018/090], Step[0060/0312], Lr: 6.273209e+00, Loss: 1.7479 (1.7669), Avg Acc: 0.6056
+2022-03-23 21:00:33,339 MASTER_LOG Epoch[018/090], Step[0080/0312], Lr: 6.270955e+00, Loss: 1.7447 (1.7705), Avg Acc: 0.6051
+2022-03-23 21:01:21,499 MASTER_LOG Epoch[018/090], Step[0100/0312], Lr: 6.268680e+00, Loss: 1.7214 (1.7703), Avg Acc: 0.6045
+2022-03-23 21:02:08,502 MASTER_LOG Epoch[018/090], Step[0120/0312], Lr: 6.266387e+00, Loss: 1.7730 (1.7729), Avg Acc: 0.6041
+2022-03-23 21:02:55,601 MASTER_LOG Epoch[018/090], Step[0140/0312], Lr: 6.264074e+00, Loss: 1.8123 (1.7747), Avg Acc: 0.6036
+2022-03-23 21:03:43,512 MASTER_LOG Epoch[018/090], Step[0160/0312], Lr: 6.261741e+00, Loss: 1.7212 (1.7777), Avg Acc: 0.6032
+2022-03-23 21:04:30,655 MASTER_LOG Epoch[018/090], Step[0180/0312], Lr: 6.259389e+00, Loss: 1.7605 (1.7795), Avg Acc: 0.6030
+2022-03-23 21:05:19,697 MASTER_LOG Epoch[018/090], Step[0200/0312], Lr: 6.257018e+00, Loss: 1.8141 (1.7811), Avg Acc: 0.6027
+2022-03-23 21:06:06,914 MASTER_LOG Epoch[018/090], Step[0220/0312], Lr: 6.254627e+00, Loss: 1.7788 (1.7819), Avg Acc: 0.6025
+2022-03-23 21:06:53,574 MASTER_LOG Epoch[018/090], Step[0240/0312], Lr: 6.252217e+00, Loss: 1.8607 (1.7849), Avg Acc: 0.6020
+2022-03-23 21:07:41,553 MASTER_LOG Epoch[018/090], Step[0260/0312], Lr: 6.249788e+00, Loss: 1.8300 (1.7862), Avg Acc: 0.6018
+2022-03-23 21:08:30,166 MASTER_LOG Epoch[018/090], Step[0280/0312], Lr: 6.247339e+00, Loss: 1.8413 (1.7872), Avg Acc: 0.6015
+2022-03-23 21:09:18,029 MASTER_LOG Epoch[018/090], Step[0300/0312], Lr: 6.244871e+00, Loss: 1.8008 (1.7882), Avg Acc: 0.6014
+2022-03-23 21:09:43,913 MASTER_LOG Epoch[018/090], Step[0311/0312], Lr: 6.243878e+00, Loss: 1.7580 (1.7884), Avg Acc: 0.6013
+2022-03-23 21:09:45,436 MASTER_LOG ----- Epoch[018/090], Lr: 6.243878e+00, time: 752.29Train Loss: 1.7884, Train Acc: 0.6013
+2022-03-23 21:09:45,436 MASTER_LOG ----- Validation after Epoch: 18
+2022-03-23 21:09:55,445 MASTER_LOG Step[0000/0013], Avg Loss: 1.1849, Avg Acc@1: 0.7065, Avg Acc@5: 0.8992
+2022-03-23 21:10:30,310 MASTER_LOG ----- Epoch[018/090], Validation Loss: 1.5351, Validation Acc@1: 0.6352, Validation Acc@5: 0.8516, time: 44.87
+2022-03-23 21:10:30,310 MASTER_LOG Train epoch 19. LR=6.243878e+00
+2022-03-23 21:10:37,855 MASTER_LOG Epoch[019/090], Step[0000/0312], Lr: 6.243381e+00, Loss: 1.7262 (1.7262), Avg Acc: 0.6021
+2022-03-23 21:11:26,190 MASTER_LOG Epoch[019/090], Step[0020/0312], Lr: 6.240882e+00, Loss: 1.7865 (1.7703), Avg Acc: 0.6051
+2022-03-23 21:12:14,151 MASTER_LOG Epoch[019/090], Step[0040/0312], Lr: 6.238364e+00, Loss: 1.7861 (1.7658), Avg Acc: 0.6051
+2022-03-23 21:13:01,570 MASTER_LOG Epoch[019/090], Step[0060/0312], Lr: 6.235826e+00, Loss: 1.7493 (1.7688), Avg Acc: 0.6052
+2022-03-23 21:13:48,928 MASTER_LOG Epoch[019/090], Step[0080/0312], Lr: 6.233270e+00, Loss: 1.7581 (1.7731), Avg Acc: 0.6046
+2022-03-23 21:14:35,522 MASTER_LOG Epoch[019/090], Step[0100/0312], Lr: 6.230694e+00, Loss: 1.7146 (1.7733), Avg Acc: 0.6044
+2022-03-23 21:15:23,033 MASTER_LOG Epoch[019/090], Step[0120/0312], Lr: 6.228099e+00, Loss: 1.7870 (1.7720), Avg Acc: 0.6045
+2022-03-23 21:16:09,798 MASTER_LOG Epoch[019/090], Step[0140/0312], Lr: 6.225485e+00, Loss: 1.7459 (1.7732), Avg Acc: 0.6043
+2022-03-23 21:16:57,441 MASTER_LOG Epoch[019/090], Step[0160/0312], Lr: 6.222851e+00, Loss: 1.7619 (1.7737), Avg Acc: 0.6043
+2022-03-23 21:17:44,866 MASTER_LOG Epoch[019/090], Step[0180/0312], Lr: 6.220199e+00, Loss: 1.7876 (1.7759), Avg Acc: 0.6040
+2022-03-23 21:18:32,692 MASTER_LOG Epoch[019/090], Step[0200/0312], Lr: 6.217527e+00, Loss: 1.7669 (1.7762), Avg Acc: 0.6039
+2022-03-23 21:19:21,075 MASTER_LOG Epoch[019/090], Step[0220/0312], Lr: 6.214836e+00, Loss: 1.7890 (1.7766), Avg Acc: 0.6036
+2022-03-23 21:20:07,694 MASTER_LOG Epoch[019/090], Step[0240/0312], Lr: 6.212126e+00, Loss: 1.8286 (1.7769), Avg Acc: 0.6036
+2022-03-23 21:20:55,738 MASTER_LOG Epoch[019/090], Step[0260/0312], Lr: 6.209397e+00, Loss: 1.7573 (1.7770), Avg Acc: 0.6036
+2022-03-23 21:21:44,257 MASTER_LOG Epoch[019/090], Step[0280/0312], Lr: 6.206649e+00, Loss: 1.8009 (1.7770), Avg Acc: 0.6035
+2022-03-23 21:22:31,710 MASTER_LOG Epoch[019/090], Step[0300/0312], Lr: 6.203882e+00, Loss: 1.8052 (1.7789), Avg Acc: 0.6032
+2022-03-23 21:22:56,359 MASTER_LOG Epoch[019/090], Step[0311/0312], Lr: 6.202770e+00, Loss: 1.8000 (1.7794), Avg Acc: 0.6031
+2022-03-23 21:22:57,972 MASTER_LOG ----- Epoch[019/090], Lr: 6.202770e+00, time: 747.55Train Loss: 1.7794, Train Acc: 0.6031
+2022-03-23 21:22:57,972 MASTER_LOG ----- Validation after Epoch: 19
+2022-03-23 21:23:07,949 MASTER_LOG Step[0000/0013], Avg Loss: 1.1821, Avg Acc@1: 0.6997, Avg Acc@5: 0.9026
+2022-03-23 21:23:42,546 MASTER_LOG ----- Epoch[019/090], Validation Loss: 1.5277, Validation Acc@1: 0.6365, Validation Acc@5: 0.8527, time: 44.57
+2022-03-23 21:23:42,546 MASTER_LOG Train epoch 20. LR=6.202770e+00
+2022-03-23 21:23:49,732 MASTER_LOG Epoch[020/090], Step[0000/0312], Lr: 6.202212e+00, Loss: 1.7179 (1.7179), Avg Acc: 0.6152
+2022-03-23 21:24:39,154 MASTER_LOG Epoch[020/090], Step[0020/0312], Lr: 6.199415e+00, Loss: 1.7531 (1.7315), Avg Acc: 0.6126
+2022-03-23 21:25:26,873 MASTER_LOG Epoch[020/090], Step[0040/0312], Lr: 6.196598e+00, Loss: 1.7739 (1.7403), Avg Acc: 0.6102
+2022-03-23 21:26:13,571 MASTER_LOG Epoch[020/090], Step[0060/0312], Lr: 6.193762e+00, Loss: 1.8049 (1.7522), Avg Acc: 0.6085
+2022-03-23 21:27:00,649 MASTER_LOG Epoch[020/090], Step[0080/0312], Lr: 6.190908e+00, Loss: 1.8493 (1.7610), Avg Acc: 0.6072
+2022-03-23 21:27:48,199 MASTER_LOG Epoch[020/090], Step[0100/0312], Lr: 6.188034e+00, Loss: 1.8441 (1.7624), Avg Acc: 0.6069
+2022-03-23 21:28:36,566 MASTER_LOG Epoch[020/090], Step[0120/0312], Lr: 6.185142e+00, Loss: 1.7810 (1.7633), Avg Acc: 0.6067
+2022-03-23 21:29:24,384 MASTER_LOG Epoch[020/090], Step[0140/0312], Lr: 6.182231e+00, Loss: 1.8142 (1.7632), Avg Acc: 0.6065
+2022-03-23 21:30:12,682 MASTER_LOG Epoch[020/090], Step[0160/0312], Lr: 6.179300e+00, Loss: 1.7346 (1.7651), Avg Acc: 0.6061
+2022-03-23 21:31:00,656 MASTER_LOG Epoch[020/090], Step[0180/0312], Lr: 6.176351e+00, Loss: 1.7095 (1.7650), Avg Acc: 0.6061
+2022-03-23 21:31:48,723 MASTER_LOG Epoch[020/090], Step[0200/0312], Lr: 6.173383e+00, Loss: 1.7334 (1.7659), Avg Acc: 0.6057
+2022-03-23 21:32:36,348 MASTER_LOG Epoch[020/090], Step[0220/0312], Lr: 6.170396e+00, Loss: 1.7154 (1.7667), Avg Acc: 0.6054
+2022-03-23 21:33:23,279 MASTER_LOG Epoch[020/090], Step[0240/0312], Lr: 6.167391e+00, Loss: 1.7712 (1.7686), Avg Acc: 0.6051
+2022-03-23 21:34:09,377 MASTER_LOG Epoch[020/090], Step[0260/0312], Lr: 6.164366e+00, Loss: 1.8693 (1.7704), Avg Acc: 0.6051
+2022-03-23 21:34:57,062 MASTER_LOG Epoch[020/090], Step[0280/0312], Lr: 6.161323e+00, Loss: 1.7692 (1.7699), Avg Acc: 0.6052
+2022-03-23 21:35:45,022 MASTER_LOG Epoch[020/090], Step[0300/0312], Lr: 6.158261e+00, Loss: 1.7622 (1.7697), Avg Acc: 0.6052
+2022-03-23 21:36:10,158 MASTER_LOG Epoch[020/090], Step[0311/0312], Lr: 6.157031e+00, Loss: 1.8980 (1.7706), Avg Acc: 0.6052
+2022-03-23 21:36:12,200 MASTER_LOG ----- Epoch[020/090], Lr: 6.157031e+00, time: 749.60Train Loss: 1.7706, Train Acc: 0.6052
+2022-03-23 21:36:12,200 MASTER_LOG ----- Validation after Epoch: 20
+2022-03-23 21:36:21,624 MASTER_LOG Step[0000/0013], Avg Loss: 1.1718, Avg Acc@1: 0.7034, Avg Acc@5: 0.8975
+2022-03-23 21:36:58,563 MASTER_LOG ----- Epoch[020/090], Validation Loss: 1.5293, Validation Acc@1: 0.6387, Validation Acc@5: 0.8520, time: 46.36
+2022-03-23 21:36:59,485 MASTER_LOG ----- Save model: ./output/linearprobe-20220323-17-11/LINEARPROBE-Epoch-20-Loss-1.5293068207359315.pdparams
+2022-03-23 21:36:59,485 MASTER_LOG Train epoch 21. LR=6.157031e+00
+2022-03-23 21:37:06,196 MASTER_LOG Epoch[021/090], Step[0000/0312], Lr: 6.156415e+00, Loss: 1.7359 (1.7359), Avg Acc: 0.6189
+2022-03-23 21:37:55,066 MASTER_LOG Epoch[021/090], Step[0020/0312], Lr: 6.153322e+00, Loss: 1.7529 (1.7473), Avg Acc: 0.6093
+2022-03-23 21:38:42,580 MASTER_LOG Epoch[021/090], Step[0040/0312], Lr: 6.150212e+00, Loss: 1.8073 (1.7423), Avg Acc: 0.6095
+2022-03-23 21:39:31,084 MASTER_LOG Epoch[021/090], Step[0060/0312], Lr: 6.147082e+00, Loss: 1.7614 (1.7431), Avg Acc: 0.6092
+2022-03-23 21:40:18,476 MASTER_LOG Epoch[021/090], Step[0080/0312], Lr: 6.143934e+00, Loss: 1.7751 (1.7444), Avg Acc: 0.6090
+2022-03-23 21:41:08,304 MASTER_LOG Epoch[021/090], Step[0100/0312], Lr: 6.140767e+00, Loss: 1.7964 (1.7510), Avg Acc: 0.6081
+2022-03-23 21:41:56,179 MASTER_LOG Epoch[021/090], Step[0120/0312], Lr: 6.137582e+00, Loss: 1.8092 (1.7529), Avg Acc: 0.6077
+2022-03-23 21:42:44,980 MASTER_LOG Epoch[021/090], Step[0140/0312], Lr: 6.134378e+00, Loss: 1.7442 (1.7531), Avg Acc: 0.6075
+2022-03-23 21:43:32,982 MASTER_LOG Epoch[021/090], Step[0160/0312], Lr: 6.131155e+00, Loss: 1.7009 (1.7544), Avg Acc: 0.6073
+2022-03-23 21:44:21,348 MASTER_LOG Epoch[021/090], Step[0180/0312], Lr: 6.127914e+00, Loss: 1.7572 (1.7551), Avg Acc: 0.6071
+2022-03-23 21:45:08,563 MASTER_LOG Epoch[021/090], Step[0200/0312], Lr: 6.124655e+00, Loss: 1.7200 (1.7577), Avg Acc: 0.6069
+2022-03-23 21:45:55,625 MASTER_LOG Epoch[021/090], Step[0220/0312], Lr: 6.121376e+00, Loss: 1.8005 (1.7588), Avg Acc: 0.6068
+2022-03-23 21:46:43,128 MASTER_LOG Epoch[021/090], Step[0240/0312], Lr: 6.118080e+00, Loss: 1.7958 (1.7601), Avg Acc: 0.6066
+2022-03-23 21:47:30,203 MASTER_LOG Epoch[021/090], Step[0260/0312], Lr: 6.114764e+00, Loss: 1.8398 (1.7616), Avg Acc: 0.6062
+2022-03-23 21:48:17,876 MASTER_LOG Epoch[021/090], Step[0280/0312], Lr: 6.111431e+00, Loss: 1.7314 (1.7621), Avg Acc: 0.6061
+2022-03-23 21:49:05,604 MASTER_LOG Epoch[021/090], Step[0300/0312], Lr: 6.108078e+00, Loss: 1.7352 (1.7623), Avg Acc: 0.6061
+2022-03-23 21:49:34,137 MASTER_LOG Epoch[021/090], Step[0311/0312], Lr: 6.106732e+00, Loss: 1.8182 (1.7625), Avg Acc: 0.6062
+2022-03-23 21:49:36,654 MASTER_LOG ----- Epoch[021/090], Lr: 6.106732e+00, time: 757.05Train Loss: 1.7625, Train Acc: 0.6062
+2022-03-23 21:49:36,654 MASTER_LOG ----- Validation after Epoch: 21
+2022-03-23 21:49:46,059 MASTER_LOG Step[0000/0013], Avg Loss: 1.1663, Avg Acc@1: 0.7026, Avg Acc@5: 0.9021
+2022-03-23 21:50:21,707 MASTER_LOG ----- Epoch[021/090], Validation Loss: 1.5158, Validation Acc@1: 0.6399, Validation Acc@5: 0.8543, time: 45.05
+2022-03-23 21:50:21,708 MASTER_LOG Train epoch 22. LR=6.106732e+00
+2022-03-23 21:50:29,050 MASTER_LOG Epoch[022/090], Step[0000/0312], Lr: 6.106058e+00, Loss: 1.6650 (1.6650), Avg Acc: 0.6182
+2022-03-23 21:51:17,473 MASTER_LOG Epoch[022/090], Step[0020/0312], Lr: 6.102676e+00, Loss: 1.7864 (1.7523), Avg Acc: 0.6099
+2022-03-23 21:52:05,548 MASTER_LOG Epoch[022/090], Step[0040/0312], Lr: 6.099276e+00, Loss: 1.7083 (1.7444), Avg Acc: 0.6105
+2022-03-23 21:52:54,137 MASTER_LOG Epoch[022/090], Step[0060/0312], Lr: 6.095858e+00, Loss: 1.7003 (1.7483), Avg Acc: 0.6097
+2022-03-23 21:53:41,301 MASTER_LOG Epoch[022/090], Step[0080/0312], Lr: 6.092421e+00, Loss: 1.7755 (1.7491), Avg Acc: 0.6095
+2022-03-23 21:54:28,534 MASTER_LOG Epoch[022/090], Step[0100/0312], Lr: 6.088966e+00, Loss: 1.7836 (1.7510), Avg Acc: 0.6091
+2022-03-23 21:55:15,544 MASTER_LOG Epoch[022/090], Step[0120/0312], Lr: 6.085493e+00, Loss: 1.8172 (1.7524), Avg Acc: 0.6088
+2022-03-23 21:56:02,372 MASTER_LOG Epoch[022/090], Step[0140/0312], Lr: 6.082001e+00, Loss: 1.8078 (1.7533), Avg Acc: 0.6086
+2022-03-23 21:56:49,631 MASTER_LOG Epoch[022/090], Step[0160/0312], Lr: 6.078491e+00, Loss: 1.7503 (1.7545), Avg Acc: 0.6082
+2022-03-23 21:57:36,759 MASTER_LOG Epoch[022/090], Step[0180/0312], Lr: 6.074963e+00, Loss: 1.7682 (1.7561), Avg Acc: 0.6080
+2022-03-23 21:58:23,616 MASTER_LOG Epoch[022/090], Step[0200/0312], Lr: 6.071416e+00, Loss: 1.6749 (1.7561), Avg Acc: 0.6079
+2022-03-23 21:59:11,700 MASTER_LOG Epoch[022/090], Step[0220/0312], Lr: 6.067852e+00, Loss: 1.6856 (1.7578), Avg Acc: 0.6077
+2022-03-23 21:59:59,243 MASTER_LOG Epoch[022/090], Step[0240/0312], Lr: 6.064269e+00, Loss: 1.6498 (1.7570), Avg Acc: 0.6078
+2022-03-23 22:00:46,193 MASTER_LOG Epoch[022/090], Step[0260/0312], Lr: 6.060668e+00, Loss: 1.6393 (1.7559), Avg Acc: 0.6080
+2022-03-23 22:01:33,113 MASTER_LOG Epoch[022/090], Step[0280/0312], Lr: 6.057049e+00, Loss: 1.7817 (1.7563), Avg Acc: 0.6080
+2022-03-23 22:02:19,313 MASTER_LOG Epoch[022/090], Step[0300/0312], Lr: 6.053412e+00, Loss: 1.7514 (1.7565), Avg Acc: 0.6079
+2022-03-23 22:02:43,113 MASTER_LOG Epoch[022/090], Step[0311/0312], Lr: 6.051952e+00, Loss: 1.7274 (1.7567), Avg Acc: 0.6079
+2022-03-23 22:02:44,536 MASTER_LOG ----- Epoch[022/090], Lr: 6.051952e+00, time: 742.76Train Loss: 1.7567, Train Acc: 0.6079
+2022-03-23 22:02:44,536 MASTER_LOG ----- Validation after Epoch: 22
+2022-03-23 22:02:53,949 MASTER_LOG Step[0000/0013], Avg Loss: 1.1730, Avg Acc@1: 0.7012, Avg Acc@5: 0.9028
+2022-03-23 22:03:27,869 MASTER_LOG ----- Epoch[022/090], Validation Loss: 1.5087, Validation Acc@1: 0.6450, Validation Acc@5: 0.8553, time: 43.33
+2022-03-23 22:03:27,869 MASTER_LOG Train epoch 23. LR=6.051952e+00
+2022-03-23 22:03:35,672 MASTER_LOG Epoch[023/090], Step[0000/0312], Lr: 6.051221e+00, Loss: 1.6996 (1.6996), Avg Acc: 0.6177
+2022-03-23 22:04:24,975 MASTER_LOG Epoch[023/090], Step[0020/0312], Lr: 6.047555e+00, Loss: 1.7716 (1.7292), Avg Acc: 0.6129
+2022-03-23 22:05:13,528 MASTER_LOG Epoch[023/090], Step[0040/0312], Lr: 6.043871e+00, Loss: 1.7322 (1.7258), Avg Acc: 0.6134
+2022-03-23 22:06:01,375 MASTER_LOG Epoch[023/090], Step[0060/0312], Lr: 6.040168e+00, Loss: 1.7378 (1.7269), Avg Acc: 0.6128
+2022-03-23 22:06:49,569 MASTER_LOG Epoch[023/090], Step[0080/0312], Lr: 6.036448e+00, Loss: 1.7751 (1.7292), Avg Acc: 0.6118
+2022-03-23 22:07:36,929 MASTER_LOG Epoch[023/090], Step[0100/0312], Lr: 6.032710e+00, Loss: 1.7473 (1.7328), Avg Acc: 0.6111
+2022-03-23 22:08:23,681 MASTER_LOG Epoch[023/090], Step[0120/0312], Lr: 6.028954e+00, Loss: 1.7562 (1.7354), Avg Acc: 0.6108
+2022-03-23 22:09:10,485 MASTER_LOG Epoch[023/090], Step[0140/0312], Lr: 6.025180e+00, Loss: 1.7505 (1.7353), Avg Acc: 0.6106
+2022-03-23 22:09:57,172 MASTER_LOG Epoch[023/090], Step[0160/0312], Lr: 6.021388e+00, Loss: 1.7875 (1.7380), Avg Acc: 0.6104
+/usr/local/lib/python3.7/site-packages/paddlenlp/transformers/funnel/modeling.py:30: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated, and in 3.8 it will stop working
+  from collections import Iterable
+Compose(
+    <paddle.vision.transforms.transforms.RandomResizedCrop object at 0x7fbe656badd8>
+    <paddle.vision.transforms.transforms.RandomHorizontalFlip object at 0x7fbe656e0ba8>
+    <augment.RandAugment object at 0x7fbe656e0898>
+    <paddle.vision.transforms.transforms.ToTensor object at 0x7fbe656e0940>
+    <paddle.vision.transforms.transforms.Normalize object at 0x7fbe656e09b0>
+    <random_erasing.RandomErasing object at 0x7fbe67198c88>
+)
+----- Imagenet2012 train_list.txt len = 1281167
+----- Imagenet2012 val_list.txt len = 50000
+2022-03-23 22:10:37,296 MASTER_LOG ----- world_size = 8, local_rank = 0 
+----- AMP: True
+BASE: ['']
+DATA:
+  BATCH_SIZE: 2
+  BATCH_SIZE_EVAL: 2
+  CROP_PCT: 0.875
+  DATASET: imagenet2012
+  DATA_PATH: /dataset/imagenet
+  IMAGENET_MEAN: [0.485, 0.456, 0.406]
+  IMAGENET_STD: [0.229, 0.224, 0.225]
+  IMAGE_CHANNELS: 3
+  IMAGE_SIZE: 224
+  NUM_WORKERS: 2
+EVAL: False
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DECODER:
+    DEPTH: 8
+    EMBED_DIM: 512
+    NUM_HEADS: 16
+  DROPOUT: 0.0
+  DROPPATH: 0.1
+  ENCODER:
+    DEPTH: 12
+    EMBED_DIM: 768
+    NUM_HEADS: 12
+  GLOBAL_POOL: True
+  MASK_RATIO: 0.75
+  MLP_RATIO: 4.0
+  NAME: vit_base_patch16_224
+  NORM_PIX_LOSS: True
+  NUM_CLASSES: 1000
+  PATCH_SIZE: 16
+  PRETRAINED: ./mae_pretrain_vit_base.pdparams
+  QKV_BIAS: True
+  RESUME: None
+  TYPE: FINETUNE
+REPORT_FREQ: 100
+SAVE: ./output/finetune-20220323-22-10
+SAVE_FREQ: 10
+SEED: 0
+TRAIN:
+  ACCUM_ITER: 4
+  AUTO_AUGMENT: False
+  BASE_LR: 0.0005
+  COLOR_JITTER: 0.4
+  CUTMIX_ALPHA: 1.0
+  CUTMIX_MINMAX: None
+  END_LR: 1e-06
+  GRAD_CLIP: None
+  LAST_EPOCH: 0
+  LAYER_DECAY: 0.65
+  LINEAR_SCALED_LR: 256
+  MIXUP_ALPHA: 0.8
+  MIXUP_MODE: batch
+  MIXUP_PROB: 1.0
+  MIXUP_SWITCH_PROB: 0.5
+  NUM_EPOCHS: 100
+  OPTIMIZER:
+    BETAS: (0.9, 0.999)
+    EPS: 1e-08
+    NAME: AdamWDL
+  RANDOM_ERASE_COUNT: 1
+  RANDOM_ERASE_MODE: pixel
+  RANDOM_ERASE_PROB: 0.25
+  RANDOM_ERASE_SPLIT: False
+  RAND_AUGMENT: True
+  RAND_AUGMENT_LAYERS: 2
+  RAND_AUGMENT_MAGNITUDE: 9
+  SMOOTHING: 0.1
+  WARMUP_EPOCHS: 5
+  WARMUP_START_LR: 0.0
+  WEIGHT_DECAY: 0.05
+VALIDATE_FREQ: 1
+2022-03-23 22:10:37,296 MASTER_LOG ----- world_size = 8, local_rank = 0 
+----- AMP: True
+BASE: ['']
+DATA:
+  BATCH_SIZE: 2
+  BATCH_SIZE_EVAL: 2
+  CROP_PCT: 0.875
+  DATASET: imagenet2012
+  DATA_PATH: /dataset/imagenet
+  IMAGENET_MEAN: [0.485, 0.456, 0.406]
+  IMAGENET_STD: [0.229, 0.224, 0.225]
+  IMAGE_CHANNELS: 3
+  IMAGE_SIZE: 224
+  NUM_WORKERS: 2
+EVAL: False
+MODEL:
+  ATTENTION_DROPOUT: 0.0
+  DECODER:
+    DEPTH: 8
+    EMBED_DIM: 512
+    NUM_HEADS: 16
+  DROPOUT: 0.0
+  DROPPATH: 0.1
+  ENCODER:
+    DEPTH: 12
+    EMBED_DIM: 768
+    NUM_HEADS: 12
+  GLOBAL_POOL: True
+  MASK_RATIO: 0.75
+  MLP_RATIO: 4.0
+  NAME: vit_base_patch16_224
+  NORM_PIX_LOSS: True
+  NUM_CLASSES: 1000
+  PATCH_SIZE: 16
+  PRETRAINED: ./mae_pretrain_vit_base.pdparams
+  QKV_BIAS: True
+  RESUME: None
+  TYPE: FINETUNE
+REPORT_FREQ: 100
+SAVE: ./output/finetune-20220323-22-10
+SAVE_FREQ: 10
+SEED: 0
+TRAIN:
+  ACCUM_ITER: 4
+  AUTO_AUGMENT: False
+  BASE_LR: 0.0005
+  COLOR_JITTER: 0.4
+  CUTMIX_ALPHA: 1.0
+  CUTMIX_MINMAX: None
+  END_LR: 1e-06
+  GRAD_CLIP: None
+  LAST_EPOCH: 0
+  LAYER_DECAY: 0.65
+  LINEAR_SCALED_LR: 256

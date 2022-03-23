@@ -30,9 +30,9 @@ np.random.seed(seed)
 random.seed(seed)
 
 
-#model_type = 'base'
+model_type = 'base'
 #model_type = 'large'
-model_type = 'huge'
+#model_type = 'huge'
 
 if model_type == 'base':
     model_name = 'mae_vit_base_patch16'
@@ -213,6 +213,7 @@ def main():
     noise = torch.Tensor(rp)
 
     # encoder out
+    # NOTE: need to modify the mae pytorch implementation
     out_torch = torch_model.forward_encoder(x_torch, 0.75, noise)[0]
     out_paddle = paddle_model.forward_encoder(x_paddle, 0.75, rand_probs)[0]
 

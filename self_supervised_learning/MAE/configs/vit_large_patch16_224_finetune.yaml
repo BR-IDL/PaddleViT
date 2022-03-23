@@ -3,17 +3,16 @@ DATA:
     CROP_PCT: 0.875
 MODEL:
     TYPE: FINETUNE
-    NAME: vit_huge_patch14_224
-    DROPPATH: 0.3
+    NAME: vit_large_patch16_224
+    DROPPATH: 0.2 # same as MAE official readme
     GLOBAL_POOL: True
-    TRANS:
-        PATCH_SIZE: 14
-        MLP_RATIO: 4.0
-        QKV_BIAS: true
-        ENCODER:
-            EMBED_DIM: 1280
-            DEPTH: 32
-            NUM_HEADS: 16
+    PATCH_SIZE: 16
+    MLP_RATIO: 4.0
+    QKV_BIAS: true
+    ENCODER:
+        EMBED_DIM: 1024
+        DEPTH: 24
+        NUM_HEADS: 16
 TRAIN:
     NUM_EPOCHS: 50
     WARMUP_EPOCHS: 5

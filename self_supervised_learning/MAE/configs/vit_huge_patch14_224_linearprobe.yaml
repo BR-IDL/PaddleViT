@@ -5,14 +5,13 @@ MODEL:
     TYPE: LINEARPROBE
     NAME: vit_huge_patch14_224
     GLOBAL_POOL: False
-    TRANS:
-        PATCH_SIZE: 14
-        MLP_RATIO: 4.0
-        QKV_BIAS: true
-        ENCODER:
-            EMBED_DIM: 1280
-            DEPTH: 32
-            NUM_HEADS: 16
+    PATCH_SIZE: 14
+    MLP_RATIO: 4.0
+    QKV_BIAS: true
+    ENCODER:
+        EMBED_DIM: 1280
+        DEPTH: 32
+        NUM_HEADS: 16
 TRAIN:
     NUM_EPOCHS: 90
     WARMUP_EPOCHS: 10

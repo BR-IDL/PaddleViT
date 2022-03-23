@@ -3,16 +3,15 @@ DATA:
     CROP_PCT: 0.875
 MODEL:
     TYPE: LINEARPROBE
-    NAME: vit_large_patch16_224
+    NAME: vit_base_patch16_224
     GLOBAL_POOL: False # enable cls_token
-    TRANS:
-        PATCH_SIZE: 16
-        MLP_RATIO: 4.0
-        QKV_BIAS: true
-        ENCODER:
-            EMBED_DIM: 1024
-            DEPTH: 24
-            NUM_HEADS: 16
+    PATCH_SIZE: 16
+    MLP_RATIO: 4.0
+    QKV_BIAS: true
+    ENCODER:
+        EMBED_DIM: 768
+        DEPTH: 12
+        NUM_HEADS: 12
 TRAIN:
     NUM_EPOCHS: 90
     WARMUP_EPOCHS: 10

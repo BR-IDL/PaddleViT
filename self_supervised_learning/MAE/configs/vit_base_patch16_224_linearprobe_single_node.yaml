@@ -5,21 +5,20 @@ MODEL:
     TYPE: LINEARPROBE
     NAME: vit_base_patch16_224
     GLOBAL_POOL: False # enable cls_token
-    TRANS:
-        PATCH_SIZE: 16
-        MLP_RATIO: 4.0
-        QKV_BIAS: true
-        ENCODER:
-            EMBED_DIM: 768
-            DEPTH: 12
-            NUM_HEADS: 12
+    PATCH_SIZE: 16
+    MLP_RATIO: 4.0
+    QKV_BIAS: true
+    ENCODER:
+        EMBED_DIM: 768
+        DEPTH: 12
+        NUM_HEADS: 12
 TRAIN:
+    ACCUM_ITER: 4
     NUM_EPOCHS: 90
     WARMUP_EPOCHS: 10
     WEIGHT_DECAY: 0.0
     BASE_LR: 0.1
     LINEAR_SCALED_LR: 256
     END_LR: 0.0
-    ACCUM_ITER: 1
     OPTIMIZER:
         NAME: 'LARS'

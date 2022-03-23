@@ -17,38 +17,39 @@
 import sys
 import os
 import time
-import logging
 import argparse
 import random
 import math
 import numpy as np
 import paddle
-import paddle.nn as nn
-import paddle.nn.functional as F
-import paddle.distributed as dist
 from paddle.distributed import fleet
 from datasets import get_dataloader
 from datasets import get_dataset
-from transformer import build_mae_pretrain as build_model
-from utils import AverageMeter
-from utils import get_exclude_from_weight_decay_fn
-from utils import get_params_groups
-from utils import adjust_learning_rate
 from config import get_config
 from config import update_config
+from utils import AverageMeter
+from utils import get_logger
+from utils import write_log
+from utils import all_reduce_mean
+from utils import skip_weight_decay_fn
+from utils import get_params_groups
+from utils import adjust_learning_rate
+#from mixup import Mixup
+#from losses import LabelSmoothingCrossEntropyLoss
+#from losses import SoftTargetCrossEntropyLoss
+from transformer import build_mae_pretrain as build_model
 import paddlenlp
 
-
 def get_arguments():
-    """return argumeents, this will overwrite the config after loading yaml file"""
-    parser = argparse.ArgumentParser('MAE')
+    """return argumeents, this will overwrite the config by (1) yaml file (2) argument values"""
+    parser = argparse.ArgumentParser('MAE Pretrain')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
-    parser.add_argument('-batch_size', type=int, default=None)
-    parser.add_argument('-image_size', type=int, default=None)
     parser.add_argument('-data_path', type=str, default=None)
     parser.add_argument('-output', type=str, default=None)
-    parser.add_argument('-ngpus', type=int, default=None)
+    parser.add_argument('-batch_size', type=int, default=None)
+    parser.add_argument('-batch_size_eval', type=int, default=None)
+    parser.add_argument('-image_size', type=int, default=None)
     parser.add_argument('-accum_iter', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
@@ -59,99 +60,11 @@ def get_arguments():
     return arguments
 
 
-def get_logger(file_path):
-    """Set logging file and format, logs are written in 2 loggers, one local_logger records
-       the information on its own gpu/process, one master_logger records the overall/average
-       information over all gpus/processes.
-    Args:
-        file_path: str, folder path of the logger files to write
-    Return:
-        local_logger: python logger for each process
-        master_logger: python logger for overall processes (on node 0)
-    """
-    local_rank = dist.get_rank()
-    filename = os.path.join(file_path, f'log_all.txt')
-    log_format = "%(asctime)s %(message)s"
-    logging.basicConfig(filename=filename, level=logging.INFO,
-                        format=log_format, datefmt="%m%d %I:%M:%S %p")
-
-    # local_logger for each process/GPU
-    local_logger = logging.getLogger(f'local_{local_rank}')
-    filename = os.path.join(file_path, f'log_{local_rank}.txt')
-    fh = logging.FileHandler(filename)
-    fh.setFormatter(logging.Formatter(log_format))
-    local_logger.addHandler(fh)
-    ## console
-    #sh = logging.StreamHandler(sys.stdout)
-    #sh.setFormatter(logging.Formatter(log_format))
-    #local_logger.addHandler(sh)
-
-    # master_logger records avg performance
-    if local_rank == 0:
-        master_logger = logging.getLogger('master')
-        # log.txt
-        filename = os.path.join(file_path, f'log.txt')
-        fh = logging.FileHandler(filename)
-        fh.setFormatter(logging.Formatter(log_format))
-        master_logger.addHandler(fh)
-        # console
-        sh = logging.StreamHandler(sys.stdout)
-        sh.setFormatter(logging.Formatter(log_format))
-        master_logger.addHandler(sh)
-    else:
-        master_logger = None
-    return local_logger, master_logger
-
-
-def write_log(local_logger, master_logger, msg_local, msg_master=None, level='info'):
-    """Write messages in loggers
-    Args:
-        local_logger: python logger, logs information on single gpu
-        master_logger: python logger, logs information over all gpus
-        msg_local: str, message to log on local_logger
-        msg_master: str, message to log on master_logger, if None, use msg_local, default: None
-        level: str, log level, in ['info', 'warning', 'fatal'], default: 'info'
-    """
-    # write log to local logger
-    if local_logger:
-        if level == 'info':
-            local_logger.info(msg_local)
-        elif level == 'warning':
-            local_logger.warning(msg_local)
-        elif level == 'fatal':
-            local_logger.fatal(msg_local)
-        else:
-            raise ValueError("level must in ['info', 'warning', 'fatal']")
-    # write log to master logger on node 0
-    if master_logger and dist.get_rank() == 0:
-        if msg_master is None:
-            msg_master = msg_local
-        if level == 'info':
-            master_logger.info("MASTER_LOG " + msg_master)
-        elif level == 'warning':
-            master_logger.warning("MASTER_LOG " + msg_master)
-        elif level == 'fatal':
-            master_logger.fatal("MASTER_LOG " + msg_master)
-        else:
-            raise ValueError("level must in ['info', 'warning', 'fatal']")
-
-
-def all_reduce_mean(x):
-    """perform all_reduce on Tensor"""
-    world_size = dist.get_world_size()
-    if world_size > 1:
-        x_reduce = paddle.to_tensor(x)
-        dist.all_reduce(x_reduce)
-        x_reduce = x_reduce / world_size 
-        return x_reduce.item()
-    else:
-        return x
-
-
 def train(dataloader,
           model,
           mask_ratio,
           optimizer,
+          lr_scheduler,
           base_lr,
           min_lr,
           epoch,
@@ -200,12 +113,13 @@ def train(dataloader,
         batch_size = images.shape[0]
         # adjust learning rate
         if batch_id % accum_iter == 0:
-            adjust_learning_rate(optimizer,
-                                 base_lr,
-                                 min_lr,
-                                 batch_id / total_batches + epoch - 1, 
-                                 warmup_epochs, 
-                                 total_epochs)
+            lr_scheduler.step(batch_id / total_batches + epoch -1)
+            #adjust_learning_rate(optimizer,
+            #                     base_lr,
+            #                     min_lr,
+            #                     batch_id / total_batches + epoch - 1, 
+            #                     warmup_epochs, 
+            #                     total_epochs)
         # forward
         with paddle.amp.auto_cast(amp_grad_scaler is not None):
             loss, _, _ = model(images)
@@ -216,7 +130,7 @@ def train(dataloader,
             sys.exit(1)
 
         loss = loss / accum_iter
-        
+
         # backward and step
         if amp_grad_scaler is None: # fp32
             loss.backward()
@@ -227,7 +141,7 @@ def train(dataloader,
             scaled_loss = amp_grad_scaler.scale(loss)
             scaled_loss.backward()
             if ((batch_id + 1) % accum_iter == 0) or (batch_id + 1 == len(dataloader)):
-                # amp for param group refer here: https://github.com/PaddlePaddle/Paddle/issues/37188
+                # amp for param group reference: https://github.com/PaddlePaddle/Paddle/issues/37188
                 amp_grad_scaler.step(optimizer)
                 amp_grad_scaler.update()
                 optimizer.clear_grad()
@@ -238,25 +152,27 @@ def train(dataloader,
         master_loss_meter.update(master_loss, master_batch_size)
         train_loss_meter.update(loss_value, batch_size)
         if batch_id % debug_steps == 0 or batch_id + 1 == len(dataloader):
-            general_message = (f"Epoch[{epoch:03d}/{total_epochs:03d}], " 
+            general_message = (f"Epoch[{epoch:03d}/{total_epochs:03d}], "
                                f"Step[{batch_id:04d}/{total_batches:04d}], "
-                               f"Lr: {optimizer.get_lr():04f}, ")
+                               f"Lr: {optimizer.get_lr():.6e}, ")
             local_message = (general_message +
                              f"Loss: {loss_value:.4f} ({train_loss_meter.avg:.4f})")
             master_message = (general_message +
                               f"Loss: {master_loss:.4f} ({master_loss_meter.avg:.4f})")
             write_log(local_logger, master_logger, local_message, master_message)
 
-    dist.barrier()
+    paddle.distributed.barrier()
     train_time = time.time() - time_st
     return train_loss_meter.avg, master_loss_meter.avg, train_time
 
 
 def main_worker(*args):
+    """main method for each process"""
     # STEP 0: Preparation
-    #dist.init_parallel_env()
-    world_size = dist.get_world_size()
-    local_rank = dist.get_rank()
+    paddle.device.set_device('gpu')
+    #paddle.distributed.init_parallel_env()
+    world_size = paddle.distributed.get_world_size()
+    local_rank = paddle.distributed.get_rank()
     config = args[0]
     last_epoch = config.TRAIN.LAST_EPOCH
     seed = config.SEED + local_rank
@@ -265,13 +181,13 @@ def main_worker(*args):
     random.seed(seed)
     # logger for each process/gpu
     local_logger, master_logger = get_logger(config.SAVE)
-    message = f'----- world_size = {world_size}, local_rank = {local_rank}'
+    message = (f'----- world_size = {world_size}, local_rank = {local_rank} \n'
+               f'----- {config}')
     write_log(local_logger, master_logger, message)
-    
+
     # STEP 1: Create model
-    paddle.device.set_device('gpu')
     model = build_model(config)
-    if dist.get_world_size() > 1:
+    if paddle.distributed.get_world_size() > 1:
         strategy = fleet.DistributedStrategy()
         ## Hybrid Parallel Training
         strategy.hybrid_configs = {}
@@ -279,9 +195,9 @@ def main_worker(*args):
 
     # STEP 2: Create train dataloader
     dataset_train = args[1]
-    dataloader_train = get_dataloader(config, dataset_train, 'train', True)
+    dataloader_train = get_dataloader(config, dataset_train, True, True)
     total_batch_train = len(dataloader_train)
-    message = f'----- Total # of train batch (on single gpu): {total_batch_train}'
+    message = f'----- Total # of train batch (single gpu): {total_batch_train}'
     write_log(local_logger, master_logger, message)
 
     # STEP 3: Define optimizer and lr_scheduler
@@ -293,55 +209,58 @@ def main_worker(*args):
         )
         write_log(local_logger, master_logger, f'Base lr is scaled to: {config.TRAIN.BASE_LR}')
     # define scaler for amp training
-    if config.AMP is True:
-        amp_grad_scaler = paddle.amp.GradScaler() # default init_loss_scaling = 32768
-    else:
-        amp_grad_scaler = None
+    amp_grad_scaler = paddle.amp.GradScaler() if config.AMP else None 
     # set gradient clip
     if config.TRAIN.GRAD_CLIP:
         clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
     else:
         clip = None
     # set optimizer
+	# create warmup and cosine decay lr scheduler
+    if config.TRAIN.WARMUP_EPOCHS > 0:
+        cosine_lr_scheduler = paddle.optimizer.lr.CosineAnnealingDecay(
+            learning_rate=config.TRAIN.BASE_LR,
+            T_max=config.TRAIN.NUM_EPOCHS - config.TRAIN.WARMUP_EPOCHS,
+            eta_min=config.TRAIN.END_LR,
+            last_epoch=-1) # do not set last epoch, handled in warmup sched get_lr()
+        lr_scheduler = paddle.optimizer.lr.LinearWarmup(
+            learning_rate=cosine_lr_scheduler, # use cosine lr sched after warmup
+            warmup_steps=config.TRAIN.WARMUP_EPOCHS, # only support position integet
+            start_lr=config.TRAIN.WARMUP_START_LR,
+            end_lr=config.TRAIN.BASE_LR,
+            last_epoch=config.TRAIN.LAST_EPOCH)
+    else: # create cosine decay lr scheduler if no warmup epochs
+        lr_scheduler = paddle.optimizer.lr.CosineAnnealingDecay(
+            learning_rate=config.TRAIN.BASE_LR,
+            T_max=config.TRAIN.NUM_EPOCHS,
+            eta_min=config.TRAIN.END_LR,
+            last_epoch=config.TRAIN.LAST_EPOCH)
+
     if config.TRAIN.OPTIMIZER.NAME == "AdamW":
-        #wd_exclude_list = ['encoder_position_embedding', 'cls_token']
-        wd_exclude_list = []
-        for n, p in model.named_parameters():
-            if p.stop_gradient is True:
-                continue
-            if len(p.shape) == 1 or n.endswith('.bias'):
-                wd_exclude_list.append(n)
-        #print('no_decay param names: ', wd_exclude_list)
         optimizer = paddle.optimizer.AdamW(
             parameters=model.parameters(),
-            learning_rate=config.TRAIN.BASE_LR, #scheduler if scheduler is not None else config.TRAIN.BASE_LR,
+            learning_rate=lr_scheduler, # now only support warmup + consine 
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-            weight_decay=config.TRAIN.WEIGHT_DECAY, # set by params_groups, this vaule is not effectitve 
-            apply_decay_param_fun=get_exclude_from_weight_decay_fn(wd_exclude_list),
+            weight_decay=config.TRAIN.WEIGHT_DECAY,
             epsilon=config.TRAIN.OPTIMIZER.EPS,
-            grad_clip=clip)
-    elif config.TRAIN.OPTIMIZER.NAME == "AdamWDL":
-        name_dict = dict()
-        wd_exclude_list = ['encoder_position_embedding', 'cls_token']
-        for n, p in model.named_parameters():
-            # name_dict is for AdamWDL argument 'name_dict'
-            name_dict[p.name] = n
-            # add no decay param name to weight exclude list, for AramWDL argument 'apply_decay_param_fn' 
-            if p.stop_gradient is True:
-                continue
-            if len(p.shape) == 1 or n.endswith('.bias'):
-                wd_exclude_list.append(n)
-        #print('no_decay param names: ', wd_exclude_list)
+            grad_clip=clip,
+            apply_decay_param_fun=skip_weight_decay_fn(
+                model, # skip bn and bias in model
+                ['encoder_position_embedding', 'cls_token']), # skip custom ops
+        )
+    elif config.TRAIN.OPTIMIZER.NAME == "AdamWDL":  # using paddlenlp's impl
         optimizer = paddlenlp.ops.optimizer.AdamWDL(
-            learning_rate=config.TRAIN.BASE_LR,
+            learning_rate=lr_scheduler,
             weight_decay=config.TRAIN.WEIGHT_DECAY,
             layerwise_decay=config.TRAIN.LAYER_DECAY,
-            n_layers=config.MODEL.TRANS.ENCODER.DEPTH,
+            n_layers=config.MODEL.ENCODER.DEPTH,
             set_param_lr_fun=lr_decay.lr_setting,
             parameters=model.parameters(),
             name_dict=name_dict,
-            apply_decay_param_fun=get_exclude_from_weight_decay_fn(wd_exclude_list),
+            apply_decay_param_fun=skip_weight_decay_fn(
+                model, # skip bn and bias in model
+                ['encoder_position_embedding', 'cls_token']), # skip custom ops
             beta1=config.TRAIN.OPTIMIZER.BETAS[0],
             beta2=config.TRAIN.OPTIMIZER.BETAS[1],
             epsilon=config.TRAIN.OPTIMIZER.EPS,
@@ -368,35 +287,40 @@ def main_worker(*args):
         model_state = paddle.load(config.MODEL.RESUME)
         if 'model' in model_state: # load state_dict with multi items: model, optimier, and epoch
             model.set_state_dict(model_state['model'])
-            if 'optimizer' in model_state and 'epoch' in model_state:
+            if 'optimizer' in model_state:
                 optimizer.set_state_dict(model_state['optimizer'])
-                config.TRAIN.LAST_EPOCH = model_state['epoch'] + 1
+            if 'lr_scheduler' in model_state and lr_scheduler is not None:
+                lr_scheduler.set_state_dict(model_state['lr_scheduler'])
+            if 'epoch' in model_state:
+                config.TRAIN.LAST_EPOCH = model_state['epoch']
             if 'amp_grad_scaler' in model_state and amp_grad_scaler is not None:
                 amp_grad_scaler.load_state_dict(model_state['amp_grad_scaler'])
+            if config.TRAIN.MODEL_EMA:
+                model_ema.module.set_state_dict(model_state['model_ema'])
+            lr_scheduler.step(config.TRAIN.LAST_EPOCH)
             message = (f"----- Resume Training: Load model from {config.MODEL.RESUME}, "
                        f"opt = [{'optimizer' in model_state}], "
+                       f"lr_scheduler = [{'lr_scheduler' in model_state}], "
+                       f"model_ema = [{'model_ema' in model_state}], "
                        f"epoch = [{model_state.get('epoch', -1)}], "
                        f"amp_grad_scaler = [{'amp_grad_scaler' in model_state}]")
             write_log(local_logger, master_logger, message)
         else: # direct load pdparams without other items
-            message = f"----- Resume Training: Load model from {config.MODEL.RESUME}, no opt, epoch, or scaler is set!"
+            message = f"----- Resume Training: Load from {config.MODEL.RESUME}, no opt/epoch/scaler"
             write_log(local_logger, master_logger, message, 'warning')
-            model.set_dict(model_state)
-    
-    # STEP 5: Start training (train mode)
-    if dist.get_world_size() > 1:
-        model = fleet.distributed_model(model)
+            model.set_state_dict(model_state)
 
     write_log(local_logger, master_logger, f"----- Start training from epoch {last_epoch + 1}.")
     for epoch in range(last_epoch + 1, config.TRAIN.NUM_EPOCHS + 1):
-        # train
+        # Train one epoch
         write_log(local_logger, master_logger, f"Train epoch {epoch}. LR={optimizer.get_lr():.6e}")
 
         train_loss, avg_loss, train_time = train(
             dataloader=dataloader_train,
             model=model,
-            mask_ratio=config.MODEL.TRANS.MASK_RATIO,
+            mask_ratio=config.MODEL.MASK_RATIO,
             optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
             base_lr=config.TRAIN.BASE_LR,
             min_lr=config.TRAIN.END_LR,
             epoch=epoch,
@@ -410,7 +334,7 @@ def main_worker(*args):
             master_logger=master_logger)
 
         general_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], "
-                           f"Lr: {optimizer.get_lr():.4f}, "
+                           f"Lr: {optimizer.get_lr():.6e}, "
                            f"time: {train_time:.2f}, ")
         local_message = (general_message +
                          f"Train Loss: {train_loss:.4f}")
@@ -429,25 +353,24 @@ def main_worker(*args):
                 state_dict['epoch'] = epoch
                 if amp_grad_scaler is not None:
                     state_dict['amp_grad_scaler'] = amp_grad_scaler.state_dict()
+                if lr_scheduler is not None:
+                    state_dict['lr_scheduler'] = lr_scheduler.state_dict()
                 paddle.save(state_dict, model_path)
                 message = (f"----- Save model: {model_path}")
                 write_log(local_logger, master_logger, message)
 
 
 def main():
-    # config is updated by: (1) config.py, (2) yaml file, (3) arguments
-    arguments = get_arguments()
-    config = get_config()
-    config = update_config(config, arguments)
+    # config is updated in order: (1) default in config.py, (2) yaml file, (3) arguments
+    config = update_config(get_config(), get_arguments())
     # set output folder
     config.SAVE = '{}/pretrain-{}'.format(config.SAVE, time.strftime('%Y%m%d-%H-%M'))
     if not os.path.exists(config.SAVE):
         os.makedirs(config.SAVE, exist_ok=True)
     # get dataset
-    dataset_train = get_dataset(config, mode='train')
+    dataset_train = get_dataset(config, is_train=True)
     # start training
-    #config.NGPUS = len(paddle.static.cuda_places()) if config.NGPUS == -1 else config.NGPUS
-    #dist.spawn(main_worker, args=(config, dataset_train, ), nprocs=config.NGPUS)
+    #paddle.distributed.spawn(main_worker, args=(config, dataset_train, ))
     main_worker(config, dataset_train, )
 
 

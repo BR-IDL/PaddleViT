@@ -22,14 +22,14 @@ from transformer import build_transformer as build_model
 from config import *
 
 ## vit-base
-#model_path='./mae_finetuned_vit_base'
-#model_name = 'vit_base_patch16'
+model_path='./mae_finetuned_vit_base'
+model_name = 'vit_base_patch16'
 config = get_config(f'./configs/vit_base_patch16_224_finetune.yaml')
 
 # vit-large
-model_path='./mae_finetuned_vit_large'
-model_name = 'vit_large_patch16'
-config = get_config(f'./configs/vit_large_patch16_224_finetune.yaml')
+#model_path='./mae_finetuned_vit_large'
+#model_name = 'vit_large_patch16'
+#config = get_config(f'./configs/vit_large_patch16_224_finetune.yaml')
 
 # vit-huge
 #model_path='./mae_finetuned_vit_huge'

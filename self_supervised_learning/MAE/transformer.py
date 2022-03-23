@@ -71,11 +71,21 @@ class PatchEmbedding(nn.Layer):
                  dropout=0.):
         super().__init__()
         self.n_patches = (image_size // patch_size) * (image_size // patch_size)
+        w_attr_1, b_attr_1 = self._init_weights()
         self.patch_embedding = nn.Conv2D(in_channels=in_channels,
                                          out_channels=embed_dim,
                                          kernel_size=patch_size,
-                                         stride=patch_size)
+                                         stride=patch_size,
+                                         weight_attr=w_attr_1,
+                                         bias_attr=b_attr_1)
         self.dropout = nn.Dropout(dropout)
+
+    def _init_weights(self):
+        weight_attr = paddle.ParamAttr(
+            initializer=nn.initializer.XavierUniform()) # MAE 
+        bias_attr = paddle.ParamAttr(
+            initializer=nn.initializer.Constant(0.0))
+        return weight_attr, bias_attr
 
     def forward(self, x):
         x = self.patch_embedding(x)
@@ -149,8 +159,8 @@ class Attention(nn.Layer):
         qkv = self.qkv(x).chunk(3, axis=-1)
         q, k, v = map(self.transpose_multihead, qkv)
 
+        q = q * self.scales
         attn = paddle.matmul(q, k, transpose_y=True)
-        attn = attn * self.scales
         attn = self.softmax(attn)
         attn = self.attn_dropout(attn)
 
@@ -734,13 +744,12 @@ class MAETransformer(nn.Layer):
         return weight_attr, bias_attr
 
     def _init_weights_linear(self):
-        weight_attr = paddle.ParamAttr(initializer=nn.initializer.XavierUniform()) # MAE 
+        weight_attr = paddle.ParamAttr(initializer=nn.initializer.TruncatedNormal(std=0.02)) # MAE linearprobe 
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
         return weight_attr, bias_attr
 
     def _init_weights_classifier(self):
-        #weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=2e-5))
-        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
+        weight_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.TruncatedNormal(std=0.01))
         bias_attr = paddle.ParamAttr(initializer=paddle.nn.initializer.Constant(0))
         return weight_attr, bias_attr
 
@@ -748,34 +757,34 @@ class MAETransformer(nn.Layer):
 def build_mae_pretrain(config):
     """ build MAE vit model for pretraining"""
     model = MAEPretrainTransformer(image_size=config.DATA.IMAGE_SIZE,
-                                   patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                                   in_channels=3,
-                                   encoder_embed_dim=config.MODEL.TRANS.ENCODER.EMBED_DIM,
-                                   decoder_embed_dim=config.MODEL.TRANS.DECODER.EMBED_DIM,
-                                   encoder_depth=config.MODEL.TRANS.ENCODER.DEPTH,
-                                   decoder_depth=config.MODEL.TRANS.DECODER.DEPTH,
-                                   encoder_num_heads=config.MODEL.TRANS.ENCODER.NUM_HEADS,
-                                   decoder_num_heads=config.MODEL.TRANS.DECODER.NUM_HEADS,
-                                   mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                                   qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                                   patch_size=config.MODEL.PATCH_SIZE,
+                                   in_channels=config.DATA.IMAGE_CHANNELS,
+                                   encoder_embed_dim=config.MODEL.ENCODER.EMBED_DIM,
+                                   decoder_embed_dim=config.MODEL.DECODER.EMBED_DIM,
+                                   encoder_depth=config.MODEL.ENCODER.DEPTH,
+                                   decoder_depth=config.MODEL.DECODER.DEPTH,
+                                   encoder_num_heads=config.MODEL.ENCODER.NUM_HEADS,
+                                   decoder_num_heads=config.MODEL.DECODER.NUM_HEADS,
+                                   mlp_ratio=config.MODEL.MLP_RATIO,
+                                   qkv_bias=config.MODEL.QKV_BIAS,
                                    dropout=config.MODEL.DROPOUT,
                                    attention_dropout=config.MODEL.ATTENTION_DROPOUT,
                                    droppath=config.MODEL.DROPPATH,
-                                   norm_pix_loss=config.MODEL.TRANS.NORM_PIX_LOSS)
+                                   norm_pix_loss=config.MODEL.NORM_PIX_LOSS)
     return model
 
 
 def build_transformer(config):
     """ build vit model for finetuning and linear probing"""
     model = MAETransformer(image_size=config.DATA.IMAGE_SIZE,
-                           patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                           in_channels=3,
+                           patch_size=config.MODEL.PATCH_SIZE,
+                           in_channels=config.DATA.IMAGE_CHANNELS,
                            num_classes=config.MODEL.NUM_CLASSES,
-                           embed_dim=config.MODEL.TRANS.ENCODER.EMBED_DIM,
-                           depth=config.MODEL.TRANS.ENCODER.DEPTH,
-                           num_heads=config.MODEL.TRANS.ENCODER.NUM_HEADS,
-                           mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                           qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                           embed_dim=config.MODEL.ENCODER.EMBED_DIM,
+                           depth=config.MODEL.ENCODER.DEPTH,
+                           num_heads=config.MODEL.ENCODER.NUM_HEADS,
+                           mlp_ratio=config.MODEL.MLP_RATIO,
+                           qkv_bias=config.MODEL.QKV_BIAS,
                            global_pool=config.MODEL.GLOBAL_POOL,
                            dropout=config.MODEL.DROPOUT,
                            attention_dropout=config.MODEL.ATTENTION_DROPOUT,
