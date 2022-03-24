@@ -59,7 +59,6 @@ def get_logger(file_path):
         handlers = [
             logging.FileHandler(os.path.join(file_path, 'log.txt')),
             sys.stdout,
-            sys.stderr,
         ]
         for handler in handlers:
             handler.setFormatter(logging.Formatter(log_format))
