@@ -14,6 +14,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
+- Update (2022-03-24): Code is refactored and bugs are fixed.
 - Update (2021-08-11): Model FLOPs and # params are uploaded.
 - Update (2021-08-11): Code is released and ported weights are uploaded.
 
@@ -66,7 +67,7 @@ model.set_state_dict(model_state_dict)
 ```
 
 ## Evaluation
-To evaluate shuffle transformer model performance on ImageNet2012, run the following script using command line:
+To evaluate model performance on ImageNet2012, run the following script using command line:
 ```shell
 sh run_eval_multi.sh
 ```
@@ -86,7 +87,7 @@ python main_multi_gpu.py \
 
 
 ## Training
-To train the shuffle transformer model on ImageNet2012, run the following script using command line:
+To train the model on ImageNet2012, run the following script using command line:
 ```shell
 sh run_train_multi.sh
 ```

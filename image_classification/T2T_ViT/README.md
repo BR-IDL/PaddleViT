@@ -14,6 +14,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 ### Update 
+- Update (2022-03-24): Code is refactored and bugs are fixed.
 - Update (2021-09-27): Model FLOPs and # params are uploaded.
 - Update (2021-08-18): Code is released and ported weights are uploaded.
 
@@ -31,8 +32,8 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 | t2t_vit_t_24   				| 82.55 | 96.07 | 64.0M   | 12.9G  | 224   	    | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1cvvXrGr2buB8Np2WlVL7n_F1_CnI1qow/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1BMU3KX_TRmPxQ1jN5cmWhg?pwd=6vxc) |
 | t2t_vit_14_384 				| 83.34 | 96.50 | 21.5M   | 13.0G  | 384   	    | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1Yuso8WD7Q8Lu_9I8dTvAvkcXXtPSkmnm/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1AOMhyVRF9zPqJe-lTrd7pw?pwd=r685) |
 
-
 > *The results are evaluated on ImageNet2012 validation set.
+
 ## Data Preparation
 ImageNet2012 dataset is used in the following file structure:
 ```
@@ -73,7 +74,8 @@ model.set_state_dict(model_state_dict)
 ```
 
 ## Evaluation
-To evaluate the model performance on ImageNet2012, run the following script using command line:
+
+To evaluate model performance on ImageNet2012, run the following script using command line:
 ```shell
 sh run_eval_multi.sh
 ```

@@ -162,5 +162,5 @@ def get_dataloader(config, dataset, is_train=True, use_dist_sampler=False):
                                 batch_size=batch_size,
                                 num_workers=config.DATA.NUM_WORKERS,
                                 shuffle=is_train,
-                                drop_last=it_train)
+                                drop_last=is_train)
     return dataloader

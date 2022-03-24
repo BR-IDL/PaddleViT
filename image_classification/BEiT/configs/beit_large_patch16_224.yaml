@@ -4,12 +4,21 @@ DATA:
 MODEL:
     TYPE: BEiT
     NAME: beit_large_patch16_224
-    TRANS:
-        PATCH_SIZE: 16
-        EMBED_DIM: 1024
-        DEPTH: 24
-        NUM_HEADS: 16
-        MLP_RATIO: 4
-        USE_ABS_POS_EMB: False
-        USE_REL_POS_BIAS: True
-        INIT_VALUES: 1e-5
+    PATCH_SIZE: 16
+    EMBED_DIM: 1024
+    DEPTH: 24
+    NUM_HEADS: 16
+    MLP_RATIO: 4.0
+    QKV_BIAS: True
+    USE_ABS_POS_EMB: False
+    USE_REL_POS_BIAS: True
+    INIT_VALUES: 1e-5
+    DROPPATH: 0.2
+TRAIN:
+    NUM_EPOCHS: 50
+    WARMUP_EPOCHS: 5
+    WEIGHT_DECAY: 0.05
+    LAYER_DECAY: 0.75
+    BASE_LR: 1e-3
+    MIXUP_ALPHA: 0.8
+    CUTMIX_ALPHA: 1.0

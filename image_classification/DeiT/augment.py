@@ -346,69 +346,69 @@ def shear_level_to_arg(level):
     # range [-0.3, 0.3]
     level = (level / LEVEL_DENOM) * 0.3
     level = randomly_negate(level)
-    return level
+    return level,
 
 
 def translate_absolute_level_to_arg(level):
     # translate const = 100
     level = (level / LEVEL_DENOM) * 100.
     level = randomly_negate(level)
-    return level
+    return level,
 
 
 def translate_relative_level_to_arg(level):
     # range [-0.45, 0.45]
     level = (level / LEVEL_DENOM) * 0.45
     level = randomly_negate(level)
-    return level
+    return level,
 
 
 def rotate_level_to_arg(level):
     # range [-30, 30]
     level = (level / LEVEL_DENOM) * 30.
     level = randomly_negate(level)
-    return level
+    return level,
 
 
 def solarize_level_to_arg(level):
     # range [0, 256]
     # intensity/severity of augmentation decreases with level
-    return int((level / LEVEL_DENOM) * 256)
+    return int((level / LEVEL_DENOM) * 256),
 
 
 def solarize_increasing_level_to_arg(level):
     # range [0, 256]
     # intensity/severity of augmentation increases with level
-    return 256 - int((level / LEVEL_DENOM) * 256)
+    return 256 - int((level / LEVEL_DENOM) * 256),
 
 
 def solarize_add_level_to_arg(level):
     # range [0, 110]
-    return int((level / LEVEL_DENOM) * 110)
+    return int((level / LEVEL_DENOM) * 110),
 
 
 def posterize_level_to_arg(level):
     # range [0, 4]
     # intensity/severity of augmentation decreases with level
-    return int((level / LEVEL_DENOM) * 4)
+    return int((level / LEVEL_DENOM) * 4),
 
 
 def posterize_increasing_level_to_arg(level):
     # range [4, 0]
     # intensity/severity of augmentation increases with level
-    return 4 - int((level / LEVEL_DENOM) * 4)
+    return 4 - int((level / LEVEL_DENOM) * 4),
 
 
 def posterize_original_level_to_arg(level):
     # range [4, 8]
     # intensity/severity of augmentation decreases with level
-    return int((level / LEVEL_DENOM) * 4) + 4
+    return int((level / LEVEL_DENOM) * 4) + 4,
 
 
 # For Contrast, Color, Brightness, Sharpness
 def enhance_level_to_arg(level):
     # range [0.1, 1.9]
-    return (level / LEVEL_DENOM) * 1.8 + 0.1
+    return (level / LEVEL_DENOM) * 1.8 + 0.1,
 
 
 # For ContrastIncreasing, ColorIncreasing, BrightnessIncreasing, SharpnessIncreasing
@@ -416,7 +416,7 @@ def enhance_increasing_level_to_arg(level):
     # range [0.1, 1.9]
     level = (level / LEVEL_DENOM) * 0.9
     level = max(0.1, 1.0 + randomly_negate(level))
-    return level
+    return level,
 
 
 #################################################################

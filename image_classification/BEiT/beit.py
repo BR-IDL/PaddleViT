@@ -13,9 +13,13 @@
 # limitations under the License.
 
 """
-Implement Transformer Class for BEiT
-"""
+BEiT in Paddle
 
+A Paddle Implementation of BEiT as described in:
+
+"BEiT: BERT Pre-Training of Image Transformers"
+    - Paper Link: https://arxiv.org/abs/2106.08254 
+"""
 import math
 import copy
 from functools import partial
@@ -106,9 +110,6 @@ class Identity(nn.Layer):
     Use this layer to avoid if condition in some forward methods
 
     """
-    def __init__(self):
-        super().__init__()
-
     def forward(self, inputs):
         return inputs
 
@@ -204,7 +205,8 @@ class Attention(nn.Layer):
 
         qkv = F.linear(x=x, weight=self.qkv.weight, bias=qkv_bias)
 
-        qkv = qkv.reshape([B, N, 3, self.num_heads, -1]).transpose([2, 0, 3, 1, 4])
+        qkv = qkv.reshape([paddle.shape(x)[0], paddle.shape(x)[1], 3, self.num_heads, -1]).transpose([2, 0, 3, 1, 4])
+        #qkv = qkv.reshape([B, N, 3, self.num_heads, -1]).transpose([2, 0, 3, 1, 4])
         # make torchscript happy (cannot use tensor as tuple)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
@@ -234,7 +236,7 @@ class Attention(nn.Layer):
         attn = F.softmax(attn, axis=-1)
         attn = self.attn_drop(attn)
 
-        x = (attn @ v).transpose([0, 2, 1, 3]).reshape([B, N, -1])
+        x = (attn @ v).transpose([0, 2, 1, 3]).reshape([paddle.shape(x)[0], paddle.shape(x)[1], -1])
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
@@ -265,7 +267,6 @@ class Block(nn.Layer):
             window_size=window_size,
             attn_head_dim=attn_head_dim,
         )
-        # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
@@ -475,7 +476,9 @@ class Beit(nn.Layer):
         x = self.patch_embed(x)
         batch_size, seq_len, _ = x.shape
 
-        cls_tokens = self.cls_token.expand([batch_size, -1, -1])
+        #cls_tokens = self.cls_token.expand([batch_size, 1, self.embed_dim])
+        cls_tokens = self.cls_token.expand([paddle.shape(x)[0], 1, self.embed_dim])
+        #cls_tokens = self.cls_token.expand([batch_size, -1, -1])
 
         x = paddle.concat((cls_tokens, x), axis=1)
 
@@ -505,13 +508,14 @@ def build_beit(config):
     model = Beit(
         img_size=config.DATA.IMAGE_SIZE,
         num_classes=config.MODEL.NUM_CLASSES,
-        patch_size=config.MODEL.TRANS.PATCH_SIZE,
-        embed_dim=config.MODEL.TRANS.EMBED_DIM,
-        depth=config.MODEL.TRANS.DEPTH,
-        num_heads=config.MODEL.TRANS.NUM_HEADS,
-        mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-        use_abs_pos_emb=config.MODEL.TRANS.USE_ABS_POS_EMB,
-        use_rel_pos_bias=config.MODEL.TRANS.USE_REL_POS_BIAS,
-        init_values=config.MODEL.TRANS.INIT_VALUES,
+        patch_size=config.MODEL.PATCH_SIZE,
+        embed_dim=config.MODEL.EMBED_DIM,
+        depth=config.MODEL.DEPTH,
+        num_heads=config.MODEL.NUM_HEADS,
+        mlp_ratio=config.MODEL.MLP_RATIO,
+        use_abs_pos_emb=config.MODEL.USE_ABS_POS_EMB,
+        use_rel_pos_bias=config.MODEL.USE_REL_POS_BIAS,
+        init_values=config.MODEL.INIT_VALUES,
+        qkv_bias=config.MODEL.QKV_BIAS,
     )
     return model

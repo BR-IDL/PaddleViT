@@ -49,7 +49,6 @@ def get_arguments():
     parser.add_argument('-image_size', type=int, default=None)
     parser.add_argument('-accum_iter', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
-    parser.add_argument('-teacher_model_path', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
     parser.add_argument('-eval', action='store_true')
@@ -406,18 +405,18 @@ def main_worker(*args):
         model_state = paddle.load(config.MODEL.RESUME)
         if 'model' in model_state: # load state_dict with multi items: model, optimier, and epoch
             model.set_state_dict(model_state['model'])
-            if ('optimizer' in model_state and
-                'lr_scheduler' in model_state and
-                'epoch' in model_state):
+            if 'optimizer' in model_state:
                 optimizer.set_state_dict(model_state['optimizer'])
-                lr_scheduler.set_state_dict(model_state['lr_scheduler'])
+            if 'epoch' in model_state:
                 config.TRAIN.LAST_EPOCH = model_state['epoch']
+            if 'lr_scheduler' in model_state:
+                lr_scheduler.set_state_dict(model_state['lr_scheduler'])
             if 'amp_grad_scaler' in model_state and amp_grad_scaler is not None:
                 amp_grad_scaler.load_state_dict(model_state['amp_grad_scaler'])
             if config.TRAIN.MODEL_EMA:
                 model_ema.module.set_state_dict(model_state['model_ema'])
             lr_scheduler.step(config.TRAIN.LAST_EPOCH)
-            message = (f"----- Resume Training: Load model from {config.MODEL.RESUME}, "
+            message = (f"----- Resume Training: Load model from {config.MODEL.RESUME}, w/t "
                        f"opt = [{'optimizer' in model_state}], "
                        f"lr_scheduler = [{'lr_scheduler' in model_state}], "
                        f"model_ema = [{'model_ema' in model_state}], "
@@ -425,7 +424,7 @@ def main_worker(*args):
                        f"amp_grad_scaler = [{'amp_grad_scaler' in model_state}]")
             write_log(local_logger, master_logger, message)
         else: # direct load pdparams without other items
-            message = f"----- Resume Training: Load from {config.MODEL.RESUME}, no opt/epoch/scaler"
+            message = f"----- Resume Training: Load {config.MODEL.RESUME}, w/o opt/epoch/scaler"
             write_log(local_logger, master_logger, message, 'warning')
             model.set_state_dict(model_state)
 
@@ -525,6 +524,8 @@ def main_worker(*args):
                     state_dict['model_ema'] = model_ema.state_dict()
                 state_dict['optimizer'] = optimizer.state_dict()
                 state_dict['epoch'] = epoch
+                if lr_scheduler is not None:
+                    state_dict['lr_scheduler'] = lr_scheduler.state_dict()
                 if amp_grad_scaler is not None:
                     state_dict['amp_grad_scaler'] = amp_grad_scaler.state_dict()
                 paddle.save(state_dict, model_path)

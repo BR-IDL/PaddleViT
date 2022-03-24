@@ -3,13 +3,22 @@ DATA:
     CROP_PCT: 0.9
 MODEL:
     TYPE: BEiT
-    NAME: beit_base_patch16_224
-    TRANS:
-        PATCH_SIZE: 16
-        EMBED_DIM: 768
-        DEPTH: 12
-        NUM_HEADS: 12
-        MLP_RATIO: 4
-        USE_ABS_POS_EMB: False
-        USE_REL_POS_BIAS: True
-        INIT_VALUES: 0.1
+    NAME: beit_base_patch16_224_finetune
+    PATCH_SIZE: 16
+    EMBED_DIM: 768
+    DEPTH: 12
+    NUM_HEADS: 12
+    MLP_RATIO: 4.0
+    USE_ABS_POS_EMB: False
+    USE_REL_POS_BIAS: True
+    INIT_VALUES: 0.1
+    DROPPATH: 0.1
+TRAIN:
+    NUM_EPOCHS: 100
+    WARMUP_EPOCHS: 20
+    WEIGHT_DECAY: 0.05
+    LAYER_DECAY: 0.65
+    BASE_LR: 4e-3
+    MIXUP_ALPHA: 0.8
+    CUTMIX_ALPHA: 1.0
+

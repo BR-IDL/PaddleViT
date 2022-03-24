@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ViT train and eval using multiple GPU """
+"""BeiT finetuning and eval using multiple GPU"""
 import sys
 import os
 import time
@@ -29,12 +29,20 @@ from utils import AverageMeter
 from utils import get_logger
 from utils import write_log
 from utils import all_reduce_mean
-from vit import build_vit as build_model
+from utils import skip_weight_decay_fn
+from mixup import Mixup
+import lr_decay
+from model_ema import ModelEma
+from losses import LabelSmoothingCrossEntropyLoss
+from losses import SoftTargetCrossEntropyLoss
+from interpolate_position_embedding import interpolate_position_embedding
+from beit import build_beit as build_model
+import paddlenlp
 
 
 def get_arguments():
     """return argumeents, this will overwrite the config by (1) yaml file (2) argument values"""
-    parser = argparse.ArgumentParser('ViT')
+    parser = argparse.ArgumentParser('BEiT finetune')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-data_path', type=str, default=None)
@@ -61,6 +69,8 @@ def train(dataloader,
           total_batches,
           debug_steps=100,
           accum_iter=1,
+          model_ema=None,
+          mixup_fn=None,
           amp_grad_scaler=None,
           local_logger=None,
           master_logger=None):
@@ -75,6 +85,8 @@ def train(dataloader,
         total_batches: int, total num of batches for one epoch
         debug_steps: int, num of iters to log info, default: 100
         accum_iter: int, num of iters for accumulating gradients, default: 1
+        model_ema: ModelEma, model moving average instance
+        mixup_fn: Mixup, mixup instance, default: None
         amp_grad_scaler: GradScaler, if not None pass the GradScaler and enable AMP, default: None
         local_logger: logger for local process/gpu, default: None
         master_logger: logger for main process, default: None
@@ -98,7 +110,11 @@ def train(dataloader,
         # get data
         images = data[0]
         label = data[1]
+        label_orig = label.clone()
         batch_size = images.shape[0]
+
+        if mixup_fn is not None:
+            images, label = mixup_fn(images, label_orig)
 
         # forward
         with paddle.amp.auto_cast(amp_grad_scaler is not None):
@@ -127,8 +143,13 @@ def train(dataloader,
                 amp_grad_scaler.update()
                 optimizer.clear_grad()
 
+        if model_ema is not None and paddle.distributed.get_rank() == 0:
+            model_ema.update(model)
+
+        # average of output and kd_output, same as eval mode
         pred = paddle.nn.functional.softmax(output)
-        acc = paddle.metric.accuracy(pred, label.unsqueeze(1)).item()
+        acc = paddle.metric.accuracy(pred,
+            label_orig if mixup_fn else label_orig.unsqueeze(1)).item()
 
         # sync from other gpus for overall loss and acc
         master_loss = all_reduce_mean(loss_value)
@@ -151,6 +172,9 @@ def train(dataloader,
                               f"Loss: {master_loss:.4f} ({master_loss_meter.avg:.4f}), "
                               f"Avg Acc: {master_acc_meter.avg:.4f}")
             write_log(local_logger, master_logger, local_message, master_message)
+
+        if batch_id == 100:
+            break
 
     paddle.distributed.barrier()
     train_time = time.time() - time_st
@@ -264,6 +288,16 @@ def main_worker(*args):
 
     # STEP 1: Create model
     model = build_model(config)
+    #for n, p in model.named_parameters():
+    #    print(n, p.shape)
+    #for n, p in model.named_buffers():
+    #    print(n, p.shape)
+    # define model ema
+    model_ema = None
+    if not config.EVAL and config.TRAIN.MODEL_EMA and local_rank == 0:
+        model_ema = ModelEma(model, decay=config.TRAIN.MODEL_EMA_DECAY)
+        if config.TRAIN.MODEL_EMA_FORCE_CPU:
+            model_ema.to('cpu')
 
     # STEP 2: Create train and val dataloader
     if not config.EVAL:
@@ -279,11 +313,46 @@ def main_worker(*args):
     message = f'----- Total # of val batch (single gpu): {total_batch_val}'
     write_log(local_logger, master_logger, message)
 
-    # STEP 3: Define loss/criterion
-    criterion = paddle.nn.CrossEntropyLoss()
+    # STEP 3: (Optional) Define Mixup function
+    mixup_fn = None
+    if (config.TRAIN.MIXUP_PROB > 0 or config.TRAIN.CUTMIX_ALPHA > 0 or
+        config.TRAIN.CUTMIX_MINMAX is not None):
+        mixup_fn = Mixup(mixup_alpha=config.TRAIN.MIXUP_ALPHA,
+                         cutmix_alpha=config.TRAIN.CUTMIX_ALPHA,
+                         cutmix_minmax=config.TRAIN.CUTMIX_MINMAX,
+                         prob=config.TRAIN.MIXUP_PROB,
+                         switch_prob=config.TRAIN.MIXUP_SWITCH_PROB,
+                         mode=config.TRAIN.MIXUP_MODE,
+                         label_smoothing=config.TRAIN.SMOOTHING)#
 
-    # STEP 4: Define optimizer and lr_scheduler
+    # STEP 4: Define loss/criterion
+    if mixup_fn is not None:
+        criterion = SoftTargetCrossEntropyLoss()
+    elif config.TRAIN.SMOOTHING:
+        criterion = LabelSmoothingCrossEntropyLoss()
+    else:
+        criterion = paddle.nn.CrossEntropyLoss()
+    # Use CrossEntropyLoss for val
+    criterion_val = paddle.nn.CrossEntropyLoss()
+
+    # STEP 5: Define optimizer and lr_scheduler
     if not config.EVAL:
+        # set lr according to batch size and world size
+        if config.TRAIN.LINEAR_SCALED_LR is not None:
+            effective_batch_size = config.DATA.BATCH_SIZE * config.TRAIN.ACCUM_ITER * world_size
+            config.TRAIN.BASE_LR = (
+                config.TRAIN.BASE_LR * effective_batch_size / config.TRAIN.LINEAR_SCALED_LR
+            )
+            config.TRAIN.WARMUP_START_LR = (
+                config.TRAIN.WARMUP_START_LR* effective_batch_size / config.TRAIN.LINEAR_SCALED_LR
+            )
+            config.TRAIN.END_LR = (
+                config.TRAIN.END_LR * effective_batch_size / config.TRAIN.LINEAR_SCALED_LR
+            )
+            message = (f'Base lr is scaled to: {config.TRAIN.BASE_LR}, '
+                       f'warmup start lr is scaled to: {config.TRAIN.BASE_LR}, '
+                       f'end lr is scaled to: {config.TRAIN.BASE_LR}')
+            write_log(local_logger, master_logger, message)
         # define scaler for amp training
         amp_grad_scaler = paddle.amp.GradScaler() if config.AMP else None
         # warmup + cosine lr scheduler
@@ -305,34 +374,91 @@ def main_worker(*args):
                 T_max=config.TRAIN.NUM_EPOCHS,
                 eta_min=config.TRAIN.END_LR,
                 last_epoch=config.TRAIN.LAST_EPOCH)
-
+        # weight decay scheduler
+        #wd_schedule = utils.cosine_scheduler(config.TRAIN.WEIGHT_DECAY,
+       	#                                     config.TRAIN.WEIGHT_DECAY_END,
+        #                                     config.TRAIN.NUM_EPOCHS,
+        #                                     len(dataloader_train))
         # set gradient clip
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
         else:
             clip = None
-        # set optimizer
-        optimizer = paddle.optimizer.AdamW(
-            parameters=model.parameters(),
-            learning_rate=lr_scheduler, # set to scheduler
-            beta1=config.TRAIN.OPTIMIZER.BETAS[0],
-            beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-            weight_decay=config.TRAIN.WEIGHT_DECAY,
-            epsilon=config.TRAIN.OPTIMIZER.EPS,
-            grad_clip=clip)
 
-    # STEP 5: (Optional) Load pretrained model weights for evaluation or finetuning
+        # no weight decay list
+        no_weight_decay_list = ['pos_embed', 'cls_token']
+        #for i in range(model.get_num_layers()):
+        #    no_weight_decay_list.append(f"blocks.{i}.attn.relative_position_bias_table")
+
+        # set optimizer
+        if config.TRAIN.OPTIMIZER.NAME == "AdamW":
+            params_groups = lr_decay.param_groups_lrd(
+                    model=model,
+                no_weight_decay_list=no_weight_decay_list,
+                weight_decay=config.TRAIN.WEIGHT_DECAY,
+                layer_decay=config.TRAIN.LAYER_DECAY)
+
+            optimizer = paddle.optimizer.AdamW(
+                parameters=params_groups,
+                learning_rate=lr_scheduler, # now only support warmup + cosine
+                beta1=config.TRAIN.OPTIMIZER.BETAS[0],
+                beta2=config.TRAIN.OPTIMIZER.BETAS[1],
+                weight_decay=config.TRAIN.WEIGHT_DECAY, # set by params_groups, this vaule is not effectitve
+                epsilon=config.TRAIN.OPTIMIZER.EPS,
+                grad_clip=clip)
+        elif config.TRAIN.OPTIMIZER.NAME == "AdamWDL":
+            name_dict = dict()
+            for n, p in model.named_parameters():
+                # name_dict is for AdamWDL argument 'name_dict'
+                name_dict[p.name] = n
+            optimizer = paddlenlp.ops.optimizer.AdamWDL(
+                learning_rate=lr_scheduler,
+                weight_decay=config.TRAIN.WEIGHT_DECAY,
+                layerwise_decay=config.TRAIN.LAYER_DECAY,
+                n_layers=config.MODEL.DEPTH,
+                set_param_lr_fun=lr_decay.lr_setting,
+                parameters=model.parameters(),
+                name_dict=name_dict,
+                apply_decay_param_fun=skip_weight_decay_fn(
+                    model, # skip bn and bias in model
+                    no_weight_decay_list), # skip custom ops
+                beta1=config.TRAIN.OPTIMIZER.BETAS[0],
+                beta2=config.TRAIN.OPTIMIZER.BETAS[1],
+                epsilon=config.TRAIN.OPTIMIZER.EPS,
+                grad_clip=clip)
+        else:
+            message = f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}."
+            write_log(local_logger, master_logger, message, None, 'fatal')
+            raise NotImplementedError(message)
+
+    # STEP 6: (Optional) Load pretrained model weights for evaluation or finetuning
     if config.MODEL.PRETRAINED:
         assert os.path.isfile(config.MODEL.PRETRAINED) is True
         model_state = paddle.load(config.MODEL.PRETRAINED)
         if 'model' in model_state: # load state_dict with multi items: model, optimier, and epoch
             # pretrain only load model weight, opt and epoch are ignored
-            model_state = model_state['model']
+            if 'model_ema' in model_state:
+                model_state = model_state['model_ema']
+            else:
+                model_state = model_state['model']
+
+        for k in ['head.weight', 'head.bias']:
+            if k in model_state and model_state[k].shape != model.state_dict()[k].shape:
+                del model_state[k]
+        if model.use_rel_pos_bias and "rel_pos_bias.relative_position_bias_table" in model_state:
+            num_layers = model.get_num_layers()
+            rel_pos_bias = model_state["rel_pos_bias.relative_position_bias_table"]
+            for i in range(num_layers):
+                model_state["blocks.%d.attn.relative_position_bias_table" % i] = rel_pos_bias.clone()
+            model_state.pop("rel_pos_bias.relative_position_bias_table") 
+
+        # interpolate pos tokens if num of model's tokens not equal to num of model_state's tokens
+        interpolate_position_embedding(model, model_state)
         model.set_state_dict(model_state)
         message = f"----- Pretrained: Load model state from {config.MODEL.PRETRAINED}"
         write_log(local_logger, master_logger, message)
 
-    # STEP 6: (Optional) Load model weights and status for resume training
+    # STEP 7: (Optional) Load model weights and status for resume training
     if config.MODEL.RESUME:
         assert os.path.isfile(config.MODEL.RESUME) is True
         model_state = paddle.load(config.MODEL.RESUME)
@@ -346,10 +472,13 @@ def main_worker(*args):
                 lr_scheduler.set_state_dict(model_state['lr_scheduler'])
             if 'amp_grad_scaler' in model_state and amp_grad_scaler is not None:
                 amp_grad_scaler.load_state_dict(model_state['amp_grad_scaler'])
+            if config.TRAIN.MODEL_EMA:
+                model_ema.module.set_state_dict(model_state['model_ema'])
             lr_scheduler.step(config.TRAIN.LAST_EPOCH)
             message = (f"----- Resume Training: Load model from {config.MODEL.RESUME}, w/t "
                        f"opt = [{'optimizer' in model_state}], "
                        f"lr_scheduler = [{'lr_scheduler' in model_state}], "
+                       f"model_ema = [{'model_ema' in model_state}], "
                        f"epoch = [{model_state.get('epoch', -1)}], "
                        f"amp_grad_scaler = [{'amp_grad_scaler' in model_state}]")
             write_log(local_logger, master_logger, message)
@@ -367,7 +496,7 @@ def main_worker(*args):
         val_loss, val_acc1, val_acc5, avg_loss, avg_acc1, avg_acc5, val_time = validate(
             dataloader=dataloader_val,
             model=model,
-            criterion=criterion,
+            criterion=criterion_val,
             total_batches=total_batch_val,
             debug_steps=config.REPORT_FREQ,
             local_logger=local_logger,
@@ -400,6 +529,8 @@ def main_worker(*args):
             total_batches=total_batch_train,
             debug_steps=config.REPORT_FREQ,
             accum_iter=config.TRAIN.ACCUM_ITER,
+            model_ema=model_ema,
+            mixup_fn=mixup_fn,
             amp_grad_scaler=amp_grad_scaler,
             local_logger=local_logger,
             master_logger=master_logger)
@@ -424,7 +555,7 @@ def main_worker(*args):
             val_loss, val_acc1, val_acc5, avg_loss, avg_acc1, avg_acc5, val_time = validate(
                 dataloader=dataloader_val,
                 model=model,
-                criterion=criterion,
+                criterion=criterion_val,
                 total_batches=total_batch_val,
                 debug_steps=config.REPORT_FREQ,
                 local_logger=local_logger,
@@ -448,6 +579,8 @@ def main_worker(*args):
                     config.SAVE, f"Epoch-{epoch}-Loss-{avg_loss}.pdparams")
                 state_dict = dict()
                 state_dict['model'] = model.state_dict()
+                if model_ema is not None:
+                    state_dict['model_ema'] = model_ema.state_dict()
                 state_dict['optimizer'] = optimizer.state_dict()
                 state_dict['epoch'] = epoch
                 if lr_scheduler is not None:
