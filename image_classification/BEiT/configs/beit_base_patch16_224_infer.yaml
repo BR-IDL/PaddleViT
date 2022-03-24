@@ -1,14 +1,14 @@
 DATA:
-    IMAGE_SIZE: 384
-    CROP_PCT: 1.0
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
 MODEL:
     TYPE: BEiT
-    NAME: beit_base_patch16_384
+    NAME: beit_base_patch16_224
     PATCH_SIZE: 16
     EMBED_DIM: 768
     DEPTH: 12
     NUM_HEADS: 12
     MLP_RATIO: 4.0
     USE_ABS_POS_EMB: False
-    USE_REL_POS_BIAS: True
+    USE_REL_POS_BIAS: False
     INIT_VALUES: 0.1

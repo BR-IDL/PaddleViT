@@ -74,8 +74,8 @@ class ImageNet2012Dataset(Dataset):
         return data, label
 
 
-def get_train_transforms_deit(config):
-    """ Get full training transforms (as DeiT)
+def get_train_transforms(config):
+    """ Get full training transforms
     For training, a RandomResizedCrop is applied with random mirror,
     then RandAug, AutoAug or ColorJitter is applied,
     then normalization is applied with mean and std,
@@ -126,7 +126,7 @@ def get_train_transforms_deit(config):
     return transforms_train
 
 
-def get_train_transforms_vit(config):
+def get_train_transforms_simple(config):
     """ Get training transforms
     For training, a RandomResizedCrop is applied with random mirror,
     then normalization is applied with mean and std.
@@ -180,8 +180,8 @@ def get_dataset(config, is_train=True):
     """
     if config.DATA.DATASET == "imagenet2012":
         if is_train:
-            # use full augmentation for DeiT
-            transform_ops = get_train_transforms_deit(config)
+            # use full augmentation
+            transform_ops = get_train_transforms(config)
         else:
             transform_ops = get_val_transforms(config)
         dataset = ImageNet2012Dataset(config.DATA.DATA_PATH,
@@ -210,7 +210,8 @@ def get_dataloader(config, dataset, is_train=True, use_dist_sampler=False):
     if use_dist_sampler is True:
         sampler = DistributedBatchSampler(dataset=dataset,
                                           batch_size=batch_size,
-                                          shuffle=is_train)
+                                          shuffle=is_train,
+                                          drop_last=is_train)
         dataloader = DataLoader(dataset=dataset,
                                 batch_sampler=sampler,
                                 num_workers=config.DATA.NUM_WORKERS)
@@ -218,5 +219,6 @@ def get_dataloader(config, dataset, is_train=True, use_dist_sampler=False):
         dataloader = DataLoader(dataset=dataset,
                                 batch_size=batch_size,
                                 num_workers=config.DATA.NUM_WORKERS,
-                                shuffle=is_train)
+                                shuffle=is_train,
+                                drop_last=is_train)
     return dataloader

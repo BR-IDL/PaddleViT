@@ -55,7 +55,7 @@ _C.MODEL.DEPTH = 12
 _C.MODEL.MLP_RATIO = 4.0
 _C.MODEL.QKV_BIAS = True
 
-# training settings (for ViT-B/16 pretrain)
+# training settings
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 300
@@ -83,7 +83,7 @@ _C.TRAIN.MODEL_EMA_FORCE_CPU = True
 _C.TRAIN.SMOOTHING = 0.1
 _C.TRAIN.COLOR_JITTER = 0.4  # if both auto augment and rand augment are False, use color jitter
 _C.TRAIN.AUTO_AUGMENT = False  # rand augment is used if both rand and auto augment are set True
-_C.TRAIN.RAND_AUGMENT = False
+_C.TRAIN.RAND_AUGMENT = True
 _C.TRAIN.RAND_AUGMENT_LAYERS = 2
 _C.TRAIN.RAND_AUGMENT_MAGNITUDE = 9  # scale from 0 to 9
 # mixup params (optional, check datasets.py)
