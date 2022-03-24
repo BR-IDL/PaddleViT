@@ -14,6 +14,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
+- Update (2022-03-24): Code is refactored and bugs are fixed.
 - Update (2021-08-11): Model FLOPs and # params are uploaded.
 - Update (2021-08-11): Code is released and ported weights are uploaded.
 

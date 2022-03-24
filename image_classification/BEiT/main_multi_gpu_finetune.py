@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Swin train and eval using multiple GPU without teacher model"""
+"""BeiT finetuning and eval using multiple GPU"""
 import sys
 import os
 import time
@@ -31,16 +31,18 @@ from utils import write_log
 from utils import all_reduce_mean
 from utils import skip_weight_decay_fn
 from mixup import Mixup
+import lr_decay
 from model_ema import ModelEma
 from losses import LabelSmoothingCrossEntropyLoss
 from losses import SoftTargetCrossEntropyLoss
 from interpolate_position_embedding import interpolate_position_embedding
-from swin import build_swin as build_model
+from beit import build_beit as build_model
+import paddlenlp
 
 
 def get_arguments():
     """return argumeents, this will overwrite the config by (1) yaml file (2) argument values"""
-    parser = argparse.ArgumentParser('Swin')
+    parser = argparse.ArgumentParser('BEiT finetune')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-data_path', type=str, default=None)
@@ -126,9 +128,6 @@ def train(dataloader,
 
         loss = loss / accum_iter
 
-        if batch_id % accum_iter == 0: # adjust lr per iter (same as official swin)
-            lr_scheduler.step(batch_id / total_batches + epoch -1)
-
         # backward and step
         if amp_grad_scaler is None: # fp32
             loss.backward()
@@ -173,6 +172,9 @@ def train(dataloader,
                               f"Loss: {master_loss:.4f} ({master_loss_meter.avg:.4f}), "
                               f"Avg Acc: {master_acc_meter.avg:.4f}")
             write_log(local_logger, master_logger, local_message, master_message)
+
+        if batch_id == 100:
+            break
 
     paddle.distributed.barrier()
     train_time = time.time() - time_st
@@ -286,6 +288,10 @@ def main_worker(*args):
 
     # STEP 1: Create model
     model = build_model(config)
+    #for n, p in model.named_parameters():
+    #    print(n, p.shape)
+    #for n, p in model.named_buffers():
+    #    print(n, p.shape)
     # define model ema
     model_ema = None
     if not config.EVAL and config.TRAIN.MODEL_EMA and local_rank == 0:
@@ -368,25 +374,62 @@ def main_worker(*args):
                 T_max=config.TRAIN.NUM_EPOCHS,
                 eta_min=config.TRAIN.END_LR,
                 last_epoch=config.TRAIN.LAST_EPOCH)
-
+        # weight decay scheduler
+        #wd_schedule = utils.cosine_scheduler(config.TRAIN.WEIGHT_DECAY,
+       	#                                     config.TRAIN.WEIGHT_DECAY_END,
+        #                                     config.TRAIN.NUM_EPOCHS,
+        #                                     len(dataloader_train))
         # set gradient clip
         if config.TRAIN.GRAD_CLIP:
             clip = paddle.nn.ClipGradByGlobalNorm(config.TRAIN.GRAD_CLIP)
         else:
             clip = None
+
+        # no weight decay list
+        no_weight_decay_list = ['pos_embed', 'cls_token']
+        #for i in range(model.get_num_layers()):
+        #    no_weight_decay_list.append(f"blocks.{i}.attn.relative_position_bias_table")
+
         # set optimizer
-        optimizer = paddle.optimizer.AdamW(
-            parameters=model.parameters(),
-            learning_rate=lr_scheduler, # set to scheduler
-            beta1=config.TRAIN.OPTIMIZER.BETAS[0],
-            beta2=config.TRAIN.OPTIMIZER.BETAS[1],
-            weight_decay=config.TRAIN.WEIGHT_DECAY,
-            epsilon=config.TRAIN.OPTIMIZER.EPS,
-            grad_clip=clip,
-            apply_decay_param_fun=skip_weight_decay_fn(
-                model, # skip bn and bias
-                ['absolute_positional_embedding', 'relative_position_bias_table']), # skip custom ops
-            )
+        if config.TRAIN.OPTIMIZER.NAME == "AdamW":
+            params_groups = lr_decay.param_groups_lrd(
+                    model=model,
+                no_weight_decay_list=no_weight_decay_list,
+                weight_decay=config.TRAIN.WEIGHT_DECAY,
+                layer_decay=config.TRAIN.LAYER_DECAY)
+
+            optimizer = paddle.optimizer.AdamW(
+                parameters=params_groups,
+                learning_rate=lr_scheduler, # now only support warmup + cosine
+                beta1=config.TRAIN.OPTIMIZER.BETAS[0],
+                beta2=config.TRAIN.OPTIMIZER.BETAS[1],
+                weight_decay=config.TRAIN.WEIGHT_DECAY, # set by params_groups, this vaule is not effectitve
+                epsilon=config.TRAIN.OPTIMIZER.EPS,
+                grad_clip=clip)
+        elif config.TRAIN.OPTIMIZER.NAME == "AdamWDL":
+            name_dict = dict()
+            for n, p in model.named_parameters():
+                # name_dict is for AdamWDL argument 'name_dict'
+                name_dict[p.name] = n
+            optimizer = paddlenlp.ops.optimizer.AdamWDL(
+                learning_rate=lr_scheduler,
+                weight_decay=config.TRAIN.WEIGHT_DECAY,
+                layerwise_decay=config.TRAIN.LAYER_DECAY,
+                n_layers=config.MODEL.DEPTH,
+                set_param_lr_fun=lr_decay.lr_setting,
+                parameters=model.parameters(),
+                name_dict=name_dict,
+                apply_decay_param_fun=skip_weight_decay_fn(
+                    model, # skip bn and bias in model
+                    no_weight_decay_list), # skip custom ops
+                beta1=config.TRAIN.OPTIMIZER.BETAS[0],
+                beta2=config.TRAIN.OPTIMIZER.BETAS[1],
+                epsilon=config.TRAIN.OPTIMIZER.EPS,
+                grad_clip=clip)
+        else:
+            message = f"Unsupported Optimizer: {config.TRAIN.OPTIMIZER.NAME}."
+            write_log(local_logger, master_logger, message, None, 'fatal')
+            raise NotImplementedError(message)
 
     # STEP 6: (Optional) Load pretrained model weights for evaluation or finetuning
     if config.MODEL.PRETRAINED:
@@ -398,15 +441,17 @@ def main_worker(*args):
                 model_state = model_state['model_ema']
             else:
                 model_state = model_state['model']
-        # delete relative_position_index since it is always re-initialized
-        for key in [k for k in model_state.keys() if 'relative_position_index' in k]:
-            del model_state[key]
-        # delete relative_coords_table since it is always re-initialized
-        for key in [k for k in model_state.keys() if 'relative_coords_table' in k]:
-            del model_state[key]
-        # delete attn_mask since it is always re-initialized
-        for key in [k for k in model_state.keys() if 'attn_mask' in k]:
-            del model_state[key]
+
+        for k in ['head.weight', 'head.bias']:
+            if k in model_state and model_state[k].shape != model.state_dict()[k].shape:
+                del model_state[k]
+        if model.use_rel_pos_bias and "rel_pos_bias.relative_position_bias_table" in model_state:
+            num_layers = model.get_num_layers()
+            rel_pos_bias = model_state["rel_pos_bias.relative_position_bias_table"]
+            for i in range(num_layers):
+                model_state["blocks.%d.attn.relative_position_bias_table" % i] = rel_pos_bias.clone()
+            model_state.pop("rel_pos_bias.relative_position_bias_table") 
+
         # interpolate pos tokens if num of model's tokens not equal to num of model_state's tokens
         interpolate_position_embedding(model, model_state)
         model.set_state_dict(model_state)
@@ -490,8 +535,8 @@ def main_worker(*args):
             local_logger=local_logger,
             master_logger=master_logger)
 
-        ## update lr per epoch (not used here)
-        #lr_scheduler.step()
+        # update lr
+        lr_scheduler.step()
 
         general_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], "
                            f"Lr: {optimizer.get_lr():.4f}, "
