@@ -1,8 +1,9 @@
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
 -cfg='./configs/shuffle_vit_tiny_patch4_window7_224.yaml' \
 -dataset='imagenet2012' \
--batch_size=32 \
+-batch_size=128 \
 -data_path='/dataset/imagenet' \
+-pretrained='./shuffle_vit_tiny_patch4_window7_224.pdparams' \
 -eval \
--pretrained='./shuffle_vit_tiny_patch4_window7_224' \
+-amp

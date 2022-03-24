@@ -55,7 +55,7 @@ _C.MODEL.DEPTH = 12
 _C.MODEL.MLP_RATIO = 4.0
 _C.MODEL.QKV_BIAS = True
 
-# training settings (for ViT-B/16 pretrain)
+# training settings
 _C.TRAIN = CN()
 _C.TRAIN.LAST_EPOCH = 0
 _C.TRAIN.NUM_EPOCHS = 300

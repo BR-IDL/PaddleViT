@@ -13,10 +13,14 @@
 # limitations under the License.
 
 """
-Implement T2T-ViT Transformer
+T2T-ViT Transformer in Paddle
+
+A Paddle Implementation of Tokens-to-Token ViT (T2T-ViT) as describted in:
+
+"Tokens-to-Token ViT: Training Vision Transformers from Scratch on ImageNet"
+	- Paper Link: https://arxiv.org/abs/2101.11986
 """
 
-import copy
 import math
 import numpy as np
 import paddle
@@ -27,19 +31,15 @@ from utils import orthogonal
 
 class Identity(nn.Layer):
     """ Identity layer
-
     The output of this layer is the input without any change.
-    Use this layer to avoid using 'if' condition in forward methods
+    Use this layer to avoid if condition in some forward methods
     """
-    def __init__(self):
-        super(Identity, self).__init__()
-
     def forward(self, x):
         return x
 
 
 class PatchEmbedding(nn.Layer):
-    """Patch Embeddings
+    """Patch embedding layer
 
     Apply patch embeddings (tokens-to-token) on input images. Embeddings is
     implemented using one of the following ops: Performer, Transformer.
@@ -587,15 +587,14 @@ class T2TViT(nn.Layer):
         # craete self-attention layers
         layer_list = []
         for i in range(depth):
-            block_layers = Block(dim=embed_dim,
-                                 num_heads=num_heads,
-                                 mlp_ratio=mlp_ratio,
-                                 qkv_bias=qkv_bias,
-                                 qk_scale=qk_scale,
-                                 dropout=dropout,
-                                 attention_dropout=attention_dropout,
-                                 droppath=depth_decay[i])
-            layer_list.append(copy.deepcopy(block_layers))
+            layer_list.append(Block(dim=embed_dim,
+                                    num_heads=num_heads,
+                                    mlp_ratio=mlp_ratio,
+                                    qkv_bias=qkv_bias,
+                                    qk_scale=qk_scale,
+                                    dropout=dropout,
+                                    attention_dropout=attention_dropout,
+                                    droppath=depth_decay[i]))
         self.blocks = nn.LayerList(layer_list)
         w_attr_1, b_attr_1 = self._init_weights_layernorm()
         self.norm = nn.LayerNorm(embed_dim, epsilon=1e-6, weight_attr=w_attr_1, bias_attr=b_attr_1)
@@ -643,13 +642,13 @@ def build_t2t_vit(config):
     model = T2TViT(image_size=config.DATA.IMAGE_SIZE,
                    in_channels=3,
                    num_classes=config.MODEL.NUM_CLASSES,
-                   token_type=config.MODEL.TRANS.TOKEN_TYPE,
-                   embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                   depth=config.MODEL.TRANS.DEPTH,
-                   num_heads=config.MODEL.TRANS.NUM_HEADS,
-                   mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                   qk_scale=config.MODEL.TRANS.QK_SCALE,
-                   qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                   token_type=config.MODEL.TOKEN_TYPE,
+                   embed_dim=config.MODEL.EMBED_DIM,
+                   depth=config.MODEL.DEPTH,
+                   num_heads=config.MODEL.NUM_HEADS,
+                   mlp_ratio=config.MODEL.MLP_RATIO,
+                   qk_scale=config.MODEL.QK_SCALE,
+                   qkv_bias=config.MODEL.QKV_BIAS,
                    dropout=config.MODEL.DROPOUT,
                    attention_dropout=config.MODEL.ATTENTION_DROPOUT,
                    droppath=config.MODEL.DROPPATH,

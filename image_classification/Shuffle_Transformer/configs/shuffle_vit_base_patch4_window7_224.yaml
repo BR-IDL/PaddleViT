@@ -4,9 +4,8 @@ DATA:
 MODEL:
     TYPE: shuffle
     NAME: shuffle_vit_tiny_patch4_window7_224
-    DROP_PATH: 0.5
-    TRANS:
-        EMBED_DIM: 128
-        DEPTHS: [2, 2, 18, 2]
-        NUM_HEADS: [4, 8, 16, 32]
-        WINDOW_SIZE: 7
+    DROPPATH: 0.5
+    EMBED_DIM: 128
+    STAGE_DEPTHS: [2, 2, 18, 2]
+    NUM_HEADS: [4, 8, 16, 32]
+    WINDOW_SIZE: 7

@@ -1,23 +1,23 @@
 DATA:
     IMAGE_SIZE: 224
     CROP_PCT: 0.9
+    BATCH_SIZE: 64
 MODEL:
     TYPE: T2T-ViT
     NAME: t2t-vit-14
-    TRANS:
-        EMBED_DIM: 384 
-        DEPTH: 14
-        NUM_HEADS: 6
-        MLP_RATIO: 3.0
-        QKV_BIAS: False
-        QK_SCALE: None #0.05103103630798288 #384 ** -0.5
+    EMBED_DIM: 384
+    DEPTH: 14
+    NUM_HEADS: 6
+    MLP_RATIO: 3.0
+    QKV_BIAS: False
+    QK_SCALE: None  # 384 ** -0.5
 TRAIN:
-    NUM_EPOCHS: 300
-    WARMUP_EPOCHS: 3
-    WEIGHT_DECAY: 0.3
-    BASE_LR: 0.003
+    NUM_EPOCHS: 310
+    WARMUP_EPOCHS: 5
+    WEIGHT_DECAY: 0.05
+    BASE_LR: 5e-4
     WARMUP_START_LR: 1e-6
-    END_LR: 5e-4
-    ACCUM_ITER: 2
+    END_LR: 1e-5
+    ACCUM_ITER: 1
 
 

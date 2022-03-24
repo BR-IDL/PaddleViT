@@ -12,7 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Implement Shuffle Transformer (https://arxiv.org/abs/2106.03650) """
+""" 
+Shuffle Transformer in Paddle
+
+A Paddle Implementation of ShuffleTransformer as described in:
+
+"Shuffle Transformer: Rethinking Spatial Shuffle for Vision Transformer"
+	- Paper Link: https://arxiv.org/abs/2106.03650
+"""
 
 import numpy as np
 import paddle
@@ -22,13 +29,9 @@ from droppath import DropPath
 
 class Identity(nn.Layer):
     """ Identity layer
-
     The output of this layer is the input without any change.
     Use this layer to avoid if condition in some forward methods
     """
-    def __init__(self):
-        super(Identity, self).__init__()
-
     def forward(self, x):
         return x
 
@@ -526,12 +529,16 @@ class ShuffleTransformer(nn.Layer):
 def build_shuffle_transformer(config):
     """ build shuffle transformer using config"""
     model = ShuffleTransformer(image_size=config.DATA.IMAGE_SIZE,
-                               embed_dim=config.MODEL.TRANS.EMBED_DIM,
                                num_classes=config.MODEL.NUM_CLASSES,
-                               mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                               layers=config.MODEL.TRANS.DEPTHS,
-                               num_heads=config.MODEL.TRANS.NUM_HEADS,
-                               window_size=config.MODEL.TRANS.WINDOW_SIZE,
-                               qk_scale=config.MODEL.TRANS.QK_SCALE,
-                               qkv_bias=config.MODEL.TRANS.QKV_BIAS)
+                               token_dim=config.MODEL.TOKEN_DIM,
+                               embed_dim=config.MODEL.EMBED_DIM,
+                               mlp_ratio=config.MODEL.MLP_RATIO,
+                               layers=config.MODEL.STAGE_DEPTHS,
+                               num_heads=config.MODEL.NUM_HEADS,
+                               window_size=config.MODEL.WINDOW_SIZE,
+                               qk_scale=config.MODEL.QK_SCALE,
+                               qkv_bias=config.MODEL.QKV_BIAS,
+                               attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                               dropout=config.MODEL.DROPOUT,
+                               droppath=config.MODEL.DROPPATH)
     return model

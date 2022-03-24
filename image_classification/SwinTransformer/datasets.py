@@ -210,7 +210,8 @@ def get_dataloader(config, dataset, is_train=True, use_dist_sampler=False):
     if use_dist_sampler is True:
         sampler = DistributedBatchSampler(dataset=dataset,
                                           batch_size=batch_size,
-                                          shuffle=is_train)
+                                          shuffle=is_train,
+                                          drop_last=is_train)
         dataloader = DataLoader(dataset=dataset,
                                 batch_sampler=sampler,
                                 num_workers=config.DATA.NUM_WORKERS)
@@ -218,5 +219,6 @@ def get_dataloader(config, dataset, is_train=True, use_dist_sampler=False):
         dataloader = DataLoader(dataset=dataset,
                                 batch_size=batch_size,
                                 num_workers=config.DATA.NUM_WORKERS,
-                                shuffle=is_train)
+                                shuffle=is_train,
+                                drop_last=is_train)
     return dataloader

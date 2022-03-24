@@ -20,28 +20,18 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 ## Models Zoo
 | Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
 |-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| shuffle_vit_tiny  			| 82.39 | 96.05 | 28.5M   | 4.6G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ffJ-tG_CGVXztPEPQMaT_lUoc4hxFy__/view?usp=sharing)/[baidu](https://pan.baidu.com/s/19DhlLIFyPGOWtyq_c83ZGQ)(8a1i) |
-| shuffle_vit_small 			| 83.53 | 96.57 | 50.1M   | 8.8G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1du9H0SKr0QH9GQjhWDOXOnhpSVpfbb8X/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1rM2J8BVwxQ3kRZoHngwNZA)(xwh3) |
-| shuffle_vit_base  			| 83.95 | 96.91 | 88.4M   | 15.5G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1sYh808AyTG3-_qv6nfN6gCmyagsNAE6q/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1fks_IYDdnXdAkCFuYHW_Nw)(1gsr) |
+| shuffle_vit_tiny  			| 82.39 | 96.05 | 28.5M   | 4.6G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1ffJ-tG_CGVXztPEPQMaT_lUoc4hxFy__/view?usp=sharing)/[baidu](https://pan.baidu.com/s/19DhlLIFyPGOWtyq_c83ZGQ?pwd=8a1i) |
+| shuffle_vit_small 			| 83.53 | 96.57 | 50.1M   | 8.8G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1du9H0SKr0QH9GQjhWDOXOnhpSVpfbb8X/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1rM2J8BVwxQ3kRZoHngwNZA?pwd=xwh3) |
+| shuffle_vit_base  			| 83.95 | 96.91 | 88.4M   | 15.5G  | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1sYh808AyTG3-_qv6nfN6gCmyagsNAE6q/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1fks_IYDdnXdAkCFuYHW_Nw?pwd=1gsr) |
 
 > *The results are evaluated on ImageNet2012 validation set.
 
-## Notebooks
-We provide a few notebooks in aistudio to help you get started:
-
-**\*(coming soon)\***
-
-
-## Requirements
-- Python>=3.6
-- yaml>=0.2.5
-- [PaddlePaddle](https://www.paddlepaddle.org.cn/documentation/docs/en/install/index_en.html)>=2.1.0
-- [yacs](https://github.com/rbgirshick/yacs)>=0.1.8
-
-## Data 
-ImageNet2012 dataset is used in the following folder structure:
+## Data Preparation
+ImageNet2012 dataset is used in the following file structure:
 ```
 │imagenet/
+├──train_list.txt
+├──val_list.txt
 ├──train/
 │  ├── n01440764
 │  │   ├── n01440764_10026.JPEG
@@ -55,106 +45,63 @@ ImageNet2012 dataset is used in the following folder structure:
 │  │   ├── ......
 │  ├── ......
 ```
+- `train_list.txt`: list of relative paths and labels of training images. You can download it from: [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm?pwd=a4vm)
+- `val_list.txt`: list of relative paths and labels of validation images. You can download it from: [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga?pwd=kdga) 
+
 
 ## Usage
 To use the model with pretrained weights, download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
 
-For example, assume the downloaded weight file is stored in `./shuffle_vit_base_patch4_window7.pdparams`, to use the `shuffle_vit_base_patch4_window7_224` model in python:
+For example, assume weight file is downloaded in `./shuffle_vit_tiny_patch4_window7_224.pdparams`, to use the `shuffle_vit_tiny` model in python:
 ```python
 from config import get_config
 from shuffle_transformer import build_shuffle_transformer as build_model
 # config files in ./configs/
-config = get_config('./configs/shuffle_vit_base_patch4_window7_224.yaml')
+config = get_config('./configs/shuffle_vit_tiny_patch4_window7_224.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights
-model_state_dict = paddle.load('./shuffle_vit_base_patch4_window7_224.pdparams')
-model.set_dict(model_state_dict)
+model_state_dict = paddle.load('./shuffle_vit_tiny_patch4_window7_224.pdparams')
+model.set_state_dict(model_state_dict)
 ```
 
 ## Evaluation
-To evaluate Shuffle Transformer model performance on ImageNet2012 with a single GPU, run the following script using command line:
-```shell
-sh run_eval.sh
-```
-or
-```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_single_gpu.py \
-    -cfg=./configs/shuffle_vit_base_patch4_window7_224.yaml \
-    -dataset=imagenet2012 \
-    -batch_size=16 \
-    -data_path=/path/to/dataset/imagenet/val \
-    -eval \
-    -pretrained=/path/to/pretrained/model/shuffle_vit_base_patch4_window7_224  # .pdparams is NOT needed
-```
-
-<details>
-
-<summary>
-Run evaluation using multi-GPUs:
-</summary>
-
-
+To evaluate model performance on ImageNet2012, run the following script using command line:
 ```shell
 sh run_eval_multi.sh
 ```
 or
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg=./configs/shuffle_vit_base_patch4_window7_224.yaml \
-    -dataset=imagenet2012 \
-    -batch_size=16 \
-    -data_path=/path/to/dataset/imagenet/val \
-    -eval \
-    -pretrained=/path/to/pretrained/model/shuffle_vit_base_patch4_window7_224  # .pdparams is NOT needed
+-cfg='./configs/shuffle_vit_tiny_patch4_window7_224.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-eval \
+-pretrained='./shuffle_vit_tiny_patch4_window7_224.pdparams' \
+-amp
 ```
-
-</details>
+> Note: if you have only 1 GPU, change device number to `CUDA_VISIBLE_DEVICES=0` would run the evaluation on single GPU.
 
 
 ## Training
-To train the Shuffle Transformer model on ImageNet2012 with single GPU, run the following script using command line:
-```shell
-sh run_train.sh
-```
-or
-```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_single_gpu.py \
-  -cfg=./configs/shuffle_vit_base_patch4_window7_224.yaml \
-  -dataset=imagenet2012 \
-  -batch_size=32 \
-  -data_path=/path/to/dataset/imagenet/train
-```
-
-
-<details>
-
-<summary>
-Run training using multi-GPUs:
-</summary>
-
-
+To train the model on ImageNet2012, run the following script using command line:
 ```shell
 sh run_train_multi.sh
 ```
 or
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg=./configs/shuffle_vit_base_patch4_window7_224.yaml \
-    -dataset=imagenet2012 \
-    -batch_size=32 \
-    -data_path=/path/to/dataset/imagenet/train
+-cfg='./configs/shuffle_vit_tiny_patch4_window7_224.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-amp
 ```
+> Note: it is highly recommanded to run the training using multiple GPUs / multi-node GPUs.
 
-</details>
-
-
-## Visualization Attention Map
-**(coming soon)**
 
 ## Reference
 ```

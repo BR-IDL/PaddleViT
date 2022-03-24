@@ -163,8 +163,6 @@ def update_config(config, args):
         config.MODEL.PRETRAINED = args.pretrained
     if args.resume:
         config.MODEL.RESUME = args.resume
-    if args.teacher_model_path:
-        config.TRAIN.TEACHER_MODEL = args.teacher_model_path
     if args.last_epoch:
         config.TRAIN.LAST_EPOCH = args.last_epoch
     if args.amp:  # only for training
