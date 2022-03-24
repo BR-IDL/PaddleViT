@@ -34,7 +34,6 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 > *The results are evaluated on ImageNet2012 validation set.
 
-
 ## Data Preparation
 ImageNet2012 dataset is used in the following file structure:
 ```
@@ -75,6 +74,7 @@ model.set_state_dict(model_state_dict)
 ```
 
 ## Evaluation
+
 To evaluate model performance on ImageNet2012, run the following script using command line:
 ```shell
 sh run_eval_multi.sh
@@ -110,6 +110,7 @@ python main_multi_gpu.py \
 -amp
 ```
 > Note: it is highly recommanded to run the training using multiple GPUs / multi-node GPUs.
+
 
 ## Reference
 ```

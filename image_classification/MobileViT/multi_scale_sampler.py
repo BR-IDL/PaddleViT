@@ -14,7 +14,9 @@ class MultiScaleSamplerDDP(BatchSampler):
                  min_scale_multi=0.5,
                  max_scale_multi=1.5,
                  num_scales=5,
-                 is_train=False):
+                 is_train=False,
+                 drop_last=False):
+        super().__init__(drop_last=drop_last)
         min_image_width = int(base_image_width * min_scale_multi)
         min_image_height = int(base_image_height * min_scale_multi)
         max_image_width = int(base_image_width * max_scale_multi)

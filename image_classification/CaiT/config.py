@@ -39,7 +39,7 @@ _C.DATA.IMAGENET_STD = [0.229, 0.224, 0.225]  # imagenet std values
 # model general settings
 _C.MODEL = CN()
 _C.MODEL.TYPE = 'cait'
-_C.MODEL.NAME = 'vait'
+_C.MODEL.NAME = 'cait'
 _C.MODEL.RESUME = None  # full model path for resume training
 _C.MODEL.PRETRAINED = None  # full model path for finetuning
 _C.MODEL.NUM_CLASSES = 1000  # num of classes for classifier

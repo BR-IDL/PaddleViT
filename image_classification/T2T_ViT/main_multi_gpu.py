@@ -49,6 +49,7 @@ def get_arguments():
     parser.add_argument('-image_size', type=int, default=None)
     parser.add_argument('-accum_iter', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
+    parser.add_argument('-teacher_model_path', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
     parser.add_argument('-eval', action='store_true')

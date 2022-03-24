@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Swin train and eval using multiple GPU without teacher model"""
+
+"""Shuffle Transformer train and eval using multiple GPU"""
 import sys
 import os
 import time
@@ -49,6 +50,7 @@ def get_arguments():
     parser.add_argument('-image_size', type=int, default=None)
     parser.add_argument('-accum_iter', type=int, default=None)
     parser.add_argument('-pretrained', type=str, default=None)
+    parser.add_argument('-teacher_model_path', type=str, default=None)
     parser.add_argument('-resume', type=str, default=None)
     parser.add_argument('-last_epoch', type=int, default=None)
     parser.add_argument('-eval', action='store_true')

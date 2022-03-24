@@ -53,7 +53,7 @@ ImageNet2012 dataset is used in the following file structure:
 ## Usage
 To use the model with pretrained weights, download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
 
-For example, assume weight file is downloaded in `./shuffle_vit_tiny_patch4_window7_224.pdparams`, to use the `shuffle_vit_tiny` model in python:
+For example, assume weight file is downloaded in `./shuffle_vit_tiny_patch4_window7_224.pdparams`, to use the `shuffle_vit_tiny_patch4_window7_224` model in python:
 ```python
 from config import get_config
 from shuffle_transformer import build_shuffle_transformer as build_model

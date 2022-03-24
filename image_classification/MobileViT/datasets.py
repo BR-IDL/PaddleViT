@@ -236,12 +236,14 @@ def get_dataloader(config, dataset, is_train=True, use_dist_sampler=False):
                                            base_image_height=config.DATA.IMAGE_SIZE,
                                            base_batch_size=batch_size,
                                            num_data_samples=len(dataset),
-                                           is_train=is_train)
+                                           is_train=is_train,
+                                           drop_last=drop_last)
         else:
             sampler = DistributedBatchSampler(dataset=dataset,
                                               batch_size=batch_size,
                                               shuffle=is_train,
-                                              drop_last=True)
+                                              drop_last=is_train)
+
         dataloader = DataLoader(dataset=dataset,
                                 batch_sampler=sampler,
                                 num_workers=config.DATA.NUM_WORKERS)

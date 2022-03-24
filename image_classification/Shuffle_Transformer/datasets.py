@@ -74,6 +74,7 @@ class ImageNet2012Dataset(Dataset):
         return data, label
 
 
+
 def get_train_transforms(config):
     """ Get full training transforms
     For training, a RandomResizedCrop is applied with random mirror,
@@ -124,6 +125,7 @@ def get_train_transforms(config):
     transforms_train = transforms.Compose(aug_op_list)
 
     return transforms_train
+
 
 
 def get_train_transforms_simple(config):
