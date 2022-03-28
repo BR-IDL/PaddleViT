@@ -21,12 +21,10 @@ import paddle
 import paddle.nn as nn
 from scipy import special
 
-# https://github.com/xperzy/PPViT/blob/91ad6dd625cd39ebb854352eeb95991ec438575d/image_classification/ViT/droppath.py
 class DropPath(nn.Layer):
     """DropPath class"""
-
     def __init__(self, drop_prob=None):
-        super(DropPath, self).__init__()
+        super().__init__()
         self.drop_prob = drop_prob
 
     def drop_path(self, inputs):
@@ -43,7 +41,7 @@ class DropPath(nn.Layer):
             return inputs
         keep_prob = 1 - self.drop_prob
         keep_prob = paddle.to_tensor(keep_prob, dtype='float32')
-        shape = (inputs.shape[0],) + (1,) * (inputs.ndim - 1)  # shape=(N, 1, 1, 1)
+        shape = (inputs.shape[0], ) + (1, ) * (inputs.ndim - 1)  # shape=(N, 1, 1, 1)
         random_tensor = keep_prob + paddle.rand(shape, dtype=inputs.dtype)
         random_tensor = random_tensor.floor()  # mask
         output = inputs.divide(keep_prob) * random_tensor  # divide is to keep same output expectation
@@ -152,7 +150,7 @@ class Mlp(nn.Layer):
     """
 
     def __init__(self, in_features, hidden_features, dropout):
-        super(Mlp, self).__init__()
+        super().__init__()
         w_attr_1, b_attr_1 = self._init_weights()
         self.fc1 = nn.Linear(in_features,
                              hidden_features,
@@ -243,8 +241,8 @@ class Attention(nn.Layer):
         qkv = self.qkv(x).chunk(3, axis=-1)
         q, k, v = map(self.transpose_multihead, qkv)
 
+        q = q * self.scales
         attn = paddle.matmul(q, k, transpose_y=True)
-        attn = attn * self.scales
         attn = self.softmax(attn)
         attn_weights = attn
         attn = self.attn_dropout(attn)
@@ -267,7 +265,7 @@ class Identity(nn.Layer):
     """
 
     def __init__(self):
-        super(Identity, self).__init__()
+        super().__init__()
 
     def forward(self, x):
         return x

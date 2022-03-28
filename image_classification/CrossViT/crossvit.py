@@ -1,3 +1,5 @@
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -9,9 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Cross ViT Class"""
 
-
+"""
+CrossViT in Paddle
+A Paddle Implementation of Cross-Attention Multi-Scale Vision Transformer (CrossViT) as described in:
+"CrossViT: Cross-Attention Multi-Scale Vision Transformer for Image Classification"
+    - Paper Link: https://arxiv.org/abs/2103.14899
+"""
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
@@ -20,8 +26,6 @@ from t2t import T2T, get_sinusoid_encoding
 from crossvit_utils import *
 
 class PatchEmbed(nn.Layer):
-    """ Image to Patch Embedding
-    """
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768, multi_conv=False):
         super().__init__()
         img_size = to_2tuple(img_size)
@@ -283,9 +287,9 @@ class VisionTransformer(nn.Layer):
                  mlp_ratio=(2., 2., 4.),
                  qkv_bias=False,
                  qk_scale=None,
-                 drop_rate=0.,
-                 attn_drop_rate=0.,
-                 drop_path_rate=0.,
+                 dropout=0.,
+                 attention_dropout=0.,
+                 droppath=0.,
                  hybrid_backbone=None,
                  multi_conv=False):
         super().__init__()
@@ -335,10 +339,10 @@ class VisionTransformer(nn.Layer):
         self.cls_token = nn.ParameterList(
             [paddle.create_parameter(
                 shape=[1, 1, embed_dim[i]], dtype='float32') for i in range(self.num_branches)])
-        self.pos_drop = nn.Dropout(p=drop_rate)
+        self.pos_drop = nn.Dropout(p=dropout)
 
         total_depth = sum([sum(x[-2:]) for x in depth])
-        dpr = [x.item() for x in paddle.linspace(0, drop_path_rate, total_depth)]
+        dpr = [x.item() for x in paddle.linspace(0, droppath, total_depth)]
         dpr_ptr = 0
         self.blocks = nn.LayerList()
         for idx, block_cfg in enumerate(depth):
@@ -351,8 +355,8 @@ class VisionTransformer(nn.Layer):
                                   mlp_ratio=mlp_ratio,
                                   qkv_bias=qkv_bias,
                                   qk_scale=qk_scale,
-                                  drop=drop_rate,
-                                  attn_drop=attn_drop_rate,
+                                  drop=dropout,
+                                  attn_drop=attention_dropout,
                                   drop_path=dpr_)
             dpr_ptr += curr_depth
             self.blocks.append(blk)
@@ -425,18 +429,19 @@ class VisionTransformer(nn.Layer):
         return ce_logits
 
 
-def build_crossvit(config, **kwargs):
-    model = VisionTransformer(img_size=config.MODEL.TRANS.IMG_SIZE,
+def build_crossvit(config):
+    """build corssvit model using config"""
+    model = VisionTransformer(img_size=config.MODEL.IMG_SIZE,
                               num_classes=config.MODEL.NUM_CLASSES,
-                              patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                              embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                              depth=config.MODEL.TRANS.DEPTH,
-                              num_heads=config.MODEL.TRANS.NUM_HEADS,
-                              mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                              qkv_bias=config.MODEL.TRANS.QKV_BIAS,
-                              multi_conv=config.MODEL.TRANS.MULTI_CONV,
-                              drop_rate=config.MODEL.DROPOUT,
-                              attn_drop_rate=config.MODEL.ATTENTION_DROPOUT,
-                              drop_path_rate=config.MODEL.DROPPATH,
-                              **kwargs)
+                              patch_size=config.MODEL.PATCH_SIZE,
+                              embed_dim=config.MODEL.EMBED_DIM,
+                              depth=config.MODEL.DEPTH,
+                              num_heads=config.MODEL.NUM_HEADS,
+                              mlp_ratio=config.MODEL.MLP_RATIO,
+                              qkv_bias=config.MODEL.QKV_BIAS,
+                              multi_conv=config.MODEL.MULTI_CONV,
+                              hybrid_backbone=config.MODEL.HYBRID_BACKBONE,
+                              dropout=config.MODEL.DROPOUT,
+                              attention_dropout=config.MODEL.ATTENTION_DROPOUT,
+                              droppath=config.MODEL.DROPPATH)
     return model

@@ -4,12 +4,11 @@ DATA:
 MODEL:
     TYPE: CrossViT
     NAME: crossvit_vit_18_dagger_224
-    TRANS:
-        IMG_SIZE: [240, 224]
-        PATCH_SIZE: [12, 16]
-        EMBED_DIM: [224, 448]
-        DEPTH: [[1, 6, 0], [1, 6, 0], [1, 6, 0]]
-        NUM_HEADS: [7, 7]
-        MLP_RATIO: [3, 3, 1]
-        QKV_BIAS: True
-        MULTI_CONV: True
+    IMG_SIZE: [240, 224]
+    PATCH_SIZE: [12, 16]
+    EMBED_DIM: [224, 448]
+    DEPTH: [[1, 6, 0], [1, 6, 0], [1, 6, 0]]
+    NUM_HEADS: [7, 7]
+    MLP_RATIO: [3, 3, 1]
+    QKV_BIAS: True
+    MULTI_CONV: True
