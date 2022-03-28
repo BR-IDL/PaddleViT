@@ -56,13 +56,15 @@ def get_logger(file_path):
     # master_logger records avg performance
     if local_rank == 0:
         master_logger = logging.getLogger('master')
-        handlers = [
-            logging.FileHandler(os.path.join(file_path, 'log.txt')),
-            sys.stdout,
-        ]
-        for handler in handlers:
-            handler.setFormatter(logging.Formatter(log_format))
-            master_logger.addHandler(handler)
+        # log.txt
+        filename = os.path.join(file_path, 'log.txt')
+        fh = logging.FileHandler(filename)
+        fh.setFormatter(logging.Formatter(log_format))
+        master_logger.addHandler(fh)
+        # console
+        sh = logging.StreamHandler(sys.stdout)
+        sh.setFormatter(logging.Formatter(log_format))
+        master_logger.addHandler(sh)
     else:
         master_logger = None
     return local_logger, master_logger
