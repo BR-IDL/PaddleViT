@@ -27,10 +27,11 @@ PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接�
 - [PaddleViT-Det](./object_detection/DETR) 用于 目标检测
 - [PaddleViT-Seg](./semantic_segmentation) 用于 语义分割
 - [PaddleViT-GAN](./gan) 用于 生成对抗模型
+- [Docs](./docs/) 提供文档和教程
+- [docs-export](./docs/paddlevit-export-en.md) 预测模型的生成与部署
   
 我们同时提供对应教程：
-- Notebooks (即将更新)
-- Online Course (即将更新)
+- PaddleViT免费在线课程 [这里](https://aistudio.baidu.com/aistudio/course/introduce/25102)
 
 ## 项目特性 ##
 1. **SOTA模型的完整实现**
