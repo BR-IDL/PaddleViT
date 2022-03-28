@@ -27,9 +27,10 @@ PaddleViT implements model architectures and tools for multiple vision tasks, go
 - [PaddleViT-Det](./object_detection/DETR) for object detection
 - [PaddleViT-Seg](./semantic_segmentation) for Semantic Segmentation
 - [PaddleViT-GAN](./gan) for GANs.
+- [Docs](./docs/) for tutorials and documentations.
+- [docs-export](./docs/paddlevit-export-en.md) for exporte paddlevit models to inference models for produiction deployment
   
 We also provide tutorials:
-- Notebooks (coming soon)
 - [Online Course](https://aistudio.baidu.com/aistudio/course/introduce/25102): on Paddle AIStudio (in chinese version)
 
 ## Features ##
