@@ -13,6 +13,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
+- Update (2022-03-30): Code is refactored.
 - Update (2021-08-11): Model FLOPs and # params are uploaded.
 - Update (2021-08-11): Code is released and ported weights are uploaded.
 
@@ -25,7 +26,6 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 > *The results are evaluated on ImageNet2012 validation set.
 
 > Note: MLP-Mixer weights are ported from [timm](https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/mlp_mixer.py)
-)
 
 
 ## Data Preparation

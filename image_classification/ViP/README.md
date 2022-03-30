@@ -15,6 +15,7 @@ This implementation is developed by [PPViT](https://github.com/BR-IDL/PaddleViT/
 
 
 ### Update 
+- Update (2022-03-30): Code is refactored.
 - Update (2021-11-03): Code and weights are updated.
 - Update (2021-09-23): Code is released and ported weights are uploaded.
 
