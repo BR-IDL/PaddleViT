@@ -60,7 +60,7 @@ For example, assume weight file is downloaded in `./poolformer_s12.pdparams`, to
 from config import get_config
 from poolformer import build_poolformer as build_model
 # config files in ./configs/
-config = get_config('./configs/poolformer_s12_finetune.yaml')
+config = get_config('./configs/poolformer_s12.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights
