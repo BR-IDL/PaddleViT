@@ -70,7 +70,7 @@ For example, assume weight file is downloaded in `./beit_base_patch16_224.pdpara
 from config import get_config
 from beit import build_beit as build_model
 # config files in ./configs/
-config = get_config('./configs/beit_base_patch16_224_finetune.yaml')
+config = get_config('./configs/beit_base_patch16_224.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights
@@ -87,7 +87,7 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
--cfg='./configs/beit_base_patch16_224_finetune.yaml' \
+-cfg='./configs/beit_base_patch16_224.yaml' \
 -dataset='imagenet2012' \
 -batch_size=256 \
 -data_path='/dataset/imagenet' \
@@ -107,7 +107,7 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
--cfg='./configs/beit_base_patch16_224_finetune.yaml' \
+-cfg='./configs/beit_base_patch16_224.yaml' \
 -dataset='imagenet2012' \
 -batch_size=256 \
 -data_path='/dataset/imagenet' \

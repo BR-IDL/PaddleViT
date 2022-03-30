@@ -66,7 +66,7 @@ For example, assume weight file is downloaded in `./crossvit_tiny_224.pdparams`,
 from config import get_config
 from crossvit import build_crossvit as build_model
 # config files in ./configs/
-config = get_config('./configs/crossvit_tiny_224_finetune.yaml')
+config = get_config('./configs/crossvit_tiny_224.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights
@@ -83,7 +83,7 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
--cfg='./configs/crossvit_tiny_224_finetune.yaml' \
+-cfg='./configs/crossvit_tiny_224.yaml' \
 -dataset='imagenet2012' \
 -batch_size=256 \
 -data_path='/dataset/imagenet' \
@@ -103,7 +103,7 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
--cfg='./configs/crossvit_tiny_224_finetune.yaml' \
+-cfg='./configs/crossvit_tiny_224.yaml' \
 -dataset='imagenet2012' \
 -batch_size=256 \
 -data_path='/dataset/imagenet' \

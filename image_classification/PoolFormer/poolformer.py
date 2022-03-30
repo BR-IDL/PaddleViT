@@ -13,14 +13,15 @@
 # limitations under the License.
 
 """
-Implement Transformer Class for PoolFormer
+Poolformer in Paddle
+A Paddle Implementation of MetaFormer (PoolFormer) as described in:
+"MetaFormer is Actually What You Need for Vision"
+    - Paper Link: https://arxiv.org/abs/2111.11418
 """
-
 
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-
 from droppath import DropPath
 
 trunc_normal_ = nn.initializer.TruncatedNormal(std=0.02)
@@ -419,10 +420,10 @@ def build_poolformer(config):
     """build poolformer model from config"""
     model = PoolFormer(
         num_classes=config.MODEL.NUM_CLASSES,
-        layers=config.MODEL.TRANS.LAYERS,
-        embed_dims=config.MODEL.TRANS.EMBED_DIMS,
-        downsamples=config.MODEL.TRANS.DOWNSAMPLES,
-        mlp_ratios=config.MODEL.TRANS.MLP_RATIOS,
-        layer_scale_init_value=config.MODEL.TRANS.LAYER_SCALE_INIT_VALUE
+        layers=config.MODEL.LAYERS,
+        embed_dims=config.MODEL.EMBED_DIMS,
+        downsamples=config.MODEL.DOWNSAMPLES,
+        mlp_ratios=config.MODEL.MLP_RATIOS,
+        layer_scale_init_value=config.MODEL.LAYER_SCALE_INIT_VALUE
     )
     return model
