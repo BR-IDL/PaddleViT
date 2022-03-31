@@ -3,11 +3,10 @@ DATA:
     CROP_PCT: 1.0
 MODEL:
     TYPE: xcit
-    NAME: xcit_tiny_24_p16_224
-    PATCH_SIZE: 16
+    NAME: xcit_tiny_12_p8_224
+    PATCH_SIZE: 8
     EMBED_DIM: 192
-    DEPTH: 24
+    DEPTH: 12
     NUM_HEADS: 4
-    ETA: 1e-5
+    ETA: 1.0
     TOKENS_NORM: True
-

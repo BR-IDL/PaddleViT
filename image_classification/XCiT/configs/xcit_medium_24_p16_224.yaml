@@ -4,11 +4,10 @@ DATA:
 MODEL:
     TYPE: xcit
     NAME: xcit_medium_24_p16_224
-    TRANS:
-        PATCH_SIZE: 16
-        EMBED_DIM: 512
-        DEPTH: 24
-        NUM_HEADS: 8
-        ETA: 1e-5
-        TOKENS_NORM: True
+    PATCH_SIZE: 16
+    EMBED_DIM: 512
+    DEPTH: 24
+    NUM_HEADS: 8
+    ETA: 1e-5
+    TOKENS_NORM: True
 

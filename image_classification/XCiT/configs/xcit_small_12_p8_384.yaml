@@ -1,10 +1,10 @@
 DATA:
-    IMAGE_SIZE: 224
+    IMAGE_SIZE: 384
     CROP_PCT: 1.0
 MODEL:
     TYPE: xcit
-    NAME: xcit_small_12_p16_224
-    PATCH_SIZE: 16
+    NAME: xcit_small_12_p8_384
+    PATCH_SIZE: 8
     EMBED_DIM: 384
     DEPTH: 12
     NUM_HEADS: 8

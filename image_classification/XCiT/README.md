@@ -15,6 +15,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 ### Update 
 
+* Update (2022-03-31): Code is refactored and more ported weights are uploaded.
 * Update (2021-12-8): Code is updated and ported weights are uploaded.
 * Update (2021-11-7): Code is released
 
@@ -22,36 +23,58 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 | Model                       | Acc@1  | Acc@5  | #Params | FLOPs | Image Size | Crop_pct | Interpolation | Link |
 | --------------------------- | ------ | ------ | ------- | ----- | ---------- | -------- | ------------- | ---- |
-| xcit_nano_12_p16_224_dist   | 72.32  | 90.86  | 0.6G    | 3.1M      | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/14FsYtm48JB-rQFF9CanJsJaPESniWD7q/view?usp=sharing)/[baidu](https://pan.baidu.com/s/15kdY4vzwU2QiBSU5127AYA)(7qvz)     |
-| xcit_nano_12_p16_384_dist   | 75.46  | 92.70  | 1.6G    | 3.1M      | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1zR-hFQryocF9muG-erzcxFuJme5y_e9f/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1449qtQzEMg6lqdtClyiCRQ)(1y2j)     |
-| xcit_large_24_p16_224_dist  | 84.92  | 97.13  | 35.9G   | 189.1M    | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1lAtko_KwOagjwaFvUkeXirVClXCV8gt-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1Gs401mXqG1bifi1hBdXtig)(kfv8)     |
-| xcit_large_24_p16_384_dist  | 85.76  | 97.54  | 105.5G  | 189.1M    | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/15djnKz_-eooncvyZp_UTwOiHIm1Hxo_G/view?usp=sharing)/[baidu](https://pan.baidu.com/s/14583hbtIVbZ_2ifZepQItQ)(ffq3)     |
-| xcit_nano_12_p8_224_dist    | 76.33  | 93.10  | 2.2G    | 3.0M      | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1XxRNjskLvSVp6lvhlsnylq6g7vd_5MsI/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1DZJxuahFJyz-rEEsCqhhrA)(jjs7)     |
-| xcit_nano_12_p8_384_dist    | 77.82  | 94.04  | 6.3G    | 3.0M      | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1P3ln8JqLzMKbJAhCanRbu7i5NMPVFNec/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ECY9-PVDMNSup8NMQiqBrw)(dmc1)     |
-| xcit_large_24_p8_224_dist   | 85.40  | 97.40  | 141.4G  | 188.9M    | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/14ZoDxEez5NKVNAsbgjTPisjOQEAA30Wy/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1D_zyvjzIVFp6iqx1s7IEbA)(y7gw)     |
-| xcit_large_24_p8_384_dist   | 85.99  | 97.69  | 415.5G  | 188.9M    | 384        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1stcUwwFNJ38mdaFsNXq24CBMmDenJ_e4/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1lwbBk7GFuqnnP_iU2OuDRw)(9xww)     |
-> *The results are evaluated on ImageNet2012 validation set.
+|xcit_nano_12_p16_224				|  69.96	|	89.76	|	3.1M	|	0.6G 	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_nano_12_p16_224_distill		|  72.32	|	90.86	|	3.1M	|	0.6G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_nano_12_p16_384_distill		|  75.46 	|	92.70	|	3.1M	|	1.6G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_nano_12_p8_224				|  73.91	|	92.17	|	3.0M	|	2.2G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_nano_12_p8_224_distill		|  76.32 	|	93.09	|	3.0M	|	2.2G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_nano_12_p8_384_distill		|  77.66 	|	93.92	|	3.0M	|	6.3G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_tiny_12_p16_224		    	|  77.14 	|	93.71	|	6.7M	|	1.2G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_tiny_12_p16_224_distill		|  78.58 	|	94.29	|	6.7M	|	1.2G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_tiny_12_p16_384_distill		|  80.94 	|	95.41	|	6.7M	|	3.6G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_tiny_12_p8_224		  		|  79.69 	|	95.05	|	6.7M	|	4.8G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_tiny_12_p8_224_distill		|  81.21 	|	95.61	|	6.7M	|	4.8G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_tiny_12_p8_384_distill		|  82.30 	|	96.20	|	6.7M	|	14.0G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |
+|xcit_tiny_24_p16_224				|  79.45 	|	94.88	|	12.1M	|	2.3G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_tiny_24_p16_224_distill		|  80.46 	|	95.22	|	12.1M	|	2.3G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_tiny_24_p16_384_distill		|  82.56 	|	96.28	|	12.1M	|	6.8G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_tiny_24_p8_224				|  81.89 	|	95.97	|	12.1M	|	9.1G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_tiny_24_p8_224_distill		|  82.57 	|	96.17	|	12.1M	|	9.1G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_tiny_24_p8_384_distill		|  83.62 	|	96.67	|	12.1M	|	26.7G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_small_12_p16_224				|  81.97 	|	95.81	|	26.2M	|	4.8G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_small_12_p16_224_distill		|  83.33 	|	96.41	|	26.2M	|	4.8G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_small_12_p16_384_distill		|  84.71 	|	97.12	|	26.2M	|	14.2G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_small_12_p8_224				|  83.33 	|	96.49	|	26.2M	|	18.7G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_small_12_p8_224_distill		|  84.24 	|	96.87	|	26.2M	|	18.7G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_small_12_p8_384_distill		|  85.05 	|	97.27	|	26.2M	|	55.1G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_small_24_p16_224				|  82.58 	|	96.01	|	47.7M	|	9.1G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_small_24_p16_224_distill		|  83.88 	|	96.73	|	47.7M	|	9.1G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_small_24_p16_384_distill		|  85.10 	|	97.31	|	47.7M	|	26.6G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_small_24_p8_224				|  83.83 	|	96.63	|	47.6M	|	35.7G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_small_24_p8_224_distill		|  84.86 	|	97.19	|	47.6M	|	35.7G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_small_24_p8_384_distill		|  85.52 	|	97.56	|	47.6M	|	104.8G  |	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_medium_24_p16_224				|  82.64 	|	95.98	|	84.4M	|	16.0G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_medium_24_p16_224_distill  	|  83.88 	|	96.73	|	84.4M	|	16.0G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_medium_24_p16_384_distill  	|  85.82 	|	97.59	|	84.4M	|	47.1G  	|	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_medium_24_p8_224				|  83.74 	|	96.40	|	84.3M	|	63.1G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_medium_24_p8_224_distill		|  85.07 	|	97.27	|	84.3M	|	63.1G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_medium_24_p8_384_distill		|  85.82 	|	97.59	|	84.3M	|	185.5G  |	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_large_24_p16_224		 		|  82.90 	|	95.89	|	189.1M	|	35.9G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_large_24_p16_224_distill		|  84.92 	|	97.13	|	189.1M	|	35.9G  	|	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_large_24_p16_384_distill		|  85.67 	|	97.54	|	189.1M	|	105.5G  |	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_large_24_p8_224				|  84.39 	|	96.66	|	188.9M	|	141.4G  |	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
+|xcit_large_24_p8_224_distill		|  85.40 	|	97.40	|	188.9M	|	141.4G  |	224  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |		
+|xcit_large_24_p8_384_distill		|  85.99 	|	97.69	|	188.9M	|	415.5G  |	384  |	1.0  |	bicubic  |	[google](https://drive.google.com/drive/folders/1QCeKP4jXwMakw-lcdlVQWtmmE0Xuj3D8?usp=sharing)/[baidu](https://pan.baidu.com/s/18I5npwc3U11Orkan-8J-FQ?pwd=ecn3) |	
 
-## Notebooks
 
-We provide a few notebooks in aistudio to help you get started:
+> *The results are evaluated on ImageNet2012 validation set. 
 
-**\*(coming soon)\***
-
-
-## Requirements
-
-- Python>=3.6
-- yaml>=0.2.5
-- [PaddlePaddle](https://www.paddlepaddle.org.cn/documentation/docs/en/install/index_en.html)>=2.1.0
-- [yacs](https://github.com/rbgirshick/yacs)>=0.1.8
-
-## Data 
-
-ImageNet2012 dataset is used in the following folder structure:
-
+## Data Preparation
+ImageNet2012 dataset is used in the following file structure:
 ```
 │imagenet/
+├──train_list.txt
+├──val_list.txt
 ├──train/
 │  ├── n01440764
 │  │   ├── n01440764_10026.JPEG
@@ -65,13 +88,14 @@ ImageNet2012 dataset is used in the following folder structure:
 │  │   ├── ......
 │  ├── ......
 ```
+- `train_list.txt`: list of relative paths and labels of training images. You can download it from: [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm?pwd=a4vm)
+- `val_list.txt`: list of relative paths and labels of validation images. You can download it from: [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga?pwd=kdga) 
+
 
 ## Usage
-
 To use the model with pretrained weights, download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
 
-For example, assume the downloaded weight file is stored in `./swin_base_patch4_window7_224.pdparams`, to use the `swin_base_patch4_window7_224` model in python:
-
+For example, assume weight file is downloaded in `./xcit_nano_12_p16_224.pdparams`, to use the `xcit_nano_12_p16_224` model in python:
 ```python
 from config import get_config
 from xcit import build_xcit as build_model
@@ -79,108 +103,48 @@ from xcit import build_xcit as build_model
 config = get_config('./configs/xcit_nano_12_p16_224.yaml')
 # build model
 model = build_model(config)
-# load pretrained weights, .pdparams is NOT needed
-model_state_dict = paddle.load('./xcit_nano_12_p16_224_dist')
-model.set_dict(model_state_dict)
+# load pretrained weights
+model_state_dict = paddle.load('./xcit_nano_12_p16_224.pdparams')
+model.set_state_dict(model_state_dict)
 ```
 
 ## Evaluation
-
-To evaluate XCiT model performance on ImageNet2012 with a single GPU, run the following script using command line:
-
-```shell
-sh run_eval.sh
-```
-
-or
-
-```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_single_gpu.py \
-    -cfg='./configs/xcit_nano_12_p16_224.yaml' \
-    -dataset='imagenet2012' \
-    -batch_size=16 \
-    -data_path='/dataset/imagenet' \
-    -eval \
-    -pretrained='./xcit_nano_12_p16_224_dist'
-```
-
-<details>
-
-
-<summary>
-Run evaluation using multi-GPUs:
-</summary>
-
-
+To evaluate model performance on ImageNet2012, run the following script using command line:
 ```shell
 sh run_eval_multi.sh
 ```
-
 or
-
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg='./configs/xcit_nano_12_p16_224.yaml' \
-    -dataset='imagenet2012' \
-    -batch_size=16 \
-    -data_path='/dataset/imagenet' \
-    -eval \
-    -pretrained='./xcit_nano_12_p16_224_dist'
+-cfg='./configs/xcit_nano_12_p16_224.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-eval \
+-pretrained='./xcit_nano_12_p16_224.pdparams' \
+-amp
 ```
-
-</details>
+> Note: if you have only 1 GPU, change device number to `CUDA_VISIBLE_DEVICES=0` would run the evaluation on single GPU.
 
 
 ## Training
-
-To train the XCiT model on ImageNet2012 with single GPU, run the following script using command line:
-
-```shell
-sh run_train.sh
-```
-
-or
-
-```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_singel_gpu.py \
-  -cfg='./configs/xcit_nano_12_p16_224.yaml' \
-  -dataset='imagenet2012' \
-  -batch_size=32 \
-  -data_path='/dataset/imagenet' \
-```
-
-<details>
-
-
-<summary>
-Run training using multi-GPUs:
-</summary>
-
-
+To train the model on ImageNet2012, run the following script using command line:
 ```shell
 sh run_train_multi.sh
 ```
-
 or
-
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg='./configs/xcit_nano_12_p16_224.yaml' \
-    -dataset='imagenet2012' \
-    -batch_size=16 \
-    -data_path='/dataset/imagenet' \
+-cfg='./configs/xcit_nano_12_p16_224.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-amp
 ```
+> Note: it is highly recommanded to run the training using multiple GPUs / multi-node GPUs.
 
-</details>
-
-
-## Visualization Attention Map
-
-**(coming soon)**
 
 ## Reference
 
