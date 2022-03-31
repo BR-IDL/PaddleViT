@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""MLP-Mixer train and eval using multiple GPU"""
+"""gMLP train and eval using multiple GPU"""
 import sys
 import os
 import time
@@ -39,7 +39,7 @@ from gmlp import build_gmlp as build_model
 
 def get_arguments():
     """return argumeents, this will overwrite the config by (1) yaml file (2) argument values"""
-    parser = argparse.ArgumentParser('MLP-Mixer')
+    parser = argparse.ArgumentParser('gMLP')
     parser.add_argument('-cfg', type=str, default=None)
     parser.add_argument('-dataset', type=str, default=None)
     parser.add_argument('-data_path', type=str, default=None)

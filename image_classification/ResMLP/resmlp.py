@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,10 @@
 # limitations under the License.
 
 """
-Implement MLP Class for ResMLP
+ResMLP in Paddle
+A Paddle implementation of ResMLP as described in:
+"ResMLP: Feedforward networks for image classification with data-efficient training"
+    - Paper Link: https://arxiv.org/abs/2105.03404
 """
 
 import math
@@ -218,14 +221,15 @@ class ResMlp(nn.Layer):
         return x
 
 
-def build_res_mlp(config):
+def build_resmlp(config):
+    """build resmlp model form config"""
     model = ResMlp(num_classes=config.MODEL.NUM_CLASSES,
                    image_size=config.DATA.IMAGE_SIZE,
                    patch_size=config.MODEL.MIXER.PATCH_SIZE,
-                   in_channels=3,
-                   num_mixer_layers=config.MODEL.MIXER.NUM_LAYERS,
-                   embed_dim=config.MODEL.MIXER.HIDDEN_SIZE,
-                   mlp_ratio=4,
+                   in_channels=config.DATA.IMAGE_CHANNELS,
+                   num_mixer_layers=config.MODEL.MIXER.DEPTH,
+                   embed_dim=config.MODEL.MIXER.EMBED_DIM,
+                   mlp_ratio=config.MODEL.MIXER.MLP_RATIO,
                    dropout=config.MODEL.DROPOUT,
-                   droppath=config.MODEL.DROP_PATH)
+                   droppath=config.MODEL.DROPPATH)
     return model
