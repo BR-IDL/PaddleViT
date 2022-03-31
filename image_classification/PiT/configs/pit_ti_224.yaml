@@ -1,0 +1,11 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.90
+MODEL:
+    TYPE: PiT
+    NAME: pit_ti
+    PATCH_SIZE: 16
+    STRIDE: 8
+    BASE_DIMS: [32, 32, 32]
+    DEPTH: [2, 6, 4]
+    NUM_HEADS: [2, 4, 8]

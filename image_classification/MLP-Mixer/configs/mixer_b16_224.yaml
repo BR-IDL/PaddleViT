@@ -6,6 +6,6 @@ MODEL:
     NAME: mixer_base_patch16_224
     MIXER:
         PATCH_SIZE: 16
-        HIDDEN_SIZE: 768
-        NUM_LAYERS: 12
+        EMBED_DIM: 768
+        DEPTH: 12
 

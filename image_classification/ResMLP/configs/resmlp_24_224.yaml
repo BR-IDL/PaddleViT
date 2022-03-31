@@ -6,6 +6,6 @@ MODEL:
     NAME: resmlp_24_224
     MIXER:
         PATCH_SIZE: 16
-        HIDDEN_SIZE: 384
-        NUM_LAYERS: 24
+        EMBED_DIM: 384
+        DEPTH: 24
 

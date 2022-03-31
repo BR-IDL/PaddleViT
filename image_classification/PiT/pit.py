@@ -13,7 +13,10 @@
 # limitations under the License.
 
 """
-Implement Transformer Class for PiT
+PiT in Paddle
+A Paddle Implementation of PiT as described in:
+"Rethinking Spatial Dimensions of Vision Transformers"
+    - Paper Link: https://arxiv.org/abs/2103.16302
 """
 
 import math
@@ -36,9 +39,6 @@ class Identity(nn.Layer):
     Use this layer to avoid if condition in some forward methods
 
     """
-    def __init__(self):
-        super().__init__()
-
     def forward(self, x):
         return x
 
@@ -53,8 +53,7 @@ class Mlp(nn.Layer):
         fc1: nn.Linear
         fc2: nn.Linear
         act: GELU
-        dropout1: dropout after fc1
-        dropout2: dropout after fc2
+        dropout: dropout after fc1 and fc2
     """
 
     def __init__(self,
@@ -69,16 +68,15 @@ class Mlp(nn.Layer):
 
         self.fc1 = nn.Linear(in_features, hidden_features)
         self.act = act_layer()
-        self.drop1 = nn.Dropout(drop)
         self.fc2 = nn.Linear(hidden_features, out_features)
-        self.drop2 = nn.Dropout(drop)
+        self.drop = nn.Dropout(drop)
 
     def forward(self, x):
         x = self.fc1(x)
         x = self.act(x)
-        x = self.drop1(x)
+        x = self.drop(x)
         x = self.fc2(x)
-        x = self.drop2(x)
+        x = self.drop(x)
         return x
 
 
@@ -379,26 +377,35 @@ class DistilledPoolingTransformer(PoolingTransformer):
 
 
 def build_pit(config):
-    if config.MODEL.DISTILL:
+    if config.TRAIN.DISTILLATION_TYPE != 'none':
         model = DistilledPoolingTransformer(
             image_size=config.DATA.IMAGE_SIZE,
             num_classes=config.MODEL.NUM_CLASSES,
-            patch_size=config.MODEL.TRANS.PATCH_SIZE,
-            stride=config.MODEL.TRANS.STRIDE,
-            base_dims=config.MODEL.TRANS.BASE_DIMS,
-            depth=config.MODEL.TRANS.DEPTH,
-            heads=config.MODEL.TRANS.HEADS,
+            patch_size=config.MODEL.PATCH_SIZE,
+            stride=config.MODEL.STRIDE,
+            base_dims=config.MODEL.BASE_DIMS,
+            depth=config.MODEL.DEPTH,
+            heads=config.MODEL.NUM_HEADS,
+            mlp_ratio=config.MODEL.MLP_RATIO,
+            in_chans=config.DATA.IMAGE_CHANNELS,
+            attn_drop_rate=config.MODEL.ATTENTION_DROPOUT,
+            drop_rate=config.MODEL.DROPOUT,
+            drop_path_rate=config.MODEL.DROPPATH,
         )
-
     else:
         model = PoolingTransformer(
             image_size=config.DATA.IMAGE_SIZE,
             num_classes=config.MODEL.NUM_CLASSES,
-            patch_size=config.MODEL.TRANS.PATCH_SIZE,
-            stride=config.MODEL.TRANS.STRIDE,
-            base_dims=config.MODEL.TRANS.BASE_DIMS,
-            depth=config.MODEL.TRANS.DEPTH,
-            heads=config.MODEL.TRANS.HEADS,
+            patch_size=config.MODEL.PATCH_SIZE,
+            stride=config.MODEL.STRIDE,
+            base_dims=config.MODEL.BASE_DIMS,
+            depth=config.MODEL.DEPTH,
+            heads=config.MODEL.NUM_HEADS,
+            mlp_ratio=config.MODEL.MLP_RATIO,
+            in_chans=config.DATA.IMAGE_CHANNELS,
+            attn_drop_rate=config.MODEL.ATTENTION_DROPOUT,
+            drop_rate=config.MODEL.DROPOUT,
+            drop_path_rate=config.MODEL.DROPPATH,
         )
 
     return model

@@ -13,7 +13,10 @@
 # limitations under the License.
 
 """
-Implement MLP Class for ViP
+ViP in Paddle
+A Paddle Implementation of Vision Permutator(ViP) as described in:
+"Vision Permutator: A Permutable MLP-Like Architecture for Visual Recognition"
+    - Paper Link: https://arxiv.org/abs/2106.12368 
 """
 
 import paddle.nn as nn
@@ -144,7 +147,6 @@ class PermutatorBlock(nn.Layer):
             attn_drop=attn_drop,
         )
 
-        # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else Identity()
 
         self.norm2 = norm_layer(dim)
@@ -319,9 +321,18 @@ def build_vip(config):
     model = VisionPermutator(num_classes=config.MODEL.NUM_CLASSES,
                              layers=config.MODEL.MIXER.LAYER,
                              embed_dims=config.MODEL.MIXER.EMBED_DIMS,
-                             patch_size=7,
+                             patch_size=config.MODEL.MIXER.PATCH_SIZE,
                              transitions=config.MODEL.MIXER.TRANSITIONS,
                              segment_dim=config.MODEL.MIXER.SEGMENT_DIM,
-                             mlp_ratios=[3, 3, 3, 3],
-                             mlp_fn=WeightedPermuteMLP)
+                             mlp_ratios=config.MODEL.MIXER.MLP_RATIO,
+                             mlp_fn=WeightedPermuteMLP,
+                             img_size=config.DATA.IMAGE_SIZE,
+                             in_chans=config.DATA.IMAGE_CHANNELS,
+                             skip_lam=1.0,
+                             qkv_bias=config.MODEL.MIXER.QKV_BIAS,
+                             qk_scale=config.MODEL.MIXER.QK_SCALE,
+                             drop_rate=config.MODEL.DROPOUT,
+                             attn_drop_rate=config.MODEL.ATTENTION_DROPOUT,
+                             drop_path_rate=config.MODEL.DROPPATH,
+    )
     return model

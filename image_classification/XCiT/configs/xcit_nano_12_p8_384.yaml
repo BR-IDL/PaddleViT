@@ -3,12 +3,10 @@ DATA:
     CROP_PCT: 1.0
 MODEL:
     TYPE: xcit
-    NAME: xcit_nano_12_p16_224
-    TRANS:
-        PATCH_SIZE: 8
-        EMBED_DIM: 128
-        DEPTH: 12
-        NUM_HEADS: 4
-        ETA: 1.0
-        TOKENS_NORM: False
-
+    NAME: xcit_nano_12_p8_384
+    PATCH_SIZE: 8
+    EMBED_DIM: 128
+    DEPTH: 12
+    NUM_HEADS: 4
+    ETA: 1.0
+    TOKENS_NORM: False

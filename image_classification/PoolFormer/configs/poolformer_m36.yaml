@@ -4,8 +4,7 @@ DATA:
 MODEL:
     TYPE: poolformer
     NAME: poolformer_m36
-    TRANS:
-        LAYERS: [6, 6, 18, 6]
-        EMBED_DIMS: [96, 192, 384, 768]
-        LAYER_SCALE_INIT_VALUE: 1e-6
+    LAYERS: [6, 6, 18, 6]
+    EMBED_DIMS: [96, 192, 384, 768]
+    LAYER_SCALE_INIT_VALUE: 1e-6
 

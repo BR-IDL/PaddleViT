@@ -1,3 +1,23 @@
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+gMLP in Paddle
+A Paddle implementation of gMLP as described in:
+"Pay Attention to MLPs"
+    - Paper Link: https://arxiv.org/abs/2105.08050
+"""
 import math
 import copy
 from functools import partial
@@ -192,13 +212,13 @@ class GatedMlp(nn.Layer):
         return x
 
 
-def build_gated_mlp(config):
+def build_gmlp(config):
     model = GatedMlp(num_classes=config.MODEL.NUM_CLASSES,
                      image_size=config.DATA.IMAGE_SIZE,
-                     in_channels=3,
-                     num_mixer_layers=config.MODEL.MIXER.NUM_LAYERS,
-                     embed_dim=config.MODEL.MIXER.HIDDEN_SIZE,
+                     in_channels=config.DATA.IMAGE_CHANNELS,
+                     num_mixer_layers=config.MODEL.MIXER.DEPTH,
+                     embed_dim=config.MODEL.MIXER.EMBED_DIM,
                      mlp_ratio=config.MODEL.MIXER.MLP_RATIO,
                      dropout=config.MODEL.DROPOUT,
-                     droppath=config.MODEL.DROP_PATH)
+                     droppath=config.MODEL.DROPPATH)
     return model

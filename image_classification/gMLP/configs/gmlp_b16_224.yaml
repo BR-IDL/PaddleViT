@@ -6,7 +6,7 @@ MODEL:
     NAME: gmlp_b16_224
     MIXER:
         PATCH_SIZE: 16
-        HIDDEN_SIZE: 512
-        NUM_LAYERS: 30
+        EMBED_DIM: 512
+        DEPTH: 30
         MLP_RATIO: 6.0
 

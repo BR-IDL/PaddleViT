@@ -13,7 +13,10 @@
 # limitations under the License.
 
 """
-Implement Transformer Class for XCiT
+XCiT in Paddle
+A Paddle Impelementation of XCiT as described in:
+"Cross-Covariance Image Transformer"
+    - Paper Link: https://arxiv.org/pdf/2106.09681.pdf
 """
 
 import math
@@ -21,7 +24,7 @@ from functools import partial
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
-from drop import DropPath
+from droppath import DropPath
 
 
 trunc_normal_ = nn.initializer.TruncatedNormal(std=0.02)
@@ -81,15 +84,15 @@ class PositionalEncodingFourier(nn.Layer):
         self.temperature = temperature
         self.hidden_dim = hidden_dim
         self.dim = dim
+        self.eps = 1e-6
 
     def forward(self, B, H, W):
         mask = paddle.zeros([B, H, W]).astype("bool")
         not_mask = paddle.logical_not(mask)
         y_embed = not_mask.cumsum(1, dtype="float32")
         x_embed = not_mask.cumsum(2, dtype="float32")
-        eps = 1e-6
-        y_embed = y_embed / (y_embed[:, -1:, :] + eps) * self.scale
-        x_embed = x_embed / (x_embed[:, :, -1:] + eps) * self.scale
+        y_embed = y_embed / (y_embed[:, -1:, :] + self.eps) * self.scale
+        x_embed = x_embed / (x_embed[:, :, -1:] + self.eps) * self.scale
 
         dim_t = paddle.arange(self.hidden_dim, dtype="int64")
         dim_t = self.temperature ** (2 * (dim_t // 2) / self.hidden_dim)
@@ -205,6 +208,66 @@ class LPI(nn.Layer):
 
         return x
 
+#class ClassAttention(nn.Layer):
+#    """ Class Attention (timm version)
+#
+#    Class Attention module
+#
+#    Args:
+#        dim: int, all heads dimension
+#        dim_head: int, single heads dimension, default: None
+#        num_heads: int, num of heads
+#        qkv_bias: bool, if True, qkv linear layer is using bias, default: False
+#        qk_scale: float, if None, qk_scale is dim_head ** -0.5, default: None
+#        attention_dropout: float, dropout rate for attention dropout, default: 0.
+#        dropout: float, dropout rate for projection dropout, default: 0.
+#    """
+#
+#    def __init__(self,
+#                 dim,
+#                 num_heads=8,
+#                 qkv_bias=False,
+#                 qk_scale=None,
+#                 attention_dropout=0.,
+#                 dropout=0.):
+#        super().__init__()
+#        self.num_heads = num_heads
+#        self.dim_head = dim // num_heads
+#        self.scale = qk_scale or self.dim_head ** -0.5
+#
+#        self.q = nn.Linear(dim, dim, bias_attr=qkv_bias)
+#        self.k = nn.Linear(dim, dim, bias_attr=qkv_bias)
+#        self.v = nn.Linear(dim, dim, bias_attr=qkv_bias)
+#
+#        self.attn_dropout = nn.Dropout(attention_dropout)
+#        self.proj = nn.Linear(dim, dim)
+#        self.proj_dropout = nn.Dropout(dropout)
+#        self.softmax = nn.Softmax(axis=-1)
+#
+#    def forward(self, x):
+#        B, N, C = x.shape
+#
+#        q = self.q(x[:, :1, :]) # same as x[:, 0], but more intuitive
+#        q = q.reshape([B, self.num_heads, 1, self.dim_head])
+#
+#        k = self.k(x)
+#        k = k.reshape([B, N, self.num_heads, self.dim_head])
+#        k = k.transpose([0, 2, 1, 3])
+#
+#        v = self.v(x)
+#        v = v.reshape([B, N, self.num_heads, self.dim_head])
+#        v = v.transpose([0, 2, 1, 3])
+#
+#        attn = paddle.matmul(q * self.scale, k, transpose_y=True)
+#        attn = self.softmax(attn)
+#        attn = self.attn_dropout(attn)
+#
+#        cls_embed = paddle.matmul(attn, v)
+#        cls_embed = cls_embed.transpose([0, 2, 1, 3])
+#        cls_embed = cls_embed.reshape([B, 1, C])
+#        cls_embed = self.proj(cls_embed)
+#        cls_embed = self.proj_dropout(cls_embed)
+#        return cls_embed
 
 class ClassAttention(nn.Layer):
     """Class Attention Layer as in CaiT https://arxiv.org/abs/2103.17239
@@ -222,6 +285,7 @@ class ClassAttention(nn.Layer):
         self.scale = qk_scale or head_dim ** -0.5
 
         self.qkv = nn.Linear(dim, dim * 3, bias_attr=qkv_bias)
+
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
@@ -301,6 +365,11 @@ class ClassAttentionBlock(nn.Layer):
         self.tokens_norm = tokens_norm
 
     def forward(self, x, H, W, mask=None):
+        ##timm version
+        #x_norm1 = self.norm1(x)
+        #x_attn = paddle.concat([self.attn(x_norm1), x_norm1[:, 1:]], axis=1)
+        #x = x + self.drop_path(self.gamma1 * x_attn)
+
         x = x + self.drop_path(self.gamma1 * self.attn(self.norm1(x)))
         if self.tokens_norm:
             x = self.norm2(x)
@@ -477,6 +546,7 @@ class XCiT(nn.Layer):
         """
         super().__init__()
         self.num_classes = num_classes
+        self.num_heads = num_heads
         self.num_features = self.embed_dim = embed_dim
         norm_layer = norm_layer or partial(nn.LayerNorm, epsilson=1e-6)
 
@@ -553,6 +623,7 @@ class XCiT(nn.Layer):
 
         x, (Hp, Wp) = self.patch_embed(x)
 
+
         if self.use_pos:
             pos_encoding = (
                 self.pos_embeder(B, Hp, Wp)
@@ -562,6 +633,7 @@ class XCiT(nn.Layer):
             x = x + pos_encoding
 
         x = self.pos_drop(x)
+
 
         for blk in self.blocks:
             x = blk(x, Hp, Wp)
@@ -578,6 +650,8 @@ class XCiT(nn.Layer):
     def forward(self, x):
         x = self.forward_features(x)
         x = self.head(x)
+        if self.train:
+            return x, x
 
         return x
 
@@ -585,12 +659,21 @@ class XCiT(nn.Layer):
 def build_xcit(config):
     model = XCiT(
         img_size=config.DATA.IMAGE_SIZE,
-        patch_size=config.MODEL.TRANS.PATCH_SIZE,
-        embed_dim=config.MODEL.TRANS.EMBED_DIM,
+        patch_size=config.MODEL.PATCH_SIZE,
+        embed_dim=config.MODEL.EMBED_DIM,
         num_classes=config.MODEL.NUM_CLASSES,
-        depth=config.MODEL.TRANS.DEPTH,
-        num_heads=config.MODEL.TRANS.NUM_HEADS,
-        eta=config.MODEL.TRANS.ETA,
-        tokens_norm=config.MODEL.TRANS.TOKENS_NORM,
+        depth=config.MODEL.DEPTH,
+        num_heads=config.MODEL.NUM_HEADS,
+        eta=config.MODEL.ETA,
+        tokens_norm=config.MODEL.TOKENS_NORM,
+        in_chans=config.DATA.IMAGE_CHANNELS,
+        mlp_ratio=config.MODEL.MLP_RATIO,
+        qkv_bias=config.MODEL.QKV_BIAS,
+        qk_scale=config.MODEL.QK_SCALE,
+        drop_rate=config.MODEL.DROPOUT,
+        attn_drop_rate=config.MODEL.ATTENTION_DROPOUT,
+        drop_path_rate=config.MODEL.DROPPATH,
+        cls_attn_layers=config.MODEL.CLS_ATTN_LAYERS,
+        use_pos=config.MODEL.USE_POS,
     )
     return model

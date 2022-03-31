@@ -13,13 +13,16 @@
 # limitations under the License.
 
 """
-This module implements MLP-Mixer
-MLP-Mixer: An all-MLP Architecture for Vision
-https://arxiv.org/abs/2105.01601
+MLP-Mixer in Paddle 
+A Paddle implementation of MLP-Mixer as described in:
+"MLP-Mixer: An all-MLP Architecture for Vision"
+    - Paper Link: https://arxiv.org/abs/2105.01601
 """
 
 import paddle
 import paddle.nn as nn
+import numpy as np
+import os
 from droppath import DropPath
 
 
@@ -151,11 +154,14 @@ class MixerBlock(nn.Layer):
         x = self.drop_path(x)
         x = x + h
 
+
         h = x
         x = self.norm2(x)
         x = self.mlp_channels(x)
         x = self.drop_path(x)
         x = x + h
+
+
 
         return x
 
@@ -214,6 +220,7 @@ class MlpMixer(nn.Layer):
     def forward_features(self, x):
         x = self.patch_embed(x)
         x = self.mixer_layers(x)
+        #np.save('p.npy', x.cpu().numpy())
         x = self.norm(x)
         x = x.mean(axis=1)
         return x
@@ -234,10 +241,10 @@ def build_mlp_mixer(config):
 
     model = MlpMixer(num_classes=config.MODEL.NUM_CLASSES,
                      image_size=config.DATA.IMAGE_SIZE,
-                     in_channels=3,
-                     num_mixer_layers=config.MODEL.MIXER.NUM_LAYERS,
-                     embed_dim=config.MODEL.MIXER.HIDDEN_SIZE,
+                     in_channels=config.DATA.IMAGE_CHANNELS,
+                     num_mixer_layers=config.MODEL.MIXER.DEPTH,
+                     embed_dim=config.MODEL.MIXER.EMBED_DIM,
                      mlp_ratio=(0.5, 4.0),
                      dropout=config.MODEL.DROPOUT,
-                     droppath=config.MODEL.DROP_PATH)
+                     droppath=config.MODEL.DROPPATH)
     return model

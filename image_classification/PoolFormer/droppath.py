@@ -1,4 +1,4 @@
-# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 """
 Droppath, reimplement from https://github.com/yueatsprograms/Stochastic_Depth
 """
-
 import paddle
 import paddle.nn as nn
 
@@ -23,7 +22,7 @@ import paddle.nn as nn
 class DropPath(nn.Layer):
     """DropPath class"""
     def __init__(self, drop_prob=None):
-        super(DropPath, self).__init__()
+        super().__init__()
         self.drop_prob = drop_prob
 
     def drop_path(self, inputs):
@@ -43,7 +42,7 @@ class DropPath(nn.Layer):
         shape = (inputs.shape[0], ) + (1, ) * (inputs.ndim - 1)  # shape=(N, 1, 1, 1)
         random_tensor = keep_prob + paddle.rand(shape, dtype=inputs.dtype)
         random_tensor = random_tensor.floor() # mask
-        output = inputs.divide(keep_prob) * random_tensor #divide is to keep same output expectation
+        output = inputs.divide(keep_prob) * random_tensor # divide to keep same output expectation
         return output
 
     def forward(self, inputs):

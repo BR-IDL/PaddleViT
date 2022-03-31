@@ -1,6 +1,6 @@
 DATA:
     IMAGE_SIZE: 224
-    CROP_PCT: 0.875
+    CROP_PCT: 0.9
 MODEL:
     TYPE: ViP
     NAME: vip_m7
