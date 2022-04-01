@@ -17,11 +17,10 @@ import numpy as np
 import paddle
 import torch
 import timm
+from repmlp import build_repmlp as build_model
 from config import get_config
-from t2t_vit import build_t2t_vit as build_model
-
-from T2T_ViT_torch.models.t2t_vit import *
-from T2T_ViT_torch.utils import load_for_transfer_learning
+from repmlp_torch import create_RepMLPNet_B224
+from repmlp_torch import create_RepMLPNet_B256
 
 
 def print_model_named_params(model):
@@ -39,59 +38,48 @@ def print_model_named_buffers(model):
 
 
 def torch_to_paddle_mapping(model_name, config):
- 	# (torch_param_name, paddle_param_name)
     mapping = [
-        ('cls_token', 'cls_token'),
-        ('pos_embed', 'pos_embed'),
+        ('conv_embedding.conv', 'conv_embedding.conv'),
+        ('conv_embedding.bn', 'conv_embedding.bn'),
     ]
 
-    for idx in range(1, 3):
-        th_prefix = f'tokens_to_token.attention{idx}'
-        pp_prefix = f'patch_embed.attn{idx}'
-        if '_t_' in model_name:
-        	layer_mapping = [
-        	    (f'{th_prefix}.attn.qkv', f'{pp_prefix}.attn.qkv'),
-        	    (f'{th_prefix}.attn.proj', f'{pp_prefix}.attn.proj'),
-        	    (f'{th_prefix}.norm1', f'{pp_prefix}.norm1'),
-        	    (f'{th_prefix}.norm2', f'{pp_prefix}.norm2'),
-        	    (f'{th_prefix}.mlp.fc1', f'{pp_prefix}.mlp.fc1'),
-        	    (f'{th_prefix}.mlp.fc2', f'{pp_prefix}.mlp.fc2'),
-        	]
-        else:
+    for stage_idx, depth in enumerate(config.MODEL.NUM_BLOCKS):
+        for d in range(depth):
+            th_prefix = f'stages.{stage_idx}.{d}'
+            pp_prefix = f'stages.{stage_idx}.{d}'
+
             layer_mapping = [
-                (f'{th_prefix}.w', f'{pp_prefix}.w'),
-                (f'{th_prefix}.kqv', f'{pp_prefix}.kqv'),
-                (f'{th_prefix}.proj', f'{pp_prefix}.proj'),
-                (f'{th_prefix}.norm1', f'{pp_prefix}.norm1'),
-                (f'{th_prefix}.norm2', f'{pp_prefix}.norm2'),
-                (f'{th_prefix}.mlp.0', f'{pp_prefix}.mlp.0'),
-                (f'{th_prefix}.mlp.2', f'{pp_prefix}.mlp.2'),
+                (f'{th_prefix}.repmlp_block.gp.fc1', f'{pp_prefix}.repmlp_block.gp.fc1'),
+                (f'{th_prefix}.repmlp_block.gp.fc2', f'{pp_prefix}.repmlp_block.gp.fc2'),
+                (f'{th_prefix}.repmlp_block.fc3', f'{pp_prefix}.repmlp_block.fc3'),
+                (f'{th_prefix}.repmlp_block.fc3_bn', f'{pp_prefix}.repmlp_block.fc3_bn'),
+                (f'{th_prefix}.repmlp_block.repconv1.conv', f'{pp_prefix}.repmlp_block.repconv1.conv'),
+                (f'{th_prefix}.repmlp_block.repconv1.bn', f'{pp_prefix}.repmlp_block.repconv1.bn'),
+                (f'{th_prefix}.repmlp_block.repconv3.conv', f'{pp_prefix}.repmlp_block.repconv3.conv'),
+                (f'{th_prefix}.repmlp_block.repconv3.bn', f'{pp_prefix}.repmlp_block.repconv3.bn'),
+                (f'{th_prefix}.ffn_block.ffn_fc1.conv', f'{pp_prefix}.ffn_block.ffn_fc1.conv'),
+                (f'{th_prefix}.ffn_block.ffn_fc1.bn', f'{pp_prefix}.ffn_block.ffn_fc1.bn'),
+                (f'{th_prefix}.ffn_block.ffn_fc2.conv', f'{pp_prefix}.ffn_block.ffn_fc2.conv'),
+                (f'{th_prefix}.ffn_block.ffn_fc2.bn', f'{pp_prefix}.ffn_block.ffn_fc2.bn'),
+                (f'{th_prefix}.prebn1', f'{pp_prefix}.prebn1'),
+                (f'{th_prefix}.prebn2', f'{pp_prefix}.prebn2'),
             ]
-        mapping.extend(layer_mapping)
-    mapping.append(('tokens_to_token.project','patch_embed.proj'))
-
-
-    num_layers = config.MODEL.DEPTH
-    for idx in range(num_layers):
-        th_prefix = f'blocks.{idx}'
-        pp_prefix = f'blocks.{idx}'
-        layer_mapping = [
-            (f'{th_prefix}.norm1', f'{pp_prefix}.norm1'),
-            (f'{th_prefix}.attn.qkv', f'{pp_prefix}.attn.qkv'),
-            (f'{th_prefix}.attn.proj', f'{pp_prefix}.attn.proj'),
-            (f'{th_prefix}.norm2', f'{pp_prefix}.norm2'),
-            (f'{th_prefix}.mlp.fc1', f'{pp_prefix}.mlp.fc1'), 
-            (f'{th_prefix}.mlp.fc2', f'{pp_prefix}.mlp.fc2'), 
-        ]
-        mapping.extend(layer_mapping)
+            mapping.extend(layer_mapping)
 
     head_mapping = [
-        ('norm', 'norm'),
+        ('embeds.0.conv', 'embeds.0.conv'),
+        ('embeds.0.bn', 'embeds.0.bn'),
+        ('embeds.1.conv', 'embeds.1.conv'),
+        ('embeds.1.bn', 'embeds.1.bn'),
+        ('embeds.2.conv', 'embeds.2.conv'),
+        ('embeds.2.bn', 'embeds.2.bn'),
+        ('head_norm', 'head_norm'),
         ('head', 'head'),
     ]
     mapping.extend(head_mapping)
 
     return mapping
+
 
 
 def convert(torch_model, paddle_model, model_name, config):
@@ -142,6 +130,12 @@ def convert(torch_model, paddle_model, model_name, config):
             if key.endswith('.bias'):
                 if key[:-5] in th_keys:
                     missing = False
+            if key.endswith('.running_mean'):
+                if key[:-13] in th_keys:
+                    missing = False
+            if key.endswith('.running_var'):
+                if key[:-12] in th_keys:
+                    missing = False
         if missing:
             missing_keys_th.append(key)
 
@@ -154,6 +148,12 @@ def convert(torch_model, paddle_model, model_name, config):
                     missing = False
             if key.endswith('.bias'):
                 if key[:-5] in pd_keys:
+                    missing = False
+            if key.endswith('._mean'):
+                if key[:-6] in pd_keys:
+                    missing = False
+            if key.endswith('._variance'):
+                if key[:-10] in pd_keys:
                     missing = False
         if missing:
             missing_keys_pd.append(key)
@@ -169,10 +169,7 @@ def convert(torch_model, paddle_model, model_name, config):
     # 3. set torch param values to paddle params: may needs transpose on weights
     for th_name, pd_name in mapping:
         if th_name in th_params and pd_name in pd_params: # nn.Parameters
-            if th_name.endswith('w'):
-                _set_value(th_name, pd_name, transpose=False)
-            else:
-                _set_value(th_name, pd_name)
+            _set_value(th_name, pd_name)
         else:
             if f'{th_name}.weight' in th_params and f'{pd_name}.weight' in pd_params:
                 th_name_w = f'{th_name}.weight'
@@ -183,9 +180,9 @@ def convert(torch_model, paddle_model, model_name, config):
                 pd_name_b = f'{pd_name}.bias'
                 _set_value(th_name_b, pd_name_b)
             if f'{th_name}.running_mean' in th_params and f'{pd_name}._mean' in pd_params:
-                th_name_b = f'{th_name}.running_mean'
-                pd_name_b = f'{pd_name}._mean'
-                _set_value(th_name_b, pd_name_b)
+                th_name_w = f'{th_name}.running_mean'
+                pd_name_w = f'{pd_name}._mean'
+                _set_value(th_name_w, pd_name_w)
             if f'{th_name}.running_var' in th_params and f'{pd_name}._variance' in pd_params:
                 th_name_b = f'{th_name}.running_var'
                 pd_name_b = f'{pd_name}._variance'
@@ -196,37 +193,16 @@ def convert(torch_model, paddle_model, model_name, config):
 
 def main():
     paddle.set_device('cpu')
-    model_name_list = ['t2t_vit_7',
-                       't2t_vit_10',
-                       't2t_vit_12',
-                       't2t_vit_14',
-                       't2t_vit_14_384',
-                       't2t_vit_19',
-                       't2t_vit_24',
-                       't2t_vit_24_token_labeling',
-                       't2t_vit_t_14',
-                       't2t_vit_t_19',
-                       't2t_vit_t_24']
-    pth_model_path_list = ['./T2T_ViT_torch/t2t-vit-pth-models/71.7_T2T_ViT_7.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/75.2_T2T_ViT_10.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/76.5_T2T_ViT_12.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/81.5_T2T_ViT_14.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/83.3_T2T_ViT_14.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/81.9_T2T_ViT_19.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/82.3_T2T_ViT_24.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/84.2_T2T_ViT_24.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/81.7_T2T_ViTt_14.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/82.4_T2T_ViTt_19.pth.tar',
-                      './T2T_ViT_torch/t2t-vit-pth-models/82.6_T2T_ViTt_24.pth.tar']
+    model_name_list = [
+        'repmlp_b_224',
+        'repmlp_b_256',
+    ]
 
-    for model_name, pth_model_path in zip(model_name_list, pth_model_path_list):
+    for model_name in model_name_list:
         print(f'============= NOW: {model_name} =============')
-        sz = 384 if '384' in model_name else 224
+        sz = 224 if '224' in model_name else 256
+        config = get_config(f'./configs/{model_name}.yaml')
 
-        if 'token_labeling' in model_name:
-            config = get_config(f'./configs/{model_name[:-15]}.yaml')
-        else:
-            config = get_config(f'./configs/{model_name}.yaml')
         paddle_model = build_model(config)
 
         paddle_model.eval()
@@ -235,23 +211,20 @@ def main():
 
         print('+++++++++++++++++++++++++++++++++++')
         device = torch.device('cpu')
-        if 'token_labeling' in model_name:
-            torch_model = eval(f'{model_name[:-15]}(img_size={sz})')
+        if sz == 224:
+            torch_model = create_RepMLPNet_B224()
+            state_dict = torch.load('./RepMLPNet-B224-train-acc8040.pth')
+            torch_model.load_state_dict(state_dict)
         else:
-            if '384' in model_name:
-                torch_model = eval(f'{model_name[:-4]}(img_size={sz})')
-            else:
-                torch_model = eval(f'{model_name}(img_size={sz})')
+            torch_model = create_RepMLPNet_B256()
+            state_dict = torch.load('./RepMLPNet-B256-train-acc8111.pth')
+            torch_model.load_state_dict(state_dict)
 
-        load_for_transfer_learning(torch_model,
-                                   pth_model_path,
-                                   use_ema=True,
-                                   strict=False,
-                                   num_classes=1000)
-        torch_model = torch_model.to(device)
         torch_model.eval()
+        torch_model = torch_model.to(device)
         print_model_named_params(torch_model)
         print_model_named_buffers(torch_model)
+
 
         # convert weights
         paddle_model = convert(torch_model, paddle_model, model_name, config)
@@ -271,7 +244,7 @@ def main():
         print(out_torch[0, 0:100])
         print('========================================================')
         print(out_paddle[0, 0:100])
-        assert np.allclose(out_torch, out_paddle, atol = 1e-2)
+        assert np.allclose(out_torch, out_paddle, atol = 1e-3)
 
         # save weights for paddle model
         model_path = os.path.join(f'./{model_name}.pdparams')
