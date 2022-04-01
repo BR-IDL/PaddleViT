@@ -140,18 +140,19 @@ def convert(torch_model, paddle_model, model_name, config):
     for key in th_params:
         missing = False
         if key not in th_keys:
+            missing = True
             if key.endswith('.weight'):
-                if key[:-7] not in th_keys:
-                    missing = True
+                if key[:-7] in th_keys:
+                    missing = False
             if key.endswith('.bias'):
-                if key[:-5] not in th_keys:
-                    missing = True
+                if key[:-5] in th_keys:
+                    missing = False
             if key.endswith('.running_mean'):
-                if key[:-13] not in th_keys:
-                    missing = True
-            if key.endswith('.running_variance'):
-                if key[:-17] not in th_keys:
-                    missing = True
+                if key[:-13] in th_keys:
+                    missing = False
+            if key.endswith('.running_var'):
+                if key[:-12] in th_keys:
+                    missing = False
         if missing:
             missing_keys_th.append(key)
 
@@ -172,7 +173,7 @@ def convert(torch_model, paddle_model, model_name, config):
                 if key[:-10] in pd_keys:
                     missing = False
         if missing:
-            missing_keys_th.append(key)
+            missing_keys_pd.append(key)
 
 
     print('====================================')

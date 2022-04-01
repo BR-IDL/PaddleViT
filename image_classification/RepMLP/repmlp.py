@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,338 +13,311 @@
 # limitations under the License.
 
 """
-Implement MLP Class for RepMLP
+RepMLP in Paddle
+A Paddle Implementation of RepMLP as described in:
+"RepMLP: Re-parameterizing Convolutions into Fully-connected Layers for Image Recognition"
+    - Paper Link: https://arxiv.org/abs/2112.11081
 """
 
 import copy
-
 import paddle
 import paddle.nn.functional as F
 from paddle import nn
 
 
-def repeat_interleave(x, arg):
-    """Use numpy to implement repeat operations"""
-    return paddle.to_tensor(x.numpy().repeat(arg))
+
+def conv_bn_relu(in_channels, out_channels, kernel_size, stride, padding, groups=1, relu=True):
+    ops = [] 
+    ops.append(('conv', nn.Conv2D(in_channels=in_channels, out_channels=out_channels,
+                  kernel_size=kernel_size, stride=stride, padding=padding, groups=groups, bias_attr=False)))
+    ops.append(('bn', nn.BatchNorm2D(num_features=out_channels)))
+    if relu is True:
+        ops.append(('relu', nn.ReLU()))
+    return nn.Sequential(*ops)
+
+
+def fuse_bn(conv_or_fc, bn):
+    std = (bn._variance + bn.epsilon).sqrt()
+    t = bn.weight / std
+    t = t.reshape([-1, 1, 1, 1])
+
+    if len(t) == conv_or_fc.weight.shape[0]:
+        return conv_or_fc.weight * t, bn.bias - bn._mean * bn.weight / std
+    else:
+        repeat_times = conv_or_fc.weight.shape[0] // len(t)
+        repeated = t.repeat_interleave(repeat_times, 0)
+        return conv_or_fc.weight * repeated, (bn.bias - bn._mean * bn.weight / std).repeat_interleave(
+            repeat_times, 0)
 
 
 class Identity(nn.Layer):
-    """Identity layer
-
-    The output of this layer is the input without any change.
-    Use this layer to avoid if condition in some forward methods.
-    """
-
-    def __init__(self):
-        super().__init__()
-
     def forward(self, x):
         return x
 
 
-def fuse_bn(conv_or_fc, bn):
-    """Fusion of BN weights"""
-    std = (bn._variance + bn._epsilon).sqrt()
-    t = bn.weight / std
-    if conv_or_fc.weight.ndim == 4:
-        t = t.reshape([-1, 1, 1, 1])
-    else:
-        t = t.reshape([-1, 1])
-    return conv_or_fc.weight * t, bn.bias - bn._mean * bn.weight / std
+class GlobalPerceptron(nn.Layer):
+    def __init__(self, input_channels, internal_neurons):
+        super().__init__()
+        self.fc1 = nn.Conv2D(in_channels=input_channels, out_channels=internal_neurons, kernel_size=1, stride=1, bias_attr=True)
+        self.fc2 = nn.Conv2D(in_channels=internal_neurons, out_channels=input_channels, kernel_size=1, stride=1, bias_attr=True)
+        self.pool = nn.AdaptiveAvgPool2D(1)
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+        self.input_channels = input_channels
+
+    def forward(self, inputs):
+        x = self.pool(inputs)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.sigmoid(x)
+        x = x.reshape([-1, self.input_channels, 1, 1])
+        return x
 
 
-class RepMLP(nn.Layer):
-    """RepMLP Layer
-
-    The RepMLP consists of three parts: Global Perceptron, Partition Perceptron, Local Perceptron.
-    When deploy is True, the training weight of Local Perceptron is integrated into the full connection
-    layer of part of Partition Perceptron, In order to improve the ability of representation.
-    """
-
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        H,
-        W,
-        h,
-        w,
-        reparam_conv_k=None,
-        fc1_fc2_reduction=1,
-        fc3_groups=1,
-        deploy=False,
-    ):
+class RepMLPBlock(nn.Layer):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 h,
+                 w,
+                 reparam_conv_k=None,
+                 globalperceptron_reduce=4,
+                 num_sharesets=1,
+                 deploy=False):
         super().__init__()
 
         self.C = in_channels
         self.O = out_channels
-        self.fc3_groups = fc3_groups
+        self.S = num_sharesets
 
-        self.H, self.W, self.h, self.w = H, W, h, w
-
-        self.h_parts = self.H // self.h
-        self.w_parts = self.W // self.w
-
-        assert self.H % self.h == 0
-        assert self.W % self.w == 0
-        self.target_shape = (-1, self.O, self.H, self.W)
+        self.h, self.w = h, w
 
         self.deploy = deploy
 
-        self.need_global_perceptron = (H != h) or (W != w)
-        if self.need_global_perceptron:
-            internal_neurons = int(
-                self.C * self.h_parts * self.w_parts // fc1_fc2_reduction
-            )
-            self.fc1_fc2 = nn.Sequential()
-            self.fc1_fc2.add_sublayer(
-                "fc1", nn.Linear(self.C * self.h_parts * self.w_parts, internal_neurons)
-            )
-            self.fc1_fc2.add_sublayer("relu", nn.ReLU())
-            self.fc1_fc2.add_sublayer(
-                "fc2", nn.Linear(internal_neurons, self.C * self.h_parts * self.w_parts)
-            )
-            if deploy:
-                self.avg = nn.AvgPool2D(kernel_size=(self.h, self.w))
-            else:
-                self.avg = nn.Sequential()
-                self.avg.add_sublayer("avg", nn.AvgPool2D(kernel_size=(self.h, self.w)))
-                self.avg.add_sublayer("bn", nn.BatchNorm2D(num_features=self.C))
+        assert in_channels == out_channels
+        self.gp = GlobalPerceptron(input_channels=in_channels, internal_neurons=in_channels // globalperceptron_reduce)
 
-        self.fc3 = nn.Conv2D(
-            self.C * self.h * self.w,
-            self.O * self.h * self.w,
-            1,
-            1,
-            0,
-            bias_attr=deploy,
-            groups=fc3_groups,
-        )
-        self.fc3_bn = Identity() if deploy else nn.BatchNorm1D(self.O * self.h * self.w)
+        self.fc3 = nn.Conv2D(self.h * self.w * num_sharesets, self.h * self.w * num_sharesets, 1, 1, 0, bias_attr=deploy, groups=num_sharesets)
+        if deploy:
+            self.fc3_bn = Identity()
+        else:
+            self.fc3_bn = nn.BatchNorm2D(num_sharesets)
 
         self.reparam_conv_k = reparam_conv_k
         if not deploy and reparam_conv_k is not None:
             for k in reparam_conv_k:
-                conv_branch = nn.Sequential()
-                conv_branch.add_sublayer(
-                    "conv",
-                    nn.Conv2D(
-                        in_channels=self.C,
-                        out_channels=self.O,
-                        kernel_size=k,
-                        padding=k // 2,
-                        bias_attr=False,
-                        groups=fc3_groups,
-                    ),
-                )
-                conv_branch.add_sublayer("bn", nn.BatchNorm2D(self.O))
-                self.__setattr__("repconv{}".format(k), conv_branch)
+                conv_branch = conv_bn_relu(num_sharesets, num_sharesets, kernel_size=k, stride=1, padding=k//2, groups=num_sharesets, relu=False)
+                self.__setattr__('repconv{}'.format(k), conv_branch)
 
-    def forward(self, inputs):
+    def partition(self, x, h_parts, w_parts):
+        x = x.reshape([-1, self.C, h_parts, self.h, w_parts, self.w])
+        x = x.transpose([0, 2, 4, 1, 3, 5])
+        return x
 
-        if self.need_global_perceptron:
-            v = self.avg(inputs)
-            v = v.reshape([-1, self.C * self.h_parts * self.w_parts])
-            v = self.fc1_fc2(v)
-            v = v.reshape([-1, self.C, self.h_parts, 1, self.w_parts, 1])
-            inputs = inputs.reshape(
-                [-1, self.C, self.h_parts, self.h, self.w_parts, self.w]
-            )
-            inputs = inputs + v
-        else:
-            inputs = inputs.reshape(
-                [-1, self.C, self.h_parts, self.h, self.w_parts, self.w]
-            )
-
-        # N, h_parts, w_parts, C, in_h, in_w
-        partitions = inputs.transpose([0, 2, 4, 1, 3, 5])
-
-        #   Feed partition map into Partition Perceptron
-        fc3_inputs = partitions.reshape([-1, self.C * self.h * self.w, 1, 1])
-        fc3_out = self.fc3(fc3_inputs)
-        fc3_out = fc3_out.reshape([-1, self.O * self.h * self.w])
-        fc3_out = self.fc3_bn(fc3_out)
-        fc3_out = fc3_out.reshape(
-            [-1, self.h_parts, self.w_parts, self.O, self.h, self.w]
-        )
-
-        #   Feed partition map into Local Perceptron
-        if self.reparam_conv_k is not None and not self.deploy:
-            conv_inputs = partitions.reshape([-1, self.C, self.h, self.w])
-            conv_out = 0
-            for k in self.reparam_conv_k:
-                conv_branch = self.__getattr__("repconv{}".format(k))
-                conv_out += conv_branch(conv_inputs)
-            conv_out = conv_out.reshape(
-                [-1, self.h_parts, self.w_parts, self.O, self.h, self.w]
-            )
-            fc3_out += conv_out
-
-        # N, O, h_parts, out_h, w_parts, out_w
-        fc3_out = fc3_out.transpose([0, 3, 1, 4, 2, 5])
-        out = fc3_out.reshape([*self.target_shape])
+    def partition_affine(self, x, h_parts, w_parts):
+        fc_inputs = x.reshape([-1, self.S * self.h * self.w, 1, 1])
+        out = self.fc3(fc_inputs)
+        out = out.reshape([-1, self.S, self.h, self.w])
+        out = self.fc3_bn(out)
+        out = out.reshape([-1, h_parts, w_parts, self.S, self.h, self.w])
         return out
 
-    def _convert_conv_to_fc(self, conv_kernel, conv_bias):
-        I = (
-            paddle.eye(self.C * self.h * self.w // self.fc3_groups)
-            .tile(repeat_times=[1, self.fc3_groups])
-            .reshape(
-                [self.C * self.h * self.w // self.fc3_groups, self.C, self.h, self.w]
-            )
-        )
-        fc_k = F.conv2d(
-            I, conv_kernel, padding=conv_kernel.shape[2] // 2, groups=self.fc3_groups
-        )
-        fc_k = fc_k.reshape(
-            [self.O * self.h * self.w // self.fc3_groups, self.C * self.h * self.w]
-        ).t()
-        fc_bias = repeat_interleave(conv_bias, self.h * self.w)
-        return fc_k, fc_bias
+    def forward(self, inputs):
+        #   Global Perceptron
+        global_vec = self.gp(inputs)
 
-    def get_equivalent_fc1_fc3_params(self):
+        origin_shape = inputs.shape
+        h_parts = origin_shape[2] // self.h
+        w_parts = origin_shape[3] // self.w
+
+        partitions = self.partition(inputs, h_parts, w_parts)
+
+        #   Channel Perceptron
+        fc3_out = self.partition_affine(partitions, h_parts, w_parts)
+
+        #   Local Perceptron
+        if self.reparam_conv_k is not None and not self.deploy:
+            conv_inputs = partitions.reshape([-1, self.S, self.h, self.w])
+            conv_out = 0
+            for k in self.reparam_conv_k:
+                conv_branch = self.__getattr__('repconv{}'.format(k))
+                conv_out += conv_branch(conv_inputs)
+            conv_out = conv_out.reshape([-1, h_parts, w_parts, self.S, self.h, self.w])
+            fc3_out += conv_out
+
+        fc3_out = fc3_out.transpose([0, 3, 1, 4, 2, 5])  # N, O, h_parts, out_h, w_parts, out_w
+        out = fc3_out.reshape(origin_shape)
+        out = out * global_vec
+        return out
+
+    def get_equivalent_fc3(self):
         fc_weight, fc_bias = fuse_bn(self.fc3, self.fc3_bn)
-
         if self.reparam_conv_k is not None:
             largest_k = max(self.reparam_conv_k)
-            largest_branch = self.__getattr__("repconv{}".format(largest_k))
+            largest_branch = self.__getattr__('repconv{}'.format(largest_k))
             total_kernel, total_bias = fuse_bn(largest_branch.conv, largest_branch.bn)
             for k in self.reparam_conv_k:
                 if k != largest_k:
-                    k_branch = self.__getattr__("repconv{}".format(k))
+                    k_branch = self.__getattr__('repconv{}'.format(k))
                     kernel, bias = fuse_bn(k_branch.conv, k_branch.bn)
                     total_kernel += F.pad(kernel, [(largest_k - k) // 2] * 4)
                     total_bias += bias
-
             rep_weight, rep_bias = self._convert_conv_to_fc(total_kernel, total_bias)
             final_fc3_weight = rep_weight.reshape(fc_weight.shape) + fc_weight
             final_fc3_bias = rep_bias + fc_bias
-
         else:
             final_fc3_weight = fc_weight
             final_fc3_bias = fc_bias
+        return final_fc3_weight, final_fc3_bias
 
-        #   ------------------------------- remove BN after avg
-        if self.need_global_perceptron:
-            avgbn = self.avg.bn
-            std = (avgbn._variance + avgbn._epsilon).sqrt()
-            scale = avgbn.weight / std
-            avgbias = avgbn.bias - avgbn._mean * scale
-            fc1 = self.fc1_fc2.fc1
-            replicate_times = fc1.weight.shape[0] // len(avgbias)
-            replicated_avgbias = repeat_interleave(avgbias, replicate_times).reshape(
-                [-1, 1]
-            )
-            bias_diff = fc1.weight.matmul(replicated_avgbias).squeeze()
-            fc1_bias_new = fc1.bias + bias_diff
-            fc1_weight_new = fc1.weight * repeat_interleave(
-                scale, replicate_times
-            ).reshape([1, -1])
-        else:
-            fc1_bias_new = None
-            fc1_weight_new = None
-
-        return fc1_weight_new, fc1_bias_new, final_fc3_weight, final_fc3_bias
-
-    def switch_to_deploy(self):
+    def local_inject(self):
         self.deploy = True
-        (
-            fc1_weight,
-            fc1_bias,
-            fc3_weight,
-            fc3_bias,
-        ) = self.get_equivalent_fc1_fc3_params()
+        #   Locality Injection
+        fc3_weight, fc3_bias = self.get_equivalent_fc3()
         #   Remove Local Perceptron
         if self.reparam_conv_k is not None:
             for k in self.reparam_conv_k:
-                self.__delattr__("repconv{}".format(k))
-        #   Remove the BN after FC3
-        self.__delattr__("fc3")
-        self.__delattr__("fc3_bn")
-        self.fc3 = nn.Conv2D(
-            self.C * self.h * self.w,
-            self.O * self.h * self.w,
-            1,
-            1,
-            0,
-            bias_attr=True,
-            groups=self.fc3_groups,
-        )
+                self.__delattr__('repconv{}'.format(k))
+        self.__delattr__('fc3')
+        self.__delattr__('fc3_bn')
+        self.fc3 = nn.Conv2D(self.S * self.h * self.w, self.S * self.h * self.w, 1, 1, 0, bias_attr=True, groups=self.S)
         self.fc3_bn = Identity()
-        #   Remove the BN after AVG
-        if self.need_global_perceptron:
-            self.__delattr__("avg")
-            self.avg = nn.AvgPool2D(kernel_size=(self.h, self.w))
-        #   Set values
-        if fc1_weight is not None:
-            self.fc1_fc2.fc1.weight.set_value(fc1_weight)
-            self.fc1_fc2.fc1.bias.set_value(fc1_bias)
-        self.fc3.weight.set_value(fc3_weight)
-        self.fc3.bias.set_value(fc3_bias)
+        self.fc3.weight.data = fc3_weight
+        self.fc3.bias.data = fc3_bias
+
+    def _convert_conv_to_fc(self, conv_kernel, conv_bias):
+        I = paddle.eye(self.h * self.w).tile([1, self.S]).reshape([self.h * self.w, self.S, self.h, self.w])
+        fc_k = F.conv2d(I, conv_kernel, padding=(conv_kernel.size(2)//2,conv_kernel.size(3)//2), groups=self.S)
+        fc_k = fc_k.reshape([self.h * self.w, self.S * self.h * self.w]).t()
+        fc_bias = conv_bias.repeat_interleave(self.h * self.w)
+        return fc_k, fc_bias
 
 
-def repmlp_model_convert(model, save_path=None, do_copy=True):
-    """reparameterizing model
+#   The common FFN Block used in many Transformer and MLP models.
+class FFNBlock(nn.Layer):
+    def __init__(self, in_channels, hidden_channels=None, out_channels=None, act_layer=nn.GELU):
+        super().__init__()
+        out_features = out_channels or in_channels
+        hidden_features = hidden_channels or in_channels
+        self.ffn_fc1 = conv_bn_relu(in_channels, hidden_features, 1, 1, 0, relu=False)
+        self.ffn_fc2 = conv_bn_relu(hidden_features, out_features, 1, 1, 0, relu=False)
+        self.act = act_layer()
 
-    Args:
-        model (nn.Layer): origin model
-        save_path (str): save the model . Defaults to None.
-        do_copy (bool): copy origin model. Defaults to True.
-
-    Returns:
-        nn.Layer: The reparameterized model
-    """
-    if do_copy:
-        model = copy.deepcopy(model)
-    for module in model.sublayers():
-        if hasattr(module, "switch_to_deploy"):
-            module.switch_to_deploy()
-    if save_path is not None:
-        paddle.save(model.state_dict(), save_path)
-    return model
+    def forward(self, x):
+        x = self.ffn_fc1(x)
+        x = self.act(x)
+        x = self.ffn_fc2(x)
+        return x
 
 
-def TestRepMLP():
-    # print('=== Test training_to_deploy for RepMLP ===')
-    uniform_ = paddle.nn.initializer.Uniform(low=0, high=0.1, name=None)
-    N = 1
-    C = 8
-    H = 14
-    W = 14
-    h = 7
-    w = 7
-    O = 8
-    groups = 4
+class RepMLPNetUnit(nn.Layer):
+    def __init__(self,
+                 channels,
+                 h,
+                 w,
+                 reparam_conv_k,
+                 globalperceptron_reduce,
+                 ffn_expand=4,
+                 num_sharesets=1,
+                 deploy=False):
+        super().__init__()
+        self.repmlp_block = RepMLPBlock(in_channels=channels,
+                                        out_channels=channels,
+                                        h=h,
+                                        w=w,
+                                        reparam_conv_k=reparam_conv_k,
+                                        globalperceptron_reduce=globalperceptron_reduce,
+                                        num_sharesets=num_sharesets,
+                                        deploy=deploy)
+        self.ffn_block = FFNBlock(channels, channels * ffn_expand)
+        self.prebn1 = nn.BatchNorm2D(channels)
+        self.prebn2 = nn.BatchNorm2D(channels)
 
-    x = paddle.randn([N, C, H, W])
-    # print("input shape:", x.shape)
-    repmlp = RepMLP(
-        C,
-        O,
-        H=H,
-        W=W,
-        h=h,
-        w=w,
-        reparam_conv_k=(1, 3, 5),
-        fc1_fc2_reduction=1,
-        fc3_groups=groups,
-        deploy=False,
+    def forward(self, x):
+        y = x + self.repmlp_block(self.prebn1(x))
+        z = y + self.ffn_block(self.prebn2(y))
+        return z
+
+
+class RepMLP(nn.Layer):
+    """RepMLP Layer"""
+    def __init__(self,
+                 in_channels=3,
+                 num_class=1000,
+                 patch_size=(4, 4),
+                 num_blocks=(2,2,6,2),
+                 channels=(192,384,768,1536),
+                 hs=(64,32,16,8),
+                 ws=(64,32,16,8),
+                 sharesets_nums=(4,8,16,32),
+                 reparam_conv_k=(3,),
+                 globalperceptron_reduce=4,
+                 deploy=False):
+        super().__init__()
+        num_stages = len(num_blocks)
+        assert num_stages == len(channels)
+        assert num_stages == len(hs)
+        assert num_stages == len(ws)
+        assert num_stages == len(sharesets_nums)
+
+        self.conv_embedding = conv_bn_relu(in_channels, channels[0], kernel_size=patch_size, stride=patch_size, padding=0)
+
+        stages = []
+        embeds = []
+        for stage_idx in range(num_stages):
+            stage_blocks = []
+            for _ in range(num_blocks[stage_idx]):
+                stage_blocks.append(RepMLPNetUnit(channels=channels[stage_idx],
+                                                  h=hs[stage_idx],
+                                                  w=ws[stage_idx],
+                                                  reparam_conv_k=reparam_conv_k,
+                                                  globalperceptron_reduce=globalperceptron_reduce,
+                                                  ffn_expand=4,
+                                                  num_sharesets=sharesets_nums[stage_idx],
+                                                  deploy=deploy))
+            stages.append(nn.LayerList(stage_blocks))
+            if stage_idx < num_stages - 1:
+                embeds.append(conv_bn_relu(in_channels=channels[stage_idx],
+                                           out_channels=channels[stage_idx + 1],
+                                           kernel_size=2,
+                                           stride=2,
+                                           padding=0))
+
+        self.stages = nn.LayerList(stages)
+        self.embeds = nn.LayerList(embeds)
+        self.head_norm = nn.BatchNorm2D(channels[-1])
+        self.head = nn.Linear(channels[-1], num_class)
+        self.pool = nn.AdaptiveAvgPool2D(1)
+
+    def forward(self, x):
+        x = self.conv_embedding(x)
+        for i, stage in enumerate(self.stages):
+            for block in stage:
+                x = block(x)
+            if i < len(self.stages) - 1:
+                embed = self.embeds[i]
+                x = embed(x)
+        x = self.head_norm(x)
+        x = self.pool(x)
+        x = x.reshape([x.shape[0], -1])
+        x = self.head(x)
+        return x
+
+    def locality_injection(self):
+        for m in self.sublayers():
+            if hasattr(m, 'local_inject'):
+                m.local_inject()
+
+
+def build_repmlp(config):
+    model = RepMLP(
+        channels=config.MODEL.CHANNELS,
+        hs=config.MODEL.HEIGHTS,
+        ws=config.MODEL.WIDTHS,
+        num_blocks=config.MODEL.NUM_BLOCKS,
+        reparam_conv_k=config.MODEL.REPARAM_CONV_K,
+        sharesets_nums=config.MODEL.SHARESETS_NUMS,
+        deploy=config.MODEL.DEPLOY,
     )
-    repmlp.eval()
-
-    for module in repmlp.sublayers():
-        if isinstance(module, nn.BatchNorm2D) or isinstance(module, nn.BatchNorm1D):
-            uniform_(module._mean)
-            uniform_(module._variance)
-            uniform_(module.weight)
-            uniform_(module.bias)
-
-    out = repmlp(x)
-    repmlp.switch_to_deploy()
-    deployout = repmlp(x)
-    print("difference between the outputs of the training-time and converted RepMLP is")
-    print(((deployout - out) ** 2).sum().numpy().item())
-
-
-if __name__ == "__main__":
-    TestRepMLP()
+    return model

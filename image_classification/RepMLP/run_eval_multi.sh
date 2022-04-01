@@ -1,8 +1,9 @@
-CUDA_VISIBLE_DEVICES=4,5,6,7 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
--cfg='./configs/repmlpres50_light_224.yaml' \
+-cfg='./configs/repmlp_b_224.yaml' \
 -dataset='imagenet2012' \
 -batch_size=128 \
 -data_path='/dataset/imagenet' \
+-pretrained='./repmlp_b_224.pdparams' \
 -eval \
--pretrained='./RepMLP-Res50-light-224_train'
+-amp
