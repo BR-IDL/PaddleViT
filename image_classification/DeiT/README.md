@@ -13,6 +13,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 </p>
 
 ### Update 
+- Update (2022-04-02): Add model weights trained from scratch using PaddleViT.
 - Update (2022-03-16): Code is refactored.
 - Update (2021-09-27): More weights are uploaded.
 - Update (2021-08-11): Code is released and ported weights are uploaded.
@@ -31,6 +32,12 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 | RegNet_Y_160  | [google](https://drive.google.com/file/d/1_nEYFnQqlGGqboLq_VmdRvV9mLGSrbyG/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1NZNhiO4xDfqHiRiIbk9BCA?pwd=gjsm)   |
 
 > *The results are evaluated on ImageNet2012 validation set.
+
+
+## Models trained from scratch by PaddleViT
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         | Log |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|-----|
+| deit_tiny_distilled_224   	| 74.26 | 91.85 | 5.9M    | 1.1G   | 224        | 0.875    | bicubic       | [google](https://drive.google.com/file/d/1gKu1oP2nbOsAOK3okGdm_79mp9pb6h1W/view?usp=sharing)/[baidu](https://pan.baidu.com/s/12XpS4PdmPFavTNCDsDio6g?pwd=kxg3) | [baidu](https://pan.baidu.com/s/1vLvNDGNviVRRf1N_U7z61w?pwd=v5uf) |
 
 ## Data Preparation
 ImageNet2012 dataset is used in the following file structure:
