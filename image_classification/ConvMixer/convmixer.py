@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,10 @@
 # limitations under the License.
 
 """
-Implement CNN Class for ConvMixer
+ConvMixer in Paddle
+A Paddle Implementation of ConvMixer as described in:
+"Patches Are All You Need?"
+    - Paper Link: https://arxiv.org/abs/2201.09792
 """
 
 import paddle
@@ -29,12 +32,17 @@ class Residual(nn.Layer):
         return self.fn(x) + x
 
 
-def ConvMixer(
-    dim, depth, kernel_size=9, patch_size=7, num_classes=1000, activation='GELU'):
+def ConvMixer(dim,
+              depth,
+              kernel_size=9,
+              patch_size=7,
+              num_classes=1000,
+              activation='GELU'):
     if activation == 'ReLU':
         convmixer_act = nn.ReLU()
     else:
         convmixer_act = nn.GELU()
+
     return nn.Sequential(
         nn.Conv2D(3, dim, kernel_size=patch_size, stride=patch_size),
         convmixer_act,
@@ -43,7 +51,7 @@ def ConvMixer(
             nn.Sequential(
                 Residual(
                     nn.Sequential(
-                        nn.Conv2D(dim, dim, kernel_size, groups=dim, padding="same"),
+                        nn.Conv2D(dim, dim, kernel_size, groups=dim, padding=kernel_size//2),
                         convmixer_act,
                         nn.BatchNorm2D(dim),
                     )
