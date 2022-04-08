@@ -11,7 +11,7 @@ MODEL:
         MLP_RATIOS: [2, 2, 2]
         CHANNELS: 64
         N_CONV_BLOCKS: 2
-    DROP_PATH: 0.1
+    DROPPATH: 0.1
 TRAIN:
     NUM_EPOCHS: 300
     WARMUP_EPOCHS: 5

@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,10 @@
 # limitations under the License.
 
 """
-Implement MLP Class for CycleMLP
+CycleMLP in Paddle
+A Paddle Implementation of CycleMLP as described in:
+"CycleMLP: A MLP-like Architecture for Dense Prediction"
+    - Paper Link: https://arxiv.org/abs/2107.10224
 """
 
 import os
@@ -52,8 +55,7 @@ class Mlp(nn.Layer):
         fc1: nn.Linear
         fc2: nn.Linear
         act: GELU
-        dropout1: dropout after fc1
-        dropout2: dropout after fc2
+        dropout: dropout after fc
     """
     def __init__(self,
                  in_features,
@@ -231,7 +233,6 @@ class CycleBlock(nn.Layer):
         self.norm1 = norm_layer(dim)
         self.attn = mlp_fn(dim, qkv_bias=qkv_bias, qk_scale=None, attn_drop=attn_drop)
 
-        # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else Identity()
 
         self.norm2 = norm_layer(dim)
@@ -292,8 +293,6 @@ class Downsample(nn.Layer):
         x = self.proj(x)  # B, C, H, W
         x = x.transpose([0, 2, 3, 1])
         return x
-
-
 
 
 def basic_blocks(dim,
@@ -453,10 +452,10 @@ class CycleNet(nn.Layer):
 def build_cyclemlp(config):
     '''build cyclemlp model'''
     model = CycleNet(num_classes=config.MODEL.NUM_CLASSES,
-                     layers=config.MODEL.MIXER.LAYERS,
-                     embed_dims=config.MODEL.MIXER.EMBED_DIMS,
-                     patch_size=7,
-                     transitions=config.MODEL.MIXER.TRANSITIONS,
-                     mlp_ratios=config.MODEL.MIXER.MLP_RATIOS,
+                     layers=config.MODEL.LAYERS,
+                     embed_dims=config.MODEL.EMBED_DIMS,
+                     patch_size=config.MODEL.PATCH_SIZE,
+                     transitions=config.MODEL.TRANSITIONS,
+                     mlp_ratios=config.MODEL.MLP_RATIOS,
                      mlp_fn=CycleMLP)
     return model

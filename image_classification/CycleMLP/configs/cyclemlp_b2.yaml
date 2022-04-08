@@ -4,8 +4,7 @@ DATA:
 MODEL:
     TYPE: CycleMLP
     NAME: cyclemlp_b2
-    MIXER:
-        TRANSITIONS: [True, True, True, True]
-        LAYERS: [2, 3, 10, 3]
-        MLP_RATIOS: [4, 4, 4, 4]
-        EMBED_DIMS: [64, 128, 320, 512]
+    TRANSITIONS: [True, True, True, True]
+    LAYERS: [2, 3, 10, 3]
+    MLP_RATIOS: [4, 4, 4, 4]
+    EMBED_DIMS: [64, 128, 320, 512]

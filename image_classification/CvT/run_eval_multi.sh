@@ -1,8 +1,9 @@
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg='./configs/cvt-w24-384x384.yaml' \
-    -dataset='imagenet2012' \
-    -batch_size=16 \
-    -data_path='/dataset/imagenet' \
-    -eval \
-    -pretrained='./CvT-w24-384x384-IN-22k'
+-cfg='./configs/cvt-13-224x224.yaml' \
+-dataset='imagenet2012' \
+-batch_size=128 \
+-data_path='/dataset/imagenet' \
+-pretrained='./CvT-13-224x224-IN-1k.pdparams' \
+-eval \
+-amp

@@ -13,7 +13,10 @@
 # limitations under the License.
 
 """
-Implement HVT
+HVT in Paddle
+A Paddle Implementation of HVT as described in:
+"Scalable Vision Transformers with Hierarchical Pooling"
+    - Paper Link: https://arxiv.org/abs/2103.10619
 """
 
 import math
@@ -344,17 +347,17 @@ class HVT(nn.Layer):
 def build_hvt(config):
     """build hvt model using config"""
     model = HVT(image_size=config.DATA.IMAGE_SIZE,
-                in_channels=config.MODEL.TRANS.IN_CHANNELS,
+                in_channels=config.MODEL.IN_CHANNELS,
                 num_classes=config.MODEL.NUM_CLASSES,
-                patch_size=config.MODEL.TRANS.PATCH_SIZE,
-                embed_dim=config.MODEL.TRANS.EMBED_DIM,
-                num_heads=config.MODEL.TRANS.NUM_HEADS,
-                depth=config.MODEL.TRANS.DEPTH,
-                mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
-                qkv_bias=config.MODEL.TRANS.QKV_BIAS,
+                patch_size=config.MODEL.PATCH_SIZE,
+                embed_dim=config.MODEL.EMBED_DIM,
+                num_heads=config.MODEL.NUM_HEADS,
+                depth=config.MODEL.DEPTH,
+                mlp_ratio=config.MODEL.MLP_RATIO,
+                qkv_bias=config.MODEL.QKV_BIAS,
                 dropout=config.MODEL.DROPOUT,
-                pool_block_width=config.MODEL.TRANS.POOL_BLOCK_WIDTH,
-                pool_kernel_size=config.MODEL.TRANS.POOL_KERNEL_SIZE,
+                pool_block_width=config.MODEL.POOL_BLOCK_WIDTH,
+                pool_kernel_size=config.MODEL.POOL_KERNEL_SIZE,
                 attention_dropout=config.MODEL.ATTENTION_DROPOUT,
                 droppath=config.MODEL.DROPPATH)
     return model

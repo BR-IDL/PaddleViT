@@ -3,7 +3,5 @@ DATA:
     CROP_PCT: 0.875
 MODEL:
     TYPE: FF_Only
-    NAME: ff_tiny
-    MIXER:
-        EMBED_DIM: 192
-
+    NAME: ff_base
+    EMBED_DIM: 768

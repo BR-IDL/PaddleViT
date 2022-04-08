@@ -13,16 +13,18 @@
 # limitations under the License.
 
 """
-Implement MLP Class for FF_Only
+FF_Only in Paddle
+A Paddle Implementation of FF_only as described in:
+"Do You Even Need Attention? A Stack of Feed-Forward Layers Does Surprisingly Well on ImageNet"
+    - Paper Link: https://arxiv.org/abs/2105.02723
 """
 
 from functools import partial
-
 import paddle
 import paddle.nn.functional as F
 from paddle import nn
-
 from droppath import DropPath
+
 
 trunc_normal_ = nn.initializer.TruncatedNormal(std=0.02)
 zeros_ = nn.initializer.Constant(value=0.0)
@@ -288,6 +290,7 @@ class LinearVisionTransformer(nn.Layer):
 def build_ffonly(config):
     model = LinearVisionTransformer(
         num_classes=config.MODEL.NUM_CLASSES,
-        embed_dim=config.MODEL.MIXER.EMBED_DIM,
+        embed_dim=config.MODEL.EMBED_DIM,
+        depth=config.MODEL.LAYERS,
     )
     return model
