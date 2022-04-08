@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,10 @@
 # limitations under the License.
 
 """
-Implement MLP Class for ConvMLP
+ConvMLP in Paddle
+A Paddle Implementation of ConvMLP as described in:
+"ConvMLP: Hierarchical Convolutional MLPs for Vision"
+    - Paper Link: https://arxiv.org/abs/2109.04454
 """
 
 import paddle
@@ -311,7 +314,7 @@ def build_convmlp(config):
         n_conv_blocks=config.MODEL.MIXER.N_CONV_BLOCKS,
         classifier_head=True,
         num_classes=config.MODEL.NUM_CLASSES,
-        droppath=config.MODEL.DROP_PATH,
+        droppath=config.MODEL.DROPPATH,
     )
     return model
 

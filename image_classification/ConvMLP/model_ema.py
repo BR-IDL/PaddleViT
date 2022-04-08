@@ -18,9 +18,7 @@ https://github.com/rwightman/pytorch-image-models/blob/master/timm/utils/model_e
 """
 
 import copy
-from collections import OrderedDict
 import paddle
-import paddle.nn as nn
 
 
 class ModelEma:
@@ -36,7 +34,6 @@ class ModelEma:
     def __init__(self, model, decay=0.999):
         self.module = copy.deepcopy(model)
         self.module.eval()
-        self.module.to('cpu')
         self.decay = decay
 
     @paddle.no_grad()
@@ -45,7 +42,7 @@ class ModelEma:
         for (_, ema_param), (_, model_param) in zip(
             self.module.named_parameters(), model.named_parameters()):
             ema_param.set_value(copy.deepcopy(update_fn(ema_param, model_param)))
-            
+
         # update ema model buffers by model buffers
         for (_, ema_buf), (_, model_buf) in zip(
             self.module.named_buffers(), model.named_buffers()):
@@ -56,6 +53,9 @@ class ModelEma:
 
     def set(self, model):
         self._update(model, update_fn=lambda e, m: m)
+
+    def to(self, device):
+        self.module.to(device)
 
     def state_dict(self):
         return self.module.state_dict()
