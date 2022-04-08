@@ -13,15 +13,18 @@
 # limitations under the License.
 
 """
-Implement Transformer Class for ViT
+CvT in Paddle
+A Paddle Implementation of CvT as described in:
+"CvT: Introducing Convolutions to Vision Transformers"
+    - Paper Link: https://arxiv.org/abs/2103.15808
 """
-
-import paddle
-import paddle.nn as nn
 
 from numpy import repeat
 import os
+import paddle
+import paddle.nn as nn
 from droppath import DropPath
+
 
 class QuickGELU(nn.Layer):
     '''
