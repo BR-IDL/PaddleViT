@@ -5,7 +5,7 @@ PaddlePaddle training/validation code and pretrained models for **ConvMLP**.
 The official and 3rd party pytorch implementation are [here](https://github.com/SHI-Labs/Convolutional-MLPs).
 
 
-This implementation is developed by [PPViT](https://github.com/xperzy/PPViT/tree/master).
+This implementation is developed by [PPViT](https://github.com/BR-IDL/PaddleViT).
 
 <p align="center">
 <img src="./convmlp.png" alt="drawing" width="90%" height="90%"/>
