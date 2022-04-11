@@ -13,7 +13,10 @@
 # limitations under the License.
 
 """
-Implement Network Class for HaloNet
+HaloNet in Paddle
+A Paddle Implementation of HaloNet as described in:
+"Scaling Local Self-Attention for Parameter Efficient Visual Backbones"
+    - Paper Link: https://arxiv.org/pdf/2103.12731v3.pdf
 """
 
 import paddle

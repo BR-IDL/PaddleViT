@@ -11,11 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""
+Focal Transformer in Paddle
+A Paddle Implementation of Focal Transformer as described in:
+"Focal Self-attention for Local-Global Interactions in Vision Transformers"
+    - Paper Link: https://arxiv.org/pdf/2107.00641.pdf
+"""
+
 import math
 import numpy as np
 import paddle
 from paddle import nn
 from paddle.nn import functional as F
+
 
 class DropPath(nn.Layer):
     r"""DropPath class"""
@@ -1162,7 +1171,7 @@ def build_focal(config):
         qkv_bias=config.MODEL.FOCAL.QKV_BIAS,
         qk_scale=config.MODEL.FOCAL.QK_SCALE,
         drop_rate=config.MODEL.DROPOUT,
-        drop_path_rate=config.MODEL.DROP_PATH,
+        drop_path_rate=config.MODEL.DROPPATH,
         ape=config.MODEL.FOCAL.APE,
         patch_norm=config.MODEL.FOCAL.PATCH_NORM,
         use_shift=config.MODEL.FOCAL.USE_SHIFT,

@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-Implement BoTNet
-'''
+"""
+BoTNet in Paddle
+A Paddle Implementation of Bottleneck Transformers (BoTNet) as described in:
+"Bottleneck Transformers for Visual Recognition"
+    - Paper Link: https://arxiv.org/abs/2101.11605
+"""
 
 import paddle
 import paddle.nn as nn
@@ -311,6 +314,6 @@ def build_botnet50(config):
         image_size=config.DATA.IMAGE_SIZE,
         fmap_size=config.DATA.FMAP_SIZE,
         num_classes=config.MODEL.NUM_CLASSES,
-        embed_dim=config.MODEL.TRANS.EMBED_DIM,
+        embed_dim=config.MODEL.EMBED_DIM,
     )
     return model

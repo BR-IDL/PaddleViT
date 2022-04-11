@@ -18,106 +18,6 @@ import paddle.nn as nn
 import paddle.nn.functional as F
 
 
-class TokenLabelGTCrossEntropy(nn.Layer):
-    def __init__(self,
-                 dense_weight=1.0,
-                 cls_weight=1.0,
-                 mixup_activate=True,
-                 smoothing=0.1,
-                 classes=1000):
-        super().__init__()
-        self.CE = SoftTargetCrossEntropy()
-
-        self.dense_weight = dense_weight
-        self.smoothing = smoothing
-        self.mixup_activate = mixup_activate
-        self.classes = classes
-        self.cls_weight = cls_weight
-        assert dense_weight + cls_weight > 0
-
-    def forward(self, x, target):
-        output, aux_output, bb = x
-        bbx1, bby1, bbx2, bby2 = bb
-        B, N, C = aux_output.shape
-        if len(target.shape) == 2:
-            target_cls = target
-#TODO: fix bugs
-            target_aux = target.expand([1, N]).reshape((B*N, C))
-        else:
-            ground_truth = target[:, :, 0]
-            target_cls = target[:, :, 1]
-            ratio = (0.9 - 0.4 * (ground_truth.max(-1)[1] == target_cls.max(-1)[1])).unsqueeze(-1)
-            target_cls = target_cls * ratio + ground_truth * (1 - ratio)
-            target_aux = target[:, :, 2:]
-            target_aux = target_aux.transpose([0, 2, 1]).reshape((-1, C))
-        lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / N)
-        if lam < 1:
-            target_cls = lam * target_cls + (1 - lam) * target_cls.flip(0)
-
-        aux_output = aux_output.reshape((-1, C))
-
-        loss_cls = self.CE(output, target_cls)
-        loss_aux = self.CE(aux_output, target_aux)
-
-        return self.cls_weigth * loss_cls + self.dense_weight * loss_aux
-
-
-
-class TokenLabelCrossEntropy(nn.Layer):
-    def __init__(self,
-                 dense_weight=1.0,
-                 cls_weight=1.0,
-                 mixup_activate=True,
-                 classes=1000):
-        super().__init__()
-        self.CE = SoftTargetCrossEntropy()
-
-        self.dense_weight = dense_weight
-        self.mixup_activate = mixup_activate
-        self.classes = classes
-        self.cls_weight = cls_weight
-        assert dense_weight + cls_weight > 0
-
-    def forward(self, x, target):
-        output, aux_output, bb = x
-        bbx1, bby1, bbx2, bby2 = bb
-        B, N, C = aux_output.shape
-        if len(target.shape) == 2:
-            target_cls = target
-#TODO: fix bugs
-            target_aux = target.expand([1, N]).reshape((B*N, C))
-        else:
-            target_cls = target[:, :, 1]
-            target_aux = target[:, :, 2:]
-            target_aux = target_aux.transpose([0, 2, 1]).reshape((-1, C))
-        lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / N)
-        if lam < 1:
-            target_cls = lam * target_cls + (1 - lam) * target_cls.flip(0)
-
-        aux_output = aux_output.reshape((-1, C))
-
-        loss_cls = self.CE(output, target_cls)
-        loss_aux = self.CE(aux_output, target_aux)
-
-        return self.cls_weigth * loss_cls + self.dense_weight * loss_aux
-
-
-class TokenLabelSoftTargetCrossEntropy(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x, target):
-        N_rep = x.shape[0]
-        N = target.shape[0]
-        if not N == N_rep:
-# TODO:
-            target = target.repeat(N_rep // N, 1)
-        if len(target.shape) == 3 and target.shape[-1] == 2:
-            target = target[:, :, 1]
-        loss = paddle.sum(-target * F.log_softmax(x, dim=-1), dim=-1)
-        return loss.mean()
-
-
 class LabelSmoothingCrossEntropyLoss(nn.Layer):
     """ cross entropy loss for label smoothing
     Args:
@@ -154,9 +54,6 @@ class SoftTargetCrossEntropyLoss(nn.Layer):
     Returns:
         loss: float, the mean loss value
     """
-    def __init__(self):
-        super().__init__()
-
     def forward(self, x, target):
         loss = paddle.sum(-target * F.log_softmax(x, axis=-1), axis=-1)
         return loss.mean()
@@ -164,16 +61,16 @@ class SoftTargetCrossEntropyLoss(nn.Layer):
 
 class DistillationLoss(nn.Layer):
     """Distillation loss function
-    This layer includes the orginal loss (criterion) and a extra 
-    distillation loss (criterion), which computes the loss with 
-    different type options, between current model and 
+    This layer includes the orginal loss (criterion) and a extra
+    distillation loss (criterion), which computes the loss with
+    different type options, between current model and
     a teacher model as its supervision.
 
     Args:
         base_criterion: nn.Layer, the original criterion
         teacher_model: nn.Layer, the teacher model as supervision
         distillation_type: str, one of ['none', 'soft', 'hard']
-        alpha: float, ratio of base loss (* (1-alpha)) 
+        alpha: float, ratio of base loss (* (1-alpha))
                and distillation loss( * alpha)
         tao: float, temperature in distillation
     """
@@ -201,7 +98,9 @@ class DistillationLoss(nn.Layer):
                          in the last layer of the model
             targets: tensor, the labels for the base criterion
         """
-        outputs, outputs_kd = outputs[0], outputs[1]
+        outputs_kd = None
+        if not isinstance(outputs, paddle.Tensor):
+            outputs, outputs_kd = outputs[0], outputs[1]
         base_loss = self.base_criterion(outputs, targets)
         if self.type == 'none':
             return base_loss
@@ -219,5 +118,3 @@ class DistillationLoss(nn.Layer):
 
         loss = base_loss * (1 - self.alpha) + distillation_loss * self.alpha
         return loss
-
-

@@ -158,6 +158,8 @@ def update_config(config, args):
         config.TRAIN.ACCUM_ITER = args.accum_iter
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
+    if args.output:
+        config.SAVE = args.output
     if args.eval:
         config.EVAL = True
     if args.pretrained:

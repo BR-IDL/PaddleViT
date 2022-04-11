@@ -13,9 +13,11 @@
 # limitations under the License.
 
 """
-Implement VOLO Class
+VOLO in Paddle
+A Paddle Impelementation of Vision Outlooker (VOLO) as described in:
+"VOLO: Vision Outlooker for Visual Recognition"
+    - Paper Link: https://arxiv.org/abs/2106.13112
 """
-
 import math
 import copy
 import numpy as np
@@ -23,8 +25,7 @@ import paddle
 import paddle.nn as nn
 from droppath import DropPath
 from fold import fold
-#from utils import MyPrint
-#myprint = MyPrint()
+
 
 class Identity(nn.Layer):
     """ Identity layer
