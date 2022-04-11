@@ -53,6 +53,9 @@ class Stem(nn.Layer):
         elif init_type == 'kn':
             weight_attr = nn.initializer.KaimingNormal()
             bias_attr = nn.initializer.Constant(value=0.0)
+        elif init_type == 'tn':
+            weight_attr = nn.initializer.TruncatedNormal(std=.02)
+            bias_attr = nn.initializer.Constant(value=0.0)
         return weight_attr, bias_attr
 
     def forward(self, inputs):
@@ -121,6 +124,9 @@ class DepthWiseConv(nn.Layer):
         elif init_type == 'kn':
             weight_attr = nn.initializer.KaimingNormal()
             bias_attr = nn.initializer.Constant(value=0.0)
+        elif init_type == 'tn':
+            weight_attr = nn.initializer.TruncatedNormal(std=.02)
+            bias_attr = nn.initializer.Constant(value=0.0)
         return weight_attr, bias_attr
 
     def forward(self, inputs):
@@ -159,6 +165,9 @@ class PointWiseConv(nn.Layer):
             bias_attr = nn.initializer.Constant(value=0.0)
         elif init_type == 'kn':
             weight_attr = nn.initializer.KaimingNormal()
+            bias_attr = nn.initializer.Constant(value=0.0)
+        elif init_type == 'tn':
+            weight_attr = nn.initializer.TruncatedNormal(std=.02)
             bias_attr = nn.initializer.Constant(value=0.0)
         return weight_attr, bias_attr
 

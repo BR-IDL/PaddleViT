@@ -26,10 +26,11 @@ _C.BASE = ['']
 # data settings - is ok
 _C.DATA = CN()
 _C.DATA.BATCH_SIZE = 256 # train batch_size for single GPU
-_C.DATA.BATCH_SIZE_EVAL = 128 # val batch_size for single GPU
-_C.DATA.DATA_PATH = 'ILSVRC2012_val/' # path to dataset
+_C.DATA.BATCH_SIZE_EVAL = None # val batch_size for single GPU
+_C.DATA.DATA_PATH = '/dataset/imagenet/' # path to dataset
 _C.DATA.DATASET = 'imagenet2012' # dataset name
 _C.DATA.IMAGE_SIZE = 224 # input image size: 224 for pretrain, 384 for finetune
+_C.DATA.IMAGE_CHANNELS = 3  # input image channels: e.g., 3
 _C.DATA.CROP_PCT = 0.875 # input image scale ratio, scale is applied before centercrop in eval mode
 _C.DATA.NUM_WORKERS = 2 # number of data loading threads
 _C.DATA.IMAGENET_MEAN = [0.485, 0.456, 0.406] # [0.5, 0.5, 0.5]
@@ -112,43 +113,37 @@ _C.TRAIN.WARMUP_START_LR = 1e-7
 _C.TRAIN.END_LR = 1e-3
 _C.TRAIN.GRAD_CLIP = 2.0 # Clip gradient norm
 _C.TRAIN.ACCUM_ITER = 1 # Gradient accumulation steps
-
-_C.TRAIN.LR_SCHEDULER = CN()
-_C.TRAIN.LR_SCHEDULER.NAME = 'warmupcosine'
-_C.TRAIN.LR_SCHEDULER.MILESTONES = "30, 60, 90" # only used in StepLRScheduler
-_C.TRAIN.LR_SCHEDULER.DECAY_EPOCHS = 30 # only used in StepLRScheduler
-_C.TRAIN.LR_SCHEDULER.DECAY_RATE = 0.1 # only used in StepLRScheduler
+_C.TRAIN.LINEAR_SCALED_LR = None
 
 _C.TRAIN.OPTIMIZER = CN()
 _C.TRAIN.OPTIMIZER.NAME = 'AdamW'
 _C.TRAIN.OPTIMIZER.EPS = 1e-8
-_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)  # for adamW
-_C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
+_C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)
 
-# -----------------------------------------------------------------------------
-# Augmentation settings
-# -----------------------------------------------------------------------------
+# model ema
+_C.TRAIN.MODEL_EMA = False
+_C.TRAIN.MODEL_EMA_DECAY = 0.99996
+_C.TRAIN.MODEL_EMA_FORCE_CPU = True
+
+# data augmentation (optional, check datasets.py)
+_C.TRAIN.SMOOTHING = 0.1
+_C.TRAIN.COLOR_JITTER = 0.4  # if both auto augment and rand augment are False, use color jitter
+_C.TRAIN.AUTO_AUGMENT = False  # rand augment is used if both rand and auto augment are set True
+_C.TRAIN.RAND_AUGMENT = True
+_C.TRAIN.RAND_AUGMENT_LAYERS = 2
+_C.TRAIN.RAND_AUGMENT_MAGNITUDE = 9  # scale from 0 to 9
+# mixup params (optional, check datasets.py)
 _C.TRAIN.MIXUP_ALPHA = 0.8
-_C.TRAIN.CUTMIX_ALPHA = 1.0
-_C.TRAIN.CUTMIX_MINMAX = None
 _C.TRAIN.MIXUP_PROB = 1.0
 _C.TRAIN.MIXUP_SWITCH_PROB = 0.5
 _C.TRAIN.MIXUP_MODE = 'batch'
-
-_C.TRAIN.SMOOTHING = 0.1
-_C.TRAIN.COLOR_JITTER = 0.4
-_C.TRAIN.AUTO_AUGMENT = True #'rand-m9-mstd0.5-inc1'
-
+_C.TRAIN.CUTMIX_ALPHA = 1.0
+_C.TRAIN.CUTMIX_MINMAX = None
+# random erase params (optional, check datasets.py)
 _C.TRAIN.RANDOM_ERASE_PROB = 0.25
-_C.TRAIN.RANDOM_ERASE_MODE = 'pixel' # How to apply mixup/cutmix params. Per "batch", "pair", or "elem"
+_C.TRAIN.RANDOM_ERASE_MODE = 'pixel'
 _C.TRAIN.RANDOM_ERASE_COUNT = 1
 _C.TRAIN.RANDOM_ERASE_SPLIT = False
-
-# -----------------------------------------------------------------------------
-# Misc
-# -----------------------------------------------------------------------------
-_C.TEST = CN()
-_C.TEST.CROP = True   # 预测时，是否使用裁剪
 
 # -----------------------------------------------------------------------------
 # Misc
@@ -157,31 +152,37 @@ _C.AMP = False
 _C.SAVE = "./output"
 _C.TAG = 'default'
 _C.SAVE_FREQ = 1 # Frequency to save checkpoint
-_C.REPORT_FREQ  = 100 # Frequency to logging info
+_C.REPORT_FREQ  = 20 # Frequency to logging info
 _C.VALIDATE_FREQ = 10 # freq to do validation
 _C.SEED = 0 # Fixed random seed
 _C.EVAL = False
 _C.THROUGHPUT_MODE = False
-_C.LOCAL_RANK = 0
-_C.NGPUS = -1
 
 
 def _update_config_from_file(config, cfg_file):
-    config.defrost()
-    with open(cfg_file, 'r') as f:
-        yaml_cfg = yaml.load(f, Loader=yaml.FullLoader)
+    """Load cfg file (.yaml) and update config object
 
+    Args:
+        config: config object
+        cfg_file: config file (.yaml)
+    Return:
+        None
+    """
+    config.defrost()
+    with open(cfg_file, 'r') as infile:
+        yaml_cfg = yaml.load(infile, Loader=yaml.FullLoader)
     for cfg in yaml_cfg.setdefault('BASE', ['']):
         if cfg:
             _update_config_from_file(
                 config, os.path.join(os.path.dirname(cfg_file), cfg)
             )
-    print('=> merge config from {}'.format(cfg_file))
     config.merge_from_file(cfg_file)
-    #config.freeze()
+    config.freeze()
+
 
 def update_config(config, args):
     """Update config by ArgumentParser
+    Configs that are often used can be updated from arguments
     Args:
         args: ArgumentParser contains options
     Return:
@@ -189,56 +190,36 @@ def update_config(config, args):
     """
     if args.cfg:
         _update_config_from_file(config, args.cfg)
-    if args.model_type:
-        config.MODEL.MF.TYPE = args.model_type
+    config.defrost()
     if args.dataset:
         config.DATA.DATASET = args.dataset
-    if args.eval:
-        config.EVAL = True
     if args.batch_size:
         config.DATA.BATCH_SIZE = args.batch_size
-        if config.EVAL:
-            config.DATA.BATCH_SIZE_EVAL = args.batch_size
+        config.DATA.BATCH_SIZE_EVAL = args.batch_size
+    if args.batch_size_eval:
+        config.DATA.BATCH_SIZE_EVAL = args.batch_size_eval
     if args.image_size:
         config.DATA.IMAGE_SIZE = args.image_size
-    if args.num_classes:
-        config.MODEL.NUM_CLASSES = args.num_classes
+    if args.accum_iter:
+        config.TRAIN.ACCUM_ITER = args.accum_iter
     if args.data_path:
         config.DATA.DATA_PATH = args.data_path
-    if args.ngpus:
-        config.NGPUS = args.ngpus
+    if args.eval:
+        config.EVAL = True
     if args.pretrained:
         config.MODEL.PRETRAINED = args.pretrained
     if args.resume:
         config.MODEL.RESUME = args.resume
     if args.last_epoch:
         config.TRAIN.LAST_EPOCH = args.last_epoch
-    if args.output is not None:
-        config.SAVE = args.output
-    if args.save_freq:
-        config.SAVE_FREQ = args.save_freq
-    if args.log_freq:
-        config.REPORT_FREQ = args.log_freq
-    if args.validate_freq:
-        config.VALIDATE_FREQ = args.validate_freq 
-    if args.num_workers:
-        config.DATA.NUM_WORKERS = args.num_workers
-    if args.accum_iter: 
-        config.TRAIN.ACCUM_ITER = args.accum_iter
-    if args.amp: # only during training
-        if config.EVAL is True:
-            config.AMP = False
-        else:
-            config.AMP = True
-
-    # output folder
-    config.SAVE = os.path.join(config.SAVE, config.MODEL.NAME, config.TAG)
-
+    if args.amp:  # only for training
+        config.AMP = not config.EVAL
+    # config.freeze()
     return config
 
 
 def get_config(cfg_file=None):
-    """Return a clone of config or load from yaml file"""
+    """Return a clone of config and optionally overwrite it from yaml file"""
     config = _C.clone()
     if cfg_file:
         _update_config_from_file(config, cfg_file)

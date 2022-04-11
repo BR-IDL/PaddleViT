@@ -57,7 +57,7 @@ class Classifier_Head(nn.Layer):
         self.act = act()
         self.softmax = nn.Softmax()
 
-    def _linear_init(self, init_type='kn'):
+    def _linear_init(self, init_type='tn'):
         if init_type == 'xu':
             weight_attr = nn.initializer.XavierUniform()
             bias_attr = nn.initializer.Constant(value=0.0)
@@ -66,6 +66,9 @@ class Classifier_Head(nn.Layer):
             bias_attr = nn.initializer.Constant(value=0.0)
         elif init_type == 'kn':
             weight_attr = nn.initializer.KaimingNormal()
+            bias_attr = nn.initializer.Constant(value=0.0)
+        elif init_type == 'tn':
+            weight_attr = nn.initializer.TruncatedNormal(std=.02)
             bias_attr = nn.initializer.Constant(value=0.0)
         return weight_attr, bias_attr
 
@@ -114,7 +117,7 @@ class Mobile(nn.Layer):
                  consts=[1.0, 0.0],
                  reduce=4,
                  use_dyrelu=False,
-                 init_type='kn'):
+                 init_type='tn'):
         super(Mobile, self).__init__(
                  name_scope="Mobile")
         self.add_dw = True if stride==2 else False
@@ -175,7 +178,7 @@ class Former(nn.Layer):
                  norm=nn.LayerNorm,
                  act=nn.GELU,
                  qkv_bias=True,
-                 init_type='kn'):
+                 init_type='tn'):
         super(Former, self).__init__(name_scope="Former")
 
         self.attn = Attention(embed_dims=embed_dims,
@@ -229,7 +232,7 @@ class ToFormer_Bridge(nn.Layer):
                  attn_dropout_rate=0.,
                  qkv_bias=True,
                  norm=nn.LayerNorm,
-                 init_type='kn'):
+                 init_type='tn'):
         super(ToFormer_Bridge, self).__init__(
                  name_scope="ToFormer_Bridge")
         self.num_head = num_head
@@ -260,7 +263,7 @@ class ToFormer_Bridge(nn.Layer):
         self.droppath = DropPath(droppath_rate)
         self.attn_dropout= nn.Dropout(attn_dropout_rate)
 
-    def _linear_init(self, init_type='kn'):
+    def _linear_init(self, init_type='tn'):
         if init_type == 'xu':
             weight_attr = nn.initializer.XavierUniform()
             bias_attr = nn.initializer.Constant(value=0.0)
@@ -269,6 +272,9 @@ class ToFormer_Bridge(nn.Layer):
             bias_attr = nn.initializer.Constant(value=0.0)
         elif init_type == 'kn':
             weight_attr = nn.initializer.KaimingNormal()
+            bias_attr = nn.initializer.Constant(value=0.0)
+        elif init_type == 'tn':
+            weight_attr = nn.initializer.TruncatedNormal(std=.02)
             bias_attr = nn.initializer.Constant(value=0.0)
         return weight_attr, bias_attr
 
@@ -307,10 +313,9 @@ class ToFormer_Bridge(nn.Layer):
         # token to shape: B, n_h, M, D // n_h
         fm, token = self.transfer_shape(feature_map, tokens_)
         q = self._multi_head_q_forward(token, B, M)
-
         # attention distribution
+        q = q * self.scale
         attn = paddle.matmul(q, fm, transpose_y=True) # B, n_h, M, L
-        attn = attn * self.scale
         attn = self.softmax(attn)
         attn = self.attn_dropout(attn)
 
@@ -345,7 +350,7 @@ class ToMobile_Bridge(nn.Layer):
                  attn_dropout_rate=0.,
                  qkv_bias=True,
                  norm=nn.LayerNorm,
-                 init_type='kn'):
+                 init_type='tn'):
         super(ToMobile_Bridge, self).__init__(
                  name_scope="ToMobile_Bridge")
         self.num_head = num_head
@@ -379,7 +384,7 @@ class ToMobile_Bridge(nn.Layer):
         self.droppath = DropPath(droppath_rate)
         self.attn_dropout= nn.Dropout(attn_dropout_rate)
 
-    def _linear_init(self, init_type='kn'):
+    def _linear_init(self, init_type='tn'):
         if init_type == 'xu':
             weight_attr = nn.initializer.XavierUniform()
             bias_attr = nn.initializer.Constant(value=0.0)
@@ -388,6 +393,9 @@ class ToMobile_Bridge(nn.Layer):
             bias_attr = nn.initializer.Constant(value=0.0)
         elif init_type == 'kn':
             weight_attr = nn.initializer.KaimingNormal()
+            bias_attr = nn.initializer.Constant(value=0.0)
+        elif init_type == 'tn':
+            weight_attr = nn.initializer.TruncatedNormal(std=.02)
             bias_attr = nn.initializer.Constant(value=0.0)
         return weight_attr, bias_attr
 
@@ -439,8 +447,8 @@ class ToMobile_Bridge(nn.Layer):
         k, v = self._multi_head_kv_forward(k_, v_, B, M)
 
         # attention distribution
+        q = q * self.scale
         attn = paddle.matmul(q, k, transpose_y=True) # B, n_h, L, M
-        attn = attn * self.scale
         attn = self.softmax(attn)
         attn = self.attn_dropout(attn)
 
@@ -502,7 +510,7 @@ class MFBlock(nn.Layer):
                  norm=nn.LayerNorm,
                  act=nn.GELU,
                  qkv_bias=True,
-                 init_type='kn'):
+                 init_type='tn'):
         super(MFBlock, self).__init__(
                  name_scope="MFBlock")
         self.mobile = Mobile(in_channels=in_channels,
@@ -590,7 +598,7 @@ class MobileFormer(nn.Layer):
                  attn_dropout_rate=0.0, mlp_dropout_rate=0.0,
                  norm=nn.LayerNorm, act=nn.GELU,
                  alpha=1.0, qkv_bias=True,
-                 config=None, init_type='kn'):
+                 config=None, init_type='tn'):
         super(MobileFormer, self).__init__()
         self.num_token, self.embed_dims = tokens[0], tokens[1]
         self.num_head = num_head
@@ -605,8 +613,8 @@ class MobileFormer(nn.Layer):
         self.mlp_dropout_rate = mlp_dropout_rate
         self.init_type = init_type
 
-        assert init_type in ['xu', 'ku', 'kn'], \
-            "Error: Please choice the init type in ['xu', 'ku', 'kn']"+\
+        assert init_type in ['xu', 'ku', 'kn', 'tn'], \
+            "Error: Please choice the init type in ['xu', 'ku', 'kn', 'tn']"+\
             ", but now it is {0}.".format(init_type)
         assert config is not None, \
             "Error: Please enter the config(now: {0})".format(config)+\
@@ -819,7 +827,7 @@ class MobileFormer(nn.Layer):
         return output
 
 
-def build_mformer(config):
+def build_mobileformer(config):
     model = MobileFormer(num_classes=config.MODEL.NUM_CLASSES,
                          in_channels=config.MODEL.MF.IN_CHANNELS,
                          tokens=config.MODEL.MF.TOKENS,
@@ -837,6 +845,6 @@ def build_mformer(config):
                          alpha=config.MODEL.MF.ALPHA,
                          qkv_bias=config.MODEL.MF.QKV_BIAS,
                          config=config,
-                         init_type='kn')
+                         init_type='tn')
 
     return model

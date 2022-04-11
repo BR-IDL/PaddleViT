@@ -1,4 +1,4 @@
-#   Copyright (c) 2021 PPViT Authors. All Rights Reserved.
+# Copyright (c) 2021 PPViT Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ def rand_bbox(image_shape, lam, count=None):
     """ CutMix bbox by lam value
     Generate 1 random bbox by value lam. lam is the cut size rate.
     The cut_size is computed by sqrt(1-lam) * image_size.
+
     Args:
         image_shape: tuple/list, image height and width
         lam: float, cutmix lambda value
@@ -42,7 +43,7 @@ def rand_bbox(image_shape, lam, count=None):
     bbox_y2 = np.clip(cy + cut_h // 2, 0, image_h)
 
     # NOTE: in paddle, tensor indexing e.g., a[x1:x2],
-    # if x1 == x2, paddle will raise ValueErros, 
+    # if x1 == x2, paddle will raise ValueErros,
     # while in pytorch, it will return [] tensor
     return bbox_x1, bbox_y1, bbox_x2, bbox_y2
 
@@ -52,6 +53,7 @@ def rand_bbox_minmax(image_shape, minmax, count=None):
     Generate 1 random bbox by min and max percentage values.
     Minmax is a tuple/list of min and max percentage vlaues
     applied to the image width and height.
+
     Args:
         image_shape: tuple/list, image height and width
         minmax: tuple/list, min and max percentage values of image size
@@ -61,8 +63,8 @@ def rand_bbox_minmax(image_shape, minmax, count=None):
     image_h, image_w = image_shape[-2:]
     min_ratio = minmax[0]
     max_ratio = minmax[1]
-    cut_h = np.random.randint(int(image_h * min_ratio), int(image_h * max_ratio), size=count) 
-    cut_w = np.random.randint(int(image_w * min_ratio), int(image_w * max_ratio), size=count) 
+    cut_h = np.random.randint(int(image_h * min_ratio), int(image_h * max_ratio), size=count)
+    cut_w = np.random.randint(int(image_w * min_ratio), int(image_w * max_ratio), size=count)
 
     bbox_x1 = np.random.randint(0, image_w - cut_w, size=count)
     bbox_y1 = np.random.randint(0, image_h - cut_h, size=count)
@@ -76,6 +78,7 @@ def cutmix_generate_bbox_adjust_lam(image_shape, lam, minmax=None, correct_lam=T
     """Generate bbox and apply correction for lambda
     If the mimmax is None, apply the standard cutmix by lam value,
     If the minmax is set, apply the cutmix by min and max percentage values.
+
     Args:
         image_shape: tuple/list, image height and width
         lam: float, cutmix lambda value
@@ -118,6 +121,7 @@ def mixup_one_hot(label, num_classes, lam=1., smoothing=0.):
     label smoothing is firstly applied, then
     mixup is applied by mixing the bacth and its flip,
     with a mixup rate.
+
     Args:
         label: tensor, label tensor with shape [N], contains the class indices
         num_classes: int, num of all classes
@@ -209,7 +213,7 @@ class Mixup:
                 correct_lam=self.correct_lam)
 
             # NOTE: in paddle, tensor indexing e.g., a[x1:x2],
-            # if x1 == x2, paddle will raise ValueErros, 
+            # if x1 == x2, paddle will raise ValueErros,
             # but in pytorch, it will return [] tensor without errors
             if int(bbox_x1) != int(bbox_x2) and int(bbox_y1) != int(bbox_y2):
                 x[:, :, int(bbox_x1): int(bbox_x2), int(bbox_y1): int(bbox_y2)] = x.flip(axis=[0])[

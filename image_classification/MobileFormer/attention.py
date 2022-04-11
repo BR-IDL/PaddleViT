@@ -49,7 +49,8 @@ class MLP(nn.Layer):
         self.act = act()
         self.dropout = nn.Dropout(mlp_dropout_rate)
 
-    def _linear_init(self, init_type='kn'):
+    def _linear_init(self, init_type='tn'):
+        weight_attr = bias_attr = None
         if init_type == 'xu':
             weight_attr = nn.initializer.XavierUniform()
             bias_attr = nn.initializer.Constant(value=0.0)
@@ -58,6 +59,9 @@ class MLP(nn.Layer):
             bias_attr = nn.initializer.Constant(value=0.0)
         elif init_type == 'kn':
             weight_attr = nn.initializer.KaimingNormal()
+            bias_attr = nn.initializer.Constant(value=0.0)
+        elif init_type == 'tn':
+            weight_attr = nn.initializer.TruncatedNormal(std=.02)
             bias_attr = nn.initializer.Constant(value=0.0)
         return weight_attr, bias_attr
 
@@ -107,6 +111,7 @@ class Attention(nn.Layer):
         self.attn_dropout= nn.Dropout(attn_dropout_rate)
 
     def _linear_init(self, init_type='kn'):
+        weight_attr = bias_attr = None
         if init_type == 'xu':
             weight_attr = nn.initializer.XavierUniform()
             bias_attr = nn.initializer.Constant(value=0.0)
@@ -115,6 +120,9 @@ class Attention(nn.Layer):
             bias_attr = nn.initializer.Constant(value=0.0)
         elif init_type == 'kn':
             weight_attr = nn.initializer.KaimingNormal()
+            bias_attr = nn.initializer.Constant(value=0.0)
+        elif init_type == 'tn':
+            weight_attr = nn.initializer.TruncatedNormal(std=.02)
             bias_attr = nn.initializer.Constant(value=0.0)
         return weight_attr, bias_attr
 

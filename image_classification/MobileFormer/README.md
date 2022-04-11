@@ -21,42 +21,30 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 ### Update
 
+- Update(2022-04-11): Code is updated.
 - Update(2021-11-26): Code is released.
 
 ## Models Zoo
 
 | Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |
 |-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|
-| mobileformer_26m			| * | * |  3.227M   | 26M±    | 224        | 0.875    | bicubic       | * |
-| mobileformer_52m   		| * | * |  3.513M   | 52M±    | 224        | 0.875    | bicubic       | * |
-| mobileformer_96m			| * | * |  4.595M   | 96M±    | 224        | 0.875    | bicubic       | * |
-| mobileformer_151m  		| * | * |  7.616M   | 151M±   | 224        | 0.875    | bicubic       | * |
-| mobileformer_214m			| * | * |  9.416M   | 214M±  | 224        | 0.875    | bicubic       | * |
-| mobileformer_294m   		| * | * | 11.392M   | 294M±  | 224        | 0.875    | bicubic       | * |
-| mobileformer_508m   		| * | * | 14.013M   | 508M±   | 224        | 0.875    | bicubic       | * |
+| mobileformer_26m			| * | * |  3.227M   | 26M    | 224        | 0.875    | bicubic       | * |
+| mobileformer_52m   		| * | * |  3.513M   | 52M    | 224        | 0.875    | bicubic       | * |
+| mobileformer_96m			| * | * |  4.595M   | 96M    | 224        | 0.875    | bicubic       | * |
+| mobileformer_151m  		| * | * |  7.616M   | 151M   | 224        | 0.875    | bicubic       | * |
+| mobileformer_214m			| * | * |  9.416M   | 214M  | 224        | 0.875    | bicubic       | * |
+| mobileformer_294m   		| * | * | 11.392M   | 294M  | 224        | 0.875    | bicubic       | * |
+| mobileformer_508m   		| * | * | 14.013M   | 508M   | 224        | 0.875    | bicubic       | * |
 
 > *The results are evaluated on ImageNet2012 validation set.
 
 
-### Models trained from scratch using PaddleViT
-
-**(coming soon)**
-
-## Notebooks
-We provide a few notebooks in aistudio to help you get started:
-
-**(coming soon)**
-
-## Requirements
-- Python>=3.6
-- yaml>=0.2.5
-- PaddlePaddle>=2.1.0
-- yacs>=0.1.8
-
-## Data
-`ImageNet2012 dataset` is used in the following folder structure:
+## Data Preparation
+ImageNet2012 dataset is used in the following file structure:
 ```
 │imagenet/
+├──train_list.txt
+├──val_list.txt
 ├──train/
 │  ├── n01440764
 │  │   ├── n01440764_10026.JPEG
@@ -70,114 +58,65 @@ We provide a few notebooks in aistudio to help you get started:
 │  │   ├── ......
 │  ├── ......
 ```
+- `train_list.txt`: list of relative paths and labels of training images. You can download it from: [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm?pwd=a4vm)
+- `val_list.txt`: list of relative paths and labels of validation images. You can download it from: [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga?pwd=kdga) 
+
 
 ## Usage
-To use the model with pretrained weights, download the .pdparam weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
+To use the model with pretrained weights, download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
 
-For example, assume the downloaded weight file is stored in `./mobileformer_26m.pdparams`, to use the `mobileformer_26m` model in python:
-
+For example, assume weight file is downloaded in `./mobileformer_26m.pdparams`, to use the `mobileformer_26m` model in python:
 ```python
 from config import get_config
-from mobileformer import build_mformer as build_model
+from mobileformer import build_mobileformer as build_model
 # config files in ./configs/
 config = get_config('./configs/mobileformer_26m.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights
 model_state_dict = paddle.load('./mobileformer_26m.pdparams')
-model.set_dict(model_state_dict)
+model.set_state_dict(model_state_dict)
 ```
 
 ## Evaluation
-To evaluate `MobileFormer` model performance on ImageNet2012 with a `single GPU`, run the following script using command line:
-
-```shell
-sh run_eval.sh
-```
-
-or
-
-```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_single_gpu.py \
-    -cfg=./configs/mobileformer_26m.yaml \
-    -dataset=imagenet2012 \
-    -num_classes=1000 \
-    -batch_size=64 \
-    -image_size=224 \
-    -data_path=/path/to/dataset/imagenet/val \
-    -eval \
-    -pretrained=/path/to/pretrained/model/mobileformer_26m  # .pdparams is NOT needed
-```
-
-<details>
-
-<summary>
-Run evaluation using multi-GPUs:
-</summary>
-
-
+To evaluate model performance on ImageNet2012, run the following script using command line:
 ```shell
 sh run_eval_multi.sh
 ```
 or
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
-    -cfg=./configs/mobileformer_26m.yaml \
-    -dataset=imagenet2012 \
-    -num_classes=1000 \
-    -batch_size=32 \
-    -image_size=224 \
-    -data_path=/path/to/dataset/imagenet/val \
-    -eval \
-    -pretrained=/path/to/pretrained/model/mobileformer_26m  # .pdparams is NOT needed
+-cfg='./configs/mobileformer_26m.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-eval \
+-pretrained='./mobileformer_26m.pdparams' \
+-amp
 ```
+> Note: if you have only 1 GPU, change device number to `CUDA_VISIBLE_DEVICES=0` would run the evaluation on single GPU.
 
-</details>
 
 ## Training
-To train the `MobileFormer` model on ImageNet2012 with `single GPU`, run the following script using command line:
-```shell
-sh run_train.sh
-```
-or
-```shell
-CUDA_VISIBLE_DEVICES=0 \
-python main_single_gpu.py \
-    -cfg=./configs/mobileformer_26m.yaml \
-    -dataset=imagenet2012 \
-    -num_classes=1000 \
-    -batch_size=32 \
-    -image_size=224 \
-    -data_path=/path/to/dataset/imagenet/train \
-    -output=./output
-```
-
-<details>
-
-<summary>
-Run training using multi-GPUs:
-</summary>
-
-
+To train the model on ImageNet2012, run the following script using command line:
 ```shell
 sh run_train_multi.sh
 ```
 or
 ```shell
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
-python main_single_gpu.py \
-    -cfg=./configs/mobileformer_26m.yaml \
-    -dataset=imagenet2012 \
-    -num_classes=1000 \
-    -batch_size=4 \
-    -image_size=224 \
-    -data_path=/path/to/dataset/imagenet/train \
-    -output=./output
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+python main_multi_gpu.py \
+-cfg='./configs/mobileformer_26m.yaml' \
+-dataset='imagenet2012' \
+-batch_size=256 \
+-data_path='/dataset/imagenet' \
+-amp
 ```
+> Note: it is highly recommanded to run the training using multiple GPUs / multi-node GPUs.
 
-</details>
+
+
 
 ## Arguments
 - *`-cfg`*: path of model config file (.yaml), stored in `./configs`.
@@ -201,8 +140,6 @@ python main_single_gpu.py \
 
 > `-cfg`,`-dataset` and `-data_path` in `main_single_gpu.py` and `main_multi_gpu.py` are MUST-HAVE settings.
 
-## Visualization Attention Map
-**(coming soon)**
 
 ## Reference
 ```
