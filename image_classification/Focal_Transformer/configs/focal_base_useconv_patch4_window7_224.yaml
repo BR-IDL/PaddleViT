@@ -1,7 +1,7 @@
 MODEL:
   TYPE: focal
   NAME: focal_base_patch4_window7_224
-  DROP_PATH: 0.5
+  DROPPATH: 0.5
   FOCAL:
     USE_CONV_EMBED: True
     EMBED_DIM: 128

@@ -1,7 +1,7 @@
 MODEL:
   TYPE: focal
   NAME: focal_tiny_patch4_window7_224
-  DROP_PATH: 0.2
+  DROPPATH: 0.2
   FOCAL:
     EMBED_DIM: 96
     DEPTHS: [2, 2, 6, 2]
