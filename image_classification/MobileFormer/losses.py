@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """ Implement Loss functions """
 import paddle
 import paddle.nn as nn
@@ -53,9 +54,6 @@ class SoftTargetCrossEntropyLoss(nn.Layer):
     Returns:
         loss: float, the mean loss value
     """
-    def __init__(self):
-        super().__init__()
-
     def forward(self, x, target):
         loss = paddle.sum(-target * F.log_softmax(x, axis=-1), axis=-1)
         return loss.mean()
@@ -63,15 +61,16 @@ class SoftTargetCrossEntropyLoss(nn.Layer):
 
 class DistillationLoss(nn.Layer):
     """Distillation loss function
-    This layer includes the orginal loss (criterion) and a extra 
-    distillation loss (criterion), which computes the loss with 
-    different type options, between current model and 
+    This layer includes the orginal loss (criterion) and a extra
+    distillation loss (criterion), which computes the loss with
+    different type options, between current model and
     a teacher model as its supervision.
+
     Args:
         base_criterion: nn.Layer, the original criterion
         teacher_model: nn.Layer, the teacher model as supervision
         distillation_type: str, one of ['none', 'soft', 'hard']
-        alpha: float, ratio of base loss (* (1-alpha)) 
+        alpha: float, ratio of base loss (* (1-alpha))
                and distillation loss( * alpha)
         tao: float, temperature in distillation
     """
@@ -99,7 +98,9 @@ class DistillationLoss(nn.Layer):
                          in the last layer of the model
             targets: tensor, the labels for the base criterion
         """
-        outputs, outputs_kd = outputs[0], outputs[1]
+        outputs_kd = None
+        if not isinstance(outputs, paddle.Tensor):
+            outputs, outputs_kd = outputs[0], outputs[1]
         base_loss = self.base_criterion(outputs, targets)
         if self.type == 'none':
             return base_loss

@@ -4,9 +4,9 @@ DATA:
 MODEL:
     TYPE: MobileFormer
     NAME: MobileFormer_294M
-    DROPPATH: 0.1
-    DROPOUT: 0.1
-    MLP_DROPOUT: 0.1
+    DROPPATH: 0.2
+    DROPOUT: 0.2
+    MLP_DROPOUT: 0.2
     ATTENTION_DROPOUT: 0.1
     MF:
         IN_CHANNELS: 3
