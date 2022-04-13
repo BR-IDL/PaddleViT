@@ -412,7 +412,7 @@ def main_worker(*args):
                 lr_scheduler.set_state_dict(model_state['lr_scheduler'])
             if 'amp_grad_scaler' in model_state and amp_grad_scaler is not None:
                 amp_grad_scaler.load_state_dict(model_state['amp_grad_scaler'])
-            if config.TRAIN.MODEL_EMA:
+            if config.TRAIN.MODEL_EMA and local_rank == 0: 
                 model_ema.module.set_state_dict(model_state['model_ema'])
             lr_scheduler.step(config.TRAIN.LAST_EPOCH)
             message = (f"----- Resume Training: Load model from {config.MODEL.RESUME}, w/t "
@@ -480,7 +480,7 @@ def main_worker(*args):
 
         general_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], "
                            f"Lr: {optimizer.get_lr():.4f}, "
-                           f"time: {train_time:.2f}")
+                           f"time: {train_time:.2f}, ")
         local_message = (general_message +
                          f"Train Loss: {train_loss:.4f}, "
                          f"Train Acc: {train_acc:.4f}")
