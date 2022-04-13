@@ -484,7 +484,7 @@ def main_worker(*args):
 
         general_message = (f"----- Epoch[{epoch:03d}/{config.TRAIN.NUM_EPOCHS:03d}], "
                            f"Lr: {optimizer.get_lr():.4f}, "
-                           f"time: {train_time:.2f}")
+                           f"time: {train_time:.2f}, ")
         local_message = (general_message +
                          f"Train Loss: {train_loss:.4f}, "
                          f"Train Acc: {train_acc:.4f}")
