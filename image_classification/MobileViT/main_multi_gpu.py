@@ -341,7 +341,7 @@ def main_worker(*args):
                 config.TRAIN.END_LR * effective_batch_size / config.TRAIN.LINEAR_SCALED_LR
             )
             message = (f'Base lr is scaled to: {config.TRAIN.BASE_LR}, '
-                       f'warmup start lr is scaled to: {config.TRAIN.BASE_LR}, '
+                       f'warmup start lr is scaled to: {config.TRAIN.WARMUP_START_LR}, '
                        f'end lr is scaled to: {config.TRAIN.BASE_LR}')
             write_log(local_logger, master_logger, message)
         # define scaler for amp training
