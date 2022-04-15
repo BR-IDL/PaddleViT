@@ -419,17 +419,21 @@ def main_worker(*args):
         model_state = paddle.load(config.MODEL.RESUME)
         if 'model' in model_state: # load state_dict with multi items: model, optimier, and epoch
             model.set_state_dict(model_state['model'])
+
             if 'optimizer' in model_state:
                 optimizer.set_state_dict(model_state['optimizer'])
             if 'epoch' in model_state:
                 config.TRAIN.LAST_EPOCH = model_state['epoch']
+                last_epoch = model_state['epoch']
             if 'lr_scheduler' in model_state:
                 lr_scheduler.set_state_dict(model_state['lr_scheduler'])
             if 'amp_grad_scaler' in model_state and amp_grad_scaler is not None:
                 amp_grad_scaler.load_state_dict(model_state['amp_grad_scaler'])
-            if config.TRAIN.MODEL_EMA:
+            if config.TRAIN.MODEL_EMA and local_rank == 0:
                 model_ema.module.set_state_dict(model_state['model_ema'])
-            lr_scheduler.step(config.TRAIN.LAST_EPOCH)
+
+            lr_scheduler.step(last_epoch + 1)
+
             message = (f"----- Resume Training: Load model from {config.MODEL.RESUME}, w/t "
                        f"opt = [{'optimizer' in model_state}], "
                        f"lr_scheduler = [{'lr_scheduler' in model_state}], "
@@ -441,6 +445,7 @@ def main_worker(*args):
             message = f"----- Resume Training: Load {config.MODEL.RESUME}, w/o opt/epoch/scaler"
             write_log(local_logger, master_logger, message, 'warning')
             model.set_state_dict(model_state)
+            lr_scheduler.step(last_epoch + 1)
 
     # STEP 8: Enable model data parallelism on multi processes
     model = paddle.DataParallel(model)
