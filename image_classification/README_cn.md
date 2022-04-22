@@ -6,6 +6,7 @@ PaddlePaddle用于图像分类的训练/评估代码和预训练模型。
 此实现是 [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) 项目的一部分.
 
 ## 更新 
+* 更新 (2022-04-22): 添加 TopFormer.
 * 更新 (2021-12-30): 添加 MobileViT 模型和 multi scale sampler.
 * 更新 (2021-12-28): 添加 HvT 模型.
 * 更新 (2021-12-24): 添加 CvT 模型.
@@ -50,6 +51,7 @@ PaddlePaddle用于图像分类的训练/评估代码和预训练模型。
 12. **[BoTNet](./BoTNet)**
 12. **[CvT](./Cvt)**
 12. **[HvT](./HVT)**
+12. **[TopFormer](./TopFormer)**
 13. **[MLP-Mixer](./MLP-Mixer)**
 14. **[ResMLP](./ResMLP)**
 15. **[gMLP](./gMLP)**
@@ -147,6 +149,7 @@ PaddleViT 目前支持以下 **transfomer based models**:
 19. **[BoTNet](./BoTNet)**, (from UC Berkeley/Google), released with paper [Bottleneck Transformers for Visual Recognition](https://arxiv.org/abs/2101.11605), by Aravind Srinivas, Tsung-Yi Lin, Niki Parmar, Jonathon Shlens, Pieter Abbeel, Ashish Vaswani.
 20. **[CvT](./Cvt)** (from McGill/Microsoft), released with paper [CvT: Introducing Convolutions to Vision Transformers](https://arxiv.org/abs/2103.15808), by Haiping Wu, Bin Xiao, Noel Codella, Mengchen Liu, Xiyang Dai, Lu Yuan, Lei Zhang
 21. **[HvT](./HVT)** (from Monash University), released with paper [Scalable Vision Transformers with Hierarchical Pooling](https://arxiv.org/abs/2103.10619), by Zizheng Pan, Bohan Zhuang, Jing Liu, Haoyu He, Jianfei Cai.
+22. **[TopFormer](./image_classification/TopFormer)** (from HUST/Tencent/Fudan/ZJU), released with paper [TopFormer: Token Pyramid Transformer for Mobile Semantic Segmentation](https://arxiv.org/pdf/2204.05525.pdf), by Wenqiang Zhang, Zilong Huang, Guozhong Luo, Tao Chen, Xinggang Wang, Wenyu Liu, Gang Yu, Chunhua Shen.
 
 
 PaddleViT 目前支持以下 **MLP based models**:
