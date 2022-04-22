@@ -82,7 +82,7 @@ PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接�
 19. **[BoTNet](./image_classification/BoTNet)**, (from UC Berkeley/Google), released with paper [Bottleneck Transformers for Visual Recognition](https://arxiv.org/abs/2101.11605), by Aravind Srinivas, Tsung-Yi Lin, Niki Parmar, Jonathon Shlens, Pieter Abbeel, Ashish Vaswani.
 20. **[CvT](./image_classification/CvT)** (from McGill/Microsoft), released with paper [CvT: Introducing Convolutions to Vision Transformers](https://arxiv.org/abs/2103.15808), by Haiping Wu, Bin Xiao, Noel Codella, Mengchen Liu, Xiyang Dai, Lu Yuan, Lei Zhang
 21. **[HvT](./image_classification/HVT)** (from Monash University), released with paper [Scalable Vision Transformers with Hierarchical Pooling](https://arxiv.org/abs/2103.10619), by Zizheng Pan, Bohan Zhuang, Jing Liu, Haoyu He, Jianfei Cai.
-
+22. **[TopFormer](./image_classification/TopFormer)** (from HUST/Tencent/Fudan/ZJU), released with paper [TopFormer: Token Pyramid Transformer for Mobile Semantic Segmentation](https://arxiv.org/pdf/2204.05525.pdf), by Wenqiang Zhang, Zilong Huang, Guozhong Luo, Tao Chen, Xinggang Wang, Wenyu Liu, Gang Yu, Chunhua Shen.
 
 
 ### 图像分类 (MLP & others) ###
