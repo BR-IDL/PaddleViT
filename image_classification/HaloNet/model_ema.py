@@ -46,7 +46,7 @@ class ModelEma:
         # update ema model buffers by model buffers
         for (_, ema_buf), (_, model_buf) in zip(
             self.module.named_buffers(), model.named_buffers()):
-            ema_buf.set_value(copy.deepcopy(update_fn(ema_buf, model_buf)))
+            ema_buf.set_value(copy.deepcopy(update_fn(ema_buf, model_buf).astype(model_buf.dtype)))
 
     def update(self, model):
         self._update(model, update_fn=lambda e, m: self.decay * e  + (1 - self.decay) * m)
