@@ -1,0 +1,16 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: levit
+    NAME: levie_384
+    DROPPATH: 0.1
+    EMBED_DIM: [384, 512, 768]
+    NUM_HEADS: [6, 9, 12]
+    DEPTH: [4, 4, 4]
+    KEY_DIM: 32
+    USE_CONV: False
+TRAIN:
+    LINEAR_SCALED_LR: 1024
+    MODEL_EMA: True
+    MODEL_EMA_FORCE_CPU: True
