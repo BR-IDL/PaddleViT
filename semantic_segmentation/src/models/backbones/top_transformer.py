@@ -24,8 +24,8 @@ Note: This implementation only contains the image classification model.
 
 import paddle
 import paddle.nn as nn
-from droppath import DropPath
 import paddle.nn.functional as F
+from .swin_transformer import Identity, DropPath
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -46,15 +46,6 @@ def _make_divisible(v, divisor, min_value=None):
     if new_v < 0.9 * v:
         new_v += divisor
     return new_v
-
-
-class Identity(nn.Layer):
-    """ Identity layer
-    The output of this layer is the input without any change.
-    Use this layer to avoid if condition in some forward methods
-    """
-    def forward(self, inputs):
-        return inputs
 
 
 class Mlp(nn.Layer):
@@ -93,9 +84,9 @@ class Attention(nn.Layer):
         super().__init__()
         self.embed_dim = embed_dim
         self.num_heads = num_heads
-        self.attn_head_size = key_dim
+        self.attn_head_size = key_dim 
         self.all_head_size = self.attn_head_size * num_heads
-        self.dh = int(self.attn_head_size * attn_ratio) * num_heads
+        self.dh = int(self.attn_head_size * attn_ratio) * num_heads  
 
         self.q = ConvNormAct(embed_dim, self.all_head_size, kernel_size=1, act=None)
         self.k = ConvNormAct(embed_dim, self.all_head_size, kernel_size=1, act=None)
@@ -123,7 +114,7 @@ class Attention(nn.Layer):
         q = self.transpose_multihead(q)
         k = self.k(x)
         k = self.transpose_multihead(k)
-        v = self.v(x) #
+        v = self.v(x) # 
         v = self.transpose_multihead(v)
 
         #q = q * self.scales
@@ -213,7 +204,7 @@ class Transformer(nn.Layer):
 
 
 class ConvNormAct(nn.Layer):
-    """Layer ops: Conv2D -> BatchNorm2D -> ReLU"""
+    """Layer ops: Conv2D -> SyncBatchNorm -> ReLU"""
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -223,7 +214,7 @@ class ConvNormAct(nn.Layer):
                  bias_attr=False,
                  groups=1,
                  act=nn.ReLU(),
-                 norm=nn.BatchNorm2D):
+                 norm=nn.SyncBatchNorm):
         super().__init__()
         self.conv = nn.Conv2D(in_channels=in_channels,
                               out_channels=out_channels,
@@ -267,7 +258,7 @@ class MobileV2Block(nn.Layer):
                         padding=kernel_size//2),
             # pw-linear
             nn.Conv2D(hidden_dim, oup, 1, 1, 0, bias_attr=False),
-            nn.BatchNorm2D(oup),
+            nn.SyncBatchNorm(oup),
         ])
 
         self.conv = nn.Sequential(*layers)
@@ -400,63 +391,42 @@ class FuseBlockMulti(nn.Layer):
         return out
 
 
-class Topformer(nn.Layer):
-    def __init__(self,
-                 cfgs,
-                 channels,
-                 out_channels,
-                 embed_out_indice,
-                 decode_out_indices=[1, 2, 3],
-                 depth=4,
-                 key_dim=16,
-                 num_heads=8,
-                 attn_ratio=2,
-                 mlp_ratio=2,
-                 c2t_stride=2,
-                 droppath=0.,
-                 injection_type="muli_sum",
-                 injection=True,
-                 num_classes=1000):
+class TopTransformer(nn.Layer):
+    def __init__(self, config):
         super().__init__()
 
-        self.channels = channels
-        self.injection = injection
-        self.embed_dim = sum(channels)
-        self.decode_out_indices = decode_out_indices
+        self.channels = config.MODEL.TRANS.INPUT_CHANNELS;
+        self.injection = config.MODEL.TRANS.INJECTION
+        self.embed_dim = sum(self.channels)
+        self.decode_out_indices = config.MODEL.TRANS.DECODE_OUT_INDICES
         
-        self.tpm = TokenPyramidModule(cfgs=cfgs, out_indices=embed_out_indice)
-        self.ppa = PyramidPoolAgg(stride=c2t_stride)
+        self.tpm = TokenPyramidModule(cfgs=config.MODEL.TRANS.CFGS, out_indices=config.MODEL.TRANS.EMBED_OUT_INDICE)
+        self.ppa = PyramidPoolAgg(stride=config.MODEL.TRANS.C2T_STRIDE)
 
         self.trans = Transformer(embed_dim=self.embed_dim,
-                                 key_dim=key_dim,
-                                 num_heads=num_heads,
-                                 depth=depth,
-                                 mlp_ratio=mlp_ratio,
-                                 attn_ratio=attn_ratio,
-                                 dropout=0.,
-                                 attention_dropout=0.,
-                                 droppath=droppath)
+                                 key_dim=config.MODEL.TRANS.KEY_DIM,
+                                 num_heads=config.MODEL.TRANS.NUM_HEADS,
+                                 depth=config.MODEL.TRANS.DEPTH,
+                                 mlp_ratio=config.MODEL.TRANS.MLP_RATIO,
+                                 attn_ratio=config.MODEL.TRANS.ATTEN_RATIO,
+                                 dropout=config.MODEL.DROPOUT,
+                                 attention_dropout=config.MODEL.TRANS.ATTEN_DROPOUT,
+                                 droppath=config.MODEL.DROP_PATH)
 
         self.sim = nn.LayerList()
         sim_block_dict = {"fuse_sum": FuseBlockSum,
                           "fuse_multi": FuseBlockMulti,
                           "multi_sum": InjectionMultiSum,
                           "multi_sim_cbr": InjectionMultiSumCBR}
-        sim_block = sim_block_dict[injection_type]
+        sim_block = sim_block_dict[config.MODEL.TRANS.INJECTION_TYPE]
         if self.injection:
-            for idx, (channel, out_channel) in enumerate(zip(channels, out_channels)):
-                if idx in decode_out_indices:
+            for idx, (channel, out_channel) in enumerate(zip(self.channels, config.MODEL.TRANS.OUT_CHANNELS)):
+                if idx in self.decode_out_indices:
                     self.sim.append(sim_block(channel, out_channel))
                 else:
                     self.sim.append(Identity())
-        # classifer
-        self.avg_pool = nn.AdaptiveAvgPool2D(1)
-        self.head = nn.Sequential(
-            ('bn', nn.BatchNorm1D(self.embed_dim)),
-            ('l', nn.Linear(self.embed_dim, num_classes)),
-        )
 
-    def forward_features(self, x):
+    def forward(self, x):
         outputs = self.tpm(x)
         out = self.ppa(outputs)
         out = self.trans(out)
@@ -474,34 +444,3 @@ class Topformer(nn.Layer):
         else:
             outputs.append(out)
             return outputs
-
-    def forward(self, x):
-        x = self.forward_features(x)
-        x = self.avg_pool(x[-1]).squeeze([-2, -1])
-        x = self.head(x)
-        return x
-
-
-def build_topformer(config):
-    """Build TopFormer by reading options in config object
-    Args:
-        config: config instance contains setting options
-    Returns:
-        model: nn.Layer, TopFormer model
-    """
-    model = Topformer(cfgs=config.MODEL.CFGS,
-                      channels=config.MODEL.CHANNELS,
-                      out_channels=config.MODEL.OUT_CHANNELS,
-                      embed_out_indice=config.MODEL.EMBED_OUT_INDICE,
-                      decode_out_indices=config.MODEL.DECODE_OUT_INDICES,
-                      depth=config.MODEL.DEPTH,
-                      key_dim=config.MODEL.KEY_DIM,
-                      num_heads=config.MODEL.NUM_HEADS,
-                      attn_ratio=config.MODEL.ATTN_RATIO,
-                      mlp_ratio=config.MODEL.MLP_RATIO,
-                      c2t_stride=config.MODEL.C2T_STRIDE,
-                      droppath=config.MODEL.DROPPATH,
-                      injection_type=config.MODEL.INJECTION_TYPE,
-                      injection=config.MODEL.INJECTION,
-                      num_classes=config.MODEL.NUM_CLASSES)
-    return model

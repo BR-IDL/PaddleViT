@@ -1,0 +1,61 @@
+DATA:
+    BATCH_SIZE: 16  # total bs=16, [per GPU is 2, 8 gpus]
+    BATCH_SIZE_VAL: 1  # per GPU
+    DATASET: 'ADE20K' # dataset name
+    DATA_PATH: 'G:/TopFormer-main/data/ade/ADEChallengeData2016'
+    CROP_SIZE: (512,512)  # input_size (training)
+    NUM_CLASSES: 150
+TRAIN:
+    BASE_LR: 0.00012
+    END_LR: 0.0
+    ITERS: 160000
+    IGNORE_INDEX: -1
+    LOSS: "CrossEntropyLoss"
+    LR_SCHEDULER:
+        NAME: "WarmupPolyLR"
+        WARM_UP_STEPS: 1500
+        POWER: 1.0
+    OPTIMIZER:
+        NAME: 'ADAMW'
+        WEIGHT_DECAY: 1e-2
+VAL:
+    MULTI_SCALES_VAL: False
+    SIZE_DIVISOR: 32
+    IMAGE_BASE_SIZE: 512
+    CROP_SIZE: [512, 512]
+MODEL:
+    NAME: "TopFomer"
+    ENCODER:
+        TYPE: 'TopTransformer'
+    DECODER_TYPE: 'SimpleHead'
+    SIMPLE:
+        IN_CHANNELS: [192, 192, 192]
+        CHANNELS: 192
+    DROP_PATH: 0.0
+    DROPOUT: 0.0
+    TRANS:
+        MLP_RATIO: 2
+        ATTEN_RATIO: 2.0
+        NUM_HEADS: 6
+        INPUT_CHANNELS: [24, 48, 96, 128]
+        OUT_CHANNELS: [None, 192, 192, 192]
+        EMBED_OUT_INDICE: [2, 4, 6, 9]
+        DECODE_OUT_INDICES: [1, 2, 3]
+        C2T_STRIDE: 2
+        KEY_DIM: 16
+        DEPTH: 4
+        INJECTION: True
+        INJECTION_TYPE: "multi_sum"
+        CFGS: [[3,   1,  16, 1],  # 1/2        0.464K  17.461M
+               [3,   4,  24, 2],  # 1/4 1      3.44K   64.878M
+               [3,   3,  24, 1],  #            4.44K   41.772M
+               [5,   3,  48, 2],  # 1/8 3      6.776K  29.146M
+               [5,   3,  48, 1],  #            13.16K  30.952M
+               [3,   3,  96, 2],  # 1/16 5     16.12K  18.369M
+               [3,   3,  96, 1],  #            41.68K  24.508M
+               [5,   6,  128, 2], # 1/32 7     0.129M  36.385M
+               [5,   6,  128, 1], #            0.335M  49.298M
+               [3,   6,  128, 1], #            0.335M  49.298M
+             ]
+    PRETRAINED: "C:/Users/Administrator/Downloads/PaddleViT-develop/topformer_tiny.pdparams"
+SAVE_DIR: "./output/ade20k/topformer_small_512x512_160k_2x8_ade20k"

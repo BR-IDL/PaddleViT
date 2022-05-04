@@ -40,6 +40,12 @@ def parse_args():
         type=str,
         help="The config file."
     )
+    parser.add_argument(
+        "--resume", 
+        default=None, 
+        type=str,
+        help="Training from resume checkpoint."
+    )
     return parser.parse_args()
 
 def main():
@@ -59,24 +65,31 @@ def main():
     optimizer = get_optimizer(model, lr_scheduler, config)
     # bulid train transforms
     transforms_train = get_transforms(config)
+    # build loss function
+    loss_func = get_loss_function(config)
+    # Resume from checkpoints, and update start_iter
+    start_iter = 0
+    if args.resume is not None:
+        assert os.path.exists(args.resume), args.resume + "is not found!"
+        opt_state = paddle.load(args.resume.replace('.pdparams', '.pdopt').replace('model', 'opt'))
+        start_iter = opt_state['LR_Scheduler']['last_epoch']
+        optimizer.set_state_dict(opt_state)
+        model.set_state_dict(paddle.load(args.resume))
+        logger.info("training from checkpoint {}, start_iter= {}".format(args.resume, start_iter))
     # build dataset_train
     dataset_train = get_dataset(config, data_transform=transforms_train, mode='train')
     train_loader = get_dataloader(dataset=dataset_train,
                                   shuffle=True,
                                   batch_size=config.DATA.BATCH_SIZE,
                                   num_iters=config.TRAIN.ITERS,
-                                  num_workers=config.DATA.NUM_WORKERS)
-    # build loss function
-    loss_func = get_loss_function(config)
-    # TODO(wutianyiRosun@gmail.com): Resume from checkpoints, and update start_iter
-
+                                  num_workers=config.DATA.NUM_WORKERS,
+                                  start_iter=start_iter)
     # build workspace for saving checkpoints
     if not os.path.isdir(config.SAVE_DIR):
         if os.path.exists(config.SAVE_DIR):
             os.remove(config.SAVE_DIR)
         os.makedirs(config.SAVE_DIR)
     logger.info("train_loader.len= {}".format(len(train_loader)))
-    start_iter = 0
     if nranks > 1:
         # Initialize parallel environment if not done.
         if not paddle.distributed.parallel.parallel_helper._is_parallel_ctx_initialized():
