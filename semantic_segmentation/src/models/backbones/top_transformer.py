@@ -442,4 +442,4 @@ class TopTransformer(nn.Layer):
             return results
         else:
             outputs.append(out)
-            return outputs
+        return outputs
