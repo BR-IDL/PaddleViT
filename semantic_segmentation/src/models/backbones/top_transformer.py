@@ -383,7 +383,6 @@ class FuseBlockSum(nn.Layer):
 class FuseBlockMulti(nn.Layer):
     def __init__(self, in_channels, out_channels, act=nn.Hardsigmoid()):
         super().__init__(in_channels, out_channels, act)
-        pass
 
     def forward(self, x_local, x_global):
         local_features, global_features = self.forward_features(x_local, x_global)
@@ -395,7 +394,7 @@ class TopTransformer(nn.Layer):
     def __init__(self, config):
         super().__init__()
 
-        self.channels = config.MODEL.TRANS.INPUT_CHANNELS;
+        self.channels = config.MODEL.TRANS.INPUT_CHANNELS
         self.injection = config.MODEL.TRANS.INJECTION
         self.embed_dim = sum(self.channels)
         self.decode_out_indices = config.MODEL.TRANS.DECODE_OUT_INDICES
