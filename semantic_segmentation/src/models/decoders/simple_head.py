@@ -99,7 +99,6 @@ class SimpleHead(nn.Layer):
         self.conv_seg = nn.Conv2D(self.channels, config.DATA.NUM_CLASSES , kernel_size=1)
         self.index = config.MODEL.SIMPLE.IN_INDEX
         self.align_corners=config.MODEL.SIMPLE.ALIGN_CORNERS
-        self.seg_label_shape = config.DATA.CROP_SIZE
 
         self.linear_fuse = ConvModule(
             in_channels=self.channels,
@@ -141,7 +140,7 @@ class SimpleHead(nn.Layer):
             inputs = [inputs[i] for i in self.in_index]
             upsampled_inputs = [
                 resize(
-                    input=x,
+                    input_data=x,
                     size=inputs[0].shape[2:],
                     mode='bilinear',
                     align_corners=self.align_corners) for x in inputs
@@ -167,14 +166,14 @@ class SimpleHead(nn.Layer):
             outs += pred
         return outs
 
-    def forward(self, inputs):
+    def forward(self, inputs, shape):
         xx = self._transform_inputs(inputs)  # len=4, 1/4,1/8,1/16,1/32
         x = self.agg_res(xx)
         _c = self.linear_fuse(x)
         x = self.cls_seg(_c)
         x = resize(
-            input=x,
-            size=self.seg_label_shape,
+            input_data=x,
+            size=shape[2:],
             mode='bilinear',
             align_corners=self.align_corners)
         return x

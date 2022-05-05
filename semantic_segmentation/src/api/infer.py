@@ -118,12 +118,11 @@ def ss_inference(model,
         else:
             raise ValueError("Considering the different shapes of inputs,"
                 "batch_size should be set to 1 while is_slide is False")
-        logits = model(img)
-        if not isinstance(logits, collections.abc.Sequence):
-            raise TypeError("The type of logits must be one of "
+        logit_list = model(img.unsqueeze(0))
+        if not isinstance(logit_list, collections.abc.Sequence):
+            raise TypeError("The type of logit_list must be one of "
                 "collections.abc.Sequence, e.g. list, tuple. But received {}"
-                .format(type(logits)))
-        logit = logits[0]
+                .format(type(logit_list)))
     else:
         # TODO (wutianyiRosun@gmail.com): when dataloader does not uses resize,
         #  rescale or padding

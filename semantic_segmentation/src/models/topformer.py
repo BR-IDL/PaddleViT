@@ -52,5 +52,5 @@ class TopFormer(nn.Layer):
 
     def forward(self, inputs):
         features = self.encoder(inputs)
-        out = self.decoder(features)
+        out = self.decoder(features, inputs.shape)
         return (out,)
