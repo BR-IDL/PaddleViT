@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import random
 import numpy as np
 import cv2
@@ -131,7 +132,7 @@ class Resize:
         'LINEAR', 'CUBIC', 'AREA', 'LANCZOS4', 'RANDOM').
     """
 
-    def __init__(self, target_size=520, interp='LINEAR', keep_ori_size=False):
+    def __init__(self, target_size=520, interp='LINEAR', keep_ori_size=False, size_divisor=32):
         self.interp = interp
         self.keep_ori_size = keep_ori_size
 
@@ -146,6 +147,7 @@ class Resize:
                 "Type of `target_size` is invalid. It should be list or tuple, "
                 "but it is {}".format(type(target_size)))
         self.target_size = target_size
+        self.size_divisor = size_divisor
 
     def __call__(self, img, label=None):
         """
@@ -170,11 +172,29 @@ class Resize:
             interp = random.choice(list(self.interp_dict.keys()))
         else:
             interp = self.interp
+
         if not self.keep_ori_size:
-            img = F.resize(img, self.target_size, 'bilinear')
+            if self.size_divisor is not None:
+                h, w, _ = img.shape
+                if h < w:
+                    ratio = self.target_size / h
+                    h = self.target_size
+                    w = w * ratio
+                    w = math.ceil(w / self.size_divisor) * self.size_divisor
+                else:
+                    ratio = self.target_size / w
+                    w = self.target_size
+                    h = h * ratio
+                    h = math.ceil(h / self.size_divisor) * self.size_divisor
+                img = F.resize(img, (h, w), 'bilinear')
+            else:
+                img = F.resize(img, self.target_size, 'bilinear')
 
         if label is not None:
-            label = F.resize(label, self.target_size,'nearest')
+            if self.size_divisor is not None:
+                label = F.resize(label, (h, w),'nearest')
+            else:
+                label = F.resize(label, self.target_size,'nearest')
 
         if label is None:
             return (img, )

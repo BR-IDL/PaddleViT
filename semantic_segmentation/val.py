@@ -81,11 +81,12 @@ if __name__ == '__main__':
             ddp_model = paddle.DataParallel(model)
     # build val dataset and dataloader
     transforms_val = [ Resize(target_size=config.VAL.IMAGE_BASE_SIZE,
-                              keep_ori_size=config.VAL.KEEP_ORI_SIZE),
+                              keep_ori_size=config.VAL.KEEP_ORI_SIZE,
+                              size_divisor=config.VAL.SIZE_DIVISOR),
                        Normalize(mean=config.VAL.MEAN, std=config.VAL.STD)]
     dataset_val = get_dataset(config, data_transform=transforms_val, mode='val')
     batch_sampler = paddle.io.DistributedBatchSampler(dataset_val, 
-        batch_size=config.DATA.BATCH_SIZE_VAL, shuffle=True, drop_last=True)
+        batch_size=config.DATA.BATCH_SIZE_VAL, shuffle=False, drop_last=True)
     collate_fn = multi_val_fn()
     loader_val = paddle.io.DataLoader(dataset_val, batch_sampler=batch_sampler,
         num_workers=config.DATA.NUM_WORKERS, return_list=True, collate_fn=collate_fn)
@@ -117,7 +118,7 @@ if __name__ == '__main__':
                     model=model,
                     img=img,
                     ori_shape=ori_shape,
-                    is_slide=True,
+                    is_slide=config.VAL.IS_SLIDE,
                     base_size=config.VAL.IMAGE_BASE_SIZE,
                     stride_size=config.VAL.STRIDE_SIZE,
                     crop_size=config.VAL.CROP_SIZE,
@@ -131,7 +132,7 @@ if __name__ == '__main__':
                     model=model,
                     img=img,
                     ori_shape=ori_shape,
-                    is_slide=True,
+                    is_slide=config.VAL.IS_SLIDE,
                     base_size=config.VAL.IMAGE_BASE_SIZE,
                     stride_size=config.VAL.STRIDE_SIZE,
                     crop_size=config.VAL.CROP_SIZE,

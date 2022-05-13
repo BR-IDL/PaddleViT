@@ -18,7 +18,6 @@ import paddle
 from paddle import nn
 from paddle.nn import functional as F
 from .swin_transformer import Identity, DropPath, Mlp, windows_partition, windows_reverse
-import sys
 
 
 def window_partition_noreshape(x, window_size):
