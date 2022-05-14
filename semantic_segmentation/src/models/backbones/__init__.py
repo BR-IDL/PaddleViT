@@ -6,3 +6,4 @@ from .focal_transformer import FocalTransformer
 from .deit import Deit
 from .resnet import *
 from .trans2seg_transformer import *
+from .top_transformer import TopTransformer

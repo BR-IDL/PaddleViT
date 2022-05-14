@@ -4,6 +4,7 @@ from .dpt import DPTSeg
 from .segmentor import Segmentor
 from .trans2seg import Trans2Seg
 from .segformer import Segformer
+from .topformer import TopFormer
 
 
 def get_model(config):
@@ -19,4 +20,6 @@ def get_model(config):
        model = Trans2Seg(config)
     elif "Segformer" in config.MODEL.NAME:
        model = Segformer(config)
+    elif "TopFomer" in config.MODEL.NAME:
+       model = TopFormer(config)
     return model

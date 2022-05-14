@@ -65,8 +65,7 @@ class ADE20K(Dataset):
     def __getitem__(self, idx):
         image_path, label_path = self.file_list[idx]
         if self.mode == 'val':
-            img, _ = self.transforms(img=image_path)
-            label = np.asarray(Image.open(label_path))
+            img, label = self.transforms(img=image_path, label=label_path)
             # The class 0 is ignored. And it will equal to 255 after
             # subtracted 1, because the dtype of label is uint8.
             label = label - 1
