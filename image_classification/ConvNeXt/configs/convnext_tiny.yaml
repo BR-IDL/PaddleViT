@@ -1,0 +1,12 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+    BATCH_SIZE: 128  # effective batch size = 4096
+MODEL:
+    TYPE: convnext
+    NAME: convnext_tiny
+    DEPTHS: [3, 3, 9, 3]
+    DIMS: [96, 192, 384, 768]
+    DROPPATH: 0.1
+TRAIN:
+    ACCUM_ITER: 4  # for single node 8 gpus
