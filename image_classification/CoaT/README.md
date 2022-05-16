@@ -1,12 +1,12 @@
-# A ConvNet for the 2020s, [arxiv](https://arxiv.org/abs/2201.03545)
-PaddlePaddle training/validation code and pretrained models for the model released in CVPR2022: **ConvNeXt**.
+# Co-Scale Conv-Attentional Image Transformers, [arxiv](https://arxiv.org/abs/2104.06399)
+PaddlePaddle training/validation code and pretrained models for the model released in ICCV2021: **CoaT**.
 
-The official PyTorch implementation is [here](https://github.com/facebookresearch/ConvNeXt).
+The official PyTorch implementation is [here](https://github.com/mlpc-ucsd/CoaT).
 
 This implementation is developed by [PaddleViT](https://github.com/BR-IDL/PaddleViT.git).
 
 <p align="center">
-<img src="./convnext.png" alt="drawing" width="80%"/>
+<img src="./coat.png" alt="drawing" width="80%"/>
 <h4 align="center">ConvNeXt Model Overview</h4>
 </p>
 
@@ -19,11 +19,15 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 | Model      | Acc@1 | Acc@5 | #Params | FLOPs | Image Size | Crop_pct | Interpolation | Link                                                                                                                                                           |
 | ---------- | ----- | ----- | ------- | ----- | ---------- | -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ConvNeXt-T(22kft1k)  | 82.91 | 96.62 | 28.6M   | 4.5G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1BkIy0LZHcqG15di84TMr6n1zU6g1h6or/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1h1y-opZUzLYmgu85skd2zg?pwd=mct6) |
-| ConvNeXt-S(22kft1k)  | 84.57 | 97.39 | 50.2M   | 8.8G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1Is8nOgOpLmvgm3q8hyjtHAEpPAKWYRPe/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1yeCDTbsWqzUVC6L-q4nYCQ?pwd=npvk) |
-| ConvNeXt-B(22kft1k)  | 85.82 | 97.87 | 88.6M   | 15.5G  | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1aKWxqRmew1JEnR_0p1ZalVA64UrDtulE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1iTqCcV_yYGQOMibe_6xNzw?pwd=sr4f) |
-| ConvNeXt-L(22kft1k)  | 86.64 | 98.03 | 197.7M  | 34.6G  | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1wTW8Dzw0SEW5CN005KLKrs38A6wxuQ6h/view?usp=sharing)/[baidu](https://pan.baidu.com/s/19XXJWXI7TIafN_tWmQ_Rkw?pwd=pgh4) |
-| ConvNeXt-XL(22kft1k) | 87.01 | 98.20 | 350.2M  | 61.3G  | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1_Gy0GYw3c_FkwAzPgPxJNKtbpnbTFr60/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1cfmNtdzvIDKGlpvkGOvArg?pwd=bx1p) |
+| CoaT-Lite Tiny   | 77.51 | 93.92 | 5.7M   | 1.7G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1DVZzFvMrDx8VcpZ7ceDsvmUGspP0uz5i/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1EDixd2DZNyr2I8MsXyRQzQ?pwd=hi4y) |
+| CoaT-Lite Mini   | 79.10 | 94.61 | 11.0M  | 2.1G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1iTYV5gmzyHT3k_YBDwtcfAO6upOU7seZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1uCcg5CF0CNLAGwX2823R1g?pwd=e5ka) |
+| CoaT-Lite Small  | 81.83 | 95.58 | 19.8M  | 4.2G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/18qAwntCB56-cdv1bfdY3yrnUr0pxXHga/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1EWSyMShAJ80bkjDrtRRocw?pwd=rsn6) |
+| CoaT-Lite Medium | 83.60 | 96.73 | 44.6M  | 10.5G  | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1hmgBhcag5H3Vh1eA6gW4IgVkbTmv6465/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1funugCLyC4i0rQQ9JbKEyw?pwd=f1sp) |
+| CoaT Tiny        | 78.45 | 94.07 | 7.7M   | 4.8G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1hJI1kaL6KkIldmIeBrZViNC_NAmRwMWa/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1qOY16SSg2QdfKQDymvNx0g?pwd=5bz7) |
+| CoaT Mini        | 81.27 | 95.38 | 14.8M  | 7.3G   | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/16yXAAt9-vtYAH-ZUbdsKIb9YVBCMSwf_/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1u9ei9w6sih_OdoJPdl-rOw?pwd=g3ce) |
+| CoaT Small       | 82.36 | 96.21 | 31.5M  | 13.3G  | 224        | 0.9      | bicubic       | [google](https://drive.google.com/file/d/1DE1qia_BNsw8fzVFozmlmxzcPe3itVRC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ytNXJsh4HuopRIdBBLD-2g?pwd=key2) |
+
+
 
 
 
@@ -58,17 +62,17 @@ ImageNet2012 dataset is used in the following file structure:
 
 To use the model with pretrained weights, download the `.pdparam` weight file and change related file paths in the following python scripts. The model config files are located in `./configs/`.
 
-For example, assume weight file is downloaded in `./convnext_tiny.pdparams`, to use the `convnext_tiny` model in python:
+For example, assume weight file is downloaded in `./coat_tiny.pdparams`, to use the `coat_tiny` model in python:
 
 ```python
 from config import get_config
-from convnext import build_convnext as build_model
+from coat import build_coat as build_model
 # config files in ./configs/
-config = get_config('./configs/convnext_tiny.yaml')
+config = get_config('./configs/coat_tiny.yaml')
 # build model
 model = build_model(config)
 # load pretrained weights
-model_state_dict = paddle.load('./convnext_tiny.pdparams')
+model_state_dict = paddle.load('./coat_tiny.pdparams')
 model.set_state_dict(model_state_dict)
 ```
 
@@ -85,12 +89,12 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
--cfg='./configs/convnext_tiny.yaml' \
+-cfg='./configs/coat_tiny.yaml' \
 -dataset='imagenet2012' \
 -batch_size=256 \
 -data_path='/dataset/imagenet' \
 -eval \
--pretrained='./convnext_tiny.pdparams' \
+-pretrained='./coat_tiny.pdparams' \
 -amp
 ```
 
@@ -109,7 +113,7 @@ or
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python main_multi_gpu.py \
--cfg='./configs/convnext_tiny.yaml' \
+-cfg='./configs/coat_tiny.yaml' \
 -dataset='imagenet2012' \
 -batch_size=256 \
 -data_path='/dataset/imagenet' \
@@ -121,10 +125,12 @@ python main_multi_gpu.py \
 ## Reference
 
 ```
-@Article{liu2022convnet,
-  author  = {Zhuang Liu and Hanzi Mao and Chao-Yuan Wu and Christoph Feichtenhofer and Trevor Darrell and Saining Xie},
-  title   = {A ConvNet for the 2020s},
-  journal = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year    = {2022},
+@InProceedings{Xu_2021_ICCV,
+    author    = {Xu, Weijian and Xu, Yifan and Chang, Tyler and Tu, Zhuowen},
+    title     = {Co-Scale Conv-Attentional Image Transformers},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2021},
+    pages     = {9981-9990}
 }
 ```

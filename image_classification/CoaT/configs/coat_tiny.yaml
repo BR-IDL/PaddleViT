@@ -1,0 +1,16 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
+    BATCH_SIZE: 256  # effective batch size = 2048
+MODEL:
+    TYPE: coat
+    NAME: coat_tiny
+    PATCH_SIZE: 4
+    EMBED_DIMS: [152, 152, 152, 152]
+    SERIAL_DEPTHS: [2, 2, 2, 2]
+    PARALLEL_DEPTH: 6
+    NUM_HEADS: 8
+    MLP_RATIOS: [4, 4, 4, 4]
+    DROPPATH: 0.0
+TRAIN:
+    ACCUM_ITER: 1  # for single node 8 gpus
