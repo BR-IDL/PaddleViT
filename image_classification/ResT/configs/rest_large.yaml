@@ -1,0 +1,17 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
+    BATCH_SIZE: 256
+MODEL:
+    TYPE: ResT
+    NAME: rest_large
+    EMBED_DIMS: [96, 192, 384, 768]
+    NUM_HEADS: [1, 2, 4, 8]
+    MLP_RATIOS: [4, 4, 4, 4]
+    QKV_BIAS: True
+    DEPTHS: [2, 2, 18, 2]
+    SR_RATIOS: [8, 4, 2, 1]
+    APPLY_TRANSFORM: True
+    DROPPATH: 0.0
+TRAIN:
+    ACCUM_ITER: 1

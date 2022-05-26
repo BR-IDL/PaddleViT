@@ -6,6 +6,7 @@ PaddlePaddle training/validation code and pretrained models for **Image Classifi
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
+* Update (2022-05-26): Add ResT and ResTV2.
 * Update (2022-05-16): Add CoaT.
 * Update (2022-05-16): Add ConvNeXt.
 * Update (2022-04-22): Add TopFormer.
@@ -65,6 +66,8 @@ This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.g
 17. **[CycleMLP](./CycleMLP)**
 17. **[ConvMixer](./ConvMixer)**
 17. **[ConvMLP](./ConvMLP)**
+17. **[ResT](./ResT)**
+17. **[ResTV2](./ResT)**
 
 
 ## Installation
@@ -156,7 +159,8 @@ PaddleViT now provides the following **transfomer based models**:
 22. **[TopFormer](./TopFormer)** (from HUST/Tencent/Fudan/ZJU), released with paper [TopFormer: Token Pyramid Transformer for Mobile Semantic Segmentation](https://arxiv.org/pdf/2204.05525.pdf), by Wenqiang Zhang, Zilong Huang, Guozhong Luo, Tao Chen, Xinggang Wang, Wenyu Liu, Gang Yu, Chunhua Shen.
 22. **[ConvNeXt](./ConvNeXt)** (from FAIR/UCBerkeley), released with paper [A ConvNet for the 2020s](https://arxiv.org/abs/2201.03545), by Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Feichtenhofer, Trevor Darrell, Saining Xie.
 22. **[CoaT](./CoaT)** (from UCSD), released with paper [Co-Scale Conv-Attentional Image Transformers](https://arxiv.org/abs/2104.06399), by Weijian Xu, Yifan Xu, Tyler Chang, Zhuowen Tu.
-
+22. **[ResT](./ResT)** (from NJU), released with paper [ResT: An Efficient Transformer for Visual Recognition](https://arxiv.org/abs/2105.13677), by Qinglong Zhang, Yubin Yang.
+22. **[ResTV2](./ResT)** (from NJU), released with paper [ResT V2: Simpler, Faster and Stronger](https://arxiv.org/abs/2204.07366), by Qinglong Zhang, Yubin Yang.
 
 
 

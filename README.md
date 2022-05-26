@@ -84,6 +84,11 @@ We also provide tutorials:
 21. **[HvT](./image_classification/HVT)** (from Monash University), released with paper [Scalable Vision Transformers with Hierarchical Pooling](https://arxiv.org/abs/2103.10619), by Zizheng Pan, Bohan Zhuang, Jing Liu, Haoyu He, Jianfei Cai.
 22. **[TopFormer](./image_classification/TopFormer)** (from HUST/Tencent/Fudan/ZJU), released with paper [TopFormer: Token Pyramid Transformer for Mobile Semantic Segmentation](https://arxiv.org/pdf/2204.05525.pdf), by Wenqiang Zhang, Zilong Huang, Guozhong Luo, Tao Chen, Xinggang Wang, Wenyu Liu, Gang Yu, Chunhua Shen.
 
+22. **[ConvNeXt](./image_classification/ConvNeXt)** (from FAIR/UCBerkeley), released with paper [A ConvNet for the 2020s](https://arxiv.org/abs/2201.03545), by Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Feichtenhofer, Trevor Darrell, Saining Xie.
+22. **[CoaT](./image_classification/CoaT)** (from UCSD), released with paper [Co-Scale Conv-Attentional Image Transformers](https://arxiv.org/abs/2104.06399), by Weijian Xu, Yifan Xu, Tyler Chang, Zhuowen Tu.
+22. **[ResT](./image_classification/ResT)** (from NJU), released with paper [ResT: An Efficient Transformer for Visual Recognition](https://arxiv.org/abs/2105.13677), by Qinglong Zhang, Yubin Yang.
+22. **[ResTV2](./image_classification/ResT)** (from NJU), released with paper [ResT V2: Simpler, Faster and Stronger](https://arxiv.org/abs/2204.07366), by Qinglong Zhang, Yubin Yang.
+
 
 ### Image Classification (MLP & others) ###
 1. **[MLP-Mixer](./image_classification/MLP-Mixer)** (from Google), released with paper [MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601), by Ilya Tolstikhin, Neil Houlsby, Alexander Kolesnikov, Lucas Beyer, Xiaohua Zhai, Thomas Unterthiner, Jessica Yung, Andreas Steiner, Daniel Keysers, Jakob Uszkoreit, Mario Lucic, Alexey Dosovitskiy
