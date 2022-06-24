@@ -32,9 +32,8 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 > *The results are evaluated on ImageNet2012 validation set.
 
-
-
-
+For finetuning using 22k model, the ported weight file can be downloaded from:
+- cswin_large_22k_224 [google](https://drive.google.com/file/d/12DXxq_I5x7Eqm_660riN7UvjGsOSDqVZ/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1oF-k8WEseuoGcbbyoowAoQ?pwd=ckwg)
 
 
 ## Data Preparation
