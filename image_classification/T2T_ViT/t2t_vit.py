@@ -261,9 +261,11 @@ class Attention(nn.Layer):
 
     def transpose_multihead(self, x):
         if self.skip: # token transformer
-            new_shape = x.shape[:-1] + [self.num_heads, self.in_dim]
+            #new_shape = x.shape[:-1] + [self.num_heads, self.in_dim]
+            new_shape = tuple(x.shape[:-1]) + ([self.num_heads, self.in_dim])
         else: # regular attention
-            new_shape = x.shape[:-1] + [self.num_heads, self.dim_head]
+            #new_shape = x.shape[:-1] + [self.num_heads, self.dim_head]
+            new_shape = tuple(x.shape[:-1]) + (self.num_heads, self.dim_head)
         x = x.reshape(new_shape)
         x = x.transpose([0, 2, 1, 3])
         return x
@@ -282,7 +284,8 @@ class Attention(nn.Layer):
         if self.skip: # token transformer
             z = z.reshape([B, -1, self.in_dim])
         else: # regular attention
-            z = z.reshape([B, -1, C])
+            z = z.reshape([B, H, C])
+            #z = z.reshape([B, -1, C])
         z = self.proj(z)
         z = self.proj_dropout(z)
 
@@ -426,7 +429,8 @@ class TokenPerformer(nn.Layer):
         # w: [m, hs]
         # return x: B, T, m
         xd = (x * x).sum(axis=-1, keepdim=True)
-        xd = xd.expand([xd.shape[0], xd.shape[1], self.m]) / 2
+        #xd = xd.expand([xd.shape[0], xd.shape[1], self.m]) / 2
+        xd = xd.expand([paddle.shape(xd)[0], paddle.shape(xd)[1], self.m]) / 2
         # same as einsum('bti,mi->btm', x, self.w)
         wtx = paddle.matmul(x, self.w, transpose_y=True)
         out = paddle.exp(wtx - xd) / math.sqrt(self.m)
@@ -445,7 +449,8 @@ class TokenPerformer(nn.Layer):
         kptv = paddle.matmul(v, kp, transpose_x=True)
         # same as einsum('bti,bni->btn')
         y = paddle.matmul(qp, kptv, transpose_y=True)
-        y = y / (D.expand([D.shape[0], D.shape[1], self.embed_dim]) + 1e-8)
+        y = y / (D.expand([paddle.shape(D)[0], paddle.shape(D)[1], self.embed_dim]) + 1e-8)
+        #y = y / (D.expand([D.shape[0], D.shape[1], self.embed_dim]) + 1e-8)
 
         # skip connection
         y = self.proj(y)
@@ -562,6 +567,7 @@ class T2TViT(nn.Layer):
                  token_dim=64):
         super().__init__()
         self.num_classes = num_classes
+        self.embed_dim = embed_dim
         # convert image to paches: T2T-Module
         self.patch_embed = PatchEmbedding(image_size=image_size,
                                           token_type=token_type,
@@ -619,7 +625,8 @@ class T2TViT(nn.Layer):
         # Patch Embedding
         x = self.patch_embed(x)
 
-        cls_tokens = self.cls_token.expand([x.shape[0], -1, -1])
+        cls_tokens = self.cls_token.expand([paddle.shape(x)[0], 1, self.embed_dim])
+        #cls_tokens = self.cls_token.expand([x.shape[0], -1, -1])
         x = paddle.concat([cls_tokens, x], axis=1)
         x = x + self.pos_embed
         x = self.pos_dropout(x)
