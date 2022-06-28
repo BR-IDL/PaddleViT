@@ -13,6 +13,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 ### Update 
+- Update (2022-06-28): Model weight trained from scracth using paddlevit is uploaded.
 - Update (2022-04-22): Code is released and ported weights are uploaded.
 
 ## Models Zoo
@@ -24,6 +25,16 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 > *The results are evaluated on ImageNet2012 validation set.
+
+
+### Model weights trained from scratch using PaddleViT is also provided:
+
+| Model          | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |Log         |
+|----------------|-------|-------|---------|--------|------------|----------|---------------|--------------|--------------|
+| topformer_base | 74.22 | 91.74 | 5.1M   | 0.37G   | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1dUCl4MznaYgv4M9zzmgx45fSOFn5k7Dh/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RT53tIhcQohdtKiViaZSiA?pwd=j5vd)| [google](https://drive.google.com/file/d/1w8CaEOv5OGcf0P1Jbw-qepD3XxVmLG3r/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1SQ_GYP5cNNlM5Z7sv6_WUA?pwd=g8x2)            |
+
+> Note: accuracy is validated using model EMA.
+
 
 ## Data Preparation
 ImageNet2012 dataset is used in the following file structure:
