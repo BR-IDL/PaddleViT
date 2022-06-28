@@ -9,7 +9,7 @@
 > `paddle.inference` 的官方文档和示例请参考[这里](https://paddle-inference.readthedocs.io/en/latest/index.html)
 
 ### 1. PaddleViT如何生成预测模型?
-在`PaddleViT`中，我们提供了非常简餐的预测模型生成方法。其核心思想是使用paddle api将动态图模型转换为静态图模式，并储存相关模型到文件系统。在这一过程中我们可以设置许多优化配置，例如合并操作，允许inplace操作等。在此，我们提供了一个简单的[脚本文件](../image_classification/BEiT/export_models.py)，您可以参考并实现自己的模型转换代码：
+在`PaddleViT`中，我们提供了非常简单的预测模型生成方法。其核心思想是使用paddle api将动态图模型转换为静态图模式，并储存相关模型到文件系统。在这一过程中我们可以设置许多优化配置，例如合并操作，允许inplace操作等。在此，我们提供了一个简单的[脚本文件](../image_classification/BEiT/export_models.py)，您可以参考并实现自己的模型转换代码：
 
 
 ```python
