@@ -1,0 +1,13 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.9
+MODEL:
+    TYPE: cswin
+    NAME: cswin_large_22k_224
+    NUM_CLASSES: 21842
+    PATCH_SIZE: 4
+    EMBED_DIM: 144
+    DEPTHS: [2, 4, 32, 2]
+    SPLIT_SIZES: [1, 2, 7, 7]
+    NUM_HEADS: [6, 12, 24, 24]
+
