@@ -24,13 +24,15 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 | topformer_base | 75.25 | 92.67 | 5.1M   | 0.37G   | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1jC_NVpaTRqFJ4ACnv_TTs9kH1yPvHE4H/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1ep2YEQ1ZwgXFb0V6RrQq5Q?pwd=v9xm)             |
 
 
-> *The results are evaluated on ImageNet2012 validation set.
+> *The results are above are ported from official implemetation and evaluated on ImageNet2012 validation set.
 
 
-### Model weights trained from scratch using PaddleViT is also provided:
+### Model weights trained from scratch using **PaddleViT** are also provided:
 
 | Model          | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         |Log         |
 |----------------|-------|-------|---------|--------|------------|----------|---------------|--------------|--------------|
+| topformer_tiny | 67.63 | 87.82 | 1.5M   | 0.13G   | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1DoXiePfozbv-hm6z8jYIV3YDu4HLqXlu/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1fMXv-ESHc_U9Q1Rhd-d5JQ?pwd=hyze)           |   [google](https://drive.google.com/file/d/1ZfsCPNIPGyPPH4cnDP9ZgKMCcvMfdatw/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1qKr5KaIfpSQJtT_Oo1IZ_g?pwd=idq4)           |
+| topformer_small| 72.61 | 90.78 | 3.1M   | 0.24G   | 224        | 0.875      | bicubic       |    [google](https://drive.google.com/file/d/1xwFXX7gaVRFluDK6a2g9ZgEtx-NmXnRl/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1pQlDPibKS1v-w_CVMScbvg?pwd=c8hx)        |   [google](https://drive.google.com/file/d/1LP-ZuwWztS3Sdx5CXM16s-IjLbKNj33U/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1JJ8bzXoBAcsdagsvWGXwbg?pwd=41fr) |
 | topformer_base | 74.22 | 91.74 | 5.1M   | 0.37G   | 224        | 0.875      | bicubic       | [google](https://drive.google.com/file/d/1dUCl4MznaYgv4M9zzmgx45fSOFn5k7Dh/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RT53tIhcQohdtKiViaZSiA?pwd=j5vd)| [google](https://drive.google.com/file/d/1w8CaEOv5OGcf0P1Jbw-qepD3XxVmLG3r/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1SQ_GYP5cNNlM5Z7sv6_WUA?pwd=g8x2)            |
 
 > Note: accuracy is validated using model EMA.
