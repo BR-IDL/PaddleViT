@@ -1,0 +1,14 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: ViT
+    NAME: vit_large_patch16_224
+    TRANS:
+        PATCH_SIZE: 16
+        EMBED_DIM: 1024
+        MLP_RATIO: 4.0
+        DEPTH: 24
+        NUM_HEADS: 16
+        QKV_BIAS: true
+
