@@ -171,7 +171,7 @@ def train(dataloader,
                               f"Avg Acc: {master_acc_meter.avg:.4f}")
             write_log(local_logger, master_logger, local_message, master_message)
 
-    paddle.distributed.barrier()
+    #paddle.distributed.barrier()
     train_time = time.time() - time_st
     return (train_loss_meter.avg,
             train_acc_meter.avg,
@@ -221,7 +221,7 @@ def validate(dataloader,
         label = data[1]
         batch_size = images.shape[0]
 
-        output = model(images)
+        output, _ = model(images)
         loss = criterion(output, label)
         loss_value = loss.item()
 
@@ -252,7 +252,7 @@ def validate(dataloader,
                               f"Avg Acc@1: {master_acc1_meter.avg:.4f}, "
                               f"Avg Acc@5: {master_acc5_meter.avg:.4f}")
             write_log(local_logger, master_logger, local_message, master_message)
-    paddle.distributed.barrier()
+    #paddle.distributed.barrier()
     val_time = time.time() - time_st
     return (val_loss_meter.avg,
             val_acc1_meter.avg,
