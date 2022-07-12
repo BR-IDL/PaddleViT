@@ -14,6 +14,7 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 
 
 ### Update 
+- Update (2022-07-12): Model weights trained from scratch using PaddleViT is updated.
 - Update (2022-03-17): Code is refactored and bugs are fixed.
 - Update (2021-09-27): More weights are uploaded.
 - Update (2021-08-11): Code is released and ported weights are uploaded.
@@ -33,6 +34,11 @@ This implementation is developed by [PaddleViT](https://github.com/BR-IDL/Paddle
 | cait_m48_448                  | 86.49 | 97.75 | 355.8M  | 287.3G | 448        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/1lJSP__dVERBNFnp7im-1xM3s_lqEe82-/view?usp=sharing)/[baidu](https://pan.baidu.com/s/179MA3MkG2qxFle0K944Gkg?pwd=imk5) |
 
 > *The results are evaluated on ImageNet2012 validation set.
+
+## Model weights trained from scratch using PaddleViT
+| Model                         | Acc@1 | Acc@5 | #Params | FLOPs  | Image Size | Crop_pct | Interpolation | Link         | Log |
+|-------------------------------|-------|-------|---------|--------|------------|----------|---------------|--------------|--------------|
+| cait_xxs24_224                | 78.24 | 96.26 | 11.9M   | 2.2G   | 224        | 1.0      | bicubic       | [google](https://drive.google.com/file/d/11BHchbYKAyw3IBccLGKokIdGYF12BVi3/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1RsCSHclSLGLPzXG5wtAwSw?pwd=b6u3)| [google](https://drive.google.com/file/d/1wBLwp0a69DYRYUMmTu2xfzjb8P985rYG/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1YaXsSyfKg6jmZwef16xerQ?pwd=9f1x)|
 
 
 ## Data Preparation
