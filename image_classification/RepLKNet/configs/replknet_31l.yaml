@@ -1,0 +1,28 @@
+DATA:
+    IMAGE_SIZE: 224
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: RepLKNet
+    NAME: replknet_31l
+    NUM_CLASSES: 1000  # 21841 for imagenet 22k
+    DROPPATH: 0.1
+    LARGE_KERNEL_SIZES: [31, 29, 27, 13]
+    LAYERS: [2, 2, 18, 2]
+    CHANNELS: [192, 384, 768, 1536]
+    DW_RATIO: 1.0
+    FFN_RATIO: 4.0
+    SMALL_KERNEL: 5
+    SMALL_KERNEL_MERGED: False
+    NORM_INTER_FEATURES: False
+    OUT_INDICES: None 
+
+TRAIN:  # Image22K settings 
+    NUM_EPOCHS: 90
+    WARMUP_EPOCHS: 5
+    BASE_LR: 4e-3
+    WARMUP_START_LR: 1e-6
+    END_LR: 1e-6
+    WEIGHT_DECAY: 0.05
+    LINEAR_SCALED_LR: 256
+    MODEL_EMA: True
+    ACCUM_ITER: 1
