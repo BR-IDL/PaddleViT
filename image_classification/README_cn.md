@@ -5,7 +5,9 @@ PaddlePaddle用于图像分类的训练/评估代码和预训练模型。
 
 此实现是 [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) 项目的一部分.
 
-## 更新 
+## 更新
+* 更新 (2022-08-29): 添加 MobileOne.
+* 更新 (2022-07-15): 添加 RepLKNet.
 * 更新 (2022-05-26): 添加 ResT 和 ResTV2.
 * 更新 (2022-05-16): 添加 CoaT.
 * 更新 (2022-05-16): 添加 ConvNeXt.
@@ -67,6 +69,8 @@ PaddlePaddle用于图像分类的训练/评估代码和预训练模型。
 17. **[ConvMLP](./ConvMLP)**
 17. **[ResT](./ResT)**
 17. **[ResTV2](./ResT)**
+17. **[RepLKNet](./RepLKNet)**
+17. **[MobileOne](./MobileOne)**
 
 ## 安装
 该模块在 Python3.6+ 和 PaddlePaddle 2.1.0+ 上进行了测试，多数依赖项通过PaddlePaddle安装。 您只需要安装以下包：
@@ -173,8 +177,11 @@ PaddleViT 目前支持以下 **MLP based models**:
 8. **[ConvMLP](./ConvMLP)** (from UO/UIUC/PAIR), released with [ConvMLP: Hierarchical Convolutional MLPs fo
 
 
-#### 即将更新: ####
-1. **[DynamicViT]()** (from Tsinghua/UCLA/UW), released with paper [DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification](https://arxiv.org/abs/2106.02034), by Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, Cho-Jui Hsieh.
+PaddleViT 也支持以下 **reparameterized models**:
+
+1. **[RepLKNet](./RepLKNet)** (from Tsinghua/MEGVII/Aberystwyth), released with [Scaling Up Your Kernels to 31x31: Revisiting Large Kernel Design in CNNs
+](https://arxiv.org/abs/2203.06717), by Xiaohan Ding, Xiangyu Zhang, Yizhuang Zhou, Jungong Han, Guiguang Ding, Jian Sun.
+2. **[MobileOne](./MobileOne)** (from Apple), released with [An Improved One millisecond Mobile Backbone](https://arxiv.org/abs/2206.04040), by Pavan Kumar Anasosalu Vasu, James Gabriel, Jeff Zhu, Oncel Tuzel, Anurag Ranjan.
 
 
 ## Contact

@@ -6,6 +6,8 @@ PaddlePaddle training/validation code and pretrained models for **Image Classifi
 This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.git) project.
 
 ## Update 
+* Update (2022-08-29): Add MobileOne.
+* Update (2022-07-15): Add RepLKNet.
 * Update (2022-05-26): Add ResT and ResTV2.
 * Update (2022-05-16): Add CoaT.
 * Update (2022-05-16): Add ConvNeXt.
@@ -68,6 +70,8 @@ This implementation is part of [PaddleViT](https://github.com/BR-IDL/PaddleViT.g
 17. **[ConvMLP](./ConvMLP)**
 17. **[ResT](./ResT)**
 17. **[ResTV2](./ResT)**
+17. **[RepLKNet](./RepLKNet)**
+17. **[MobileOne](./MobileOne)**
 
 
 ## Installation
@@ -133,6 +137,7 @@ PaddleViT image classification module is developed in separate folders for each 
 ## Model Architectures
 
 PaddleViT now provides the following **transfomer based models**:
+
 1. **[ViT](./ViT)** (from Google), released with paper [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929), by Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, Neil Houlsby.
 2. **[DeiT](./DeiT)** (from Facebook and Sorbonne), released with paper [Training data-efficient image transformers & distillation through attention](https://arxiv.org/abs/2012.12877), by Hugo Touvron, Matthieu Cord, Matthijs Douze, Francisco Massa, Alexandre Sablayrolles, Hervé Jégou.
 3. **[Swin Transformer](./SwinTransformer)** (from Microsoft), released with paper [Swin Transformer: Hierarchical Vision Transformer using Shifted Windows](https://arxiv.org/abs/2103.14030), by Ze Liu, Yutong Lin, Yue Cao, Han Hu, Yixuan Wei, Zheng Zhang, Stephen Lin, Baining Guo.
@@ -165,6 +170,7 @@ PaddleViT now provides the following **transfomer based models**:
 
 
 PaddleViT now provides the following **MLP based models**:
+
 1. **[MLP-Mixer](./MLP-Mixer)** (from Google), released with paper [MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601), by Ilya Tolstikhin, Neil Houlsby, Alexander Kolesnikov, Lucas Beyer, Xiaohua Zhai, Thomas Unterthiner, Jessica Yung, Andreas Steiner, Daniel Keysers, Jakob Uszkoreit, Mario Lucic, Alexey Dosovitskiy
 2. **[ResMLP](./ResMLP)** (from Facebook/Sorbonne/Inria/Valeo), released with paper [ResMLP: Feedforward networks for image classification with data-efficient training](https://arxiv.org/abs/2105.03404), by Hugo Touvron, Piotr Bojanowski, Mathilde Caron, Matthieu Cord, Alaaeldin El-Nouby, Edouard Grave, Gautier Izacard, Armand Joulin, Gabriel Synnaeve, Jakob Verbeek, Hervé Jégou.
 3. **[gMLP](./gMLP)** (from Google), released with paper [Pay Attention to MLPs](https://arxiv.org/abs/2105.08050), by Hanxiao Liu, Zihang Dai, David R. So, Quoc V. Le.
@@ -174,8 +180,14 @@ PaddleViT now provides the following **MLP based models**:
 7. **[ConvMixer](./ConvMixer)** (from Anonymous), released with [Patches Are All You Need?](https://openreview.net/forum?id=TVHS5Y4dNvM), by Anonymous.
 8. **[ConvMLP](./ConvMLP)** (from UO/UIUC/PAIR), released with [ConvMLP: Hierarchical Convolutional MLPs for Vision](https://arxiv.org/abs/2109.04454), by Jiachen Li, Ali Hassani, Steven Walton, Humphrey Shi.
 
-#### Coming Soon: ####
-1. **[DynamicViT]()** (from Tsinghua/UCLA/UW), released with paper [DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification](https://arxiv.org/abs/2106.02034), by Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, Cho-Jui Hsieh.
+
+PaddleViT also provides the following **reparameterized models**:
+
+1. **[RepLKNet](./RepLKNet)** (from Tsinghua/MEGVII/Aberystwyth), released with [Scaling Up Your Kernels to 31x31: Revisiting Large Kernel Design in CNNs
+](https://arxiv.org/abs/2203.06717), by Xiaohan Ding, Xiangyu Zhang, Yizhuang Zhou, Jungong Han, Guiguang Ding, Jian Sun.
+2. **[MobileOne](./MobileOne)** (from Apple), released with [An Improved One millisecond Mobile Backbone](https://arxiv.org/abs/2206.04040), by Pavan Kumar Anasosalu Vasu, James Gabriel, Jeff Zhu, Oncel Tuzel, Anurag Ranjan.
+
+
 
 
 ## Contact

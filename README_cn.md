@@ -98,6 +98,9 @@ PaddleViT 提供了多项视觉任务的模型和工具，请访问以下链接�
 6. **[CycleMLP](./image_classification/CycleMLP)** (from HKU/SenseTime), released with paper [CycleMLP: A MLP-like Architecture for Dense Prediction](https://arxiv.org/abs/2107.10224), by Shoufa Chen, Enze Xie, Chongjian Ge, Ding Liang, Ping Luo.
 7. **[ConvMixer](./image_classification/ConvMixer)** (from Anonymous), released with [Patches Are All You Need?](https://openreview.net/forum?id=TVHS5Y4dNvM), by Anonymous.
 8. **[ConvMLP](./image_classification/ConvMLP)** (from UO/UIUC/PAIR), released with [ConvMLP: Hierarchical Convolutional MLPs for Vision](https://arxiv.org/abs/2109.04454), by Jiachen Li, Ali Hassani, Steven Walton, Humphrey Shi.
+1. **[RepLKNet](./RepLKNet)** (from Tsinghua/MEGVII/Aberystwyth), released with [Scaling Up Your Kernels to 31x31: Revisiting Large Kernel Design in CNNs
+](https://arxiv.org/abs/2203.06717), by Xiaohan Ding, Xiangyu Zhang, Yizhuang Zhou, Jungong Han, Guiguang Ding, Jian Sun.
+2. **[MobileOne](./MobileOne)** (from Apple), released with [An Improved One millisecond Mobile Backbone](https://arxiv.org/abs/2206.04040), by Pavan Kumar Anasosalu Vasu, James Gabriel, Jeff Zhu, Oncel Tuzel, Anurag Ranjan.
 
 
 #### 即将更新: ####
