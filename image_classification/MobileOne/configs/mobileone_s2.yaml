@@ -1,0 +1,24 @@
+DATA:
+    IMAGE_SIZE: 256
+    CROP_PCT: 0.875
+MODEL:
+    TYPE: MobileOne
+    NAME: mobileone_s2
+    NUM_BLOCKS: [1, 2, 8, 10, 1]  # same as official github code
+    CHANNELS: [64, 64, 128, 256, 512]
+    STRIDES: [2, 2, 2, 2, 2]
+    EXPANSIONS: [1.0, 1.5, 2.0, 2.5, 4.0]
+    NUM_BRANCHES: [1, 1, 1, 1, 1]
+    DEPLOY: False
+    USE_SE: False
+TRAIN:
+    NUM_EPOCHS: 300
+    WARMUP_EPOCHS: 30
+    BASE_LR: 0.1
+    WARMUP_START_LR: 0.0002
+    END_LR: 0.0002
+    WEIGHT_DECAY: 0.0001
+    LINEAR_SCALED_LR: 256
+    MODEL_EMA: True
+    MODEL_EMA_DECAY: 0.9995
+    MODEL_EMA_FORCE_CPU: True
