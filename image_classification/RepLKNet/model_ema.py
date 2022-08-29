@@ -49,7 +49,7 @@ class ModelEma:
             ema_buf.set_value(copy.deepcopy(update_fn(ema_buf, model_buf).astype(model_buf.dtype)))
 
     def update(self, model):
-        self._update(model, update_fn=lambda e, m: self.decay * e  + (1 - self.decay) * m)
+        self._update(model, update_fn=lambda e, m: self.decay * e + (1 - self.decay) * m)
 
     def set(self, model):
         self._update(model, update_fn=lambda e, m: m)

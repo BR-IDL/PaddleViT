@@ -136,8 +136,6 @@ class MobileOneBlock(nn.Layer):
 
     def forward(self, x):
         if self.deploy:
-            print(x.shape)
-            print(self.dw_3x3)
             out = self.dw_3x3(x)
             out = self.dw_se(out)
             out = self.act(out)
@@ -147,23 +145,15 @@ class MobileOneBlock(nn.Layer):
                 out = self.act(out)
         else:
             dw_out = self.dw_1x1(x)
-            #print('dw_1x1 out: ', dw_out[0,0,0,:5])
-            dw_out +=  sum([dw_3x3(x) for dw_3x3 in self.dw_3x3_blocks])
-            #dw_out = self.dw_1x1(x) + sum([dw_3x3(x) for dw_3x3 in self.dw_3x3_blocks])
+            dw_out += sum([dw_3x3(x) for dw_3x3 in self.dw_3x3_blocks])
             dw_out += self.dw_skip(x) if self.dw_skip is not None else 0
-            #print('dw_out: ', dw_out[0,0,0,:5])
             dw_out = self.dw_se(dw_out)
             dw_out = self.act(dw_out)
     
             if self.use_pw:
                 out = sum([pw_1x1(dw_out) for pw_1x1 in self.pw_1x1_blocks])
-                #print('pw_out_before_skip: ', out[0,0,0,:5])
-                #out += self.pw_skip(dw_out) if self.pw_skip is not None else 0
                 skip_out = self.pw_skip(dw_out) if self.pw_skip is not None else 0
-                #if self.pw_skip:
-                #    print('skip_out: ', skip_out[0,0,0,:5])
                 out = out + skip_out
-                #print('pw_out: ', out[0,0,0,:5])
                 out = self.pw_se(out)
                 out = self.act(out)
             else:
@@ -241,7 +231,7 @@ class MobileOneBlock(nn.Layer):
         std = (running_var + eps).sqrt()
         t = (gamma / std).reshape((-1, 1, 1, 1))
 
-        return kernel * t,  -running_mean * gamma / std + beta
+        return kernel * t, -running_mean * gamma / std + beta
 
     def switch_to_deploy(self):
         dw_kernel, dw_bias, pw_kernel, pw_bias = self.get_equivalent_kernel_bias()
@@ -347,11 +337,7 @@ class MobileOne(nn.Layer):
 
     def forward(self, x):
         for idx, stage in enumerate(self.stages):
-            #if idx == 1:
-            #    print('************ stage 1')
             x = stage(x)
-            #if (idx == 2):
-            #    print('********* paddle stage2: ', x)
         x = self.avg_pool(x)
         x = paddle.flatten(x, 1)
         x = self.fc(x)
@@ -376,19 +362,11 @@ def model_convert(model, inputs=None):
     deploy_model.eval()
     model.eval()
 
-    #print('model =====================')
-    #for name, val in model_convert.state_dict().items():
-    #    print(name, val.shape)
-    #print('deploy_model =====================')
-    #for name, val in deploy_model.state_dict().items():
-    #    print(name, val.shape)
-
     deploy_model.set_state_dict(model_convert.state_dict())
     # check
     if inputs is not None:
         out_deploy = deploy_model(inputs)
         out_train = model(inputs)
-        #print(deploy_model)
         print(out_train)
         print('===================')
         print(out_deploy)
