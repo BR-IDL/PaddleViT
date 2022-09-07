@@ -86,9 +86,11 @@ cd PaddleViT/image_classification
 
 ## 基本用法
 ### 数据准备
-ImageNet2012 数据集用于以下文件结构:
+ImageNet2012 数据集使用以下的文件格式:
 ```
 │imagenet/
+├──train_list.txt
+├──val_list.txt
 ├──train/
 │  ├── n01440764
 │  │   ├── n01440764_10026.JPEG
@@ -102,6 +104,10 @@ ImageNet2012 数据集用于以下文件结构:
 │  │   ├── ......
 │  ├── ......
 ```
+其中：
+- `train_list.txt`: 包含训练图像的相对路径和类别标签. 可以从这里下载该文件： [google](https://drive.google.com/file/d/10YGzx_aO3IYjBOhInKT_gY6p0mC3beaC/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1G5xYPczfs9koDb7rM4c0lA?pwd=a4vm)
+- `val_list.txt`: 包含val集图像的相对路径和类别标签. 可以从这里下载该文件： [google](https://drive.google.com/file/d/1aXHu0svock6MJSur4-FKjW0nyjiJaWHE/view?usp=sharing)/[baidu](https://pan.baidu.com/s/1TFGda7uBZjR7g-A6YjQo-g?pwd=kdga) 
+
 ### Demo 示例
 如果需要使用具有预训练权重的模型，请转到特定子文件夹，然后下载 `.pdparam` 权重文件，并在以下python脚本中更改相关文件路径，模型配置文件位于 `./configs/`.  
 

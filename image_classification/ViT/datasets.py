@@ -28,8 +28,9 @@ class ImageNet2012Dataset(Dataset):
 
     This class gets train/val imagenet datasets, which loads transfomed data and labels.
     Note:
-        train_list.txt and val_list.txt is required.
-        Please refer https://github.com/BR-IDL/PaddleViT/image_classification#data-preparation
+        train_list.txt and val_list.txt are required.
+        See the readme webpage for more info and download links: 
+        https://github.com/BR-IDL/PaddleViT/tree/develop/image_classification#data-preparation
 
     Attributes:
         file_folder: path where imagenet images are stored
